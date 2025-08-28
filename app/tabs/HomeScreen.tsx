@@ -300,6 +300,36 @@ export default function HomeScreen() {
         <Text style={styles.rating}>⭐ 3.2</Text>
       </View>
 
+      {/* 🚀 Ride Analytics Section */}
+      <View style={styles.analyticsCard}>
+        <Text style={styles.analyticsTitle}>Check your ride Analytics</Text>
+        <TouchableOpacity style={styles.analyticsButton}>
+          <Text style={styles.analyticsButtonText}>View your Ride Summary</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* ⭐ Special Service Section */}
+      <Text style={styles.sectionTitle}>Special Service</Text>
+      <View style={styles.specialServiceRow}>
+        <TouchableOpacity style={styles.specialCard}>
+          <Image
+            source={require("../../assets/images/car3.png")}
+            style={styles.specialImage}
+          />
+          <Text style={styles.specialTitle}>Our Special AI Security</Text>
+          <Text style={styles.specialSub}>Checkout our Special AI</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.specialCard}>
+          <Image
+            source={require("../../assets/images/car4.png")}
+            style={styles.specialImage}
+          />
+          <Text style={styles.specialTitle}>Share your Ride</Text>
+          <Text style={styles.specialSub}>See how to share ride</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Conditionally render the overlays */}
       <UploadPhotoOverlay
         isVisible={showPhotoOverlay}
@@ -356,12 +386,6 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 8,
     gap: 7,
-  },
-  laterIcon: {
-    width: 16,
-    height: 16,
-    tintColor: "#fff",
-    marginRight: 6,
   },
   laterText: {
     color: "#fff",
@@ -475,6 +499,62 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginLeft: 4,
   },
+
+  // 🚀 Analytics styles
+  analyticsCard: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 20,
+    padding: 20,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  analyticsTitle: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 15,
+  },
+  analyticsButton: {
+    backgroundColor: "#000",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  analyticsButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+
+  // ⭐ Special Service
+  specialServiceRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  specialCard: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 15,
+    padding: 10,
+    width: "48%",
+  },
+  specialImage: {
+    width: "100%",
+    height: 120,
+    borderRadius: 12,
+    marginBottom: 10,
+  },
+  specialTitle: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
+    marginBottom: 5,
+  },
+  specialSub: {
+    color: "#aaa",
+    fontSize: 12,
+  },
+
   // Overlay Styles
   overlayContainer: {
     flex: 1,
@@ -512,107 +592,4 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    width: 150,
-    height: 150,
-  },
-  uploadButton: {
-    backgroundColor: '#FEB914',
-    borderRadius: 10,
-    paddingVertical: 15,
-    paddingHorizontal: 40,
-    width: '90%',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  uploadButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  skipButton: {
-    backgroundColor: '#444',
-    borderRadius: 10,
-    paddingVertical: 15,
-    paddingHorizontal: 40,
-    width: '90%',
-    alignItems: 'center',
-  },
-  skipButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  // Styles for the Additional Info overlay
-  inputContainer: {
-    // backgroundColor: '#2C2C2C',
-    borderRadius: 10,
-    width: '90%',
-    marginBottom: 15,
-    borderWidth: 0.5,
-    borderColor: 'white',
-
-
-  },
-  input: {
-    color: '#fff',
-    fontSize: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-  },
-  biometricsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#2C2C2C',
-    borderRadius: 10,
-    padding: 15,
-    marginTop: 10,
-    marginBottom: 20,
-    width: '90%',
-    justifyContent: 'center',
-  },
-  biometricsText: {
-    color: '#FFD700',
-    fontSize: 16,
-    marginLeft: 10,
-  },
-  // New styles for the custom dropdown
-  dropdownButton: {
-    // backgroundColor: '#2C2C2C',
-    borderRadius: 10,
-    width: '90%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    marginBottom: 15,
-    borderWidth: 0.5,
-    borderColor: 'white',
-  },
-  dropdownButtonText: {
-    color: '#aaa',
-    fontSize: 16,
-  },
-  dropdownOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  dropdownModal: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 10,
-    padding: 10,
-    width: '80%',
-    maxHeight: '40%',
-  },
-  dropdownOption: {
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-  },
-  dropdownText: {
-    color: '#fff',
-    fontSize: 16,
-  },
-});
+   

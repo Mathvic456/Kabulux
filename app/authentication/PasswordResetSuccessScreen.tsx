@@ -116,18 +116,12 @@ const styles = StyleSheet.create({
   envelopeIcon: {
     width: '80%',
     height: '90%',
-    // borderWidth:1,
-    // borderColor:'white',
     resizeMode: 'contain',
     alignSelf: 'center',
   },
   envelopeContainer: {
-    // backgroundColor: '#FEB91454',
-    // padding: 10,
     borderRadius: 50,
     marginTop: 30,
-    // borderWidth:1,
-    // borderColor:'white',
     width:100,
     height:100,
     alignSelf:'center'
@@ -198,8 +192,6 @@ const styles = StyleSheet.create({
   Logoicon:{
     width: 130,
     height: 100,
-    // borderWidth:1,
-    // borderColor:'white',
     resizeMode: 'contain',
     alignSelf: 'center',
   },
