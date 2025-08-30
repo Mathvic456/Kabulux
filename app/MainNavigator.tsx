@@ -4,6 +4,7 @@ import CryptoDepositScreenOne from "./addFunds/CryptoDepositScreenOne";
 import CryptoDepositScreenTwo from "./addFunds/CryptoDepositScreenTwo";
 import PaymentMethodScreen from "./addFunds/PaymentMethodScreen";
 import RedeemPointsScreen from "./addFunds/RedeemPointsScreen";
+import AnalyticsScreen from "./AnalyticsScreen";
 import AccountSuccessScreen from "./authentication/AccountSuccessScreen";
 import ForgotPasswordScreen from "./authentication/ForgotPasswordScreen";
 import LoginScreen from "./authentication/LoginScreen";
@@ -14,8 +15,12 @@ import PasswordSetScreen from "./authentication/PasswordSetScreen";
 import RegisterScreen from "./authentication/RegisterScreen";
 import ResetPasswordScreen from "./authentication/ResetPasswordScreen";
 import VerifyEmailScreen from "./authentication/VerifyEmailScreen";
+import LoyaltyPointsScreen from "./LoyaltyPointsScreen";
 import OnboardingScreen1 from "./onboarding/OnboardingScreen1";
 import OnboardingScreen2 from "./onboarding/OnboardingScreen2";
+import BookingScreen from "./Order/BookingScreen";
+import PickUpScreen from "./Order/PickUpScreen";
+import PlanRideScreen from "./Order/PlanRideScreen";
 import HelpAndSupportScreen from "./profile/HelpAndSupportScreen";
 import LegalScreen from "./profile/LegalScreen";
 import LoginAndSecurityScreen from "./profile/LoginAndSecurityScreen";
@@ -23,11 +28,11 @@ import PersonalInfoScreen from "./profile/PersonalInfoScreen";
 import ReferAndEarnScreen from "./profile/ReferAndEarnScreen";
 import SavedPlacesScreen from "./profile/SavePlacesScreen";
 import SettingsScreen from "./profile/SettingsScreen";
+import OriginalPriceDetailsScreen from "./rides/original/OriginalPriceDetailsScreen";
 import ProfileScreen from "./tabs/ProfileScreen";
 import RideDetailsScreen from "./tabs/RideDetailsScreen";
 import TabNavigator from "./tabs/TabNavigator";
 import WalletScreen from "./tabs/WalletScreen";
-
 
 // Define screen names
 type Screen =
@@ -59,6 +64,12 @@ type Screen =
   | "legal"
   | "redeemPoints"
   | "wallet"
+  | "analyticsScreen"
+  | "loyalty" 
+  | "orderScreen"
+  | "planRide"
+  | "bookingScreen"
+  | "originalPriceDetails";
 
 
 export default function MainNavigator() {
@@ -261,11 +272,45 @@ export default function MainNavigator() {
         />
       );
 
+    case "analyticsScreen":
+      return (
+        <AnalyticsScreen
+          // setScreen={setScreen}
+          next={() => setScreen("loyalty")}
+        />);
+
     case "wallet":
       return (
         <WalletScreen
           setScreen={setScreen}
         />);
+
+    case "loyalty":
+      return (
+        <LoyaltyPointsScreen
+        />);
+
+    case "orderScreen":
+      return (
+        <PickUpScreen setScreen={setScreen}
+        />);
+
+    case "planRide":
+      return (
+        <PlanRideScreen setScreen={setScreen}
+        />);
+
+    case "bookingScreen":
+      return (
+        <BookingScreen setScreen={setScreen}
+        />);  
+
+    case "originalPriceDetails":
+      return (
+        <OriginalPriceDetailsScreen
+          setScreen={setScreen}
+        />
+      );
 
     default:
       return null;

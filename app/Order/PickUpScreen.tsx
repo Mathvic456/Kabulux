@@ -1,17 +1,17 @@
+import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  TextInput,
-  Animated,
+    Animated,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 
-export default function RideHailingScreen() {
+export default function PickUpScreen({ setScreen }) {
   const [pickup, setPickup] = useState("");
-  const slideAnim = useRef(new Animated.Value(300)).current; // Start off-screen (below)
+  const slideAnim = useRef(new Animated.Value(300)).current;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -20,7 +20,7 @@ export default function RideHailingScreen() {
         duration: 500,
         useNativeDriver: true,
       }).start();
-    }, 2000); // wait 2 seconds
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [slideAnim]);
@@ -29,10 +29,10 @@ export default function RideHailingScreen() {
     <View style={styles.container}>
       {/* Top Navigation */}
       <View style={styles.topBar}>
-        <TouchableOpacity>
+        <TouchableOpacity style={styles.iconContainer}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
-        <TouchableOpacity>
+        <TouchableOpacity style={styles.iconContainer}>
           <Ionicons name="locate" size={24} color="white" />
         </TouchableOpacity>
       </View>
@@ -44,10 +44,7 @@ export default function RideHailingScreen() {
 
       {/* Animated Bottom Sheet */}
       <Animated.View
-        style={[
-          styles.bottomSheet,
-          { transform: [{ translateY: slideAnim }] },
-        ]}
+        style={[styles.bottomSheet, { transform: [{ translateY: slideAnim }] }]}
       >
         <Text style={styles.title}>Set your Pick - up Location</Text>
 
@@ -61,6 +58,9 @@ export default function RideHailingScreen() {
             value={pickup}
             onChangeText={setPickup}
           />
+          <TouchableOpacity style={styles.locateIcon}>
+            <Ionicons name="locate" size={20} color="#f6a623" />
+          </TouchableOpacity>
         </View>
 
         {/* Confirm Button */}
@@ -70,6 +70,7 @@ export default function RideHailingScreen() {
             { backgroundColor: pickup ? "#f6a623" : "#555" },
           ]}
           disabled={!pickup}
+          onPress={() => setScreen("planRide")}
         >
           <Text style={styles.confirmText}>Confirm Pick-up</Text>
         </TouchableOpacity>
@@ -92,19 +93,21 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     zIndex: 10,
   },
+  iconContainer: {
+    padding: 10,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    borderRadius: 50,
+  },
   mapPlaceholder: {
     flex: 1,
-    alignItems: "center",
+    backgroundColor: "#333",
     justifyContent: "center",
-    borderWidth: 2,
-    borderColor: "#333",
-    marginTop: 100,
-    marginHorizontal: 20,
-    borderRadius: 15,
+    alignItems: "center",
   },
   mapText: {
-    color: "white",
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#aaa",
   },
   bottomSheet: {
     position: "absolute",
@@ -115,6 +118,11 @@ const styles = StyleSheet.create({
     padding: 20,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 20,
   },
   title: {
     color: "white",
@@ -133,6 +141,9 @@ const styles = StyleSheet.create({
     flex: 1,
     color: "white",
     paddingVertical: 10,
+    marginLeft: 8,
+  },
+  locateIcon: {
     marginLeft: 8,
   },
   confirmButton: {

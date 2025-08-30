@@ -41,7 +41,11 @@ export default function TabNavigator({ setScreen, setSelectedRide }) {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
+      {/* Pass setScreen and setSelectedRide to HomeScreen using render function */}
+      <Tab.Screen name="Home">
+        {() => <HomeScreen setScreen={setScreen} />}
+      </Tab.Screen>
+      
       <Tab.Screen name="Bookings" component={BookingsScreen} />
 
       {/* Pass setScreen down to WalletScreen */}

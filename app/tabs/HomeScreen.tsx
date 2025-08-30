@@ -1,15 +1,15 @@
 import { Entypo, Feather, FontAwesome } from '@expo/vector-icons';
 import React, { useState } from "react";
 import {
-    FlatList,
-    Image,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Image,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 // Overlay Component for Photo Upload
@@ -34,10 +34,10 @@ const UploadPhotoOverlay = ({ isVisible, onClose, onNext }) => {
             <Feather name="image" size={80} color="#FFD700" />
           </View>
           <TouchableOpacity style={styles.uploadButton} onPress={onNext}>
-            <Text style={styles.uploadButtonText}>Next</Text>
+            <Text style={styles.uploadButtonText}>Upload</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.skipButton} onPress={onClose}>
-            <Text style={styles.skipButtonText}>Skip</Text>
+            <Text style={styles.skipButtonText}>Skip  </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -89,83 +89,85 @@ const AdditionalInfoOverlay = ({ isVisible, onClose }) => {
       onRequestClose={onClose}
     >
       <View style={styles.overlayContainer}>
-        <View style={styles.overlayContent}>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Entypo name="cross" size={24} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.overlayTitle}>Additional Information</Text>
-          <Text style={styles.overlaySubtitle}>Fill the details to get more information about you</Text>
+        // Inside AdditionalInfoOverlay component (no logic change, only UI refinements)
+<View style={styles.overlayContent}>
+  <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+    <Entypo name="cross" size={28} color="#fff" />
+  </TouchableOpacity>
 
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Address Book"
-              placeholderTextColor="#aaa"
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Emergency Contact Info"
-              placeholderTextColor="#aaa"
-            />
-          </View>
+  <Text style={styles.overlayTitle}>Additional Information</Text>
+  <Text style={styles.overlaySubtitle}>
+    Fill the details to get more information about you
+  </Text>
 
-          {/* Notification Preference Dropdown Button */}
-          <TouchableOpacity
-            style={styles.dropdownButton}
-            onPress={() => setShowNotificationDropdown(true)}
-          >
-            <Text style={styles.dropdownButtonText}>{notificationPreference}</Text>
-            <Entypo name="chevron-down" size={16} color="#aaa" />
-          </TouchableOpacity>
-          <Dropdown
-            options={notificationOptions}
-            onSelect={(value) => {
-              setNotificationPreference(value);
-              setShowNotificationDropdown(false);
-            }}
-            isVisible={showNotificationDropdown}
-            onClose={() => setShowNotificationDropdown(false)}
-          />
+  {/* Address Book */}
+  <TextInput
+    style={styles.inputField}
+    placeholder="Address Book"
+    placeholderTextColor="#aaa"
+  />
 
-          {/* Preferable Payment Dropdown Button */}
-          <TouchableOpacity
-            style={styles.dropdownButton}
-            onPress={() => setShowPaymentDropdown(true)}
-          >
-            <Text style={styles.dropdownButtonText}>{preferablePayment}</Text>
-            <Entypo name="chevron-down" size={16} color="#aaa" />
-          </TouchableOpacity>
-          <Dropdown
-            options={paymentOptions}
-            onSelect={(value) => {
-              setPreferablePayment(value);
-              setShowPaymentDropdown(false);
-            }}
-            isVisible={showPaymentDropdown}
-            onClose={() => setShowPaymentDropdown(false)}
-          />
+  {/* Emergency Contact Info */}
+  <TextInput
+    style={styles.inputField}
+    placeholder="Emergency Contact Info"
+    placeholderTextColor="#aaa"
+  />
 
-          <TouchableOpacity style={styles.biometricsButton}>
-            <Entypo name="fingerprint" size={24} color="#FEB914" />
-            <Text style={styles.biometricsText}>Enable Biometrics</Text>
-          </TouchableOpacity>
+  {/* Notification Preference */}
+  <TouchableOpacity
+    style={styles.inputField}
+    onPress={() => setShowNotificationDropdown(true)}
+  >
+    <Text style={styles.dropdownText}>
+      {notificationPreference}
+    </Text>
+    <Entypo name="chevron-down" size={18} color="#aaa" />
+  </TouchableOpacity>
 
-          <TouchableOpacity style={styles.uploadButton}>
-            <Text style={styles.uploadButtonText}>Next</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.skipButton} onPress={onClose}>
-            <Text style={styles.skipButtonText}>Skip</Text>
-          </TouchableOpacity>
-        </View>
+  {/* Preferable Payment */}
+  <TouchableOpacity
+    style={styles.inputField}
+    onPress={() => setShowPaymentDropdown(true)}
+  >
+    <Text style={styles.dropdownText}>
+      {preferablePayment}
+    </Text>
+    <Entypo name="chevron-down" size={18} color="#aaa" />
+  </TouchableOpacity>
+
+  {/* Biometrics */}
+  <TouchableOpacity style={styles.biometricsToggle}>
+    <Entypo name="fingerprint" size={36} color="#FEB914" />
+    <Text style={styles.biometricsLabel}>Enable Biometrics</Text>
+  </TouchableOpacity>
+
+  {/* Buttons */}
+  <TouchableOpacity style={styles.nextButton}>
+    <Text style={styles.nextButtonText}>Next</Text>
+  </TouchableOpacity>
+  <TouchableOpacity style={styles.skipButton} onPress={onClose}>
+    <Text style={styles.skipButtonText}>Skip</Text>
+  </TouchableOpacity>
+</View>
+
       </View>
     </Modal>
   );
 };
 
 
-export default function HomeScreen() {
+export default function HomeScreen({setScreen}) {
+
+  const goToAnalytics = () => {
+    setScreen("analyticsScreen");
+  };
+
+  
+  const goToOrder = () => {
+    setScreen("orderScreen");
+  };
+  
   const [showPhotoOverlay, setShowPhotoOverlay] = useState(true);
   const [showAdditionalInfoOverlay, setShowAdditionalInfoOverlay] = useState(false);
 
@@ -203,18 +205,18 @@ export default function HomeScreen() {
         />
       </View>
 
-      <View style={styles.searchContainer}>
-        <FontAwesome name="search" size={20} color="white" />
+      <TouchableOpacity style={styles.searchContainer} onPress={goToOrder}>
+        <FontAwesome name="car" size={19} color="white" />
         <TextInput
-          placeholder="Where to?"
-          placeholderTextColor="#aaa"
+          placeholder="Where to today?"
+          placeholderTextColor="white"
           style={styles.searchInput}
         />
         <TouchableOpacity style={styles.laterBtn}>
           <Entypo name="shop" size={20} color="white" />
           <Text style={styles.laterText}>Later</Text>
         </TouchableOpacity>
-      </View>
+      </TouchableOpacity>
 
       <Text style={styles.sectionTitle}>Suggestion</Text>
       <View style={styles.suggestionRow}>
@@ -303,7 +305,8 @@ export default function HomeScreen() {
       {/* 🚀 Ride Analytics Section */}
       <View style={styles.analyticsCard}>
         <Text style={styles.analyticsTitle}>Check your ride Analytics</Text>
-        <TouchableOpacity style={styles.analyticsButton}>
+        <TouchableOpacity style={styles.analyticsButton}     onPress={() => setScreen('analyticsScreen')} // Add this line
+> 
           <Text style={styles.analyticsButtonText}>View your Ride Summary</Text>
         </TouchableOpacity>
       </View>
@@ -313,7 +316,7 @@ export default function HomeScreen() {
       <View style={styles.specialServiceRow}>
         <TouchableOpacity style={styles.specialCard}>
           <Image
-            source={require("../../assets/images/car3.png")}
+            source={require("../../assets/images/car2.png")}
             style={styles.specialImage}
           />
           <Text style={styles.specialTitle}>Our Special AI Security</Text>
@@ -322,7 +325,7 @@ export default function HomeScreen() {
 
         <TouchableOpacity style={styles.specialCard}>
           <Image
-            source={require("../../assets/images/car4.png")}
+            source={require("../../assets/images/car2.png")}
             style={styles.specialImage}
           />
           <Text style={styles.specialTitle}>Share your Ride</Text>
@@ -586,10 +589,122 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   uploadIconContainer: {
-    backgroundColor: '#2C2C2C',
+    backgroundColor: 'black',
     borderRadius: 20,
     padding: 20,
     marginBottom: 20,
     alignItems: 'center',
     justifyContent: 'center',
-   
+  },
+  uploadButton: {
+    backgroundColor: '#FFD700',
+    paddingVertical: 15,
+    paddingHorizontal: 80,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  uploadButtonText: {
+    color: '#000',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  skipButton: {
+    paddingVertical: 15,
+    paddingHorizontal: 80,
+    borderRadius: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor:'white',
+  },
+  skipButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+
+  // Overlay fixes
+overlayContent: {
+  backgroundColor: "#111",
+  borderTopLeftRadius: 20,
+  borderTopRightRadius: 20,
+  padding: 25,
+  alignItems: "center",
+},
+overlayTitle: {
+  fontSize: 20,
+  fontWeight: "bold",
+  color: "#fff",
+  marginBottom: 5,
+},
+overlaySubtitle: {
+  fontSize: 14,
+  color: "#aaa",
+  marginBottom: 20,
+  textAlign: "center",
+},
+closeButton: {
+  alignSelf: "flex-start",
+  marginBottom: 10,
+},
+
+// Inputs
+inputField: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  width: "100%",
+  backgroundColor: "#1a1a1a",
+  borderRadius: 8,
+  paddingHorizontal: 15,
+  paddingVertical: 14,
+  marginBottom: 15,
+},
+dropdownText: {
+  color: "#fff",
+  fontSize: 14,
+},
+
+// Biometrics
+biometricsToggle: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  marginBottom: 20,
+  gap: 10,
+},
+biometricsLabel: {
+  color: "#fff",
+  fontSize: 14,
+  fontWeight: "500",
+},
+
+// Buttons
+nextButton: {
+  backgroundColor: "#FEB914",
+  paddingVertical: 15,
+  width: "100%",
+  borderRadius: 10,
+  alignItems: "center",
+  marginBottom: 12,
+},
+nextButtonText: {
+  color: "#000",
+  fontWeight: "bold",
+  fontSize: 16,
+},
+skipButton: {
+  borderWidth: 1,
+  borderColor: "#fff",
+  paddingVertical: 15,
+  width: "100%",
+  borderRadius: 10,
+  alignItems: "center",
+},
+skipButtonText: {
+  color: "#fff",
+  fontWeight: "bold",
+  fontSize: 16,
+},
+
+    
+})

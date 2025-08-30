@@ -12,7 +12,7 @@ import {
     View,
 } from "react-native";
 
-export default function LoginAndSecurityScreen({ goBack, next }) {
+export default function LoginAndSecurityScreen({ goBack, next }:{next: => void, goBack: => void}) {
   const [modalVisible, setModalVisible] = useState(false);
   const [currentModal, setCurrentModal] = useState(null);
   const [loading, setLoading] = useState(false);

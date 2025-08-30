@@ -1,19 +1,21 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-    Alert,
-    Keyboard,
-    Modal,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
+  Alert,
+  Keyboard,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
 
 export default function PersonalInfoScreen({ goBack, next }) {
-  const [email, setEmail] = useState("kabluxtesting@gmail.com");
+
+
+  const [email, setEmail] = useState("kabluxt}esting@gmail.com");
   const [phone, setPhone] = useState("+2349188730421");
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [isEditingPhone, setIsEditingPhone] = useState(false);
