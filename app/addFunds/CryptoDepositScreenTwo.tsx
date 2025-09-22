@@ -2,19 +2,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import React, { useRef, useState } from 'react';
 import {
-    Alert,
-    Modal,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Modal,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import QRCode from 'react-qr-code';
 
-export default function CryptoDepositScreenTwo({ next, goRegister, goForgot, goCryptoDeposit }: { next: () => void, goRegister: () => void, goForgot: () => void, goCryptoDeposit: () => void }) {
+export default function CryptoDepositScreenTwo({ next, goRegister, goForgot, goCryptoDeposit, goBack }: { next: () => void, goRegister: () => void, goForgot: () => void, goCryptoDeposit: () => void, goBack: () => void }) {
   const [selectedCrypto, setSelectedCrypto] = useState('USDT');
   const [selectedNetwork, setSelectedNetwork] = useState('TRC-20');
   const [cryptoDropdownVisible, setCryptoDropdownVisible] = useState(false);
@@ -97,7 +97,7 @@ export default function CryptoDepositScreenTwo({ next, goRegister, goForgot, goC
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
-          onPress={() => {/* navigation.goBack() */}}
+          onPress={goBack}
         >
           <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>

@@ -2,17 +2,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
 import {
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
-export default function CryptoDepositScreenOne({ next, goRegister, goForgot, goCryptoDeposit }: { next: () => void, goRegister: () => void, goForgot: () => void, goCryptoDeposit: () => void }) {
+export default function CryptoDepositScreenOne({ next, goRegister, goForgot, goCryptoDeposit, goBack }: { next: () => void, goRegister: () => void, goForgot: () => void, goCryptoDeposit: () => void, goBack: () => void }) {
   const [currencyAmount, setCurrencyAmount] = useState('');
   const [cryptoAmount, setCryptoAmount] = useState('');
 
@@ -80,7 +80,7 @@ export default function CryptoDepositScreenOne({ next, goRegister, goForgot, goC
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={goBack}
         >
           <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>

@@ -46,7 +46,13 @@ export default function TabNavigator({ setScreen, setSelectedRide }) {
         {() => <HomeScreen setScreen={setScreen} />}
       </Tab.Screen>
       
-      <Tab.Screen name="Bookings" component={BookingsScreen} />
+      <Tab.Screen name="Bookings">
+        {() => <BookingsScreen setScreen={function (screen: string): void {
+          throw new Error("Function not implemented.");
+        } } setSelectedRide={function (ride: any): void {
+          throw new Error("Function not implemented.");
+        } } />}
+      </Tab.Screen>
 
       {/* Pass setScreen down to WalletScreen */}
       <Tab.Screen name="Wallet">

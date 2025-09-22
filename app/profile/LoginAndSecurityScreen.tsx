@@ -1,18 +1,25 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
-export default function LoginAndSecurityScreen({ goBack, next }:{next: => void, goBack: => void}) {
+export default function LoginAndSecurityScreen({ 
+  goBack, 
+  next 
+}: { 
+  next: () => void; 
+  goBack: () => void; 
+}) {
+  // Your component logic
   const [modalVisible, setModalVisible] = useState(false);
   const [currentModal, setCurrentModal] = useState(null);
   const [loading, setLoading] = useState(false);

@@ -1,15 +1,15 @@
 import { Feather } from "@expo/vector-icons";
 import React, { useRef, useState } from "react";
 import {
-    Animated,
-    Dimensions,
-    Image,
-    Modal,
-    PanResponder,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  Dimensions,
+  Image,
+  Modal,
+  PanResponder,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Car from "../../assets/images/car.png";
 
@@ -24,6 +24,7 @@ const rideOptions = [
     carType: "Mid Size Car",
     passengers: 4,
     image: Car,
+    screen: "originalPriceDetails", // Added screen reference
   },
   {
     name: "Kablux Premium",
@@ -32,6 +33,7 @@ const rideOptions = [
     carType: "Smart Size Car",
     passengers: 4,
     image: Car,
+    screen: "premiumCarSelect", // Added screen reference
   },
   {
     name: "Kablux Business",
@@ -40,10 +42,11 @@ const rideOptions = [
     carType: "Jeep Size Car",
     passengers: 2,
     image: Car,
+    screen: "businessCodeScreen", // Added screen reference
   },
 ];
 
-export default function BookingScreen({ setScreen }) {
+export default function BookingScreen({ setScreen, goBack }: { setScreen: (screen: string) => void; goBack: () => void }  ) {
   const slideAnim = useRef(new Animated.Value(0)).current;
   const [selectedRide, setSelectedRide] = useState(null);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
@@ -74,16 +77,15 @@ export default function BookingScreen({ setScreen }) {
     })
   ).current;
 
-  // Handle confirm ride navigation
+  // Handle confirm ride navigation - FIXED
   const handleConfirmRide = () => {
     if (!selectedRide) return;
-
-    if (selectedRide === "Kablux Original") {
-      setScreen("originalPriceDetails");
-    } else if (selectedRide === "Kablux Premium") {
-      setScreen("premiumdetailsscreen");
-    } else if (selectedRide === "Kablux Business") {
-      setScreen("businessdetailsscreen");
+    
+    // Find the selected ride option
+    const selectedOption = rideOptions.find(option => option.name === selectedRide);
+    
+    if (selectedOption) {
+      setScreen(selectedOption.screen);
     }
   };
 
@@ -100,7 +102,7 @@ export default function BookingScreen({ setScreen }) {
         {...panResponder.panHandlers}
       >
         <View style={styles.panelHeader}>
-          <TouchableOpacity style={styles.headerIconContainer}>
+          <TouchableOpacity style={styles.headerIconContainer} onPress={goBack}>
             <Feather name="arrow-left" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Choose a Ride</Text>
@@ -209,9 +211,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   mapText: { fontSize: 18, fontWeight: "bold", color: "#aaa" },
-  panelHeader: { flexDirection: "row", alignItems: "center", marginBottom: 20 },
-  headerIconContainer: { padding: 10, backgroundColor: "#333", borderRadius: 50 },
-  headerTitle: { fontSize: 22, fontWeight: "bold", color: "white", marginLeft: 20 },
+  panelHeader: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    marginBottom: 20,
+    paddingHorizontal: 10, // Added padding for better spacing
+  },
+  headerIconContainer: { 
+    padding: 10, 
+    backgroundColor: "#333", 
+    borderRadius: 50,
+    marginRight: 15, // Added margin for better spacing
+  },
+  headerTitle: { 
+    fontSize: 22, 
+    fontWeight: "bold", 
+    color: "white", 
+  },
   bottomPanel: {
     position: "absolute",
     bottom: 0,

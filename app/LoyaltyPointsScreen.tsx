@@ -1,14 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-    Animated,
-    Dimensions,
-    Easing,
-    SafeAreaView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Animated,
+  Dimensions,
+  Easing,
+  SafeAreaView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { GestureHandlerRootView, PanGestureHandler, State } from 'react-native-gesture-handler';
 
@@ -178,12 +178,12 @@ export default function LoyaltyPointsScreen({next}: {next?:() => void}) {
           <View style={styles.scrollContainer}>
             {/* Status Bar */}
             <View style={styles.statusBar}>
-              <Text style={styles.time}>9:41</Text>
+              {/* <Text style={styles.time}>9:41</Text>
               <View style={styles.signalIcons}>
                 <Text style={styles.signalIcon}>📶</Text>
                 <Text style={styles.signalIcon}>📡</Text>
                 <Text style={styles.signalIcon}>🔋</Text>
-              </View>
+              </View> */}
             </View>
 
             {/* Navigation Tabs with Progress */}

@@ -1,18 +1,18 @@
 import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
-    Animated,
-    Dimensions,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Animated,
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 const { height } = Dimensions.get('window');
 
-export default function PlanRideScreen({ setScreen }) {
+export default function PlanRideScreen({ setScreen, goBack }: { setScreen: (screen: string, params?: any) => void; goBack: () => void }   ) {
   const [isPanelUp, setIsPanelUp] = useState(false);
   const [slideAnim] = useState(new Animated.Value(height));
   const [destinationLocation, setDestinationLocation] = useState('');
@@ -68,7 +68,7 @@ export default function PlanRideScreen({ setScreen }) {
 
   const handleBackPress = () => {
     // Navigate back to the previous screen
-    setScreen('homeScreen'); // Replace with your actual previous screen name
+    setScreen('orderScreen'); // Replace with your actual previous screen name
   };
 
   return (

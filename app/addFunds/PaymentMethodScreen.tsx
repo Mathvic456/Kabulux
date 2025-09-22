@@ -2,21 +2,21 @@ import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    Keyboard,
-    Modal,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View
+  ActivityIndicator,
+  Keyboard,
+  Modal,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View
 } from 'react-native';
 
-export default function PaymentMethodScreen({ next, goRegister, goForgot, goCryptoDeposit }: { next: () => void, goRegister: () => void, goForgot: () => void, goCryptoDeposit: () => void }) {
+export default function PaymentMethodScreen({ next, goRegister, goForgot, goCryptoDeposit, goBack }: { next: () => void, goRegister: () => void, goForgot: () => void, goCryptoDeposit: () => void, goBack: () => void }) {
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvv, setCvv] = useState('');
@@ -232,7 +232,7 @@ export default function PaymentMethodScreen({ next, goRegister, goForgot, goCryp
         <View style={styles.header}>
           <TouchableOpacity 
             style={styles.backButton}
-            onPress={() => {/* navigation.goBack() */}}
+            onPress={goBack}
           >
             <Ionicons name="arrow-back" size={24} color="black" />
           </TouchableOpacity>

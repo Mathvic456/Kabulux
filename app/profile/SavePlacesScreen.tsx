@@ -1,20 +1,20 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-    Keyboard,
-    Modal,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
+  Keyboard,
+  Modal,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
 
-export default function SavedPlacesScreen({ goBack, navigation }) {
+export default function SavedPlacesScreen({ goBack, next }: { goBack: () => void; next?: () => void}) {
   // State for saved addresses
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);

@@ -4,7 +4,7 @@
     "slug": "kablux",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/log.png",
     "scheme": "kabulux",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,

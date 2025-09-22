@@ -28,11 +28,21 @@ import PersonalInfoScreen from "./profile/PersonalInfoScreen";
 import ReferAndEarnScreen from "./profile/ReferAndEarnScreen";
 import SavedPlacesScreen from "./profile/SavePlacesScreen";
 import SettingsScreen from "./profile/SettingsScreen";
+import AdditionalInformationScreen from "./rides/business/AdditionalInformationScreen";
+import BusinessCodeScreen from "./rides/business/BusinessCodeScreen";
+import BusinessRideSelectScreen from "./rides/business/BusinessRideSelectScreen";
+import ChatScreen from "./rides/ChatScreen";
+import OriginalDriverDetailScreen from "./rides/original/OriginalDriverDetailScreen";
 import OriginalPriceDetailsScreen from "./rides/original/OriginalPriceDetailsScreen";
+import ModifyRideScreen from "./rides/premium/ModifyRideScreen";
+import PremiumCarSelectScreen from "./rides/premium/PremiumCarSelectScreen";
+import SpecialServicesScreen from "./rides/SpecialServicesScreen";
 import ProfileScreen from "./tabs/ProfileScreen";
 import RideDetailsScreen from "./tabs/RideDetailsScreen";
 import TabNavigator from "./tabs/TabNavigator";
 import WalletScreen from "./tabs/WalletScreen";
+
+
 
 // Define screen names
 type Screen =
@@ -69,7 +79,15 @@ type Screen =
   | "orderScreen"
   | "planRide"
   | "bookingScreen"
-  | "originalPriceDetails";
+  | "originalPriceDetails"
+  | "originalDriverDetails"
+  | "chatScreen"
+  | "businessRideSelect"
+  | "additionalInformation"
+  | "premiumCarSelect"
+  | "specialServices"
+  | "modifyRide"
+  | "businessCodeScreen"
 
 
 export default function MainNavigator() {
@@ -77,6 +95,9 @@ export default function MainNavigator() {
 
   // Keep track of the selected ride
   const [selectedRide, setSelectedRide] = useState<any>(null);
+
+  const [rideOptions, setRideOptions] = useState<any>(null);
+
 
   switch (screen) {
     case "onboard1":
@@ -172,8 +193,8 @@ export default function MainNavigator() {
           next={() => setScreen("paymentMethod")}
           goRegister={() => setScreen("register")}
           goForgot={() => setScreen("reset")}
-          goCryptoDeposit={() => setScreen("cryptoDepositOne")} // 👈 new navigation option
-
+          goCryptoDeposit={() => setScreen("cryptoDepositOne")}
+          goBack={() => setScreen("wallet")}
         />
       );
 
@@ -185,6 +206,7 @@ export default function MainNavigator() {
           goRegister={() => setScreen("register")}
           goForgot={() => setScreen("reset")}
           goCryptoDeposit={() => setScreen("cryptoDepositOne")}
+          goBack={() => setScreen("addFunds")}
         />
       );
     case "cryptoDepositOne":
@@ -194,6 +216,7 @@ export default function MainNavigator() {
           goRegister={() => setScreen("register")}
           goForgot={() => setScreen("reset")}
           goCryptoDeposit={() => setScreen("cryptoDepositOne")}
+          goBack={() => setScreen("paymentMethod")}
         />
       );
     case "cryptoDepositTwo":
@@ -203,6 +226,7 @@ export default function MainNavigator() {
           goRegister={() => setScreen("register")}
           goForgot={() => setScreen("reset")}
           goCryptoDeposit={() => setScreen("cryptoDepositOne")}
+          goBack={() => setScreen("cryptoDepositOne")}
         />
       );
 
@@ -265,10 +289,6 @@ export default function MainNavigator() {
       return (
         <RedeemPointsScreen
           goBack={() => setScreen('wallet')}
-          navigation={{
-            navigate: (screenName: string) => setScreen(screenName as Screen),
-            goBack: () => setScreen('wallet')
-          }}
         />
       );
 
@@ -293,22 +313,95 @@ export default function MainNavigator() {
     case "orderScreen":
       return (
         <PickUpScreen setScreen={setScreen}
+        goBack={() => setScreen("dashboard")}
         />);
 
     case "planRide":
       return (
         <PlanRideScreen setScreen={setScreen}
+        goBack={() => setScreen("orderScreen")} 
         />);
 
     case "bookingScreen":
       return (
         <BookingScreen setScreen={setScreen}
+        goBack={() => setScreen("planRide")}
         />);  
 
     case "originalPriceDetails":
       return (
         <OriginalPriceDetailsScreen
           setScreen={setScreen}
+          goBack={() => setScreen("planRide")}
+        />
+      );
+
+    case "originalDriverDetails":
+      return (
+        <OriginalDriverDetailScreen
+          setScreen={setScreen}
+          goBack={() => setScreen("bookingScreen")}
+        />
+      );
+
+    case "chatScreen":
+      return (
+        <ChatScreen
+          goBack={() => setScreen("originalDriverDetails")}
+        />
+      );
+
+    case "businessRideSelect":
+      return (
+        <BusinessRideSelectScreen
+          setScreen={setScreen}
+          goBack={() => setScreen("bookingScreen")}
+        />
+      );
+
+    case "additionalInformation":
+     return (
+        <AdditionalInformationScreen
+          setScreen={setScreen}
+          goBack={() => setScreen("bookingScreen")}
+           rideOptions={rideOptions}
+          setRideOptions={setRideOptions}
+        />
+      );
+
+    case "premiumCarSelect":
+      return (
+        <PremiumCarSelectScreen
+          setScreen={setScreen}
+          goBack={() => setScreen("bookingScreen")}
+        />
+      );
+
+    case "specialServices":
+      return (
+        <SpecialServicesScreen
+        setScreen={setScreen}
+        goBack={() => setScreen("premiumCarSelect")}
+        rideOptions={rideOptions} 
+        goNext={() => setScreen("modifyRide")}
+
+        />
+      );
+
+    case "modifyRide":
+      return ( 
+        <ModifyRideScreen
+        setScreen={setScreen}
+        goBack={() => setScreen("premiumCarSelect")}
+        />
+      );
+
+    case "businessCodeScreen":
+      return (
+        <BusinessCodeScreen
+        setScreen={setScreen}
+        goBack={() => setScreen("modifyRide")}
+        goNext={() => setScreen("bookingScreen")}
         />
       );
 

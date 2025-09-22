@@ -1,15 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Animated,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
-export default function PickUpScreen({ setScreen }) {
+export default function PickUpScreen({ setScreen, goBack }: { setScreen: (screen: string) => void; goBack: () => void }       ) {
   const [pickup, setPickup] = useState("");
   const slideAnim = useRef(new Animated.Value(300)).current;
 
@@ -29,7 +29,7 @@ export default function PickUpScreen({ setScreen }) {
     <View style={styles.container}>
       {/* Top Navigation */}
       <View style={styles.topBar}>
-        <TouchableOpacity style={styles.iconContainer}>
+        <TouchableOpacity style={styles.iconContainer} onPress={goBack}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconContainer}>
@@ -39,7 +39,8 @@ export default function PickUpScreen({ setScreen }) {
 
       {/* Map Placeholder */}
       <View style={styles.mapPlaceholder}>
-        <Text style={styles.mapText}>[ Map Placeholder ]</Text>
+        {/* <Text style={styles.mapText}>[ Map Placeholder ]</Text> */}
+        
       </View>
 
       {/* Animated Bottom Sheet */}
@@ -103,6 +104,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#333",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth:1,
+    borderColor:'blue',
   },
   mapText: {
     fontSize: 18,

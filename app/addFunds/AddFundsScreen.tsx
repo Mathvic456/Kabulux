@@ -2,20 +2,21 @@ import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
 import {
-    Modal,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Modal,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 type AddFundsScreenProps = {
   next: () => void;
   goRegister: () => void;
   goForgot: () => void;
+  goBack: () => void;
   goCryptoDeposit?: () => void; // 👈 optional
 };
 
@@ -23,6 +24,7 @@ export default function AddFundsScreen({
   next,
   goRegister,
   goForgot,
+  goBack,
   goCryptoDeposit,
 }: AddFundsScreenProps) {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
@@ -73,7 +75,7 @@ export default function AddFundsScreen({
       
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity style={styles.backButton} onPress={goBack}>
           <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Add Funds</Text>
@@ -204,7 +206,7 @@ export default function AddFundsScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1E1E1E',
+    backgroundColor: 'black',
   },
   scrollView: {
     flex: 1,

@@ -1,18 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-    Linking,
-    Modal,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Linking,
+  Modal,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
 
-export default function LegalScreen({ goBack, navigation }) {
+export default function LegalScreen({ goBack, next }: { goBack: () => void; next?: () => void}) {
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
 

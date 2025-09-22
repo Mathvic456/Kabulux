@@ -157,7 +157,11 @@ const AdditionalInfoOverlay = ({ isVisible, onClose }) => {
 };
 
 
-export default function HomeScreen({setScreen}) {
+type HomeScreenProps = {
+  setScreen: (screen: string) => void;
+};
+
+export default function HomeScreen({ setScreen }: HomeScreenProps) {
 
   const goToAnalytics = () => {
     setScreen("analyticsScreen");
@@ -167,6 +171,10 @@ export default function HomeScreen({setScreen}) {
   const goToOrder = () => {
     setScreen("orderScreen");
   };
+
+  const goToBookings = () => {
+    setScreen("bookingsScreen");
+  }
   
   const [showPhotoOverlay, setShowPhotoOverlay] = useState(true);
   const [showAdditionalInfoOverlay, setShowAdditionalInfoOverlay] = useState(false);
@@ -266,7 +274,7 @@ export default function HomeScreen({setScreen}) {
 
       <View style={styles.recentRideHeader}>
         <Text style={styles.sectionTitle}>Recent Ride</Text>
-        <TouchableOpacity>
+        <TouchableOpacity >
           <Text style={styles.seeAll}>See all</Text>
         </TouchableOpacity>
       </View>
@@ -321,6 +329,15 @@ export default function HomeScreen({setScreen}) {
           />
           <Text style={styles.specialTitle}>Our Special AI Security</Text>
           <Text style={styles.specialSub}>Checkout our Special AI</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.specialCard}>
+          <Image
+            source={require("../../assets/images/car2.png")}
+            style={styles.specialImage}
+          />
+          <Text style={styles.specialTitle}>Share your Ride</Text>
+          <Text style={styles.specialSub}>See how to share ride</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.specialCard}>
@@ -533,7 +550,8 @@ const styles = StyleSheet.create({
   specialServiceRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 20,
+    marginBottom: 150,
+    gap: 10,
   },
   specialCard: {
     backgroundColor: "#1a1a1a",
@@ -597,11 +615,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   uploadButton: {
-    backgroundColor: '#FFD700',
+    backgroundColor: '#FEB914',
     paddingVertical: 15,
     paddingHorizontal: 80,
     borderRadius: 10,
     marginBottom: 10,
+    width: '100%',
+    alignItems: 'center',
   },
   uploadButtonText: {
     color: '#000',

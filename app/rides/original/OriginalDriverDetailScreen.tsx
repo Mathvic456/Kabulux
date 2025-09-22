@@ -1,5 +1,6 @@
+import CarSpecsModal from '@/components/ui/CarSpecsModal';
 import { Feather, FontAwesome5, Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Image,
     ScrollView,
@@ -8,15 +9,20 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-// import Car from '../../assets/images/car1.png';
 import Car from '../../../assets/images/car.png';
+import Driver from '../../../assets/images/driver.png';
 
-export default function OriginalDriverDetailScreen() {
+
+
+export default function OriginalDriverDetailScreen({setScreen, goBack}: {setScreen: (screen: string) => void, goBack: () => void}                               ) {
+    
+  const [specsVisible, setSpecsVisible] = useState(false);
+    
     return (
         <View style={styles.container}>
             {/* Header with back button and title */}
             <View style={styles.header}>
-                <TouchableOpacity style={styles.backButton}>
+                <TouchableOpacity style={styles.backButton} onPress={goBack}>
                     <Feather name="arrow-left" size={24} color="white" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Driver Detail</Text>
@@ -36,7 +42,7 @@ export default function OriginalDriverDetailScreen() {
                 {/* Driver and action cards */}
                 <View style={styles.infoCardsRow}>
                     <View style={styles.driverInfoCard}>
-                        <Image source={{ uri: AvatarImage }} style={styles.driverAvatar} />
+                        <Image source={Driver} style={styles.driverAvatar} />
                         <Text style={styles.driverName}>Azeez</Text>
                         <View style={styles.ratingContainer}>
                             <FontAwesome5 name="star" size={14} color="#f6a623" />
@@ -46,18 +52,28 @@ export default function OriginalDriverDetailScreen() {
                     </View>
 
                     <View style={styles.actionButtons}>
-                        <TouchableOpacity style={styles.actionButton}>
-                            <Feather name="phone" size={24} color="#f6a623" />
-                            <Text style={styles.actionText}>Contact Driver</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.actionButton}>
-                            <Feather name="message-circle" size={24} color="#f6a623" />
+                        <View style={{alignItems:'center'}} >
+                            <TouchableOpacity style={styles.actionButton}>
+                                <Feather name="phone" size={18} color="#f6a623" />
+                            </TouchableOpacity>
+
+                            <Text style={styles.actionText}>Contact Driver</Text> 
+                        </View>
+
+                        <View style={{alignItems:'center'}} >       
+                            <TouchableOpacity style={styles.actionButton} onPress={() => setScreen("chatScreen")}>
+                                <Feather name="message-circle" size={18} color="#f6a623" />
+                            </TouchableOpacity>
                             <Text style={styles.actionText}>Chat</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.actionButton}>
-                            <Feather name="share-2" size={24} color="#f6a623" />
+                        </View>
+
+                        <View style={{alignItems:'center'}} >    
+                            <TouchableOpacity style={styles.actionButton}>
+                                <Feather name="share-2" size={18} color="#f6a623" />
+                            </TouchableOpacity>
                             <Text style={styles.actionText}>Share</Text>
-                        </TouchableOpacity>
+                        </View> 
+                    
                     </View>
                 </View>
 
@@ -83,7 +99,9 @@ export default function OriginalDriverDetailScreen() {
                 {/* Specifications section */}
                 <View style={styles.specificationsSection}>
                     <Text style={styles.specificationsTitle}>Specifications</Text>
-                    <Text style={styles.specificationsText}>Click to see more</Text>
+                    <TouchableOpacity onPress={() => setSpecsVisible(true)}>
+                        <Text style={styles.specificationsText}>Click to see more</Text>
+                    </TouchableOpacity>
                 </View>
 
                 {/* Pickup message section */}
@@ -119,6 +137,9 @@ export default function OriginalDriverDetailScreen() {
             <TouchableOpacity style={styles.cancelButton}>
                 <Text style={styles.cancelButtonText}>Cancel Ride</Text>
             </TouchableOpacity>
+
+             {/* Bottom Sheet */}
+      <CarSpecsModal visible={specsVisible} onClose={() => setSpecsVisible(false)} />
         </View>
     );
 }
@@ -126,7 +147,7 @@ export default function OriginalDriverDetailScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#000',
+        backgroundColor: '#181818',
         paddingTop: 50,
     },
     header: {
@@ -219,17 +240,26 @@ const styles = StyleSheet.create({
         justifyContent: 'space-around',
         flex: 1,
         marginLeft: 15,
+        // borderWidth:1,
+        // borderColor:'blue',
     },
     actionButton: {
         alignItems: 'center',
-        backgroundColor: '#1c1c1c',
-        borderRadius: 15,
-        padding: 10,
+        backgroundColor: '#1F212A',
+        borderRadius: 100,
+        borderWidth:1,
+        padding:10,
+        borderColor:'#FEB914',
+        height:40,
+        width:40,   
+        justifyContent:'center' 
+        
     },
     actionText: {
         color: 'white',
         fontSize: 12,
         marginTop: 5,
+        
     },
     carDetailSection: {
         backgroundColor: '#1c1c1c',

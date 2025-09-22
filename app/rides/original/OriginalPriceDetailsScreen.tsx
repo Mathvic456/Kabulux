@@ -9,8 +9,10 @@ import {
     View,
 } from 'react-native';
 import Car from '../../../assets/images/car.png';
+import CarT from '../../../assets/images/car2.png';
 
 const driverBids = [
+
     {
         name: 'Azeez',
         price: 8000,
@@ -25,6 +27,7 @@ const driverBids = [
         reviews: 42,
         trips: 156,
     },
+
     {
         name: 'John',
         price: 8500,
@@ -39,6 +42,7 @@ const driverBids = [
         reviews: 28,
         trips: 89,
     },
+
     {
         name: 'Ade',
         price: 8700,
@@ -53,13 +57,11 @@ const driverBids = [
         reviews: 67,
         trips: 203,
     },
-    // Add more drivers to test scrolling
-
 ];
 
-const driverImages = [Car];
+const driverImages = [Car,CarT];
 
-export default function OriginalPriceDetailsScreen({ setScreen }) {
+export default function OriginalPriceDetailsScreen({ setScreen, goBack }: { setScreen: (screen: string, params?: any) => void; goBack: () => void }) {
     const [baseOffer, setBaseOffer] = useState(6700);
     const [selectedBid, setSelectedBid] = useState(null);
 
@@ -80,21 +82,21 @@ export default function OriginalPriceDetailsScreen({ setScreen }) {
     const handleBidPress = (bid) => {
         setSelectedBid(bid);
         // Navigate to driver details screen with the selected bid data
-        setScreen('DriverDetailsScreen', { 
+        setScreen('originalDriverDetails', { 
             driver: bid,
             baseOffer: baseOffer 
         });
     };
 
-    const handleBackPress = () => {
-        setScreen('PreviousScreen'); // Replace with your actual previous screen
-    };
+    // const handleBackPress = () => {
+    //     setScreen('PreviousScreen'); // Replace with your actual previous screen
+    // };
 
     return (
         <View style={styles.container}>
             {/* Top Navigation and Header - Fixed */}
             <View style={styles.header}>
-                <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+                <TouchableOpacity style={styles.backButton} onPress={goBack}>
                     <Feather name="arrow-left" size={24} color="white" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Price Details</Text>

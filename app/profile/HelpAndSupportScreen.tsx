@@ -1,21 +1,21 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-    Keyboard,
-    Linking,
-    Modal,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
+  Keyboard,
+  Linking,
+  Modal,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
 
-export default function HelpAndSupportScreen({ goBack, navigation }) {
+export default function HelpAndSupportScreen({ goBack, next }: { goBack: () => void; next?: () => void}) {
   const [activeModal, setActiveModal] = useState(null);
   const [chatMessage, setChatMessage] = useState("");
   const [emailSubject, setEmailSubject] = useState("");

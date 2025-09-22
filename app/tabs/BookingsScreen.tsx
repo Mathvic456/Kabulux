@@ -32,7 +32,13 @@ const rides = [
   },
 ];
 
-const RideCard = ({ ride, setScreen, setSelectedRide }) => {
+interface RideCardProps {
+  ride: any;
+  setScreen: (screen: string) => void;
+  setSelectedRide: (ride: any) => void;
+}
+
+const RideCard: React.FC<RideCardProps> = ({ ride, setScreen, setSelectedRide }) => {
   return (
     <TouchableOpacity
       onPress={() => {
@@ -112,7 +118,12 @@ const RideCard = ({ ride, setScreen, setSelectedRide }) => {
   );
 };
 
-const BookingsScreen = ({ setScreen, setSelectedRide }) => {
+interface BookingsScreenProps {
+  setScreen: (screen: string) => void;
+  setSelectedRide: (ride: any) => void;
+}
+
+const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedRide }) => {
   const [activeTab, setActiveTab] = useState("ride");
 
   const filteredRides = rides.filter((ride) => ride.type === activeTab);
