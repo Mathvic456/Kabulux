@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Alert,
   Modal,
@@ -12,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import QRCode from 'react-qr-code';
+// import QRCode from 'react-qr-code';
 
 export default function CryptoDepositScreenTwo({ next, goRegister, goForgot, goCryptoDeposit, goBack }: { next: () => void, goRegister: () => void, goForgot: () => void, goCryptoDeposit: () => void, goBack: () => void }) {
   const [selectedCrypto, setSelectedCrypto] = useState('USDT');
@@ -55,7 +55,7 @@ export default function CryptoDepositScreenTwo({ next, goRegister, goForgot, goC
     return walletAddress;
   };
 
-  const qrCodeRef = useRef();
+  // const qrCodeRef = useRef();
 
   const handleCryptoSelect = (crypto) => {
     setSelectedCrypto(crypto);
@@ -108,13 +108,13 @@ export default function CryptoDepositScreenTwo({ next, goRegister, goForgot, goC
         {/* QR Code Section */}
         <View style={styles.qrCodeSection}>
           <View style={styles.qrCodeContainer}>
-            <QRCode
+            {/* <QRCode
               value={generateQRContent()}
               size={130}
               color="black"
               style={{ height: "auto", maxWidth: "100%", width: "100%" }}
               viewBox={`0 0 256 256`}
-            />
+            /> */}
           </View>
 
           {/* Crypto Dropdown */}
