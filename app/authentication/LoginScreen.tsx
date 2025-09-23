@@ -1,23 +1,39 @@
 import CustomButton from "@/components/ui/CustomButton";
+import { useLoginEndPoint } from "@/services/authentication.service";
 import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
 import React, { useState } from "react";
-import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import Logo from '../../assets/images/logo.png';
+import {
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Logo from "../../assets/images/logo.png";
 
-export default function LoginScreen({ next, goRegister, goForgot }: { next: () => void, goRegister: () => void, goForgot: () => void }) {
+export default function LoginScreen({
+  next,
+  goRegister,
+  goForgot,
+}: {
+  next: () => void;
+  goRegister: () => void;
+  goForgot: () => void;
+}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
   const [errors, setErrors] = useState({
     email: "",
-    password: ""
+    password: "",
   });
 
   const validateForm = () => {
     let valid = true;
     const newErrors = {
       email: "",
-      password: ""
+      password: "",
     };
 
     // Email validation
@@ -42,13 +58,19 @@ export default function LoginScreen({ next, goRegister, goForgot }: { next: () =
     return valid;
   };
 
+  const { mutate: login } = useLoginEndPoint();
   const handleSubmit = () => {
     if (validateForm()) {
-      // Form is valid, proceed with login
-      next();
+      login(
+        { email, password },
+        {
+          onSuccess: () => {
+            next();
+          },
+        }
+      );
     }
   };
-
   return (
     <View style={styles.container}>
       {/* Top Banner */}
@@ -57,20 +79,23 @@ export default function LoginScreen({ next, goRegister, goForgot }: { next: () =
       {/* Card */}
       <View style={styles.card}>
         <View style={styles.LogoContainer}>
-          <Image
-            source={Logo}
-            style={styles.Logoicon}
-          />
+          <Image source={Logo} style={styles.Logoicon} />
         </View>
         <Text style={styles.title}>Sign In</Text>
         <Text style={styles.subtitle}>
-          Need a ride? Skip the stress and rent a car in minutes. Whether it's a quick trip, 
-          a business ride or a family vacation, we got you covered.
+          Need a ride? Skip the stress and rent a car in minutes. Whether
+          it&apos;s a quick trip, a business ride or a family vacation, we got
+          you covered.
         </Text>
 
         {/* Email Input */}
         <View style={styles.inputContainer}>
-          <MaterialIcons name="email" size={20} color="#aaa" style={styles.inputIcon} />
+          <MaterialIcons
+            name="email"
+            size={20}
+            color="#aaa"
+            style={styles.inputIcon}
+          />
           <TextInput
             style={styles.input}
             placeholder="Email"
@@ -79,18 +104,25 @@ export default function LoginScreen({ next, goRegister, goForgot }: { next: () =
             onChangeText={(text) => {
               setEmail(text);
               if (errors.email) {
-                setErrors({...errors, email: ""});
+                setErrors({ ...errors, email: "" });
               }
             }}
             keyboardType="email-address"
             autoCapitalize="none"
           />
         </View>
-        {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
+        {errors.email ? (
+          <Text style={styles.errorText}>{errors.email}</Text>
+        ) : null}
 
         {/* Password Input */}
         <View style={styles.inputContainer}>
-          <FontAwesome name="lock" size={20} color="#aaa" style={styles.inputIcon} />
+          <FontAwesome
+            name="lock"
+            size={20}
+            color="#aaa"
+            style={styles.inputIcon}
+          />
           <TextInput
             style={styles.input}
             placeholder="Password"
@@ -100,18 +132,25 @@ export default function LoginScreen({ next, goRegister, goForgot }: { next: () =
             onChangeText={(text) => {
               setPassword(text);
               if (errors.password) {
-                setErrors({...errors, password: ""});
+                setErrors({ ...errors, password: "" });
               }
             }}
           />
         </View>
-        {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
+        {errors.password ? (
+          <Text style={styles.errorText}>{errors.password}</Text>
+        ) : null}
 
         {/* Remember & Forgot */}
         <View style={styles.row}>
-          <TouchableOpacity onPress={() => setRemember(!remember)} style={styles.checkboxRow}>
+          <TouchableOpacity
+            onPress={() => setRemember(!remember)}
+            style={styles.checkboxRow}
+          >
             <View style={[styles.checkbox, remember && styles.checkboxChecked]}>
-              {remember && <MaterialIcons name="check" size={16} color="#000" />}
+              {remember && (
+                <MaterialIcons name="check" size={16} color="#000" />
+              )}
             </View>
             <Text style={styles.checkboxLabel}>Remember Password</Text>
           </TouchableOpacity>
@@ -122,11 +161,11 @@ export default function LoginScreen({ next, goRegister, goForgot }: { next: () =
         </View>
 
         {/* Proceed */}
-        <CustomButton 
-          title="Proceed" 
-          onPress={handleSubmit} 
-          style={styles.proceedBtn} 
-          textStyle={styles.proceedText} 
+        <CustomButton
+          title="Proceed"
+          onPress={handleSubmit}
+          style={styles.proceedBtn}
+          textStyle={styles.proceedText}
         />
 
         {/* Divider */}
@@ -145,7 +184,8 @@ export default function LoginScreen({ next, goRegister, goForgot }: { next: () =
         {/* Sign Up */}
         <TouchableOpacity onPress={goRegister}>
           <Text style={styles.footerText}>
-            Don't have an account? <Text style={styles.signup}>Sign up</Text>
+            Don&apos;t have an account?{" "}
+            <Text style={styles.signup}>Sign up</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -155,32 +195,107 @@ export default function LoginScreen({ next, goRegister, goForgot }: { next: () =
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000" },
-  banner: { height: 200, backgroundColor: "#fcbf24", borderBottomLeftRadius: 40, borderBottomRightRadius: 40,},
-  card: { flex: 1, marginTop: -40, backgroundColor: "#000", borderTopLeftRadius: 40, borderTopRightRadius: 40, padding: 30, width:'95%', alignSelf:'center'},
-  logo: { fontSize: 36, fontWeight: "bold", color: "#fcbf24", textAlign: "center", marginBottom: 20 },
-  title: { fontSize: 24, fontWeight: "bold", color: "#fff", textAlign: "center", marginBottom: 10 },
-  subtitle: { fontSize: 14, color: "#ccc", textAlign: "center", marginBottom: 20 },
+  banner: {
+    height: 200,
+    backgroundColor: "#fcbf24",
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+  },
+  card: {
+    flex: 1,
+    marginTop: -40,
+    backgroundColor: "#000",
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    padding: 30,
+    width: "95%",
+    alignSelf: "center",
+  },
+  logo: {
+    fontSize: 36,
+    fontWeight: "bold",
+    color: "#fcbf24",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#fff",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "#ccc",
+    textAlign: "center",
+    marginBottom: 20,
+  },
 
-  inputContainer: { flexDirection: "row", alignItems: "center", backgroundColor: "#111", borderRadius: 10, marginBottom: 5, paddingHorizontal: 10 },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#111",
+    borderRadius: 10,
+    marginBottom: 5,
+    paddingHorizontal: 10,
+  },
   inputIcon: { marginRight: 10 },
   input: { flex: 1, color: "#fff", height: 50 },
-  errorText: { color: "#ff4444", fontSize: 12, marginBottom: 10, marginLeft: 10 },
+  errorText: {
+    color: "#ff4444",
+    fontSize: 12,
+    marginBottom: 10,
+    marginLeft: 10,
+  },
 
-  row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
   checkboxRow: { flexDirection: "row", alignItems: "center" },
-  checkbox: { width: 20, height: 20, borderRadius: 5, borderWidth: 1, borderColor: "#fcbf24", justifyContent: "center", alignItems: "center", marginRight: 8 },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: "#fcbf24",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8,
+  },
   checkboxChecked: { backgroundColor: "#fcbf24" },
   checkboxLabel: { color: "#fff", fontSize: 12 },
   forgot: { color: "#fcbf24", fontSize: 12 },
 
-  proceedBtn: { backgroundColor: "#fcbf24", borderRadius: 10, paddingVertical: 14, marginTop: 10 },
+  proceedBtn: {
+    backgroundColor: "#fcbf24",
+    borderRadius: 10,
+    paddingVertical: 14,
+    marginTop: 10,
+  },
   proceedText: { color: "#000", fontWeight: "bold", fontSize: 16 },
 
-  dividerRow: { flexDirection: "row", alignItems: "center", marginVertical: 20 },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 20,
+  },
   divider: { flex: 1, height: 1, backgroundColor: "#444" },
   dividerText: { color: "#aaa", marginHorizontal: 10 },
 
-  googleBtn: { flexDirection: "row", justifyContent: "center", alignItems: "center", borderColor: "#fcbf24", borderWidth: 1, borderRadius: 10, paddingVertical: 12, marginBottom: 30 },
+  googleBtn: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    borderColor: "#fcbf24",
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 12,
+    marginBottom: 30,
+  },
   googleText: { color: "#fff", marginLeft: 8 },
 
   footerText: { textAlign: "center", color: "#888", fontSize: 12 },
@@ -189,7 +304,7 @@ const styles = StyleSheet.create({
   Logoicon: {
     width: 130,
     height: 100,
-    resizeMode: 'contain',
-    alignSelf: 'center',
+    resizeMode: "contain",
+    alignSelf: "center",
   },
 });
