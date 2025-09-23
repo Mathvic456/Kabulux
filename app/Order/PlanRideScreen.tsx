@@ -1,7 +1,8 @@
 import { Feather, FontAwesome5, Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Animated,
   Dimensions,
@@ -14,6 +15,9 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+
+// Import your existing axios instance
+import { api } from '../../services/api';
 
 const { height } = Dimensions.get('window');
 
@@ -49,6 +53,7 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const suggestedLocations = [
     { 
@@ -90,6 +95,159 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
     return () => clearTimeout(timer);
   }, [locationData]);
 
+  /**
+   * Prepares the booking data in the exact format expected by the backend
+   * Backend expects: {
+   *   "pickup_lat": "6.4541",
+   *   "pickup_lng": "3.3947",
+   *   "dropoff_lat": "6.605874",
+   *   "dropoff_lng": "3.349149"
+   * }
+   */
+  const prepareBookingData = () => {
+    if (!destinationLocation) {
+      throw new Error('Destination location is required');
+    }
+
+    if (!locationData) {
+      throw new Error('Current location data is required');
+    }
+
+    // Format according to backend specification
+    return {
+      pickup_lat: locationData.latitude.toString(),
+      pickup_lng: locationData.longitude.toString(),
+      dropoff_lat: destinationLocation.latitude.toString(),
+      dropoff_lng: destinationLocation.longitude.toString()
+    };
+  };
+
+  /**
+   * Enhanced handleConfirmRide that gets ride estimate from backend
+   * Uses the correct endpoint: /rides/requests/estimate
+   */
+  const handleConfirmRide = async () => {
+    console.log('🚗 handleConfirmRide called - Getting ride estimate');
+    
+    // Validate destination selection
+    if (!destinationLocation) {
+      console.log('❌ No destination selected');
+      Alert.alert('Select Destination', 'Please select a destination first');
+      return;
+    }
+
+    // Validate current location data
+    if (!locationData) {
+      console.log('❌ No location data available');
+      Alert.alert('Location Error', 'Unable to access your current location. Please try again.');
+      return;
+    }
+
+    // Prevent multiple simultaneous submissions
+    if (isSubmitting) {
+      console.log('❌ Already submitting, ignoring press');
+      return;
+    }
+
+    console.log('✅ Starting estimate request process');
+    setIsSubmitting(true);
+
+    try {
+      // Prepare the booking data
+      const bookingData = prepareBookingData();
+      console.log('📦 Prepared estimate request data:', bookingData);
+
+      // Show immediate feedback
+      Alert.alert('Getting Ride Estimate', 'Please wait while we calculate your ride...', [], {
+        cancelable: false
+      });
+
+      // Use the CORRECT endpoint for getting ride estimates
+      console.log('🌐 Sending estimate request to /rides/requests/estimate...');
+      const response = await api.post('/rides/requests/estimate', bookingData);
+      
+      console.log('✅ Estimate response received:', response.data);
+
+      // Create navigation data with the estimate information
+      const navigationData = {
+        // Estimate data from backend
+        estimateData: response.data,
+        serverResponse: response.data,
+        submittedAt: new Date().toISOString(),
+        
+        // Original location data for UI display
+        pickupLocation: {
+          address: currentLocation,
+          latitude: locationData.latitude,
+          longitude: locationData.longitude
+        },
+        destination: {
+          name: destinationLocation.name,
+          address: destinationLocation.address,
+          latitude: destinationLocation.latitude,
+          longitude: destinationLocation.longitude
+        },
+        
+        // Backend request data for reference
+        backendRequest: bookingData,
+        
+        // Include estimate-specific data for the booking screen
+        estimatedPrice: response.data.price || response.data.estimated_cost,
+        estimatedDuration: response.data.duration || response.data.estimated_time,
+        distance: response.data.distance
+      };
+
+      console.log('➡️ Navigating to booking screen with estimate data');
+      setScreen('bookingScreen', navigationData);
+      
+    } catch (error: any) {
+      console.error('❌ Estimate API error:', error);
+      
+      let errorMessage = 'Failed to get ride estimate. Please try again.';
+      
+      if (error.response) {
+        console.log('📡 Server responded with error:', error.response.status);
+        console.log('📡 Error details:', error.response.data);
+        
+        // Handle specific error cases for estimate endpoint
+        if (error.response.status === 400) {
+          errorMessage = 'Invalid location data. Please check your pickup and destination.';
+        } else if (error.response.status === 404) {
+          errorMessage = 'Ride service not available in this area.';
+        } else if (error.response.status === 422) {
+          errorMessage = 'Unable to calculate route. Please try different locations.';
+        } else if (error.response.status === 500) {
+          errorMessage = 'Service temporarily unavailable. Please try again later.';
+        } else {
+          errorMessage = error.response.data?.message || `Server error: ${error.response.status}`;
+        }
+      } else if (error.request) {
+        console.log('📡 No response received from server');
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      } else {
+        console.log('⚡ Other error:', error.message);
+        errorMessage = `Estimate request failed: ${error.message}`;
+      }
+      
+      Alert.alert('Estimate Failed', errorMessage);
+    } finally {
+      console.log('🏁 Estimate request process completed');
+      setIsSubmitting(false);
+    }
+  };
+
+  // Add a simple test function to check if button is working
+  const testButtonFunction = () => {
+    console.log('=== BUTTON TEST ===');
+    console.log('Button pressed successfully!');
+    console.log('destinationLocation:', destinationLocation);
+    console.log('locationData:', locationData);
+    console.log('isSubmitting:', isSubmitting);
+    console.log('===================');
+    
+    Alert.alert('Button Test', 'Button is working! Check console for details.');
+  };
+
   const searchDestinations = async (query: string) => {
     if (!query.trim()) {
       setSearchResults([]);
@@ -98,7 +256,6 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
 
     setIsSearching(true);
     try {
-      // Use Expo Location geocoding to search for destinations
       const results = await Location.geocodeAsync(query);
       
       const formattedResults = results.map((result, index) => ({
@@ -109,7 +266,6 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
         longitude: result.longitude
       }));
 
-      // Combine with predefined suggestions that match the query
       const matchingSuggestions = suggestedLocations.filter(loc =>
         loc.name.toLowerCase().includes(query.toLowerCase()) ||
         loc.address.toLowerCase().includes(query.toLowerCase())
@@ -146,41 +302,7 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
 
   const handleSelectSuggestedLocation = (location: any) => {
     setDestinationLocation(location);
-    
-    const bookingData = {
-      pickupLocation: {
-        address: currentLocation,
-        coordinates: locationData ? {
-          latitude: locationData.latitude,
-          longitude: locationData.longitude
-        } : null
-      },
-      destination: location
-    };
-    
-    setTimeout(() => {
-      setScreen('bookingScreen', bookingData);
-    }, 300);
-  };
-
-  const handleConfirmRide = () => {
-    if (!destinationLocation) {
-      Alert.alert('Select Destination', 'Please select a destination first');
-      return;
-    }
-
-    const bookingData = {
-      pickupLocation: {
-        address: currentLocation,
-        coordinates: locationData ? {
-          latitude: locationData.latitude,
-          longitude: locationData.longitude
-        } : null
-      },
-      destination: destinationLocation
-    };
-
-    setScreen('bookingScreen', bookingData);
+    console.log('Destination selected:', location);
   };
 
   const handleBackPress = () => {
@@ -199,7 +321,6 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
       presentationStyle="pageSheet"
     >
       <View style={styles.modalContainer}>
-        {/* Modal Header */}
         <View style={styles.modalHeader}>
           <TouchableOpacity 
             style={styles.modalCloseButton}
@@ -210,7 +331,6 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
           <Text style={styles.modalTitle}>Search Destination</Text>
         </View>
 
-        {/* Search Input */}
         <View style={styles.searchContainer}>
           <Ionicons name="search" size={20} color="#aaa" />
           <TextInput
@@ -223,7 +343,6 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
           />
         </View>
 
-        {/* Search Results */}
         {isSearching ? (
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingText}>Searching...</Text>
@@ -261,7 +380,6 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
 
   return (
     <View style={styles.container}>
-      {/* Map Placeholder */}
       <View style={styles.mapPlaceholder}>
         {locationData ? (
           <View style={styles.mapContent}>
@@ -280,7 +398,6 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
         )}
       </View>
 
-      {/* Top Bar Navigation */}
       <View style={styles.topBar}>
         <TouchableOpacity style={styles.iconContainer} onPress={handleBackPress}>
           <Feather name="arrow-left" size={24} color="white" />
@@ -290,7 +407,6 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
         </TouchableOpacity>
       </View>
 
-      {/* Sliding Bottom Overlay */}
       <Animated.View style={[styles.bottomPanel, { transform: [{ translateY: slideAnim }] }]}>
         <View style={styles.panelHeader}>
           <TouchableOpacity style={styles.headerIconContainer} onPress={handleBackPress}>
@@ -310,7 +426,6 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          {/* Location Inputs */}
           <View style={styles.locationInputCard}>
             <View style={styles.inputRow}>
               <View style={styles.locationPinLine}>
@@ -325,7 +440,9 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
                     {locationData ? '📍 ' + shortenAddress(currentLocation, 40) : 'Current Location'}
                   </Text>
                   {locationData && (
-                    <Text style={styles.locationAccuracy}>✓ High accuracy GPS location</Text>
+                    <Text style={styles.locationAccuracy}>
+                      ✓ Latitude: {locationData.latitude.toFixed(6)}, Longitude: {locationData.longitude.toFixed(6)}
+                    </Text>
                   )}
                 </View>
                 <View style={styles.inputBox}>
@@ -335,12 +452,16 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
                       {destinationLocation ? '📍 ' + shortenAddress(destinationLocation.address, 40) : 'Select your destination'}
                     </Text>
                   </TouchableOpacity>
+                  {destinationLocation && (
+                    <Text style={styles.locationAccuracy}>
+                      ✓ Latitude: {destinationLocation.latitude.toFixed(6)}, Longitude: {destinationLocation.longitude.toFixed(6)}
+                    </Text>
+                  )}
                 </View>
               </View>
             </View>
           </View>
 
-          {/* Suggested Locations */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Suggested Locations</Text>
             {suggestedLocations.map((loc) => (
@@ -365,12 +486,14 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
                     {loc.name}
                   </Text>
                   <Text style={styles.suggestionAddress}>{loc.address}</Text>
+                  <Text style={styles.coordinatesText}>
+                    Lat: {loc.latitude.toFixed(4)}, Lng: {loc.longitude.toFixed(4)}
+                  </Text>
                 </View>
               </TouchableOpacity>
             ))}
           </View>
 
-          {/* Search Destination Button */}
           <TouchableOpacity 
             style={styles.searchButton}
             onPress={() => setShowSearchModal(true)}
@@ -379,31 +502,48 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
             <Text style={styles.searchButtonText}>Search for another destination</Text>
           </TouchableOpacity>
 
-          {/* Confirm Ride Button */}
+          {/* Main Confirm Ride Button */}
           <TouchableOpacity 
             style={[
               styles.confirmButton,
-              { backgroundColor: destinationLocation ? '#f0d46d' : '#555' }
+              { 
+                backgroundColor: destinationLocation && locationData && !isSubmitting ? '#f0d46d' : '#555',
+                opacity: (!destinationLocation || !locationData || isSubmitting) ? 0.7 : 1
+              }
             ]}
             onPress={handleConfirmRide}
-            disabled={!destinationLocation}
+            disabled={!destinationLocation || !locationData || isSubmitting}
           >
-            <Text style={styles.confirmButtonText}>
-              Confirm Ride to {destinationLocation ? shortenAddress(destinationLocation.address, 20) : 'Destination'}
-            </Text>
+            {isSubmitting ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color="white" />
+                <Text style={styles.confirmButtonText}>Getting Estimate...</Text>
+              </View>
+            ) : (
+              <Text style={styles.confirmButtonText}>
+                Get Ride Estimate {destinationLocation ? `to ${shortenAddress(destinationLocation.address, 20)}` : ''}
+              </Text>
+            )}
           </TouchableOpacity>
 
-          {/* Bottom Spacing */}
+          {/* Debug Button - Uncomment to test */}
+          <TouchableOpacity 
+            style={[styles.confirmButton, { backgroundColor: 'red', marginTop: 10 }]}
+            onPress={testButtonFunction}
+          >
+            <Text style={styles.confirmButtonText}>DEBUG BUTTON</Text>
+          </TouchableOpacity>
+
           <View style={styles.bottomSpacing} />
         </ScrollView>
       </Animated.View>
 
-      {/* Search Modal */}
       <SearchModal />
     </View>
   );
 }
 
+// Your styles remain exactly the same
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -609,6 +749,11 @@ const styles = StyleSheet.create({
     color: '#aaa',
     lineHeight: 16,
   },
+  coordinatesText: {
+    fontSize: 10,
+    color: '#666',
+    marginTop: 2,
+  },
   searchButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -628,16 +773,21 @@ const styles = StyleSheet.create({
     padding: 15,
     alignItems: 'center',
     marginBottom: 10,
+    justifyContent: 'center',
   },
   confirmButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
   },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   bottomSpacing: {
     height: 20,
   },
-  // Modal Styles
   modalContainer: {
     flex: 1,
     backgroundColor: '#1c1c1c',
@@ -695,10 +845,6 @@ const styles = StyleSheet.create({
     color: '#aaa',
     fontSize: 12,
     marginTop: 2,
-  },
-  loadingContainer: {
-    padding: 20,
-    alignItems: 'center',
   },
   loadingText: {
     color: '#aaa',
