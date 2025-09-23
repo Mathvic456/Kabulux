@@ -1,21 +1,54 @@
-import { Feather, FontAwesome5 } from '@expo/vector-icons';
+import { Feather, FontAwesome5, Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
 import React, { useEffect, useState } from 'react';
 import {
+  Alert,
   Animated,
   Dimensions,
+  FlatList,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View
 } from 'react-native';
 
 const { height } = Dimensions.get('window');
 
-export default function PlanRideScreen({ setScreen, goBack }: { setScreen: (screen: string, params?: any) => void; goBack: () => void }   ) {
+interface UserLocation {
+  address: string;
+  latitude: number;
+  longitude: number;
+  coordinates: {
+    latitude: number;
+    longitude: number;
+  };
+}
+
+interface DestinationLocation {
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+}
+
+interface PlanRideScreenProps {
+  setScreen: (screen: string, params?: any) => void;
+  goBack: () => void;
+  locationData?: UserLocation;
+}
+
+export default function PlanRideScreen({ setScreen, goBack, locationData }: PlanRideScreenProps) {
   const [isPanelUp, setIsPanelUp] = useState(false);
   const [slideAnim] = useState(new Animated.Value(height));
-  const [destinationLocation, setDestinationLocation] = useState('');
+  const [destinationLocation, setDestinationLocation] = useState<DestinationLocation | null>(null);
+  const [currentLocation, setCurrentLocation] = useState('Current Location');
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   const suggestedLocations = [
     { 
@@ -42,40 +75,209 @@ export default function PlanRideScreen({ setScreen, goBack }: { setScreen: (scre
   ];
 
   useEffect(() => {
-    // Animate the bottom panel sliding up after a short delay
+    if (locationData && locationData.address) {
+      setCurrentLocation(locationData.address);
+    }
+
     const timer = setTimeout(() => {
       Animated.timing(slideAnim, {
-        toValue: 0, // Slide up to bottom of screen
+        toValue: 0,
         duration: 500,
         useNativeDriver: true,
       }).start(() => setIsPanelUp(true));
     }, 500);
 
     return () => clearTimeout(timer);
-  }, []);
-  
-  const handleSelectLocation = (location) => {
-    setDestinationLocation(location.name);
+  }, [locationData]);
+
+  const searchDestinations = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      // Use Expo Location geocoding to search for destinations
+      const results = await Location.geocodeAsync(query);
+      
+      const formattedResults = results.map((result, index) => ({
+        id: index,
+        name: query,
+        address: formatAddress(result),
+        latitude: result.latitude,
+        longitude: result.longitude
+      }));
+
+      // Combine with predefined suggestions that match the query
+      const matchingSuggestions = suggestedLocations.filter(loc =>
+        loc.name.toLowerCase().includes(query.toLowerCase()) ||
+        loc.address.toLowerCase().includes(query.toLowerCase())
+      );
+
+      setSearchResults([...formattedResults, ...matchingSuggestions]);
+    } catch (error) {
+      console.error('Search error:', error);
+      Alert.alert('Error', 'Failed to search locations');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const formatAddress = (address: any): string => {
+    const parts = [];
+    if (address.street) parts.push(address.street);
+    if (address.city) parts.push(address.city);
+    if (address.region) parts.push(address.region);
+    if (address.country) parts.push(address.country);
+    return parts.join(', ');
+  };
+
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
+    searchDestinations(text);
+  };
+
+  const handleSelectDestination = (location: any) => {
+    setDestinationLocation(location);
+    setShowSearchModal(false);
+    setSearchQuery('');
+  };
+
+  const handleSelectSuggestedLocation = (location: any) => {
+    setDestinationLocation(location);
     
-    // Navigate to BookingScreen after a short delay to show selection feedback
+    const bookingData = {
+      pickupLocation: {
+        address: currentLocation,
+        coordinates: locationData ? {
+          latitude: locationData.latitude,
+          longitude: locationData.longitude
+        } : null
+      },
+      destination: location
+    };
+    
     setTimeout(() => {
-      // Pass the selected location data to the BookingScreen
-      setScreen('bookingScreen', { 
-        destination: location 
-      });
+      setScreen('bookingScreen', bookingData);
     }, 300);
   };
 
-  const handleBackPress = () => {
-    // Navigate back to the previous screen
-    setScreen('orderScreen'); // Replace with your actual previous screen name
+  const handleConfirmRide = () => {
+    if (!destinationLocation) {
+      Alert.alert('Select Destination', 'Please select a destination first');
+      return;
+    }
+
+    const bookingData = {
+      pickupLocation: {
+        address: currentLocation,
+        coordinates: locationData ? {
+          latitude: locationData.latitude,
+          longitude: locationData.longitude
+        } : null
+      },
+      destination: destinationLocation
+    };
+
+    setScreen('bookingScreen', bookingData);
   };
+
+  const handleBackPress = () => {
+    goBack();
+  };
+
+  const shortenAddress = (address: string, maxLength: number = 35) => {
+    if (address.length <= maxLength) return address;
+    return address.substring(0, maxLength) + '...';
+  };
+
+  const SearchModal = () => (
+    <Modal
+      visible={showSearchModal}
+      animationType="slide"
+      presentationStyle="pageSheet"
+    >
+      <View style={styles.modalContainer}>
+        {/* Modal Header */}
+        <View style={styles.modalHeader}>
+          <TouchableOpacity 
+            style={styles.modalCloseButton}
+            onPress={() => setShowSearchModal(false)}
+          >
+            <Feather name="arrow-left" size={24} color="white" />
+          </TouchableOpacity>
+          <Text style={styles.modalTitle}>Search Destination</Text>
+        </View>
+
+        {/* Search Input */}
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color="#aaa" />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search for a place or address"
+            placeholderTextColor="#666"
+            value={searchQuery}
+            onChangeText={handleSearch}
+            autoFocus
+          />
+        </View>
+
+        {/* Search Results */}
+        {isSearching ? (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Searching...</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={searchResults}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <TouchableOpacity 
+                style={styles.searchResultItem}
+                onPress={() => handleSelectDestination(item)}
+              >
+                <FontAwesome5 
+                  name="map-marker-alt" 
+                  size={18} 
+                  color="#f0d46d" 
+                />
+                <View style={styles.searchResultText}>
+                  <Text style={styles.searchResultName}>{item.name}</Text>
+                  <Text style={styles.searchResultAddress}>{item.address}</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+            ListEmptyComponent={
+              searchQuery ? (
+                <Text style={styles.noResults}>No results found for "{searchQuery}"</Text>
+              ) : null
+            }
+          />
+        )}
+      </View>
+    </Modal>
+  );
 
   return (
     <View style={styles.container}>
       {/* Map Placeholder */}
       <View style={styles.mapPlaceholder}>
-        <Text style={styles.mapText}>[ Map Placeholder ]</Text>
+        {locationData ? (
+          <View style={styles.mapContent}>
+            <Text style={styles.mapText}>
+              {destinationLocation ? '📍 Destination Set' : '📍 Your Location'}
+            </Text>
+            <Text style={styles.mapSubtext}>
+              {destinationLocation 
+                ? shortenAddress(destinationLocation.address, 30)
+                : shortenAddress(locationData.address, 30)
+              }
+            </Text>
+          </View>
+        ) : (
+          <Text style={styles.mapText}>[ Map Placeholder ]</Text>
+        )}
       </View>
 
       {/* Top Bar Navigation */}
@@ -95,6 +297,12 @@ export default function PlanRideScreen({ setScreen, goBack }: { setScreen: (scre
             <Feather name="arrow-left" size={20} color="white" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Plan your Ride</Text>
+          {locationData && (
+            <View style={styles.locationIndicator}>
+              <Feather name="check-circle" size={16} color="#4CAF50" />
+              <Text style={styles.locationIndicatorText}>Live Location</Text>
+            </View>
+          )}
         </View>
 
         <ScrollView 
@@ -113,13 +321,20 @@ export default function PlanRideScreen({ setScreen, goBack }: { setScreen: (scre
               <View style={styles.inputContainer}>
                 <View style={styles.inputBox}>
                   <Text style={styles.inputLabel}>Pick up Location</Text>
-                  <Text style={styles.inputValue}>Current Location</Text>
+                  <Text style={[styles.inputValue, styles.currentLocationText]}>
+                    {locationData ? '📍 ' + shortenAddress(currentLocation, 40) : 'Current Location'}
+                  </Text>
+                  {locationData && (
+                    <Text style={styles.locationAccuracy}>✓ High accuracy GPS location</Text>
+                  )}
                 </View>
                 <View style={styles.inputBox}>
                   <Text style={styles.inputLabel}>Where to?</Text>
-                  <Text style={[styles.inputValue, destinationLocation ? styles.selectedDestination : {}]}>
-                    {destinationLocation || 'Your destination'}
-                  </Text>
+                  <TouchableOpacity onPress={() => setShowSearchModal(true)}>
+                    <Text style={[styles.inputValue, destinationLocation ? styles.selectedDestination : styles.placeholderText]}>
+                      {destinationLocation ? '📍 ' + shortenAddress(destinationLocation.address, 40) : 'Select your destination'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>
@@ -133,19 +348,19 @@ export default function PlanRideScreen({ setScreen, goBack }: { setScreen: (scre
                 key={loc.id} 
                 style={[
                   styles.suggestionItem,
-                  destinationLocation === loc.name && styles.selectedSuggestion
+                  destinationLocation?.name === loc.name && styles.selectedSuggestion
                 ]} 
-                onPress={() => handleSelectLocation(loc)}
+                onPress={() => handleSelectSuggestedLocation(loc)}
               >
                 <FontAwesome5 
                   name="map-marker-alt" 
                   size={18} 
-                  color={destinationLocation === loc.name ? '#f0d46d' : '#aaa'} 
+                  color={destinationLocation?.name === loc.name ? '#f0d46d' : '#aaa'} 
                 />
                 <View style={styles.suggestionTextContainer}>
                   <Text style={[
                     styles.suggestionName,
-                    destinationLocation === loc.name && styles.selectedSuggestionText
+                    destinationLocation?.name === loc.name && styles.selectedSuggestionText
                   ]}>
                     {loc.name}
                   </Text>
@@ -155,27 +370,36 @@ export default function PlanRideScreen({ setScreen, goBack }: { setScreen: (scre
             ))}
           </View>
 
-          {/* Other Actions */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>More Options</Text>
-            <TouchableOpacity style={styles.actionItem}>
-              <Feather name="globe" size={20} color="#aaa" />
-              <Text style={styles.actionText}>Search in a different city</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionItem}>
-              <Feather name="map-pin" size={20} color="#aaa" />
-              <Text style={styles.actionText}>Set location on map</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionItem}>
-              <Feather name="bookmark" size={20} color="#aaa" />
-              <Text style={styles.actionText}>Saved places</Text>
-            </TouchableOpacity>
-          </View>
+          {/* Search Destination Button */}
+          <TouchableOpacity 
+            style={styles.searchButton}
+            onPress={() => setShowSearchModal(true)}
+          >
+            <Ionicons name="search" size={20} color="#f0d46d" />
+            <Text style={styles.searchButtonText}>Search for another destination</Text>
+          </TouchableOpacity>
+
+          {/* Confirm Ride Button */}
+          <TouchableOpacity 
+            style={[
+              styles.confirmButton,
+              { backgroundColor: destinationLocation ? '#f0d46d' : '#555' }
+            ]}
+            onPress={handleConfirmRide}
+            disabled={!destinationLocation}
+          >
+            <Text style={styles.confirmButtonText}>
+              Confirm Ride to {destinationLocation ? shortenAddress(destinationLocation.address, 20) : 'Destination'}
+            </Text>
+          </TouchableOpacity>
 
           {/* Bottom Spacing */}
           <View style={styles.bottomSpacing} />
         </ScrollView>
       </Animated.View>
+
+      {/* Search Modal */}
+      <SearchModal />
     </View>
   );
 }
@@ -191,10 +415,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  mapContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   mapText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#aaa',
+    color: '#f0d46d',
+    marginBottom: 5,
+  },
+  mapSubtext: {
+    fontSize: 14,
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 5,
   },
   topBar: {
     position: 'absolute',
@@ -215,7 +450,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: height * 0.75, // Increased height for better spacing
+    height: height * 0.75,
     backgroundColor: '#1c1c1c',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
@@ -231,7 +466,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 30, // Add padding at the bottom for better spacing
+    paddingBottom: 30,
   },
   panelHeader: {
     flexDirection: 'row',
@@ -248,6 +483,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'white',
     marginLeft: 15,
+    flex: 1,
+  },
+  locationIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(76, 175, 80, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  locationIndicatorText: {
+    fontSize: 12,
+    color: '#4CAF50',
+    marginLeft: 4,
+    fontWeight: '600',
   },
   locationInputCard: {
     backgroundColor: '#2b2b2b',
@@ -257,7 +507,7 @@ const styles = StyleSheet.create({
   },
   inputRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start', // Changed to flex-start for better alignment
+    alignItems: 'flex-start',
   },
   inputContainer: {
     flex: 1,
@@ -265,7 +515,7 @@ const styles = StyleSheet.create({
   locationPinLine: {
     alignItems: 'center',
     marginRight: 15,
-    marginTop: 5, // Added margin for better vertical alignment
+    marginTop: 5,
   },
   startPin: {
     width: 8,
@@ -286,24 +536,38 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0d46d',
   },
   inputBox: {
-    marginBottom: 15, // Increased margin for better spacing
+    marginBottom: 15,
   },
   inputLabel: {
     fontSize: 12,
     color: '#aaa',
-    marginBottom: 4, // Added margin for better spacing
+    marginBottom: 4,
   },
   inputValue: {
     fontSize: 16,
     color: 'white',
     fontWeight: '500',
   },
+  currentLocationText: {
+    color: '#f0d46d',
+    fontWeight: '600',
+  },
+  placeholderText: {
+    color: '#666',
+    fontStyle: 'italic',
+  },
   selectedDestination: {
     color: '#f0d46d',
     fontWeight: '600',
   },
+  locationAccuracy: {
+    fontSize: 12,
+    color: '#4CAF50',
+    marginTop: 4,
+    fontStyle: 'italic',
+  },
   section: {
-    marginBottom: 20, // Added margin between sections
+    marginBottom: 20,
   },
   sectionTitle: {
     fontSize: 14,
@@ -324,7 +588,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(240, 212, 109, 0.1)',
     borderRadius: 8,
     paddingHorizontal: 10,
-    marginHorizontal: -10, // Compensate for horizontal padding
+    marginHorizontal: -10,
   },
   suggestionTextContainer: {
     marginLeft: 15,
@@ -334,7 +598,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'white',
     fontWeight: '500',
-    marginBottom: 4, // Added margin for better spacing
+    marginBottom: 4,
   },
   selectedSuggestionText: {
     color: '#f0d46d',
@@ -343,21 +607,106 @@ const styles = StyleSheet.create({
   suggestionAddress: {
     fontSize: 12,
     color: '#aaa',
-    lineHeight: 16, // Added line height for better readability
+    lineHeight: 16,
   },
-  actionItem: {
+  searchButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 15, // Increased padding for better touch targets
+    backgroundColor: '#2b2b2b',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  searchButtonText: {
+    color: '#f0d46d',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 10,
+  },
+  confirmButton: {
+    borderRadius: 10,
+    padding: 15,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  confirmButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  bottomSpacing: {
+    height: 20,
+  },
+  // Modal Styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#1c1c1c',
+    paddingTop: 60,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  modalCloseButton: {
+    padding: 8,
+    backgroundColor: '#333',
+    borderRadius: 50,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'white',
+    marginLeft: 15,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2b2b2b',
+    margin: 20,
+    padding: 15,
+    borderRadius: 10,
+  },
+  searchInput: {
+    flex: 1,
+    color: 'white',
+    marginLeft: 10,
+    fontSize: 16,
+  },
+  searchResultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#333',
   },
-  actionText: {
-    fontSize: 16,
-    color: '#aaa',
+  searchResultText: {
     marginLeft: 15,
+    flex: 1,
   },
-  bottomSpacing: {
-    height: 20, // Added bottom spacing to ensure content doesn't get cut off
+  searchResultName: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  searchResultAddress: {
+    color: '#aaa',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#aaa',
+  },
+  noResults: {
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 20,
+    fontStyle: 'italic',
   },
 });
