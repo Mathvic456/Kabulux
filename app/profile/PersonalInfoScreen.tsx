@@ -1,6 +1,7 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Keyboard,
   Modal,
@@ -9,19 +10,47 @@ import {
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View,
+  View
 } from "react-native";
+import { api } from "../../services/api"; // Adjust the import path
 
 export default function PersonalInfoScreen({ goBack, next }) {
-
-
-  const [email, setEmail] = useState("kabluxt}esting@gmail.com");
-  const [phone, setPhone] = useState("+2349188730421");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [isEditingPhone, setIsEditingPhone] = useState(false);
-  const [tempEmail, setTempEmail] = useState(email);
-  const [tempPhone, setTempPhone] = useState(phone);
+  const [tempEmail, setTempEmail] = useState("");
+  const [tempPhone, setTempPhone] = useState("");
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+
+  // Fetch user data from backend
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  const fetchUserData = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Use your API instance - adjust endpoint based on your backend
+      const response = await api.get('/users/me');
+      
+      const userData = response.data;
+      
+      // Set the data from backend - adjust field names based on your API response
+      setEmail(userData.email || "");
+      setPhone(userData.phone || userData.phoneNumber || "");
+      setTempEmail(userData.email || "");
+      setTempPhone(userData.phone || userData.phoneNumber || "");
+
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      Alert.alert("Error", "Failed to load user data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Validation functions
   const isValidEmail = (email) => {
@@ -30,12 +59,11 @@ export default function PersonalInfoScreen({ goBack, next }) {
   };
 
   const isValidPhone = (phone) => {
-    // Remove non-digit characters and check length
     const digitsOnly = phone.replace(/\D/g, '');
     return digitsOnly.length <= 11;
   };
 
-  // Edit handlers
+  // Edit handlers (remain the same)
   const handleEditEmail = () => {
     setTempEmail(email);
     setIsEditingEmail(true);
@@ -48,20 +76,45 @@ export default function PersonalInfoScreen({ goBack, next }) {
     setIsEditingEmail(false);
   };
 
-  // Save handlers
-  const saveEmail = () => {
+  // Save handlers - updated with your API
+  const saveEmail = async () => {
     if (isValidEmail(tempEmail)) {
-      setEmail(tempEmail);
-      setIsEditingEmail(false);
+      try {
+        // Update backend using your API instance
+        await api.put('/users/me', { 
+          email: tempEmail 
+        });
+
+        setEmail(tempEmail);
+        setIsEditingEmail(false);
+        Alert.alert("Success", "Email updated successfully");
+      } catch (error) {
+        console.error('Error updating email:', error);
+        const errorMessage = error.response?.data?.message || "Failed to update email";
+        Alert.alert("Error", errorMessage);
+      }
     } else {
       Alert.alert("Invalid Email", "Please enter a valid email address");
     }
   };
 
-  const savePhone = () => {
+  const savePhone = async () => {
     if (isValidPhone(tempPhone)) {
-      setPhone(tempPhone);
-      setIsEditingPhone(false);
+      try {
+        // Update backend using your API instance
+        await api.put('/users/me', { 
+          phone: tempPhone 
+          // or phoneNumber, depending on your backend field name
+        });
+
+        setPhone(tempPhone);
+        setIsEditingPhone(false);
+        Alert.alert("Success", "Phone number updated successfully");
+      } catch (error) {
+        console.error('Error updating phone:', error);
+        const errorMessage = error.response?.data?.message || "Failed to update phone number";
+        Alert.alert("Error", errorMessage);
+      }
     } else {
       Alert.alert("Invalid Phone", "Phone number should not exceed 11 digits");
     }
@@ -76,6 +129,7 @@ export default function PersonalInfoScreen({ goBack, next }) {
 
   // Format phone number for display
   const formatPhoneNumber = (phone) => {
+    if (!phone) return "Not set";
     const digits = phone.replace(/\D/g, '');
     if (digits.length <= 3) return digits;
     if (digits.length <= 6) return `${digits.slice(0, 3)} ${digits.slice(3)}`;
@@ -84,11 +138,11 @@ export default function PersonalInfoScreen({ goBack, next }) {
 
   // Handle confirm button press
   const handleConfirm = () => {
-    if (!isValidEmail(email)) {
+    if (!email || !isValidEmail(email)) {
       Alert.alert("Invalid Email", "Please enter a valid email address");
       return;
     }
-    if (!isValidPhone(phone)) {
+    if (!phone || !isValidPhone(phone)) {
       Alert.alert("Invalid Phone", "Phone number should not exceed 11 digits");
       return;
     }
@@ -96,12 +150,30 @@ export default function PersonalInfoScreen({ goBack, next }) {
   };
 
   // Handle final confirmation
-  const handleFinalConfirm = () => {
-    setShowConfirmationModal(false);
-    if (next) {
-      next();
+  const handleFinalConfirm = async () => {
+    try {
+      // Optional: Verify all data is saved to backend
+      await api.post('/users/me/', { email, phone });
+      
+      setShowConfirmationModal(false);
+      if (next) {
+        next();
+      }
+    } catch (error) {
+      console.error('Error during confirmation:', error);
+      Alert.alert("Error", "Failed to verify information");
     }
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color="#FEB914" />
+        <Text style={styles.loadingText}>Loading your information...</Text>
+      </View>
+    );
+  }
 
   return (
     <TouchableWithoutFeedback onPress={cancelEdit}>
@@ -133,7 +205,7 @@ export default function PersonalInfoScreen({ goBack, next }) {
                 onSubmitEditing={saveEmail}
               />
             ) : (
-              <Text style={styles.infoText}>{email}</Text>
+              <Text style={styles.infoText}>{email || "Not set"}</Text>
             )}
             <TouchableOpacity onPress={isEditingEmail ? saveEmail : handleEditEmail}>
               <MaterialIcons 
@@ -226,7 +298,9 @@ export default function PersonalInfoScreen({ goBack, next }) {
   );
 }
 
+// Add loading styles to your existing styles
 const styles = StyleSheet.create({
+  // ... your existing styles
   container: {
     flex: 1,
     backgroundColor: "black",
@@ -365,5 +439,14 @@ const styles = StyleSheet.create({
   modalButtonConfirmText: {
     color: "black",
     fontWeight: "700",
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: 'white',
+    marginTop: 20,
+    fontSize: 16,
   },
 });

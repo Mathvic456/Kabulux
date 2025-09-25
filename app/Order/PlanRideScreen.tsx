@@ -97,12 +97,6 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
 
   /**
    * Prepares the booking data in the exact format expected by the backend
-   * Backend expects: {
-   *   "pickup_lat": "6.4541",
-   *   "pickup_lng": "3.3947",
-   *   "dropoff_lat": "6.605874",
-   *   "dropoff_lng": "3.349149"
-   * }
    */
   const prepareBookingData = () => {
     if (!destinationLocation) {
@@ -113,69 +107,106 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
       throw new Error('Current location data is required');
     }
 
-    // Format according to backend specification
-    return {
+    // Create the data object exactly as specified
+    const requestData = {
       pickup_lat: locationData.latitude.toString(),
       pickup_lng: locationData.longitude.toString(),
       dropoff_lat: destinationLocation.latitude.toString(),
       dropoff_lng: destinationLocation.longitude.toString()
     };
+
+    return requestData;
   };
 
   /**
-   * Enhanced handleConfirmRide that gets ride estimate from backend
-   * Uses the correct endpoint: /rides/requests/estimate
+   * Enhanced handleConfirmRide with comprehensive logging for BOTH locations
    */
   const handleConfirmRide = async () => {
-    console.log('🚗 handleConfirmRide called - Getting ride estimate');
+    console.log('=== 🚗 handleConfirmRide STARTED ===');
     
+    // Log current state values
+    console.log('📊 Current State Values:');
+    console.log('isSubmitting:', isSubmitting);
+    console.log('locationData:', locationData);
+    console.log('destinationLocation:', destinationLocation);
+    console.log('currentLocation address:', currentLocation);
+
     // Validate destination selection
     if (!destinationLocation) {
-      console.log('❌ No destination selected');
+      console.log('❌ No destination selected - showing alert');
       Alert.alert('Select Destination', 'Please select a destination first');
       return;
     }
 
     // Validate current location data
     if (!locationData) {
-      console.log('❌ No location data available');
+      console.log('❌ No location data available - showing alert');
       Alert.alert('Location Error', 'Unable to access your current location. Please try again.');
       return;
     }
 
     // Prevent multiple simultaneous submissions
     if (isSubmitting) {
-      console.log('❌ Already submitting, ignoring press');
+      console.log('❌ Already submitting - ignoring press');
       return;
     }
 
-    console.log('✅ Starting estimate request process');
+    console.log('✅ Starting submission process');
+    
+    // Set submitting state immediately
     setIsSubmitting(true);
+    console.log('📊 isSubmitting set to:', true);
 
     try {
       // Prepare the booking data
       const bookingData = prepareBookingData();
-      console.log('📦 Prepared estimate request data:', bookingData);
+      
+      // COMPREHENSIVE LOGGING FOR BOTH LOCATIONS
+      console.log('=== 📍 LOCATION DATA DETAILS ===');
+      console.log('🚖 USER CURRENT LOCATION:');
+      console.log('📍 Address:', currentLocation);
+      console.log('📍 Latitude:', locationData.latitude);
+      console.log('📍 Longitude:', locationData.longitude);
+      console.log('📍 Latitude (string):', locationData.latitude.toString());
+      console.log('📍 Longitude (string):', locationData.longitude.toString());
+      console.log('📍 Full locationData object:', JSON.stringify(locationData, null, 2));
+      
+      console.log('🎯 DESTINATION LOCATION:');
+      console.log('📍 Name:', destinationLocation.name);
+      console.log('📍 Address:', destinationLocation.address);
+      console.log('📍 Latitude:', destinationLocation.latitude);
+      console.log('📍 Longitude:', destinationLocation.longitude);
+      console.log('📍 Latitude (string):', destinationLocation.latitude.toString());
+      console.log('📍 Longitude (string):', destinationLocation.longitude.toString());
+      console.log('📍 Full destinationLocation object:', JSON.stringify(destinationLocation, null, 2));
+      
+      console.log('=== 📦 REQUEST DATA BEING SENT ===');
+      console.log('🌐 Endpoint: POST /rides/requests/estimate');
+      console.log('📤 Request Body:', JSON.stringify(bookingData, null, 2));
+      console.log('📤 pickup_lat:', bookingData.pickup_lat, '(type:', typeof bookingData.pickup_lat + ')');
+      console.log('📤 pickup_lng:', bookingData.pickup_lng, '(type:', typeof bookingData.pickup_lng + ')');
+      console.log('📤 dropoff_lat:', bookingData.dropoff_lat, '(type:', typeof bookingData.dropoff_lat + ')');
+      console.log('📤 dropoff_lng:', bookingData.dropoff_lng, '(type:', typeof bookingData.dropoff_lng + ')');
+      console.log('==================================');
 
       // Show immediate feedback
       Alert.alert('Getting Ride Estimate', 'Please wait while we calculate your ride...', [], {
         cancelable: false
       });
 
-      // Use the CORRECT endpoint for getting ride estimates
-      console.log('🌐 Sending estimate request to /rides/requests/estimate...');
+      // Use the correct endpoint for getting ride estimates
+      console.log('🌐 Sending API request to /rides/requests/estimate...');
       const response = await api.post('/rides/requests/estimate', bookingData);
       
-      console.log('✅ Estimate response received:', response.data);
+      console.log('✅ API Response received:');
+      console.log('📥 Response status:', response.status);
+      console.log('📥 Response data:', JSON.stringify(response.data, null, 2));
 
       // Create navigation data with the estimate information
       const navigationData = {
-        // Estimate data from backend
         estimateData: response.data,
         serverResponse: response.data,
         submittedAt: new Date().toISOString(),
-        
-        // Original location data for UI display
         pickupLocation: {
           address: currentLocation,
           latitude: locationData.latitude,
@@ -187,29 +218,32 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
           latitude: destinationLocation.latitude,
           longitude: destinationLocation.longitude
         },
-        
-        // Backend request data for reference
         backendRequest: bookingData,
-        
-        // Include estimate-specific data for the booking screen
         estimatedPrice: response.data.price || response.data.estimated_cost,
         estimatedDuration: response.data.duration || response.data.estimated_time,
         distance: response.data.distance
       };
 
-      console.log('➡️ Navigating to booking screen with estimate data');
+      console.log('➡️ Navigating to booking screen with data');
       setScreen('bookingScreen', navigationData);
       
     } catch (error: any) {
-      console.error('❌ Estimate API error:', error);
+      console.error('❌ API Error Details:');
+      console.error('Error object:', error);
+      
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+        console.error('Response headers:', error.response.headers);
+      } else if (error.request) {
+        console.error('Request made but no response received:', error.request);
+      } else {
+        console.error('Error message:', error.message);
+      }
       
       let errorMessage = 'Failed to get ride estimate. Please try again.';
       
       if (error.response) {
-        console.log('📡 Server responded with error:', error.response.status);
-        console.log('📡 Error details:', error.response.data);
-        
-        // Handle specific error cases for estimate endpoint
         if (error.response.status === 400) {
           errorMessage = 'Invalid location data. Please check your pickup and destination.';
         } else if (error.response.status === 404) {
@@ -222,30 +256,18 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
           errorMessage = error.response.data?.message || `Server error: ${error.response.status}`;
         }
       } else if (error.request) {
-        console.log('📡 No response received from server');
-        errorMessage = 'Network error. Please check your internet connection and try again.';
+        errorMessage = 'Network error. Please check your internet connection.';
       } else {
-        console.log('⚡ Other error:', error.message);
-        errorMessage = `Estimate request failed: ${error.message}`;
+        errorMessage = `Request failed: ${error.message}`;
       }
       
       Alert.alert('Estimate Failed', errorMessage);
     } finally {
-      console.log('🏁 Estimate request process completed');
+      // Reset loading state regardless of success or failure
+      console.log('🏁 Process completed - resetting isSubmitting to false');
       setIsSubmitting(false);
+      console.log('📊 isSubmitting set to:', false);
     }
-  };
-
-  // Add a simple test function to check if button is working
-  const testButtonFunction = () => {
-    console.log('=== BUTTON TEST ===');
-    console.log('Button pressed successfully!');
-    console.log('destinationLocation:', destinationLocation);
-    console.log('locationData:', locationData);
-    console.log('isSubmitting:', isSubmitting);
-    console.log('===================');
-    
-    Alert.alert('Button Test', 'Button is working! Check console for details.');
   };
 
   const searchDestinations = async (query: string) => {
@@ -256,6 +278,7 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
 
     setIsSearching(true);
     try {
+      // Use Expo Location geocoding to search for destinations
       const results = await Location.geocodeAsync(query);
       
       const formattedResults = results.map((result, index) => ({
@@ -266,6 +289,7 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
         longitude: result.longitude
       }));
 
+      // Combine with predefined suggestions that match the query
       const matchingSuggestions = suggestedLocations.filter(loc =>
         loc.name.toLowerCase().includes(query.toLowerCase()) ||
         loc.address.toLowerCase().includes(query.toLowerCase())
@@ -312,6 +336,40 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
   const shortenAddress = (address: string, maxLength: number = 35) => {
     if (address.length <= maxLength) return address;
     return address.substring(0, maxLength) + '...';
+  };
+
+  /**
+   * Enhanced test function to log both locations
+   */
+  const testButtonPress = () => {
+    console.log('=== 🔴 DEBUG BUTTON PRESSED ===');
+    console.log('📊 Current State Values:');
+    console.log('isSubmitting:', isSubmitting);
+    
+    console.log('🚖 USER CURRENT LOCATION:');
+    if (locationData) {
+      console.log('📍 Address:', currentLocation);
+      console.log('📍 Latitude:', locationData.latitude);
+      console.log('📍 Longitude:', locationData.longitude);
+      console.log('📍 Full object:', locationData);
+    } else {
+      console.log('📍 No location data available');
+    }
+    
+    console.log('🎯 DESTINATION LOCATION:');
+    if (destinationLocation) {
+      console.log('📍 Name:', destinationLocation.name);
+      console.log('📍 Address:', destinationLocation.address);
+      console.log('📍 Latitude:', destinationLocation.latitude);
+      console.log('📍 Longitude:', destinationLocation.longitude);
+      console.log('📍 Full object:', destinationLocation);
+    } else {
+      console.log('📍 No destination selected');
+    }
+    
+    console.log('================================');
+    
+    Alert.alert('Debug', 'Button is working! Check console for both location details.');
   };
 
   const SearchModal = () => (
@@ -508,11 +566,12 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
               styles.confirmButton,
               { 
                 backgroundColor: destinationLocation && locationData && !isSubmitting ? '#f0d46d' : '#555',
-                opacity: (!destinationLocation || !locationData || isSubmitting) ? 0.7 : 1
+                opacity: (!destinationLocation || !locationData || isSubmitting) ? 0.6 : 1
               }
             ]}
             onPress={handleConfirmRide}
             disabled={!destinationLocation || !locationData || isSubmitting}
+            activeOpacity={0.8}
           >
             {isSubmitting ? (
               <View style={styles.loadingContainer}>
@@ -521,17 +580,19 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
               </View>
             ) : (
               <Text style={styles.confirmButtonText}>
-                Get Ride Estimate {destinationLocation ? `to ${shortenAddress(destinationLocation.address, 20)}` : ''}
+                {!locationData ? 'Waiting for Location...' : 
+                 !destinationLocation ? 'Select Destination' : 
+                 `Get Estimate to ${shortenAddress(destinationLocation.address, 20)}`}
               </Text>
             )}
           </TouchableOpacity>
 
-          {/* Debug Button - Uncomment to test */}
+          {/* Debug Button - Shows both locations */}
           <TouchableOpacity 
             style={[styles.confirmButton, { backgroundColor: 'red', marginTop: 10 }]}
-            onPress={testButtonFunction}
+            onPress={testButtonPress}
           >
-            <Text style={styles.confirmButtonText}>DEBUG BUTTON</Text>
+            <Text style={styles.confirmButtonText}>DEBUG BOTH LOCATIONS</Text>
           </TouchableOpacity>
 
           <View style={styles.bottomSpacing} />
@@ -543,7 +604,6 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
   );
 }
 
-// Your styles remain exactly the same
 const styles = StyleSheet.create({
   container: {
     flex: 1,
