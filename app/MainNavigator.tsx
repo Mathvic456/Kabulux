@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import AddFundsScreen from "./addFunds/AddFundsScreen";
 import CryptoDepositScreenOne from "./addFunds/CryptoDepositScreenOne";
 import CryptoDepositScreenTwo from "./addFunds/CryptoDepositScreenTwo";
@@ -6,13 +6,13 @@ import PaymentMethodScreen from "./addFunds/PaymentMethodScreen";
 import RedeemPointsScreen from "./addFunds/RedeemPointsScreen";
 import AnalyticsScreen from "./AnalyticsScreen";
 import AccountSuccessScreen from "./authentication/AccountSuccessScreen";
-import ForgotPasswordScreen from "./authentication/ForgotPasswordScreen";
 import LoginScreen from "./authentication/LoginScreen";
 import LogoutScreen from "./authentication/LogoutScreen";
 import PasswordChangeSuccessScreen from "./authentication/PasswordChangeSuccessScreen";
 import PasswordResetSuccessScreen from "./authentication/PasswordResetSuccessScreen";
 import PasswordSetScreen from "./authentication/PasswordSetScreen";
 import RegisterScreen from "./authentication/RegisterScreen";
+import ResetCredentialsScreen from "./authentication/ResetCredentialsScreen";
 import ResetPasswordScreen from "./authentication/ResetPasswordScreen";
 import VerifyEmailScreen from "./authentication/VerifyEmailScreen";
 import LoyaltyPointsScreen from "./LoyaltyPointsScreen";
@@ -87,6 +87,7 @@ type Screen =
   | "premiumCarSelect"
   | "specialServices"
   | "modifyRide"
+  | "resetCredentials"
   | "businessCodeScreen"
 
 
@@ -124,7 +125,7 @@ export default function MainNavigator() {
     case "reset":
       return (
         <ResetPasswordScreen
-          next={() => setScreen("passwordResetSuccess")}
+          next={() => setScreen("resetCredentials")}
           goRegister={() => setScreen("register")}
           goForgot={() => setScreen("reset")}
         />
@@ -289,6 +290,13 @@ export default function MainNavigator() {
       return (
         <RedeemPointsScreen
           goBack={() => setScreen('wallet')}
+        />
+      );
+
+    case "resetCredentials":
+      return (
+        <ResetCredentialsScreen
+          next={() => setScreen("login")}
         />
       );
 

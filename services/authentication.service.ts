@@ -1,26 +1,29 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation } from "@tanstack/react-query";
-import { Alert } from "react-native";
 import { api } from "./api";
 import { CREATEACCOUNT_TYPE } from "./type";
+
+// Types for modal control
+export type AuthResult = {
+  success: boolean;
+  message: string;
+  data?: any;
+};
+
 export const useRegisterEndPoint = () => {
   return useMutation({
     mutationFn: (data: CREATEACCOUNT_TYPE) => api.post("auth/register/", data),
-    onSuccess: () => {
-      Alert.alert("Success", "Registered successfully!");
+    onSuccess: (res) => {
+      console.log("Registration successful:", res.data);
+      // Don't show alert here - let component handle the modal
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Registration error:", error);
-      Alert.alert(
-        "Registration Failed",
-        // @ts-expect-error
-        error?.response?.data?.message ||
-          error.message ||
-          "Unknown error occurred"
-      );
+      // Return error for component to handle
     },
   });
 };
+
 export const useLoginEndPoint = () => {
   return useMutation({
     mutationFn: (data: { email: string; password: string }) =>
@@ -30,18 +33,16 @@ export const useLoginEndPoint = () => {
       if (token) {
         await AsyncStorage.setItem("token", token);
       }
-      Alert.alert("Success", "Logged in successfully!");
       console.log("User logged in:", res.data);
+      // Don't show alert here - let component handle the modal
     },
     onError: (error: any) => {
       console.error("Login error:", error);
-      Alert.alert(
-        "Login Failed",
-        error?.response?.data?.message || error.message || "Unknown error"
-      );
+      // Return error for component to handle
     },
   });
 };
+
 export const useLogoutEndPoint = () => {
   return useMutation({
     mutationFn: async () => {
@@ -49,15 +50,12 @@ export const useLogoutEndPoint = () => {
       return true;
     },
     onSuccess: () => {
-      Alert.alert("Success", "Logged out successfully!");
       console.log("User logged out");
+      // Don't show alert here - let component handle the modal
     },
     onError: (error: any) => {
       console.error("Logout error:", error);
-      Alert.alert(
-        "Logout Failed",
-        error?.response?.data?.message || error.message || "Unknown error"
-      );
+      // Return error for component to handle
     },
   });
 };

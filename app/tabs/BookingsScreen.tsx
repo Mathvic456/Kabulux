@@ -1,14 +1,14 @@
 import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  RefreshControl,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Alert,
+    Image,
+    RefreshControl,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View
 } from "react-native";
 // import { api } from ""; // Adjust the import path
 import { api } from "@/services/api";
@@ -183,7 +183,7 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
   // Helper function to get car image based on vehicle type
   const getCarImage = (vehicleType: string) => {
     // Adjust based on your available images and vehicle types
-    switch (vehicleType?.toLowerCase()) {
+    switch (vehicleType?.toLowerCase()) { 
       case 'sedan':
         return require("../../assets/images/car1.png");
       case 'suv':

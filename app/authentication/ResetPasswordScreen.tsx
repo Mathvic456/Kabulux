@@ -1,48 +1,66 @@
 import { FontAwesome } from "@expo/vector-icons";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Modal,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View
 } from "react-native";
-import Lock from '../../assets/images/lock.png';
 import Logo from '../../assets/images/logo.png';
 
-export default function ResetPasswordScreen({ next, goRegister, goForgot }: { 
-  next: () => void, 
-  goRegister: () => void, 
-  goForgot: () => void 
+export default function ResetPasswordScreen({ next }: { 
+  next: () => void
 }) {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [remember, setRemember] = useState(false);
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [isLoading, setIsLoading] = useState(false); // Add loading state
+  const [isLoading, setIsLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [emailError, setEmailError] = useState("");
   
-  const handleOtpChange = (text: string, index: number) => {
-    const newOtp = [...otp];
-    newOtp[index] = text;
-    setOtp(newOtp);
-  };
-
-  const handleResendCode = () => {
-    // Logic for resending the code
-    console.log('Resend code tapped');
+  // Email validation function
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   };
 
   const handleProceed = () => {
-    setIsLoading(true); // Show loader when button is pressed
+    // Clear previous errors
+    setEmailError("");
+
+    // Validate email
+    if (!email.trim()) {
+      setEmailError("Email is required");
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setEmailError("Please enter a valid email address");
+      return;
+    }
+
+    setIsLoading(true);
     
-    // Simulate an API call or validation that takes some time
+    // Simulate API call to send OTP
     setTimeout(() => {
-      setIsLoading(false); // Hide loader
-      next(); // Navigate to next screen
-    }, 1500); // 1.5 seconds delay for demonstration
+      setIsLoading(false);
+      setShowModal(true); // Show success modal
+    }, 1500);
+  };
+
+  const handleModalContinue = () => {
+    setShowModal(false);
+    next(); // Navigate to next screen (OTP verification)
+  };
+
+  const handleEmailChange = (text: string) => {
+    setEmail(text);
+    // Clear error when user starts typing
+    if (emailError) {
+      setEmailError("");
+    }
   };
 
   return (
@@ -60,112 +78,116 @@ export default function ResetPasswordScreen({ next, goRegister, goForgot }: {
         </View>
 
         <View style={styles.envelopeContainer}>
-          <Image
-            source={Lock}
-            style={styles.envelopeIcon}
-          />
+          <FontAwesome name="envelope" size={24} color="#fcbf24" />
         </View>
 
         <View style={styles.bottomSection}>
-          <Text style={styles.title}>Set New Password</Text>
-          <Text style={styles.subtitle}>Enter a new Password to complete the reset process</Text>
+          <Text style={styles.title}>Enter Your Email</Text>
+          <Text style={styles.subtitle}>We'll send you a verification code to reset your password</Text>
 
           <View style={styles.inputContainer}>
-            <FontAwesome name="lock" size={20} color="#aaa" style={styles.inputIcon} />
+            <FontAwesome name="envelope" size={20} color="#aaa" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Password"
+              placeholder="Email Address"
               placeholderTextColor="#aaa"
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              value={email}
+              onChangeText={handleEmailChange}
             />
           </View>
 
-          <View style={styles.inputContainer}>
-            <FontAwesome name="lock" size={20} color="#aaa" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm Password"
-              placeholderTextColor="#aaa"
-              secureTextEntry
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-            />
-          </View>
+          {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
 
           <TouchableOpacity 
-            style={styles.proceedButton} 
+            style={[
+              styles.proceedButton,
+              (!email.trim() || isLoading) && styles.disabledButton
+            ]} 
             onPress={handleProceed}
-            disabled={isLoading} // Disable button when loading
+            disabled={!email.trim() || isLoading}
           >
             {isLoading ? (
               <ActivityIndicator color="#000" />
             ) : (
-              <Text style={styles.proceedButtonText}>Proceed</Text>
+              <Text style={styles.proceedButtonText}>Send Code</Text>
             )}
           </TouchableOpacity>        
         </View>
       </View>
+
+      {/* Success Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showModal}
+        onRequestClose={() => setShowModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalIconContainer}>
+              <FontAwesome name="check-circle" size={50} color="#4CAF50" />
+            </View>
+            
+            <Text style={styles.modalTitle}>OTP Sent Successfully!</Text>
+            
+            <Text style={styles.modalMessage}>
+              A verification code has been sent to{"\n"}
+              <Text style={styles.emailText}>{email}</Text>
+            </Text>
+            
+            <Text style={styles.modalSubtext}>
+              Please check your email and enter the code to continue.
+            </Text>
+
+            <TouchableOpacity 
+              style={styles.modalButton}
+              onPress={handleModalContinue}
+            >
+              <Text style={styles.modalButtonText}>Continue to OTP</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000" },
-  banner: { height: 200, backgroundColor: "#fcbf24", borderBottomLeftRadius: 40, borderBottomRightRadius: 40, },
-  card: { flex: 1, marginTop: -40, backgroundColor: "#000", borderTopLeftRadius: 40, borderTopRightRadius: 40, padding: 30, width:'95%', alignSelf:'center',},
-  logo: { fontSize: 36, fontWeight: "bold", color: "#fcbf24", textAlign: "center", marginBottom: 20 },
-  // title: { fontSize: 24, fontWeight: "bold", color: "#fff", textAlign: "center", marginBottom: 10 },
-  // subtitle: { fontSize: 14, color: "#ccc", textAlign: "center", marginBottom: 20 },
-
-  inputContainer: { flexDirection: "row", alignItems: "center", backgroundColor: "#111", borderRadius: 10, marginBottom: 15, paddingHorizontal: 10, borderWidth:2, borderColor:'white', marginTop:0 },
-  inputIcon: { marginRight: 10 },
-  input: { flex: 1, color: "#fff", height: 50 },
-
-  row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
-  checkboxRow: { flexDirection: "row", alignItems: "center" },
-  checkbox: { width: 20, height: 20, borderRadius: 5, borderWidth: 1, borderColor: "#fcbf24", justifyContent: "center", alignItems: "center", marginRight: 8 },
-  checkboxChecked: { backgroundColor: "#fcbf24" },
-  checkboxLabel: { color: "#fff", fontSize: 12 },
-  forgot: { color: "#fcbf24", fontSize: 12 },
-
-  
-  progressBackground: { height: 6, backgroundColor: "#444", borderRadius: 3, marginBottom: 20, borderWidth:1, borderColor:'white' },
-  progressFill: { height: 6, backgroundColor: "#fcbf24", width: "75%", borderRadius: 3, borderWidth:1, borderColor:'white' },
-
-
-  proceedBtn: { backgroundColor: "#fcbf24", borderRadius: 10, paddingVertical: 14, marginTop: 10, width: 90 },
-  proceedText: { color: "#000", fontWeight: "bold", fontSize: 16 },
-
-  dividerRow: { flexDirection: "row", alignItems: "center", marginVertical: 20 },
-  divider: { flex: 1, height: 1, backgroundColor: "#444" },
-  dividerText: { color: "#aaa", marginHorizontal: 10 },
-
-  googleBtn: { flexDirection: "row", justifyContent: "center", alignItems: "center", borderColor: "#fcbf24", borderWidth: 1, borderRadius: 10, paddingVertical: 12, marginBottom: 30 },
-  googleText: { color: "#fff", marginLeft: 8 },
-
-  footerText: { textAlign: "center", color: "#888", fontSize: 12 },
-  signup: { color: "#fcbf24", fontWeight: "bold" },
-
-  envelopeIcon: {
-    width: 30,
-    height: 50,
-    // borderWidth:1,
-    // borderColor:'white',
+  banner: { 
+    height: 200, 
+    backgroundColor: "#fcbf24", 
+    borderBottomLeftRadius: 40, 
+    borderBottomRightRadius: 40 
+  },
+  card: { 
+    flex: 1, 
+    marginTop: -40, 
+    backgroundColor: "#000", 
+    borderTopLeftRadius: 40, 
+    borderTopRightRadius: 40, 
+    padding: 30, 
+    width: '95%', 
+    alignSelf: 'center' 
+  },
+  LogoContainer: {},
+  Logoicon: {
+    width: 130,
+    height: 100,
     resizeMode: 'contain',
     alignSelf: 'center',
   },
   envelopeContainer: {
     backgroundColor: '#FEB91454',
-    // padding: 20,
     borderRadius: 50,
     marginTop: 30,
-    // borderWidth:1,
-    // borderColor:'white',
-    width:50,
-    height:50,
-    alignSelf:'center'
+    width: 50,
+    height: 50,
+    alignSelf: 'center',
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   bottomSection: {
     flex: 0.6,
@@ -183,23 +205,32 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#aaa',
     marginBottom: 30,
-  },
-  otpInputContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '80%',
-    marginBottom: 30,
-    gap:10,
-  },
-  otpInput: {
-    width: 40,
-    height: 40,
-    borderWidth: 1,
-    borderColor: '#ffb300',
-    borderRadius: 8,
     textAlign: 'center',
-    fontSize: 20,
-    color: '#fff',
+    paddingHorizontal: 20,
+  },
+  inputContainer: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    backgroundColor: "#111", 
+    borderRadius: 10, 
+    marginBottom: 5, 
+    paddingHorizontal: 10, 
+    borderWidth: 2, 
+    borderColor: 'white', 
+    width: '100%' 
+  },
+  inputIcon: { marginRight: 10 },
+  input: { 
+    flex: 1, 
+    color: "#fff", 
+    height: 50 
+  },
+  errorText: {
+    color: '#ff5252',
+    fontSize: 12,
+    alignSelf: 'flex-start',
+    marginBottom: 10,
+    marginLeft: 5,
   },
   proceedButton: {
     backgroundColor: '#ffb300',
@@ -210,33 +241,73 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
   },
+  disabledButton: {
+    backgroundColor: '#666',
+    opacity: 0.6,
+  },
   proceedButtonText: {
     color: '#000',
     fontSize: 18,
     fontFamily: 'BebasNeue',
   },
-  resendContainer: {
-    flexDirection: 'row',
-    marginTop: 20,
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
-  resendText: {
-    color: '#aaa',
-    marginRight: 5,
+  modalContent: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 20,
+    padding: 30,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 350,
+    borderWidth: 2,
+    borderColor: '#fcbf24',
   },
-  resendLink: {
-    color: '#ffb300',
+  modalIconContainer: {
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontFamily: 'BebasNeue',
+    color: '#fff',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#ccc',
+    textAlign: 'center',
+    marginBottom: 10,
+    lineHeight: 22,
+  },
+  emailText: {
+    color: '#fcbf24',
     fontWeight: 'bold',
   },
-  LogoContainer:{
-  
+  modalSubtext: {
+    fontSize: 14,
+    color: '#aaa',
+    textAlign: 'center',
+    marginBottom: 25,
+    lineHeight: 20,
   },
-  Logoicon:{
-    width: 130,
-    height: 100,
-    // borderWidth:1,
-    // borderColor:'white',
-    resizeMode: 'contain',
-    alignSelf: 'center',
+  modalButton: {
+    backgroundColor: '#fcbf24',
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 10,
+    width: '100%',
+    alignItems: 'center',
   },
-  
+  modalButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontFamily: 'BebasNeue',
+    fontSize: 18,
+  },
 });
