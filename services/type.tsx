@@ -7,3 +7,12 @@ export type CREATEACCOUNT_TYPE = {
   phone_number: string;
   address: string;
 };
+export type ProfileResponse = {
+  id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
+  is_active: boolean;
+  role: string;
+  referral_code: string;
+};
