@@ -1,20 +1,27 @@
+import { useProfile } from "@/services/profile.service";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
   Image,
   Modal,
   ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View
 } from "react-native";
+useProfile
 
 
-export default function ProfileScreen({ setScreen }) {
+type ProfileScreenProps = {
+  setScreen: (screen: string) => void;
+};
+
+export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 
-    //const { data: profile, isLoading, isError } = useProfile();
+    const { data: profile, isLoading, isError } = useProfile();
 
   const handleLogout = () => {
     // Add your logout logic here
@@ -40,7 +47,7 @@ export default function ProfileScreen({ setScreen }) {
     { icon: "log-out-outline", label: "Log Out", isAction: true, action: openLogoutModal },
   ];
 
-  /*
+  
 
     if (isLoading) {
       return (
@@ -58,8 +65,7 @@ export default function ProfileScreen({ setScreen }) {
       );
     }
 
-    */
-
+    
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
@@ -89,9 +95,9 @@ export default function ProfileScreen({ setScreen }) {
               borderColor: 'white',
             }}
           />
-            <Text style={{ color: "#fff", fontSize: 18, fontWeight: "600" }}>
-                Seth Eneh
-            </Text>
+          <Text style={{ color: "#fff", fontSize: 18, fontWeight: "600" }}>
+            {profile && `${profile.first_name} ${profile.last_name}`}
+        </Text>
 
           <View style={{ flexDirection: "row", marginTop: 5 }}>
             <Text style={{ color: "#fff", marginRight: 5 }}>4.99</Text>
@@ -211,6 +217,7 @@ export default function ProfileScreen({ setScreen }) {
         visible={logoutModalVisible}
         onRequestClose={closeLogoutModal}
       >
+
         <TouchableWithoutFeedback onPress={closeLogoutModal}>
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback>
@@ -249,7 +256,7 @@ export default function ProfileScreen({ setScreen }) {
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
@@ -319,4 +326,4 @@ const styles = {
     fontWeight: '600',
     fontSize: 16,
   },
-};
+});

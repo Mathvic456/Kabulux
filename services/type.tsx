@@ -15,4 +15,5 @@ export type ProfileResponse = {
   is_active: boolean;
   role: string;
   referral_code: string;
+  phone_number: string
 };

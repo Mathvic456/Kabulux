@@ -7,7 +7,7 @@ export const useProfile = () => {
     queryKey: ["profile"],
     queryFn: () =>
       api
-        .get<{ data: ProfileResponse }>("profile/me")
+        .get<{ data: ProfileResponse }>("users/me")
         .then((res) => res.data.data),
   });
 };

@@ -1,3 +1,4 @@
+import { useProfile } from "@/services/profile.service"; // Adjust the import path
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
@@ -12,53 +13,45 @@ import {
   TouchableWithoutFeedback,
   View
 } from "react-native";
-import { api } from "../../services/api"; // Adjust the import path
+import { api } from "../../services/api";
 
-export default function PersonalInfoScreen({ goBack, next }) {
+
+type PersonalInfoScreenProps = {
+  navigation: any; // you can type it properly if you have a StackParamList
+};
+
+
+export default function PersonalInfoScreen({ navigation } : PersonalInfoScreenProps) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [isEditingPhone, setIsEditingPhone] = useState(false);
   const [tempEmail, setTempEmail] = useState("");
   const [tempPhone, setTempPhone] = useState("");
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
-  // Fetch user data from backend
-  useEffect(() => {
-    fetchUserData();
-  }, []);
 
-  const fetchUserData = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Use your API instance - adjust endpoint based on your backend
-      const response = await api.get('/users/me');
-      
-      const userData = response.data;
-      
-      // Set the data from backend - adjust field names based on your API response
-      setEmail(userData.email || "");
-      setPhone(userData.phone || userData.phoneNumber || "");
-      setTempEmail(userData.email || "");
-      setTempPhone(userData.phone || userData.phoneNumber || "");
+const { data: profile, isLoading, isError } = useProfile();
 
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-      Alert.alert("Error", "Failed to load user data");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+useEffect(() => {
+  if (profile) {
+    setEmail(profile.email || "");
+    setPhone(profile.phone_number || "");
+    setTempEmail(profile.email || "");
+    setTempPhone(profile.phone_number || "");
+  }
+}, [profile]);
+
+  const goBack = () => navigation.goBack();
+  const next = () => navigation.navigate("");
 
   // Validation functions
-  const isValidEmail = (email) => {
+  const isValidEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  const isValidPhone = (phone) => {
+  const isValidPhone = (phone : string) => {
     const digitsOnly = phone.replace(/\D/g, '');
     return digitsOnly.length <= 11;
   };
@@ -128,7 +121,7 @@ export default function PersonalInfoScreen({ goBack, next }) {
   };
 
   // Format phone number for display
-  const formatPhoneNumber = (phone) => {
+  const formatPhoneNumber = (phone : string) => {
     if (!phone) return "Not set";
     const digits = phone.replace(/\D/g, '');
     if (digits.length <= 3) return digits;

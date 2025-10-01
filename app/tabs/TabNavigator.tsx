@@ -10,6 +10,7 @@ import WalletScreen from "./WalletScreen";
 
 const Tab = createBottomTabNavigator();
 
+
 export default function TabNavigator({ setScreen, setSelectedRide }) {
   return (
     <Tab.Navigator
