@@ -29,9 +29,12 @@ export const useLoginEndPoint = () => {
     mutationFn: (data: { email: string; password: string }) =>
       api.post("auth/login/", data),
     onSuccess: async (res) => {
-      const token = res.data?.token;
+      const token = res.data?.data?.access;
       if (token) {
         await AsyncStorage.setItem("token", token);
+
+          const storedToken = await AsyncStorage.getItem("token");
+        console.log("Token in AsyncStorage after login:", storedToken);
       }
       console.log("User logged in:", res.data);
       // Don't show alert here - let component handle the modal

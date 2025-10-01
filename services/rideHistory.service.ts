@@ -12,14 +12,14 @@ export type RideHistoryResponse = {
   results: RideHistoryItem[];
 };
 
-export const useRideHistory = () => {
+export const useRideHistory = (enabled: boolean) => {
   return useQuery({
     queryKey: ["rideHistory"],
     queryFn: async () => {
-      const res = await api.get<{ data: RideHistoryResponse }>(
-        "rides/history/"
-      );
-      return res.data.data;
+      const res = await api.get<{ data: RideHistoryResponse }>("rides/history/");
+      console.log("Ride history API response:", res.data);
+      return res.data?.data ?? []; 
     },
+    enabled, // Only fetch when true
   });
 };

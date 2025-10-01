@@ -10,8 +10,11 @@ import {
   View
 } from "react-native";
 
+
 export default function ProfileScreen({ setScreen }) {
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+
+    //const { data: profile, isLoading, isError } = useProfile();
 
   const handleLogout = () => {
     // Add your logout logic here
@@ -36,6 +39,26 @@ export default function ProfileScreen({ setScreen }) {
     { icon: "document-text-outline", label: "Legal", screen: "legal" },
     { icon: "log-out-outline", label: "Log Out", isAction: true, action: openLogoutModal },
   ];
+
+  /*
+
+    if (isLoading) {
+      return (
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <Text style={{ color: "#fff" }}>Loading profile...</Text>
+        </View>
+      );
+    }
+
+    if (isError) {
+      return (
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <Text style={{ color: "red" }}>Failed to load profile</Text>
+        </View>
+      );
+    }
+
+    */
 
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
@@ -66,9 +89,10 @@ export default function ProfileScreen({ setScreen }) {
               borderColor: 'white',
             }}
           />
-          <Text style={{ color: "#fff", fontSize: 18, fontWeight: "600" }}>
-            Seth Eneh
-          </Text>
+            <Text style={{ color: "#fff", fontSize: 18, fontWeight: "600" }}>
+                Seth Eneh
+            </Text>
+
           <View style={{ flexDirection: "row", marginTop: 5 }}>
             <Text style={{ color: "#fff", marginRight: 5 }}>4.99</Text>
             <FontAwesome name="star" size={14} color="#FFD700" />
@@ -261,7 +285,7 @@ const styles = {
   modalMessage: {
     fontSize: 16,
     color: '#9CA3AF',
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 24,
     lineHeight: 22,
   },
