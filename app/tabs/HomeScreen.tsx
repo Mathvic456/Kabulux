@@ -1,5 +1,6 @@
 import { Entypo, Feather, FontAwesome } from '@expo/vector-icons';
-import { useState } from "react";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useState } from "react";
 import {
   FlatList,
   Image,
@@ -31,7 +32,7 @@ const UploadPhotoOverlay = ({ isVisible, onClose, onNext }) => {
           <Text style={styles.overlayTitle}>Upload A Photo</Text>
           <Text style={styles.overlaySubtitle}>upload a profile photo for verification</Text>
           <View style={styles.uploadIconContainer}>
-            <Feather name="image" size={80} color="#FFD700" />
+            <Feather name="image" size={80} color="#f7b731" />
           </View>
           <TouchableOpacity style={styles.uploadButton} onPress={onNext}>
             <Text style={styles.uploadButtonText}>Upload</Text>
@@ -66,7 +67,6 @@ const AdditionalInfoOverlay = ({ isVisible, onClose }) => {
       onRequestClose={onClose}
     >
       <View style={styles.overlayContainer}>
-        {/* Fixed: Removed JavaScript comment from JSX */}
         <View style={styles.overlayContent}>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Entypo name="cross" size={28} color="#fff" />
@@ -176,7 +176,28 @@ type HomeScreenProps = {
 export default function HomeScreen({ setScreen }: HomeScreenProps) {
   const [showPhotoOverlay, setShowPhotoOverlay] = useState(true);
   const [showAdditionalInfoOverlay, setShowAdditionalInfoOverlay] = useState(false);
-  const [showLoginSuccessModal, setShowLoginSuccessModal] = useState(true); // Set to true for demo
+  const [showLoginSuccessModal, setShowLoginSuccessModal] = useState(false);
+
+  // Check if login success modal has been shown before
+  useEffect(() => {
+    checkLoginSuccessShown();
+  }, []);
+
+  const checkLoginSuccessShown = async () => {
+    try {
+      const hasShownLoginSuccess = await AsyncStorage.getItem('hasShownLoginSuccess');
+      
+      // If it hasn't been shown before, show it and mark as shown
+      if (!hasShownLoginSuccess) {
+        setShowLoginSuccessModal(true);
+        await AsyncStorage.setItem('hasShownLoginSuccess', 'true');
+      }
+    } catch (error) {
+      console.error('Error checking login success modal:', error);
+      // If there's an error, default to showing the modal
+      setShowLoginSuccessModal(true);
+    }
+  };
 
   const handleNextFromPhoto = () => {
     setShowPhotoOverlay(false);
@@ -185,7 +206,6 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
 
   const handleLoginSuccessClose = () => {
     setShowLoginSuccessModal(false);
-    // You might want to navigate or perform other actions here
   };
 
   const banners = [
@@ -377,6 +397,8 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
     </ScrollView>
   );
 }
+
+// ... (styles remain exactly the same)
 
 const styles = StyleSheet.create({
   container: {

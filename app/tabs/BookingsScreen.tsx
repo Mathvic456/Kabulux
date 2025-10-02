@@ -4,14 +4,22 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+<<<<<<< HEAD
   Image,
   RefreshControl,
   ScrollView,
+=======
+  Alert,
+  Image,
+>>>>>>> b17ea38803b3ce506dc0ab1b208f894776b83738
   Text,
   TouchableOpacity,
   View
 } from "react-native";
+<<<<<<< HEAD
 
+=======
+>>>>>>> b17ea38803b3ce506dc0ab1b208f894776b83738
 
 interface Ride {
   id: number;
@@ -22,7 +30,6 @@ interface Ride {
   image: any;
   type: "ride" | "delivery";
   status: string;
-  // Add other fields that match your backend response
 }
 
 interface RideCardProps {
@@ -32,8 +39,12 @@ interface RideCardProps {
 }
 
 const RideCard: React.FC<RideCardProps> = ({ ride, setScreen, setSelectedRide }) => {
+<<<<<<< HEAD
 
    const formatDate = (dateString: string) => {
+=======
+  const formatDate = (dateString: string) => {
+>>>>>>> b17ea38803b3ce506dc0ab1b208f894776b83738
     if (!dateString) return "Date not available";
     
     try {
@@ -49,7 +60,10 @@ const RideCard: React.FC<RideCardProps> = ({ ride, setScreen, setSelectedRide })
     }
   };
 
+<<<<<<< HEAD
   
+=======
+>>>>>>> b17ea38803b3ce506dc0ab1b208f894776b83738
   return (
     <TouchableOpacity
       onPress={() => {
@@ -66,7 +80,7 @@ const RideCard: React.FC<RideCardProps> = ({ ride, setScreen, setSelectedRide })
           padding: 12,
           borderRadius: 20,
           borderWidth: 1,
-          borderColor: "#FFD700",
+          borderColor: "#f7b731",
         }}
       >
         {/* Top Row */}
@@ -85,7 +99,7 @@ const RideCard: React.FC<RideCardProps> = ({ ride, setScreen, setSelectedRide })
               paddingVertical: 3,
               borderRadius: 12,
               borderWidth: 1,
-              borderColor: "#FFD700",
+              borderColor: "#f7b731",
             }}
           >
             <Text style={{ color: "#fff", fontSize: 12 }}>
@@ -124,7 +138,7 @@ const RideCard: React.FC<RideCardProps> = ({ ride, setScreen, setSelectedRide })
           {/* Rating */}
           <View style={{ flexDirection: "row" }}>
             {[...Array(ride.rating || 5)].map((_, i) => (
-              <FontAwesome key={i} name="star" size={16} color="#FFD700" />
+              <FontAwesome key={i} name="star" size={16} color="#f7b731" />
             ))}
           </View>
         </View>
@@ -144,6 +158,7 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
   // Integrate React Query for data fetching
   const { data: rideHistoryData, isLoading, refetch, isRefetching } = useRideHistory(true);
 
+<<<<<<< HEAD
   // Format date function
  
 
@@ -179,6 +194,36 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
       image: getCarImage(ride.vehicle?.type), // Helper function to get appropriate image
       // Add other fields as needed
     }));
+=======
+  // Empty mock data - no rides or deliveries
+  const mockRides: Ride[] = [];
+
+  // Simulate API call with empty data
+  const fetchRides = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 2500));
+      
+      // Use empty mock data
+      setRides(mockRides);
+      
+    } catch (error) {
+      console.error('Error fetching rides:', error);
+      Alert.alert("Error", "Failed to load ride history");
+      setRides([]); // Fallback to empty array
+    } finally {
+      setIsLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Pull to refresh function
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchRides();
+>>>>>>> b17ea38803b3ce506dc0ab1b208f894776b83738
   };
 
   const checkToken = async () => {
@@ -189,6 +234,7 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
     checkToken();
   })
 
+<<<<<<< HEAD
 
   // Pull to refresh function
   const onRefresh = () => {
@@ -198,16 +244,110 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
   // Get transformed rides
   const rides = rideHistoryData?.results ? transformRides(rideHistoryData.results) : [];
   // Filter rides based on active tab
+=======
+  // Filter rides based on active tab (will always be empty)
+>>>>>>> b17ea38803b3ce506dc0ab1b208f894776b83738
   const filteredRides = rides.filter((ride) => ride.type === activeTab);
 
   if (isLoading) {
     return (
       <View style={{ flex: 1, backgroundColor: "#000", justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#FFD700" />
+        <ActivityIndicator size="large" color="#f7b731" />
         <Text style={{ color: "#fff", marginTop: 15 }}>Loading your rides...</Text>
       </View>
     );
   }
+
+  // Empty state content based on active tab
+  const renderEmptyState = () => {
+    if (activeTab === "ride") {
+      return (
+        <>
+          <Ionicons name="car-outline" size={80} color="#666" />
+          <Text style={{ 
+            color: "#fff", 
+            fontSize: 20, 
+            fontWeight: "bold", 
+            marginTop: 20, 
+            textAlign: "center",
+            marginBottom: 10
+          }}>
+            You currently have not placed any rides yet
+          </Text>
+          <Text style={{ 
+            color: "#f7b731", 
+            fontSize: 16, 
+            textAlign: "center",
+            marginBottom: 30
+          }}>
+            Take a trip with kablux today
+          </Text>
+          <TouchableOpacity 
+            onPress={() => setScreen("dashboard")}
+            style={{
+              paddingHorizontal: 30,
+              paddingVertical: 15,
+              backgroundColor: "#f7b731",
+              borderRadius: 25,
+              borderWidth: 1,
+              borderColor: "#f7b731"
+            }}
+          >
+            <Text style={{ 
+              color: "#000", 
+              fontWeight: "bold", 
+              fontSize: 16 
+            }}>
+              Book a Ride
+            </Text>
+          </TouchableOpacity>
+        </>
+      );
+    } else {
+      return (
+        <>
+          <MaterialIcons name="local-shipping" size={80} color="#666" />
+          <Text style={{ 
+            color: "#fff", 
+            fontSize: 20, 
+            fontWeight: "bold", 
+            marginTop: 20, 
+            textAlign: "center",
+            marginBottom: 10
+          }}>
+            You have no deliveries with kablux yet
+          </Text>
+          <Text style={{ 
+            color: "#f7b731", 
+            fontSize: 16, 
+            textAlign: "center",
+            marginBottom: 30
+          }}>
+            Send your packages with kablux today
+          </Text>
+          <TouchableOpacity 
+            onPress={() => setScreen("dashboard")}
+            style={{
+              paddingHorizontal: 30,
+              paddingVertical: 15,
+              backgroundColor: "#f7b731",
+              borderRadius: 25,
+              borderWidth: 1,
+              borderColor: "#f7b731"
+            }}
+          >
+            <Text style={{ 
+              color: "#000", 
+              fontWeight: "bold", 
+              fontSize: 16 
+            }}>
+              Make a Delivery Request
+            </Text>
+          </TouchableOpacity>
+        </>
+      );
+    }
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#000", paddingTop: 20 }}>
@@ -235,18 +375,18 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
             paddingVertical: 12,
             paddingHorizontal: 28,
             borderWidth: 1,
-            borderColor: activeTab === "ride" ? "#FFD700" : "#fff",
+            borderColor: activeTab === "ride" ? "#f7b731" : "#fff",
           }}
         >
           <Ionicons
             name="car"
             size={18}
-            color={activeTab === "ride" ? "#FFD700" : "#fff"}
+            color={activeTab === "ride" ? "#f7b731" : "#fff"}
             style={{ marginRight: 8 }}
           />
           <Text
             style={{
-              color: activeTab === "ride" ? "#FFD700" : "#fff",
+              color: activeTab === "ride" ? "#f7b731" : "#fff",
               fontWeight: "bold",
               fontSize: 15,
             }}
@@ -267,18 +407,18 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
             paddingVertical: 12,
             paddingHorizontal: 28,
             borderWidth: 1,
-            borderColor: activeTab === "delivery" ? "#FFD700" : "#fff",
+            borderColor: activeTab === "delivery" ? "#f7b731" : "#fff",
           }}
         >
           <MaterialIcons
             name="local-shipping"
             size={18}
-            color={activeTab === "delivery" ? "#FFD700" : "#fff"}
+            color={activeTab === "delivery" ? "#f7b731" : "#fff"}
             style={{ marginRight: 8 }}
           />
           <Text
             style={{
-              color: activeTab === "delivery" ? "#FFD700" : "#fff",
+              color: activeTab === "delivery" ? "#f7b731" : "#fff",
               fontWeight: "bold",
               fontSize: 15,
             }}
@@ -288,6 +428,7 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
         </TouchableOpacity>
       </View>
 
+<<<<<<< HEAD
       {/* Ride History Label */}
       <Text style={{ color: "#fff", fontSize: 16, textAlign: "center", marginBottom: 15 }}>
         {activeTab === "ride" ? "Ride History" : "Delivery History"}
@@ -347,6 +488,17 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
           </View>
         )}
       </ScrollView>
+=======
+      {/* Empty State Message */}
+      <View style={{ 
+        flex: 1, 
+        justifyContent: "center", 
+        alignItems: "center",
+        paddingHorizontal: 40
+      }}>
+        {renderEmptyState()}
+      </View>
+>>>>>>> b17ea38803b3ce506dc0ab1b208f894776b83738
 
       {/* Bottom Navigation */}
       <View
@@ -361,7 +513,7 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
           <Ionicons name="home-outline" size={24} color="#fff" />
         </TouchableOpacity>
         <TouchableOpacity>
-          <Ionicons name="book-outline" size={24} color="#FFD700" />
+          <Ionicons name="book-outline" size={24} color="#f7b731" />
         </TouchableOpacity>
         <TouchableOpacity>
           <Ionicons name="wallet-outline" size={24} color="#fff" />

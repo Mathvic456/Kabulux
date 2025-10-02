@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     width: "100%",
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: "#FFD70033",
+    borderColor: "#f7b73133",
   },
   label: {
     color: "#aaa",
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   status: {
-    color: "#FFD700",
+    color: "#f7b731",
     fontSize: 14,
     fontWeight: "600",
     marginTop: 4,
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   bookButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFD700",
+    backgroundColor: "#f7b731",
     paddingVertical: 14,
     paddingHorizontal: 40,
     borderRadius: 30,

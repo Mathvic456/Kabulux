@@ -96,16 +96,21 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
             }}
           />
           <Text style={{ color: "#fff", fontSize: 18, fontWeight: "600" }}>
+<<<<<<< HEAD
             {profile && `${profile.first_name} ${profile.last_name}`}
         </Text>
 
+=======
+            Craig
+          </Text>
+>>>>>>> b17ea38803b3ce506dc0ab1b208f894776b83738
           <View style={{ flexDirection: "row", marginTop: 5 }}>
             <Text style={{ color: "#fff", marginRight: 5 }}>4.99</Text>
-            <FontAwesome name="star" size={14} color="#FFD700" />
-            <FontAwesome name="star" size={14} color="#FFD700" />
-            <FontAwesome name="star" size={14} color="#FFD700" />
-            <FontAwesome name="star" size={14} color="#FFD700" />
-            <FontAwesome name="star" size={14} color="#FFD700" />
+            <FontAwesome name="star" size={14} color="#f7b731" />
+            <FontAwesome name="star" size={14} color="#f7b731" />
+            <FontAwesome name="star" size={14} color="#f7b731" />
+            <FontAwesome name="star" size={14} color="#f7b731" />
+            <FontAwesome name="star" size={14} color="#f7b731" />
           </View>
         </View>
 
@@ -117,7 +122,7 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
             borderRadius: 12,
             paddingVertical: 10,
             borderWidth: 1,
-            borderColor: "#FFD700",
+            borderColor: "#f7b731",
             marginBottom: 20,
           }}
         >
@@ -131,11 +136,11 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
             }}
             onPress={() => setScreen("personalInfo")}
           >
-            <Ionicons name="person-outline" size={20} color="#FFD700" />
+            <Ionicons name="person-outline" size={20} color="#f7b731" />
             <Text style={{ color: "#fff", marginLeft: 15, flex: 1 }}>
               Personal info
             </Text>
-            <Ionicons name="chevron-forward" size={20} color="#FFD700" />
+            <Ionicons name="chevron-forward" size={20} color="#f7b731" />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -146,11 +151,11 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
             }}
             onPress={() => setScreen("loginAndSecurity")}
           >
-            <Ionicons name="lock-closed-outline" size={20} color="#FFD700" />
+            <Ionicons name="lock-closed-outline" size={20} color="#f7b731" />
             <Text style={{ color: "#fff", marginLeft: 15, flex: 1 }}>
               Login & security
             </Text>
-            <Ionicons name="chevron-forward" size={20} color="#FFD700" />
+            <Ionicons name="chevron-forward" size={20} color="#f7b731" />
           </TouchableOpacity>
         </View>
 
@@ -162,7 +167,7 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
             borderRadius: 12,
             paddingVertical: 10,
             borderWidth: 1,
-            borderColor: "#FFD700",
+            borderColor: "#f7b731",
           }}
         >
           {menuItems.map((item, index) => (
@@ -177,11 +182,11 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
               }}
               onPress={item.isAction ? item.action : () => setScreen(item.screen)}
             >
-              <Ionicons name={item.icon} size={20} color="#FFD700" />
+              <Ionicons name={item.icon} size={20} color="#f7b731" />
               <Text style={{ color: "#fff", marginLeft: 15, flex: 1 }}>
                 {item.label}
               </Text>
-              <Ionicons name="chevron-forward" size={20} color="#FFD700" />
+              <Ionicons name="chevron-forward" size={20} color="#f7b731" />
             </TouchableOpacity>
           ))}
         </View>
@@ -206,7 +211,7 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
           <Ionicons name="wallet-outline" size={24} color="#fff" />
         </TouchableOpacity>
         <TouchableOpacity>
-          <Ionicons name="person-outline" size={24} color="#FFD700" />
+          <Ionicons name="person-outline" size={24} color="#f7b731" />
         </TouchableOpacity>
       </View>
 
@@ -223,7 +228,7 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
             <TouchableWithoutFeedback>
               <View style={styles.modalContent}>
                 <View style={styles.modalIcon}>
-                  <Ionicons name="log-out-outline" size={40} color="#FFD700" />
+                  <Ionicons name="log-out-outline" size={40} color="#f7b731" />
                 </View>
                 
                 <Text style={styles.modalTitle}>Log Out</Text>
@@ -271,7 +276,7 @@ const styles = StyleSheet.create({
     padding: 24,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: '#f7b731',
   },
   modalIcon: {
     width: 70,
@@ -311,13 +316,13 @@ const styles = StyleSheet.create({
   cancelButton: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#FFD700',
+    borderColor: '#f7b731',
   },
   logoutButton: {
-    backgroundColor: '#FFD700',
+    backgroundColor: '#f7b731',
   },
   cancelButtonText: {
-    color: '#FFD700',
+    color: '#f7b731',
     fontWeight: '600',
     fontSize: 16,
   },
