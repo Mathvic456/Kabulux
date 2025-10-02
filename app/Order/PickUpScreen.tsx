@@ -6,10 +6,11 @@ import {
   Animated,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+import MapView, { Marker } from "react-native-maps";
 
 interface UserLocation {
   address: string;
@@ -29,9 +30,12 @@ export default function PickUpScreen({ setScreen, goBack }: {
   const [isGettingLocation, setIsGettingLocation] = useState(true);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const slideAnim = useRef(new Animated.Value(0)).current; // Start at 0 (already visible)
+  const mapRef = useRef<MapView>(null);
+  const locationSubscription = useRef<Location.LocationSubscription | null>(null);
 
   useEffect(() => {
     getUserLocation();
+    startWatchingLocation();
     
     // Start the animation immediately without timeout
     Animated.timing(slideAnim, {
@@ -39,7 +43,45 @@ export default function PickUpScreen({ setScreen, goBack }: {
       duration: 500,
       useNativeDriver: true,
     }).start();
+
+    // cleanup on unmount
+    return () => {
+      if (locationSubscription.current) {
+        locationSubscription.current.remove();
+      }
+    };
   }, []); // Removed slideAnim dependency
+
+  const startWatchingLocation = async () => {
+    try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        return;
+      }
+
+      //Subscription is to watch position, you can check if the interval is okay (decrease/increase) as needed
+      locationSubscription.current = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          timeInterval: 3000, 
+          distanceInterval: 1, //1 meter
+        },
+        (loc) => {
+          // Update map region to follow user
+          if (mapRef.current) {
+            mapRef.current.animateToRegion({
+              latitude: loc.coords.latitude,
+              longitude: loc.coords.longitude,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            });
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Error watching location:', error);
+    }
+  };
 
   const getUserLocation = async () => {
     try {
@@ -77,6 +119,16 @@ export default function PickUpScreen({ setScreen, goBack }: {
         
         setUserLocation(locationData);
         setPickup(formattedAddress);
+        
+        // Animate map to user location
+        if (mapRef.current) {
+          mapRef.current.animateToRegion({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          });
+        }
         
         // Auto-navigate after getting location (optional - you can remove this too if you want)
         setTimeout(() => {
@@ -158,25 +210,30 @@ export default function PickUpScreen({ setScreen, goBack }: {
         </TouchableOpacity>
       </View>
 
-      {/* Map Placeholder with Loading State */}
-      <View style={styles.mapPlaceholder}>
-        {isGettingLocation ? (
-          <View style={styles.loadingContainer}>
-            <Ionicons name="locate" size={50} color="#f6a623" />
-            <Text style={styles.loadingText}>Finding your location...</Text>
-          </View>
-        ) : userLocation ? (
-          <View style={styles.locationFoundContainer}>
-            <Ionicons name="checkmark-circle" size={50} color="#4CAF50" />
-            <Text style={styles.locationFoundText}>Location Found!</Text>
-            <Text style={styles.addressPreview} numberOfLines={2}>
-              {userLocation.address}
-            </Text>
-          </View>
-        ) : (
-          <Text style={styles.mapText}>📍 Enable location services</Text>
+      {/* Map View - Fully Functional */}
+      <MapView
+        ref={mapRef}
+        style={styles.mapPlaceholder}
+        initialRegion={{
+          latitude: userLocation?.latitude || 37.78825,
+          longitude: userLocation?.longitude || -122.4324,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        }}
+        showsUserLocation={true}
+        showsMyLocationButton={false}
+        followsUserLocation={true}
+      >
+        {userLocation && (
+          <Marker
+            coordinate={{
+              latitude: userLocation.latitude,
+              longitude: userLocation.longitude,
+            }}
+            title="You are here"
+          />
         )}
-      </View>
+      </MapView>
 
       {/* Bottom Sheet - Now immediately visible without animation delay */}
       <View style={styles.bottomSheet}>
@@ -185,23 +242,51 @@ export default function PickUpScreen({ setScreen, goBack }: {
         {/* Search Bar */}
         <View style={styles.searchContainer}>
           <Ionicons name="search" size={20} color="white" />
-          <TextInput
-            style={styles.input}
-            placeholder="Search or use current location"
-            placeholderTextColor="#aaa"
-            value={pickup}
-            onChangeText={setPickup}
-            editable={!isGettingLocation}
+          <GooglePlacesAutocomplete
+            placeholder="Search for a location"
+            fetchDetails={true} // important! gives lat/lng
+            onPress={(data, details = null) => {
+              // 'details' contains geometry (lat/lng)
+              if (details) {
+                const location = {
+                  address: data.description,
+                  latitude: details.geometry.location.lat,
+                  longitude: details.geometry.location.lng,
+                  coordinates: {
+                    latitude: details.geometry.location.lat,
+                    longitude: details.geometry.location.lng
+                  },
+                };
+                setUserLocation(location);
+                
+                // Animate map to selected location
+                if (mapRef.current) {
+                  mapRef.current.animateToRegion({
+                    latitude: location.latitude,
+                    longitude: location.longitude,
+                    latitudeDelta: 0.01,
+                    longitudeDelta: 0.01,
+                  });
+                }
+              }
+            }}
+            query={{
+              key: process.env.GOOGLE_MAPS_API_KEY, // set it up in env
+              language: 'en',
+            }}
+            styles={{
+              textInput: { height: 40, color: '#000', fontSize: 16 },
+            }}
           />
+
           <TouchableOpacity 
             style={styles.locateIcon}
             onPress={handleUseCurrentLocation}
-            disabled={isGettingLocation}
           >
             <Ionicons 
               name="locate" 
               size={20} 
-              color={isGettingLocation ? "#666" : "#f6a623"} 
+              color="#f6a623"
             />
           </TouchableOpacity>
         </View>
@@ -222,7 +307,6 @@ export default function PickUpScreen({ setScreen, goBack }: {
               styles.confirmButton,
               { backgroundColor: userLocation ? "#4CAF50" : "#f6a623" },
             ]}
-            disabled={!userLocation}
             onPress={handleManualConfirm}
           >
             <Text style={styles.confirmText}>
@@ -259,41 +343,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#333",
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: 'blue',
-    padding: 20,
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingText: {
-    color: '#f6a623',
-    fontSize: 16,
-    marginTop: 10,
-    textAlign: 'center',
-  },
-  locationFoundContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  locationFoundText: {
-    color: '#4CAF50',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 10,
-    marginBottom: 15,
-  },
-  addressPreview: {
-    color: '#fff',
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 10,
-  },
-  mapText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#f6a623",
   },
   bottomSheet: {
     position: "absolute",
