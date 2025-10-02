@@ -73,7 +73,7 @@ export default function SpecialServicesScreen({
                 <Ionicons
                   name="person"
                   size={16}
-                  color={escortSelected === num ? "#000" : "#FFD700"}
+                  color={escortSelected === num ? "#000" : "#f7b731"}
                 />
                 <Text
                   style={[
@@ -124,7 +124,7 @@ export default function SpecialServicesScreen({
               <Ionicons
                 name="person"
                 size={16}
-                color={seatSelected === num ? "#000" : "#FFD700"}
+                color={seatSelected === num ? "#000" : "#f7b731"}
               />
               <Text
                 style={[
@@ -189,14 +189,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#FFD700",
+    borderColor: "#f7b731",
     borderRadius: 20,
     paddingVertical: 10,
     paddingHorizontal: 20,
     backgroundColor: "#1c1c1c",
     margin: 5,
   },
-  optionSelected: { backgroundColor: "#FEB914", borderColor: "#FFD700" },
+  optionSelected: { backgroundColor: "#FEB914", borderColor: "#f7b731" },
   optionText: { fontSize: 14, marginLeft: 5, color: "white" },
   input: {
     borderWidth: 1,

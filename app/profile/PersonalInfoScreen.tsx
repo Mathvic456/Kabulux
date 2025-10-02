@@ -1,30 +1,28 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Keyboard,
-  Modal,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View
+    ActivityIndicator,
+    Alert,
+    Modal,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from "react-native";
-import { api } from "../../services/api"; // Adjust the import path
 
 export default function PersonalInfoScreen({ goBack, next }) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [isEditingEmail, setIsEditingEmail] = useState(false);
-  const [isEditingPhone, setIsEditingPhone] = useState(false);
-  const [tempEmail, setTempEmail] = useState("");
-  const [tempPhone, setTempPhone] = useState("");
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
-  // Fetch user data from backend
+  // Mock user data
+  const mockUserData = {
+    email: "rider01@gmail.com",
+    phone: "+2347080000001"
+  };
+
+  // Simulate fetching user data with loader
   useEffect(() => {
     fetchUserData();
   }, []);
@@ -33,16 +31,12 @@ export default function PersonalInfoScreen({ goBack, next }) {
     try {
       setIsLoading(true);
       
-      // Use your API instance - adjust endpoint based on your backend
-      const response = await api.get('/users/me');
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      const userData = response.data;
-      
-      // Set the data from backend - adjust field names based on your API response
-      setEmail(userData.email || "");
-      setPhone(userData.phone || userData.phoneNumber || "");
-      setTempEmail(userData.email || "");
-      setTempPhone(userData.phone || userData.phoneNumber || "");
+      // Set mock data
+      setEmail(mockUserData.email);
+      setPhone(mockUserData.phone);
 
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -50,81 +44,6 @@ export default function PersonalInfoScreen({ goBack, next }) {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Validation functions
-  const isValidEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  const isValidPhone = (phone) => {
-    const digitsOnly = phone.replace(/\D/g, '');
-    return digitsOnly.length <= 11;
-  };
-
-  // Edit handlers (remain the same)
-  const handleEditEmail = () => {
-    setTempEmail(email);
-    setIsEditingEmail(true);
-    setIsEditingPhone(false);
-  };
-
-  const handleEditPhone = () => {
-    setTempPhone(phone);
-    setIsEditingPhone(true);
-    setIsEditingEmail(false);
-  };
-
-  // Save handlers - updated with your API
-  const saveEmail = async () => {
-    if (isValidEmail(tempEmail)) {
-      try {
-        // Update backend using your API instance
-        await api.put('/users/me', { 
-          email: tempEmail 
-        });
-
-        setEmail(tempEmail);
-        setIsEditingEmail(false);
-        Alert.alert("Success", "Email updated successfully");
-      } catch (error) {
-        console.error('Error updating email:', error);
-        const errorMessage = error.response?.data?.message || "Failed to update email";
-        Alert.alert("Error", errorMessage);
-      }
-    } else {
-      Alert.alert("Invalid Email", "Please enter a valid email address");
-    }
-  };
-
-  const savePhone = async () => {
-    if (isValidPhone(tempPhone)) {
-      try {
-        // Update backend using your API instance
-        await api.put('/users/me', { 
-          phone: tempPhone 
-          // or phoneNumber, depending on your backend field name
-        });
-
-        setPhone(tempPhone);
-        setIsEditingPhone(false);
-        Alert.alert("Success", "Phone number updated successfully");
-      } catch (error) {
-        console.error('Error updating phone:', error);
-        const errorMessage = error.response?.data?.message || "Failed to update phone number";
-        Alert.alert("Error", errorMessage);
-      }
-    } else {
-      Alert.alert("Invalid Phone", "Phone number should not exceed 11 digits");
-    }
-  };
-
-  // Cancel editing
-  const cancelEdit = () => {
-    setIsEditingEmail(false);
-    setIsEditingPhone(false);
-    Keyboard.dismiss();
   };
 
   // Format phone number for display
@@ -138,22 +57,14 @@ export default function PersonalInfoScreen({ goBack, next }) {
 
   // Handle confirm button press
   const handleConfirm = () => {
-    if (!email || !isValidEmail(email)) {
-      Alert.alert("Invalid Email", "Please enter a valid email address");
-      return;
-    }
-    if (!phone || !isValidPhone(phone)) {
-      Alert.alert("Invalid Phone", "Phone number should not exceed 11 digits");
-      return;
-    }
     setShowConfirmationModal(true);
   };
 
   // Handle final confirmation
   const handleFinalConfirm = async () => {
     try {
-      // Optional: Verify all data is saved to backend
-      await api.post('/users/me/', { email, phone });
+      // Simulate API verification
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       setShowConfirmationModal(false);
       if (next) {
@@ -176,131 +87,100 @@ export default function PersonalInfoScreen({ goBack, next }) {
   }
 
   return (
-    <TouchableWithoutFeedback onPress={cancelEdit}>
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={goBack}>
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Personal Info</Text>
-          <View style={styles.headerSpacer} />
-        </View>
-
-        {/* Info Box */}
-        <View style={styles.infoBox}>
-          {/* Email Row */}
-          <View style={styles.row}>
-            <MaterialIcons name="email" size={20} color="#FEB914" />
-            {isEditingEmail ? (
-              <TextInput
-                style={styles.input}
-                value={tempEmail}
-                onChangeText={setTempEmail}
-                autoFocus
-                keyboardType="email-address"
-                autoCapitalize="none"
-                placeholder="Enter your email"
-                placeholderTextColor="#666"
-                onSubmitEditing={saveEmail}
-              />
-            ) : (
-              <Text style={styles.infoText}>{email || "Not set"}</Text>
-            )}
-            <TouchableOpacity onPress={isEditingEmail ? saveEmail : handleEditEmail}>
-              <MaterialIcons 
-                name={isEditingEmail ? "check" : "edit"} 
-                size={20} 
-                color="#FEB914" 
-              />
-            </TouchableOpacity>
-          </View>
-
-          {/* Phone Row */}
-          <View style={styles.row}>
-            <Ionicons name="call" size={20} color="#FEB914" />
-            {isEditingPhone ? (
-              <TextInput
-                style={styles.input}
-                value={tempPhone}
-                onChangeText={setTempPhone}
-                autoFocus
-                keyboardType="phone-pad"
-                placeholder="Enter your phone number"
-                placeholderTextColor="#666"
-                onSubmitEditing={savePhone}
-              />
-            ) : (
-              <Text style={styles.infoText}>{formatPhoneNumber(phone)}</Text>
-            )}
-            <TouchableOpacity onPress={isEditingPhone ? savePhone : handleEditPhone}>
-              <MaterialIcons 
-                name={isEditingPhone ? "check" : "edit"} 
-                size={20} 
-                color="#FEB914" 
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Confirm Button */}
-        <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
-          <Text style={styles.confirmText}>Confirm</Text>
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={goBack}>
+          <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>Personal Info</Text>
+        <View style={styles.headerSpacer} />
+      </View>
 
-        {/* Confirmation Modal */}
-        <Modal
-          visible={showConfirmationModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowConfirmationModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalIcon}>
-                <Ionicons name="checkmark-circle" size={40} color="#FEB914" />
-              </View>
-              <Text style={styles.modalTitle}>Confirm Information</Text>
-              <Text style={styles.modalText}>
-                Please confirm your personal information:
-              </Text>
-              
-              <View style={styles.modalInfo}>
-                <View style={styles.modalInfoRow}>
-                  <Text style={styles.modalInfoLabel}>Email:</Text>
-                  <Text style={styles.modalInfoValue}>{email}</Text>
-                </View>
-                <View style={styles.modalInfoRow}>
-                  <Text style={styles.modalInfoLabel}>Phone:</Text>
-                  <Text style={styles.modalInfoValue}>{formatPhoneNumber(phone)}</Text>
-                </View>
-              </View>
+      {/* Info Box */}
+      <View style={styles.infoBox}>
+        {/* Email Row */}
+        <View style={styles.row}>
+          <MaterialIcons name="email" size={20} color="#FEB914" />
+          <Text style={styles.infoText}>{email}</Text>
+          <View style={styles.lockIcon}>
+            <MaterialIcons name="lock" size={16} color="#666" />
+          </View>
+        </View>
 
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.modalButtonCancel]}
-                  onPress={() => setShowConfirmationModal(false)}
-                >
-                  <Text style={styles.modalButtonCancelText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.modalButtonConfirm]}
-                  onPress={handleFinalConfirm}
-                >
-                  <Text style={styles.modalButtonConfirmText}>Confirm</Text>
-                </TouchableOpacity>
+        {/* Phone Row */}
+        <View style={styles.row}>
+          <Ionicons name="call" size={20} color="#FEB914" />
+          <Text style={styles.infoText}>{formatPhoneNumber(phone)}</Text>
+          <View style={styles.lockIcon}>
+            <MaterialIcons name="lock" size={16} color="#666" />
+          </View>
+        </View>
+      </View>
+
+      {/* Info Note */}
+      <View style={styles.noteBox}>
+        <Ionicons name="information-circle-outline" size={16} color="#FEB914" />
+        <Text style={styles.noteText}>
+          Contact support to update your email or phone number
+        </Text>
+      </View>
+
+      {/* Confirm Button */}
+      <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
+        <Text style={styles.confirmText}>Confirm</Text>
+      </TouchableOpacity>
+
+      {/* Confirmation Modal */}
+      <Modal
+        visible={showConfirmationModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowConfirmationModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalIcon}>
+              <Ionicons name="checkmark-circle" size={40} color="#FEB914" />
+            </View>
+            <Text style={styles.modalTitle}>Confirm Information</Text>
+            <Text style={styles.modalText}>
+              Please confirm your personal information:
+            </Text>
+            
+            <View style={styles.modalInfo}>
+              <View style={styles.modalInfoRow}>
+                <Text style={styles.modalInfoLabel}>Email:</Text>
+                <Text style={styles.modalInfoValue}>{email}</Text>
+              </View>
+              <View style={styles.modalInfoRow}>
+                <Text style={styles.modalInfoLabel}>Phone:</Text>
+                <Text style={styles.modalInfoValue}>{formatPhoneNumber(phone)}</Text>
               </View>
             </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setShowConfirmationModal(false)}
+              >
+                <Text style={styles.modalButtonCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonConfirm]}
+                onPress={handleFinalConfirm}
+              >
+                <Text style={styles.modalButtonConfirmText}>Confirm</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </Modal>
-      </View>
-    </TouchableWithoutFeedback>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
-// Add loading styles to your existing styles
 const styles = StyleSheet.create({
-  // ... your existing styles
   container: {
     flex: 1,
     backgroundColor: "black",
@@ -328,7 +208,7 @@ const styles = StyleSheet.create({
     borderColor: "#FEB914",
     borderRadius: 10,
     padding: 15,
-    marginBottom: 40,
+    marginBottom: 20,
   },
   row: {
     flexDirection: "row",
@@ -342,14 +222,22 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 14,
   },
-  input: {
+  lockIcon: {
+    padding: 4,
+  },
+  noteBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1A1A1A",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 40,
+  },
+  noteText: {
+    color: "#999",
+    fontSize: 12,
+    marginLeft: 8,
     flex: 1,
-    marginLeft: 10,
-    color: "white",
-    fontSize: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "#FEB914",
-    padding: 5,
   },
   confirmButton: {
     backgroundColor: "#FEB914",

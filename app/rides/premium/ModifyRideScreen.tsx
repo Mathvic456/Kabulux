@@ -81,7 +81,7 @@ export default function ModifyRideScreen({setScreen, goBack}: {setScreen: (scree
         <View style={styles.rideDetails}>
           <Text style={styles.carName}>Mustang Shelby GT</Text>
           <View style={styles.ratingContainer}>
-            <Ionicons name="star" size={16} color="#FFD700" />
+            <Ionicons name="star" size={16} color="#f7b731" />
             <Text style={styles.ratingText}>4.9 (531 reviews)</Text>
           </View>
           <Image
@@ -138,7 +138,7 @@ export default function ModifyRideScreen({setScreen, goBack}: {setScreen: (scree
             ))}
             
             <TouchableOpacity style={styles.addStopContainer} onPress={toggleAddStopOverlay}>
-              <Feather name="plus-circle" size={20} color="#FFD700" />
+              <Feather name="plus-circle" size={20} color="#f7b731" />
               <Text style={styles.addStopText}>Add Stop</Text>
             </TouchableOpacity>
             

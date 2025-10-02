@@ -10,7 +10,12 @@ import WalletScreen from "./WalletScreen";
 
 const Tab = createBottomTabNavigator();
 
-export default function TabNavigator({ setScreen, setSelectedRide }) {
+type TabNavigatorProps = {
+  setScreen: (screen: string) => void;
+  setSelectedRide: (ride: any) => void;
+};
+
+export default function TabNavigator({ setScreen, setSelectedRide }: TabNavigatorProps) {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -47,11 +52,7 @@ export default function TabNavigator({ setScreen, setSelectedRide }) {
       </Tab.Screen>
       
       <Tab.Screen name="Bookings">
-        {() => <BookingsScreen setScreen={function (screen: string): void {
-          throw new Error("Function not implemented.");
-        } } setSelectedRide={function (ride: any): void {
-          throw new Error("Function not implemented.");
-        } } />}
+       {() => <BookingsScreen setScreen={setScreen} setSelectedRide={setSelectedRide}/>}
       </Tab.Screen>
 
       {/* Pass setScreen down to WalletScreen */}

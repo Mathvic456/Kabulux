@@ -2,6 +2,7 @@ import { useState } from "react";
 import AddFundsScreen from "./addFunds/AddFundsScreen";
 import CryptoDepositScreenOne from "./addFunds/CryptoDepositScreenOne";
 import CryptoDepositScreenTwo from "./addFunds/CryptoDepositScreenTwo";
+import DynamicPayStackWebViewScreen from "./addFunds/DynamicPayStackWebViewScreen";
 import PaymentMethodScreen from "./addFunds/PaymentMethodScreen";
 import RedeemPointsScreen from "./addFunds/RedeemPointsScreen";
 import AnalyticsScreen from "./AnalyticsScreen";
@@ -89,6 +90,7 @@ type Screen =
   | "modifyRide"
   | "resetCredentials"
   | "businessCodeScreen"
+  | "paystack"
 
 
 export default function MainNavigator() {
@@ -268,6 +270,13 @@ export default function MainNavigator() {
         <ReferAndEarnScreen
           goBack={() => setScreen("profile")}
           next={() => setScreen("dashboard")}
+        />
+      );
+
+    case "paystack":
+      return (
+        <DynamicPayStackWebViewScreen
+          goBack={() => setScreen("addFunds")}
         />
       );
 
