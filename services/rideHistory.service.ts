@@ -34,31 +34,11 @@ export type RideHistoryResponse = {
 export const useRideHistory = (enabled: boolean) => {
   return useQuery({
     queryKey: ["rideHistory"],
-<<<<<<< HEAD
     queryFn: async () => {
       const res = await api.get<{ data: RideHistoryResponse }>("rides/history/");
       console.log("Ride history API response:", res.data);
       return res.data?.data ?? []; 
     },
     enabled, // Only fetch when true
-=======
-    queryFn: async (): Promise<RideHistoryResponse> => {
-      try {
-        console.log("🔄 Fetching ride history...");
-        const res = await api.get<RideHistoryResponse>("rides/history/");
-        console.log("📦 Ride history response:", res.data);
-        return res.data; // Directly return res.data, not res.data.data
-      } catch (error: any) {
-        console.error("🚨 Ride history fetch error:", error);
-        
-        if (error.response?.status === 401) {
-          throw new Error("Authentication failed. Please login again.");
-        } else {
-          throw new Error("Failed to load ride history. Please try again.");
-        }
-      }
-    },
-    retry: 1,
->>>>>>> b17ea38803b3ce506dc0ab1b208f894776b83738
   });
 };

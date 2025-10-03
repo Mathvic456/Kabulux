@@ -10,17 +10,7 @@ import WalletScreen from "./WalletScreen";
 
 const Tab = createBottomTabNavigator();
 
-<<<<<<< HEAD
-
 export default function TabNavigator({ setScreen, setSelectedRide }) {
-=======
-type TabNavigatorProps = {
-  setScreen: (screen: string) => void;
-  setSelectedRide: (ride: any) => void;
-};
-
-export default function TabNavigator({ setScreen, setSelectedRide }: TabNavigatorProps) {
->>>>>>> b17ea38803b3ce506dc0ab1b208f894776b83738
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -42,7 +32,9 @@ export default function TabNavigator({ setScreen, setSelectedRide }: TabNavigato
           if (route.name === "Home") {
             return <AntDesign name="home" size={20} color={color} />;
           } else if (route.name === "Bookings") {
-            return <FontAwesome6 name="clock-rotate-left" size={20} color={color} />;
+            return (
+              <FontAwesome6 name="clock-rotate-left" size={20} color={color} />
+            );
           } else if (route.name === "Wallet") {
             return <Ionicons name="wallet" size={20} color={color} />;
           } else if (route.name === "Profile") {
@@ -55,9 +47,18 @@ export default function TabNavigator({ setScreen, setSelectedRide }: TabNavigato
       <Tab.Screen name="Home">
         {() => <HomeScreen setScreen={setScreen} />}
       </Tab.Screen>
-      
+
       <Tab.Screen name="Bookings">
-       {() => <BookingsScreen setScreen={setScreen} setSelectedRide={setSelectedRide}/>}
+        {() => (
+          <BookingsScreen
+            setScreen={function (screen: string): void {
+              throw new Error("Function not implemented.");
+            }}
+            setSelectedRide={function (ride: any): void {
+              throw new Error("Function not implemented.");
+            }}
+          />
+        )}
       </Tab.Screen>
 
       {/* Pass setScreen down to WalletScreen */}

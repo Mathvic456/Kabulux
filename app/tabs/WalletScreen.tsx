@@ -1,13 +1,18 @@
+import {
+  useFundWalletEndPoint,
+  useGetMyBalance,
+} from "@/services/funding.service";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import {
+  Linking,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 
-const WalletScreen = ({ setScreen }) => {
+const WalletScreen = ({ setScreen }: any) => {
   const transactions = [
     {
       id: 1,
@@ -28,7 +33,21 @@ const WalletScreen = ({ setScreen }) => {
       amount: "₦26,000",
     },
   ];
-
+  const fundWallet = useFundWalletEndPoint();
+  const { data: balanceData, isLoading } = useGetMyBalance();
+  const handleFundWallet = () => {
+    fundWallet.mutate(
+      { amount: 20000, channel: "card" },
+      {
+        onSuccess: (res) => {
+          const checkoutUrl = res.data?.data?.authorization_url;
+          if (checkoutUrl) {
+            Linking.openURL(checkoutUrl);
+          }
+        },
+      }
+    );
+  };
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
@@ -60,7 +79,9 @@ const WalletScreen = ({ setScreen }) => {
               marginVertical: 10,
             }}
           >
-            ₦425,000
+            {isLoading
+              ? "Loading..."
+              : `₦${balanceData?.balance?.toLocaleString() ?? 0}`}
           </Text>
 
           <View
@@ -89,9 +110,7 @@ const WalletScreen = ({ setScreen }) => {
                 paddingHorizontal: 25,
                 borderRadius: 30,
               }}
-
-              onPress={() => setScreen("addFunds")}   // 👈 navigate to AddFundsScreen
-
+              onPress={handleFundWallet} // 👈 navigate to AddFundsScreen
             >
               <Ionicons name="add" size={18} color="#000" />
               <Text
@@ -114,9 +133,7 @@ const WalletScreen = ({ setScreen }) => {
                 paddingHorizontal: 25,
                 borderRadius: 30,
               }}
-
-              onPress={() => setScreen("redeemPoints")}   // 👈 navigate to AddFundsScreen
-
+              onPress={() => setScreen("redeemPoints")}
             >
               <Ionicons name="gift-outline" size={18} color="#FEB914" />
               <Text
@@ -152,7 +169,9 @@ const WalletScreen = ({ setScreen }) => {
               borderBottomColor: "#FEB91433",
             }}
           >
-            <Text style={{ color: "#fff", flex: 1 }}>Manage Payment Methods</Text>
+            <Text style={{ color: "#fff", flex: 1 }}>
+              Manage Payment Methods
+            </Text>
             <Ionicons name="chevron-forward" size={20} color="#FEB914" />
           </TouchableOpacity>
 

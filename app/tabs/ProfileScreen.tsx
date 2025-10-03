@@ -96,14 +96,9 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
             }}
           />
           <Text style={{ color: "#fff", fontSize: 18, fontWeight: "600" }}>
-<<<<<<< HEAD
             {profile && `${profile.first_name} ${profile.last_name}`}
         </Text>
 
-=======
-            Craig
-          </Text>
->>>>>>> b17ea38803b3ce506dc0ab1b208f894776b83738
           <View style={{ flexDirection: "row", marginTop: 5 }}>
             <Text style={{ color: "#fff", marginRight: 5 }}>4.99</Text>
             <FontAwesome name="star" size={14} color="#f7b731" />

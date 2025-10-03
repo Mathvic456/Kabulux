@@ -4,22 +4,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-<<<<<<< HEAD
+
   Image,
   RefreshControl,
   ScrollView,
-=======
-  Alert,
-  Image,
->>>>>>> b17ea38803b3ce506dc0ab1b208f894776b83738
   Text,
   TouchableOpacity,
   View
 } from "react-native";
-<<<<<<< HEAD
-
-=======
->>>>>>> b17ea38803b3ce506dc0ab1b208f894776b83738
 
 interface Ride {
   id: number;
@@ -39,12 +31,8 @@ interface RideCardProps {
 }
 
 const RideCard: React.FC<RideCardProps> = ({ ride, setScreen, setSelectedRide }) => {
-<<<<<<< HEAD
 
    const formatDate = (dateString: string) => {
-=======
-  const formatDate = (dateString: string) => {
->>>>>>> b17ea38803b3ce506dc0ab1b208f894776b83738
     if (!dateString) return "Date not available";
     
     try {
@@ -60,10 +48,6 @@ const RideCard: React.FC<RideCardProps> = ({ ride, setScreen, setSelectedRide })
     }
   };
 
-<<<<<<< HEAD
-  
-=======
->>>>>>> b17ea38803b3ce506dc0ab1b208f894776b83738
   return (
     <TouchableOpacity
       onPress={() => {
@@ -158,7 +142,6 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
   // Integrate React Query for data fetching
   const { data: rideHistoryData, isLoading, refetch, isRefetching } = useRideHistory(true);
 
-<<<<<<< HEAD
   // Format date function
  
 
@@ -194,36 +177,7 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
       image: getCarImage(ride.vehicle?.type), // Helper function to get appropriate image
       // Add other fields as needed
     }));
-=======
-  // Empty mock data - no rides or deliveries
-  const mockRides: Ride[] = [];
 
-  // Simulate API call with empty data
-  const fetchRides = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 2500));
-      
-      // Use empty mock data
-      setRides(mockRides);
-      
-    } catch (error) {
-      console.error('Error fetching rides:', error);
-      Alert.alert("Error", "Failed to load ride history");
-      setRides([]); // Fallback to empty array
-    } finally {
-      setIsLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  // Pull to refresh function
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchRides();
->>>>>>> b17ea38803b3ce506dc0ab1b208f894776b83738
   };
 
   const checkToken = async () => {
@@ -234,7 +188,6 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
     checkToken();
   })
 
-<<<<<<< HEAD
 
   // Pull to refresh function
   const onRefresh = () => {
@@ -244,9 +197,6 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
   // Get transformed rides
   const rides = rideHistoryData?.results ? transformRides(rideHistoryData.results) : [];
   // Filter rides based on active tab
-=======
-  // Filter rides based on active tab (will always be empty)
->>>>>>> b17ea38803b3ce506dc0ab1b208f894776b83738
   const filteredRides = rides.filter((ride) => ride.type === activeTab);
 
   if (isLoading) {
@@ -428,7 +378,6 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
         </TouchableOpacity>
       </View>
 
-<<<<<<< HEAD
       {/* Ride History Label */}
       <Text style={{ color: "#fff", fontSize: 16, textAlign: "center", marginBottom: 15 }}>
         {activeTab === "ride" ? "Ride History" : "Delivery History"}
@@ -488,17 +437,6 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
           </View>
         )}
       </ScrollView>
-=======
-      {/* Empty State Message */}
-      <View style={{ 
-        flex: 1, 
-        justifyContent: "center", 
-        alignItems: "center",
-        paddingHorizontal: 40
-      }}>
-        {renderEmptyState()}
-      </View>
->>>>>>> b17ea38803b3ce506dc0ab1b208f894776b83738
 
       {/* Bottom Navigation */}
       <View
