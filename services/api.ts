@@ -15,23 +15,26 @@ export const api: AxiosInstance = axios.create({
 
 api.interceptors.request.use(async (config) => {
   const requestId = Math.random().toString(36).substring(7);
-  
+
   try {
     console.log(`🔧 [API Request ${requestId}] Starting request to:`, config.url);
     console.log(`🔧 [API Request ${requestId}] Method:`, config.method?.toUpperCase());
-    
-    const token = await AsyncStorage.getItem("token");
-    console.log(`🔐 [API Request ${requestId}] Token found in storage:`, !!token);
-    
-    if (token) {
-      console.log(`🔐 [API Request ${requestId}] Token length:`, token.length);
-      console.log(`🔐 [API Request ${requestId}] Token preview:`, token.substring(0, 20) + '...');
-      
-      config.headers.Authorization = `Bearer ${token}`;
-      console.log(`✅ [API Request ${requestId}] Authorization header set with Bearer token`);
+
+  
+    if (!config.url?.includes("auth/login/")) { //I added this so we can skip token generation when logging in, that was the problem
+      const token = await AsyncStorage.getItem("token");
+      console.log(`🔐 [API Request ${requestId}] Token found in storage:`, !!token); 
+
+      if (token) {
+        console.log(`🔐 [API Request ${requestId}] Token length:`, token.length);
+        console.log(`🔐 [API Request ${requestId}] Token preview:`, token.substring(0, 20) + '...');
+        config.headers.Authorization = `Bearer ${token}`;
+        console.log(`✅ [API Request ${requestId}] Authorization header set with Bearer token`);
+      } else {
+        console.log(`❌ [API Request ${requestId}] No token found in AsyncStorage`);
+      }
     } else {
-      console.log(`❌ [API Request ${requestId}] No token found in AsyncStorage`);
-      console.log(`❌ [API Request ${requestId}] Available storage keys:`, await AsyncStorage.getAllKeys());
+      console.log(`⚡ [API Request ${requestId}] Skipping token for login endpoint`);
     }
 
     // Log request headers (excluding sensitive data)
@@ -40,7 +43,7 @@ api.interceptors.request.use(async (config) => {
       safeHeaders.Authorization = safeHeaders.Authorization.substring(0, 20) + '...';
     }
     console.log(`📋 [API Request ${requestId}] Request headers:`, safeHeaders);
-    
+
     if (config.data) {
       console.log(`📦 [API Request ${requestId}] Request data:`, config.data);
     }
@@ -48,9 +51,10 @@ api.interceptors.request.use(async (config) => {
   } catch (e) {
     console.error(`🚨 [API Request ${requestId}] Token read error:`, e);
   }
-  
+
   return config;
 });
+
 
 api.interceptors.response.use(
   (response) => {

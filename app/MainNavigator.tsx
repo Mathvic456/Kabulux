@@ -100,6 +100,20 @@ export default function MainNavigator() {
   const [selectedRide, setSelectedRide] = useState<any>(null);
 
   const [rideOptions, setRideOptions] = useState<any>(null);
+  const [pickupLocationData, setPickupLocationData] = useState<any>(null);
+  const [bookingData, setBookingData] = useState<any>(null);
+
+
+  const handleSetScreen = (newScreen: Screen, params?: any) => {
+    
+    if (newScreen === "planRide" && params) {
+      setPickupLocationData(params);
+    }
+    if (newScreen === "bookingScreen" && params) {
+      setBookingData(params);
+    }
+    setScreen(newScreen);
+  };
 
 
   switch (screen) {
@@ -329,7 +343,7 @@ export default function MainNavigator() {
 
     case "orderScreen":
       return (
-        <PickUpScreen setScreen={setScreen}
+        <PickUpScreen setScreen={handleSetScreen}
         goBack={() => setScreen("dashboard")}
         />);
 
@@ -337,12 +351,14 @@ export default function MainNavigator() {
       return (
         <PlanRideScreen setScreen={setScreen}
         goBack={() => setScreen("orderScreen")} 
+        locationData={pickupLocationData}
         />);
 
     case "bookingScreen":
       return (
         <BookingScreen setScreen={setScreen}
         goBack={() => setScreen("planRide")}
+        {...bookingData}
         />);  
 
     case "originalPriceDetails":

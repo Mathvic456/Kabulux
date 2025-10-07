@@ -4,12 +4,21 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Animated,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
-  View,
+  TouchableWithoutFeedback,
+  View
 } from "react-native";
+import 'react-native-get-random-values';
+import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
+
+
+const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_API_KEY;
+
 
 interface UserLocation {
   address: string;
@@ -28,18 +37,17 @@ export default function PickUpScreen({ setScreen, goBack }: {
   const [pickup, setPickup] = useState("");
   const [isGettingLocation, setIsGettingLocation] = useState(true);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
-  const slideAnim = useRef(new Animated.Value(0)).current; // Start at 0 (already visible)
+  const slideAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     getUserLocation();
     
-    // Start the animation immediately without timeout
     Animated.timing(slideAnim, {
       toValue: 0,
       duration: 500,
       useNativeDriver: true,
     }).start();
-  }, []); // Removed slideAnim dependency
+  }, []);
 
   const getUserLocation = async () => {
     try {
@@ -61,7 +69,7 @@ export default function PickUpScreen({ setScreen, goBack }: {
         longitude: location.coords.longitude,
       });
       
-      if (addresses.length > 0) {
+      if (addresses && addresses.length > 0) {
         const address = addresses[0];
         const formattedAddress = formatAddress(address);
         
@@ -78,7 +86,6 @@ export default function PickUpScreen({ setScreen, goBack }: {
         setUserLocation(locationData);
         setPickup(formattedAddress);
         
-        // Auto-navigate after getting location (optional - you can remove this too if you want)
         setTimeout(() => {
           setScreen("planRide", locationData);
         }, 1500);
@@ -93,9 +100,10 @@ export default function PickUpScreen({ setScreen, goBack }: {
   };
 
   const formatAddress = (address: Location.LocationGeocodedAddress): string => {
+    if (!address) return "";
+    
     const parts = [];
     
-    // Start with the most specific details first
     if (address.name && address.name !== address.street) parts.push(address.name);
     if (address.street) parts.push(address.street);
     if (address.district) parts.push(address.district);
@@ -104,7 +112,6 @@ export default function PickUpScreen({ setScreen, goBack }: {
     if (address.postalCode) parts.push(address.postalCode);
     if (address.country) parts.push(address.country);
     
-    // Filter out any empty parts and join with commas
     return parts.filter(part => part && part.trim() !== '').join(', ');
   };
 
@@ -127,111 +134,218 @@ export default function PickUpScreen({ setScreen, goBack }: {
     getUserLocation();
   };
 
-  // Function to display address in a more readable format
   const renderAddressDetails = () => {
     if (!userLocation) return null;
 
     return (
       <View style={styles.locationDetails}>
-        {/* <Text style={styles.detailTitle}>📍 Your Current Address:</Text>
-        <Text style={styles.addressText}>{userLocation.address}</Text>
-        <View style={styles.addressBreakdown}>
-          {userLocation.address.split(', ').map((part, index) => (
-            <Text key={index} style={styles.addressPart}>
-              {part.trim()}
-            </Text>
-          ))}
-        </View> */}
+        {/* Address details commented out */}
       </View>
     );
   };
 
   return (
-    <View style={styles.container}>
-      {/* Top Navigation */}
-      <View style={styles.topBar}>
-        <TouchableOpacity style={styles.iconContainer} onPress={goBack}>
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.iconContainer} onPress={handleLocatePress}>
-          <Ionicons name="locate" size={24} color="white" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Map Placeholder with Loading State */}
-      <View style={styles.mapPlaceholder}>
-        {isGettingLocation ? (
-          <View style={styles.loadingContainer}>
-            <Ionicons name="locate" size={50} color="#f6a623" />
-            <Text style={styles.loadingText}>Finding your location...</Text>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.container}>
+          {/* Top Navigation */}
+          <View style={styles.topBar}>
+            <TouchableOpacity style={styles.iconContainer} onPress={goBack}>
+              <Ionicons name="arrow-back" size={24} color="white" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconContainer} onPress={handleLocatePress}>
+              <Ionicons name="locate" size={24} color="white" />
+            </TouchableOpacity>
           </View>
-        ) : userLocation ? (
-          <View style={styles.locationFoundContainer}>
-            <Ionicons name="checkmark-circle" size={50} color="#4CAF50" />
-            <Text style={styles.locationFoundText}>Location Found!</Text>
-            <Text style={styles.addressPreview} numberOfLines={2}>
-              {userLocation.address}
-            </Text>
+
+          {/* Map Placeholder with Loading State */}
+          <View style={styles.mapPlaceholder}>
+            {isGettingLocation ? (
+              <View style={styles.loadingContainer}>
+                <Ionicons name="locate" size={50} color="#f6a623" />
+                <Text style={styles.loadingText}>Finding your location...</Text>
+              </View>
+            ) : userLocation ? (
+              <View style={styles.locationFoundContainer}>
+                <Ionicons name="checkmark-circle" size={50} color="#4CAF50" />
+                <Text style={styles.locationFoundText}>Location Found!</Text>
+                <Text style={styles.addressPreview} numberOfLines={2}>
+                  {userLocation.address}
+                </Text>
+              </View>
+            ) : (
+              <Text style={styles.mapText}>📍 Enable location services</Text>
+            )}
           </View>
-        ) : (
-          <Text style={styles.mapText}>📍 Enable location services</Text>
-        )}
-      </View>
 
-      {/* Bottom Sheet - Now immediately visible without animation delay */}
-      <View style={styles.bottomSheet}>
-        <Text style={styles.title}>Set your Pick-up Location</Text>
+          {/* Bottom Sheet */}
+          <View style={styles.bottomSheet}>
+            <Text style={styles.title}>Set your Pick-up Location</Text>
 
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="white" />
-          <TextInput
-            style={styles.input}
-            placeholder="Search or use current location"
-            placeholderTextColor="#aaa"
-            value={pickup}
-            onChangeText={setPickup}
-            editable={!isGettingLocation}
-          />
-          <TouchableOpacity 
-            style={styles.locateIcon}
-            onPress={handleUseCurrentLocation}
-            disabled={isGettingLocation}
-          >
-            <Ionicons 
-              name="locate" 
-              size={20} 
-              color={isGettingLocation ? "#666" : "#f6a623"} 
-            />
-          </TouchableOpacity>
+            {/* Search Bar */}
+            <View style={styles.searchContainer}>
+              <GooglePlacesAutocomplete
+                // Required props
+                placeholder="Search or use current location"
+                query={{
+                  key: GOOGLE_API_KEY,
+                  language: "en",
+                  components: "country:ng",
+                }}
+                // Every possible prop has to be used......it's huge because of that
+                autoFillOnNotFound={false}
+                currentLocation={false}
+                currentLocationLabel="Current location"
+                debounce={300}
+                disableScroll={false}
+                enableHighAccuracyLocation={true}
+                enablePoweredByContainer={false}
+                fetchDetails={true}
+                filterReverseGeocodingByTypes={[]}
+                GooglePlacesDetailsQuery={{}}
+                GooglePlacesSearchQuery={{}}
+                GoogleReverseGeocodingQuery={{}}
+                isRowScrollable={true}
+                keyboardShouldPersistTaps="always"
+                listUnderlayColor="#c8c7cc"
+                listViewDisplayed="auto"
+                keepResultsAfterBlur={false}
+                minLength={2}
+                nearbyPlacesAPI="GooglePlacesSearch"
+                numberOfLines={1}
+                onFail={(error) => {
+                  console.error("Places API error:", error);
+                }}
+                onNotFound={() => {
+                  console.log("No results found");
+                }}
+                onPress={(data, details = null) => {
+                  console.log("Selected place:", data.description);
+                  if (details?.geometry?.location) {
+                    const newLocation: UserLocation = {
+                      address: data.description,
+                      latitude: details.geometry.location.lat,
+                      longitude: details.geometry.location.lng,
+                      coordinates: {
+                        latitude: details.geometry.location.lat,
+                        longitude: details.geometry.location.lng,
+                      }
+                    };
+                    setUserLocation(newLocation);
+                    setPickup(data.description);
+                  }
+                }}
+                onTimeout={() => {
+                  console.warn('Google Places Autocomplete: request timeout');
+                }}
+                predefinedPlaces={[]}
+                predefinedPlacesAlwaysVisible={false}
+                suppressDefaultStyles={false}
+                textInputHide={false}
+                textInputProps={{
+                  value: pickup,
+                  onChangeText: setPickup,
+                  placeholderTextColor: "#aaa",
+                }}
+                timeout={20000}
+                styles={{
+                  container: { 
+                    flex: 0,
+                    zIndex: 1,
+                  },
+                  textInputContainer: {
+                    flexDirection: "row",
+                    alignItems: "center",
+                    backgroundColor: "#333",
+                    borderRadius: 8,
+                    paddingHorizontal: 8,
+                  },
+                  textInput: {
+                    flex: 1,
+                    color: "white",
+                    paddingVertical: 10,
+                    marginLeft: 8,
+                    backgroundColor: "transparent",
+                  },
+                  listView: {
+                    backgroundColor: "#222",
+                    marginTop: 5,
+                    borderRadius: 8,
+                    position: "absolute",
+                    top: 50,
+                    left: 0,
+                    right: 0,
+                    maxHeight: 200,
+                  },
+                  row: {
+                    backgroundColor: "#222",
+                    padding: 13,
+                    minHeight: 44,
+                    flexDirection: "row",
+                  },
+                  separator: {
+                    height: 0.5,
+                    backgroundColor: "#444",
+                  },
+                  description: {
+                    color: "#fff",
+                  },
+                  loader: {
+                    flexDirection: "row",
+                    justifyContent: "flex-end",
+                    height: 20,
+                  },
+                }}
+                renderLeftButton={() => (
+                  <Ionicons name="search" size={20} color="white" />
+                )}
+                renderRightButton={() => (
+                  <TouchableOpacity
+                    onPress={handleUseCurrentLocation}
+                    disabled={isGettingLocation}
+                    style={{ marginLeft: 8, padding: 5 }}
+                  >
+                    <Ionicons
+                      name="locate"
+                      size={20}
+                      color={isGettingLocation ? "#666" : "#f6a623"}
+                    />
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+
+            {/* Address Details */}
+            {userLocation && renderAddressDetails()}
+
+            {/* Loading State or Confirm Button */}
+            {isGettingLocation ? (
+              <View style={[styles.confirmButton, { backgroundColor: "#555" }]}>
+                <Text style={styles.confirmText}>
+                  🔍 Getting your address...
+                </Text>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={[
+                  styles.confirmButton,
+                  { backgroundColor: userLocation ? "#4CAF50" : "#f6a623" },
+                ]}
+                disabled={!userLocation}
+                onPress={handleManualConfirm}
+              >
+                <Text style={styles.confirmText}>
+                  {userLocation ? "✓ Use This Address" : "Confirm Pick-up"}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
-
-        {/* Address Details */}
-        {userLocation && renderAddressDetails()}
-
-        {/* Loading State or Confirm Button */}
-        {isGettingLocation ? (
-          <View style={[styles.confirmButton, { backgroundColor: "#555" }]}>
-            <Text style={styles.confirmText}>
-              🔍 Getting your address...
-            </Text>
-          </View>
-        ) : (
-          <TouchableOpacity
-            style={[
-              styles.confirmButton,
-              { backgroundColor: userLocation ? "#4CAF50" : "#f6a623" },
-            ]}
-            disabled={!userLocation}
-            onPress={handleManualConfirm}
-          >
-            <Text style={styles.confirmText}>
-              {userLocation ? "✓ Use This Address" : "Confirm Pick-up"}
-            </Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -316,21 +430,8 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#222",
-    borderRadius: 10,
-    paddingHorizontal: 10,
     marginBottom: 15,
-  },
-  input: {
-    flex: 1,
-    color: "white",
-    paddingVertical: 10,
-    marginLeft: 8,
-  },
-  locateIcon: {
-    marginLeft: 8,
+    zIndex: 1,
   },
   locationDetails: {
     backgroundColor: 'rgba(76, 175, 80, 0.1)',
@@ -339,28 +440,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderLeftWidth: 3,
     borderLeftColor: '#4CAF50',
-  },
-  detailTitle: {
-    color: '#4CAF50',
-    fontWeight: 'bold',
-    marginBottom: 8,
-    fontSize: 14,
-  },
-  addressText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-    lineHeight: 20,
-  },
-  addressBreakdown: {
-    marginTop: 5,
-  },
-  addressPart: {
-    color: '#aaa',
-    fontSize: 12,
-    marginBottom: 2,
-    fontStyle: 'italic',
   },
   confirmButton: {
     borderRadius: 10,

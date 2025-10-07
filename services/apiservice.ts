@@ -1,61 +1,57 @@
-// apiService.js
-import { api } from './api'; // Import your existing axios instance
+// apiService.ts
+import { api } from './api'; // Your axios instance with interceptor
 
 /**
- * Sends ride booking data to the backend using the existing axios configuration
- * @param {Object} bookingData - Contains pickup and destination information
- * @returns {Promise} - Promise that resolves with the server response
+ * Send ride booking/estimate request
+ * @param bookingData - Pickup and dropoff coordinates
+ * @returns Promise resolving with server response
  */
 export const bookRide = async (bookingData: object): Promise<any> => {
   try {
-    // Use the existing api instance which already has token interception
-    const response = await api.post('rides/requests/estimate', bookingData);
-    
-    // No need to manually set headers - the interceptor already handles tokens
+    const response = await api.post('/rides/requests/estimate/', bookingData);
     return response.data;
-  } catch (error) {
-    console.error('Error booking ride:', error);
-    
-    // Enhanced error handling using axios error structure
-    if (typeof error === 'object' && error !== null && 'response' in error) {
-      const err = error as { response: { data: { message?: string }, status: number } };
-      // Server responded with error status (4xx, 5xx)
-      throw new Error(err.response.data.message || `Server error: ${err.response.status}`);
-    } else if (typeof error === 'object' && error !== null && 'request' in error) {
-      // Request made but no response received
-      throw new Error('Network error: Unable to connect to server');
+  } catch (error: any) {
+    console.error('❌ bookRide API Error:', error);
+
+    if (error.response) {
+      // Server responded with an error (4xx, 5xx)
+      const status = error.response.status;
+      const message = error.response.data?.message || `Server error: ${status}`;
+      throw new Error(message);
+    } else if (error.request) {
+      // Request sent but no response
+      throw new Error('Network error: Unable to reach server');
     } else {
-      // Something else happened
-      throw new Error('Request failed: ' + (error as Error).message);
+      // Something else went wrong
+      throw new Error(`Request failed: ${error.message}`);
     }
   }
 };
 
 /**
- * Send location data for tracking or analytics
- * @param {Object} locationData - User's current location data
+ * Optional: Get ride estimate separately
+ * @param rideData - Pickup and dropoff coordinates
+ */
+export const getRideEstimate = async (rideData: object) => {
+  try {
+    const response = await api.post('/rides/requests/estimate/', rideData);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ getRideEstimate API Error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Send location for tracking/analytics
+ * @param locationData - User's current location
  */
 export const sendLocationData = async (locationData: object) => {
   try {
     const response = await api.post('/locations/update', locationData);
     return response.data;
   } catch (error) {
-    console.error('Error sending location data:', error);
-    // Fail silently for analytics to avoid disrupting user flow
-    return null;
-  }
-};
-
-/**
- * Optional: Get ride estimates from backend
- * @param {Object} rideData - Pickup and destination data for estimation
- */
-export const getRideEstimate = async (rideData: object) => {
-  try {
-    const response = await api.post('/rides/estimate', rideData);
-    return response.data;
-  } catch (error) {
-    console.error('Error getting ride estimate:', error);
-    throw error;
+    console.warn('⚠️ Failed to send location data (non-blocking):', error);
+    return null; // Fail silently so it doesn't block user flow
   }
 };

@@ -1,25 +1,27 @@
+import 'react-native-get-random-values';
+
 import { Feather, FontAwesome5, Ionicons } from '@expo/vector-icons';
-import * as Location from 'expo-location';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Animated,
   Dimensions,
-  FlatList,
   Modal,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View
 } from 'react-native';
+import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 
 // Import your existing axios instance
 import { api } from '../../services/api';
 
 const { height } = Dimensions.get('window');
+
+const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_API_KEY || "";
 
 interface UserLocation {
   address: string;
@@ -50,9 +52,6 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
   const [destinationLocation, setDestinationLocation] = useState<DestinationLocation | null>(null);
   const [currentLocation, setCurrentLocation] = useState('Current Location');
   const [showSearchModal, setShowSearchModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const suggestedLocations = [
@@ -95,9 +94,6 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
     return () => clearTimeout(timer);
   }, [locationData]);
 
-  /**
-   * Prepares the booking data in the exact format expected by the backend
-   */
   const prepareBookingData = () => {
     if (!destinationLocation) {
       throw new Error('Destination location is required');
@@ -107,7 +103,6 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
       throw new Error('Current location data is required');
     }
 
-    // Create the data object exactly as specified
     const requestData = {
       pickup_lat: locationData.latitude.toString(),
       pickup_lng: locationData.longitude.toString(),
@@ -118,91 +113,65 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
     return requestData;
   };
 
-  /**
-   * Enhanced handleConfirmRide with comprehensive logging for BOTH locations
-   */
   const handleConfirmRide = async () => {
     console.log('=== 🚗 handleConfirmRide STARTED ===');
     
-    // Log current state values
     console.log('📊 Current State Values:');
     console.log('isSubmitting:', isSubmitting);
     console.log('locationData:', locationData);
     console.log('destinationLocation:', destinationLocation);
     console.log('currentLocation address:', currentLocation);
 
-    // Validate destination selection
     if (!destinationLocation) {
       console.log('❌ No destination selected - showing alert');
       Alert.alert('Select Destination', 'Please select a destination first');
       return;
     }
 
-    // Validate current location data
     if (!locationData) {
       console.log('❌ No location data available - showing alert');
       Alert.alert('Location Error', 'Unable to access your current location. Please try again.');
       return;
     }
 
-    // Prevent multiple simultaneous submissions
     if (isSubmitting) {
       console.log('❌ Already submitting - ignoring press');
       return;
     }
 
     console.log('✅ Starting submission process');
-    
-    // Set submitting state immediately
     setIsSubmitting(true);
     console.log('📊 isSubmitting set to:', true);
 
     try {
-      // Prepare the booking data
       const bookingData = prepareBookingData();
       
-      // COMPREHENSIVE LOGGING FOR BOTH LOCATIONS
       console.log('=== 📍 LOCATION DATA DETAILS ===');
       console.log('🚖 USER CURRENT LOCATION:');
       console.log('📍 Address:', currentLocation);
       console.log('📍 Latitude:', locationData.latitude);
       console.log('📍 Longitude:', locationData.longitude);
-      console.log('📍 Latitude (string):', locationData.latitude.toString());
-      console.log('📍 Longitude (string):', locationData.longitude.toString());
-      console.log('📍 Full locationData object:', JSON.stringify(locationData, null, 2));
       
       console.log('🎯 DESTINATION LOCATION:');
       console.log('📍 Name:', destinationLocation.name);
       console.log('📍 Address:', destinationLocation.address);
       console.log('📍 Latitude:', destinationLocation.latitude);
       console.log('📍 Longitude:', destinationLocation.longitude);
-      console.log('📍 Latitude (string):', destinationLocation.latitude.toString());
-      console.log('📍 Longitude (string):', destinationLocation.longitude.toString());
-      console.log('📍 Full destinationLocation object:', JSON.stringify(destinationLocation, null, 2));
       
       console.log('=== 📦 REQUEST DATA BEING SENT ===');
       console.log('🌐 Endpoint: POST /rides/requests/estimate');
       console.log('📤 Request Body:', JSON.stringify(bookingData, null, 2));
-      console.log('📤 pickup_lat:', bookingData.pickup_lat, '(type:', typeof bookingData.pickup_lat + ')');
-      console.log('📤 pickup_lng:', bookingData.pickup_lng, '(type:', typeof bookingData.pickup_lng + ')');
-      console.log('📤 dropoff_lat:', bookingData.dropoff_lat, '(type:', typeof bookingData.dropoff_lat + ')');
-      console.log('📤 dropoff_lng:', bookingData.dropoff_lng, '(type:', typeof bookingData.dropoff_lng + ')');
-      console.log('==================================');
+      console.log('🌐 Full request URL:', api.defaults.baseURL + '/rides/requests/estimate/');
 
-      // Show immediate feedback
-      Alert.alert('Getting Ride Estimate', 'Please wait while we calculate your ride...', [], {
-        cancelable: false
-      });
+      
 
-      // Use the correct endpoint for getting ride estimates
       console.log('🌐 Sending API request to /rides/requests/estimate...');
-      const response = await api.post('/rides/requests/estimate', bookingData);
+      const response = await api.post('/rides/requests/estimate/', bookingData);
       
       console.log('✅ API Response received:');
       console.log('📥 Response status:', response.status);
       console.log('📥 Response data:', JSON.stringify(response.data, null, 2));
 
-      // Create navigation data with the estimate information
       const navigationData = {
         estimateData: response.data,
         serverResponse: response.data,
@@ -234,7 +203,6 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
       if (error.response) {
         console.error('Response status:', error.response.status);
         console.error('Response data:', error.response.data);
-        console.error('Response headers:', error.response.headers);
       } else if (error.request) {
         console.error('Request made but no response received:', error.request);
       } else {
@@ -263,65 +231,16 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
       
       Alert.alert('Estimate Failed', errorMessage);
     } finally {
-      // Reset loading state regardless of success or failure
       console.log('🏁 Process completed - resetting isSubmitting to false');
       setIsSubmitting(false);
       console.log('📊 isSubmitting set to:', false);
     }
   };
 
-  const searchDestinations = async (query: string) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
-    setIsSearching(true);
-    try {
-      // Use Expo Location geocoding to search for destinations
-      const results = await Location.geocodeAsync(query);
-      
-      const formattedResults = results.map((result, index) => ({
-        id: index,
-        name: query,
-        address: formatAddress(result),
-        latitude: result.latitude,
-        longitude: result.longitude
-      }));
-
-      // Combine with predefined suggestions that match the query
-      const matchingSuggestions = suggestedLocations.filter(loc =>
-        loc.name.toLowerCase().includes(query.toLowerCase()) ||
-        loc.address.toLowerCase().includes(query.toLowerCase())
-      );
-
-      setSearchResults([...formattedResults, ...matchingSuggestions]);
-    } catch (error) {
-      console.error('Search error:', error);
-      Alert.alert('Error', 'Failed to search locations');
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const formatAddress = (address: any): string => {
-    const parts = [];
-    if (address.street) parts.push(address.street);
-    if (address.city) parts.push(address.city);
-    if (address.region) parts.push(address.region);
-    if (address.country) parts.push(address.country);
-    return parts.join(', ');
-  };
-
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    searchDestinations(text);
-  };
-
-  const handleSelectDestination = (location: any) => {
+  const handleSelectDestination = (location: DestinationLocation) => {
     setDestinationLocation(location);
     setShowSearchModal(false);
-    setSearchQuery('');
+    console.log('Destination selected:', location);
   };
 
   const handleSelectSuggestedLocation = (location: any) => {
@@ -338,9 +257,6 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
     return address.substring(0, maxLength) + '...';
   };
 
-  /**
-   * Enhanced test function to log both locations
-   */
   const testButtonPress = () => {
     console.log('=== 🔴 DEBUG BUTTON PRESSED ===');
     console.log('📊 Current State Values:');
@@ -389,49 +305,145 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
           <Text style={styles.modalTitle}>Search Destination</Text>
         </View>
 
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#aaa" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search for a place or address"
-            placeholderTextColor="#666"
-            value={searchQuery}
-            onChangeText={handleSearch}
-            autoFocus
+        <View style={styles.searchContainerWrapper}>
+          <GooglePlacesAutocomplete
+            placeholder="Search for a destination"
+            query={{
+              key: GOOGLE_API_KEY,
+              language: "en",
+              components: "country:ng",
+            }}
+            // All default props explicitly defined
+            autoFillOnNotFound={false}
+            currentLocation={false}
+            currentLocationLabel="Current location"
+            debounce={300}
+            disableScroll={false}
+            enableHighAccuracyLocation={true}
+            enablePoweredByContainer={false}
+            fetchDetails={true}
+            filterReverseGeocodingByTypes={[]}
+            GooglePlacesDetailsQuery={{}}
+            GooglePlacesSearchQuery={{}}
+            GoogleReverseGeocodingQuery={{}}
+            isRowScrollable={true}
+            keyboardShouldPersistTaps="always"
+            listUnderlayColor="#c8c7cc"
+            listViewDisplayed="auto"
+            keepResultsAfterBlur={false}
+            minLength={2}
+            nearbyPlacesAPI="GooglePlacesSearch"
+            numberOfLines={1}
+            onFail={(error) => {
+              console.error("Places API error:", error);
+            }}
+            onNotFound={() => {
+              console.log("No results found");
+            }}
+            onPress={(data, details = null) => {
+              console.log("Selected place:", data.description);
+              if (details?.geometry?.location) {
+                const newLocation: DestinationLocation = {
+                  name: data.structured_formatting?.main_text || data.description,
+                  address: data.description,
+                  latitude: details.geometry.location.lat,
+                  longitude: details.geometry.location.lng,
+                };
+                handleSelectDestination(newLocation);
+              } else {
+                // Fallback if details aren't available
+                const newLocation: DestinationLocation = {
+                  name: data.description,
+                  address: data.description,
+                  latitude: 0,
+                  longitude: 0,
+                };
+                handleSelectDestination(newLocation);
+              }
+            }}
+            onTimeout={() => {
+              console.warn('Google Places Autocomplete: request timeout');
+            }}
+            predefinedPlaces={[]}
+            predefinedPlacesAlwaysVisible={false}
+            suppressDefaultStyles={false}
+            textInputHide={false}
+            textInputProps={{
+              placeholderTextColor: "#666",
+              autoFocus: true,
+            }}
+            timeout={20000}
+            styles={{
+              container: { 
+                flex: 0,
+                zIndex: 1,
+              },
+              textInputContainer: {
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: "#2b2b2b",
+                borderRadius: 10,
+                paddingHorizontal: 15,
+              },
+              textInput: {
+                flex: 1,
+                color: "white",
+                paddingVertical: 12,
+                fontSize: 16,
+                backgroundColor: "transparent",
+              },
+              listView: {
+                backgroundColor: "#1c1c1c",
+                marginTop: 10,
+                borderRadius: 10,
+              },
+              row: {
+                backgroundColor: "#2b2b2b",
+                padding: 15,
+                minHeight: 50,
+                flexDirection: "row",
+                marginBottom: 2,
+              },
+              separator: {
+                height: 1,
+                backgroundColor: "#333",
+              },
+              description: {
+                color: "#fff",
+                fontSize: 15,
+              },
+              loader: {
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                height: 20,
+              },
+            }}
+            renderLeftButton={() => (
+              <Ionicons name="search" size={20} color="#666" style={{ marginRight: 10 }} />
+            )}
           />
         </View>
-
-        {isSearching ? (
-          <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Searching...</Text>
-          </View>
-        ) : (
-          <FlatList
-            data={searchResults}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
+        
+        {/* Suggested locations below the search */}
+        <View style={styles.suggestedSection}>
+          <Text style={styles.suggestedTitle}>Popular Destinations</Text>
+          <ScrollView>
+            {suggestedLocations.map((loc) => (
               <TouchableOpacity 
-                style={styles.searchResultItem}
-                onPress={() => handleSelectDestination(item)}
+                key={loc.id} 
+                style={styles.modalSuggestionItem}
+                onPress={() => handleSelectDestination(loc)}
               >
-                <FontAwesome5 
-                  name="map-marker-alt" 
-                  size={18} 
-                  color="#f0d46d" 
-                />
-                <View style={styles.searchResultText}>
-                  <Text style={styles.searchResultName}>{item.name}</Text>
-                  <Text style={styles.searchResultAddress}>{item.address}</Text>
+                <FontAwesome5 name="map-marker-alt" size={18} color="#f0d46d" />
+                <View style={styles.modalSuggestionText}>
+                  <Text style={styles.modalSuggestionName}>{loc.name}</Text>
+                  <Text style={styles.modalSuggestionAddress}>{loc.address}</Text>
                 </View>
+                <Feather name="chevron-right" size={20} color="#666" />
               </TouchableOpacity>
-            )}
-            ListEmptyComponent={
-              searchQuery ? (
-                <Text style={styles.noResults}>No results found for "{searchQuery}"</Text>
-              ) : null
-            }
-          />
-        )}
+            ))}
+          </ScrollView>
+        </View>
       </View>
     </Modal>
   );
@@ -560,7 +572,6 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
             <Text style={styles.searchButtonText}>Search for another destination</Text>
           </TouchableOpacity>
 
-          {/* Main Confirm Ride Button */}
           <TouchableOpacity 
             style={[
               styles.confirmButton,
@@ -587,7 +598,6 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
             )}
           </TouchableOpacity>
 
-          {/* Debug Button - Shows both locations */}
           <TouchableOpacity 
             style={[styles.confirmButton, { backgroundColor: 'red', marginTop: 10 }]}
             onPress={testButtonPress}
@@ -871,48 +881,42 @@ const styles = StyleSheet.create({
     color: 'white',
     marginLeft: 15,
   },
-  searchContainer: {
+  searchContainerWrapper: {
+    padding: 20,
+    zIndex: 10,
+  },
+  suggestedSection: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  suggestedTitle: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '600',
+    marginBottom: 15,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  modalSuggestionItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    padding: 15,
     backgroundColor: '#2b2b2b',
-    margin: 20,
-    padding: 15,
     borderRadius: 10,
+    marginBottom: 10,
   },
-  searchInput: {
+  modalSuggestionText: {
     flex: 1,
-    color: 'white',
-    marginLeft: 10,
-    fontSize: 16,
-  },
-  searchResultItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#333',
-  },
-  searchResultText: {
     marginLeft: 15,
-    flex: 1,
   },
-  searchResultName: {
+  modalSuggestionName: {
     color: 'white',
     fontSize: 16,
     fontWeight: '500',
+    marginBottom: 4,
   },
-  searchResultAddress: {
+  modalSuggestionAddress: {
     color: '#aaa',
     fontSize: 12,
-    marginTop: 2,
-  },
-  loadingText: {
-    color: '#aaa',
-  },
-  noResults: {
-    color: '#666',
-    textAlign: 'center',
-    marginTop: 20,
-    fontStyle: 'italic',
   },
 });
