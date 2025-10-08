@@ -1,20 +1,22 @@
 import 'react-native-get-random-values';
 
 import { Feather, FontAwesome5, Ionicons } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Animated,
   Dimensions,
+  Image,
   Modal,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 
 // Import your existing axios instance
 import { api } from '../../services/api';
@@ -53,6 +55,7 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
   const [currentLocation, setCurrentLocation] = useState('Current Location');
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const mapRef = useRef<MapView>(null);
 
   const suggestedLocations = [
     { 
@@ -93,6 +96,35 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
 
     return () => clearTimeout(timer);
   }, [locationData]);
+
+  // Fit map to show both markers when destination is selected
+  useEffect(() => {
+    if (locationData && destinationLocation && mapRef.current) {
+      const coordinates = [
+        {
+          latitude: locationData.latitude,
+          longitude: locationData.longitude,
+        },
+        {
+          latitude: destinationLocation.latitude,
+          longitude: destinationLocation.longitude,
+        }
+      ];
+
+      mapRef.current.fitToCoordinates(coordinates, {
+        edgePadding: { top: 100, right: 50, bottom: 300, left: 50 },
+        animated: true,
+      });
+    } else if (locationData && mapRef.current) {
+      // Just center on pickup location
+      mapRef.current.animateToRegion({
+        latitude: locationData.latitude,
+        longitude: locationData.longitude,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      }, 1000);
+    }
+  }, [destinationLocation, locationData]);
 
   const prepareBookingData = () => {
     if (!destinationLocation) {
@@ -162,8 +194,6 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
       console.log('🌐 Endpoint: POST /rides/requests/estimate');
       console.log('📤 Request Body:', JSON.stringify(bookingData, null, 2));
       console.log('🌐 Full request URL:', api.defaults.baseURL + '/rides/requests/estimate/');
-
-      
 
       console.log('🌐 Sending API request to /rides/requests/estimate...');
       const response = await api.post('/rides/requests/estimate/', bookingData);
@@ -313,7 +343,6 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
               language: "en",
               components: "country:ng",
             }}
-            // All default props explicitly defined
             autoFillOnNotFound={false}
             currentLocation={false}
             currentLocationLabel="Current location"
@@ -351,7 +380,6 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
                 };
                 handleSelectDestination(newLocation);
               } else {
-                // Fallback if details aren't available
                 const newLocation: DestinationLocation = {
                   name: data.description,
                   address: data.description,
@@ -424,7 +452,6 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
           />
         </View>
         
-        {/* Suggested locations below the search */}
         <View style={styles.suggestedSection}>
           <Text style={styles.suggestedTitle}>Popular Destinations</Text>
           <ScrollView>
@@ -450,24 +477,94 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
 
   return (
     <View style={styles.container}>
-      <View style={styles.mapPlaceholder}>
+      {/* Map View */}
+      <View style={styles.mapContainer}>
         {locationData ? (
-          <View style={styles.mapContent}>
-            <Text style={styles.mapText}>
-              {destinationLocation ? '📍 Destination Set' : '📍 Your Location'}
-            </Text>
-            <Text style={styles.mapSubtext}>
-              {destinationLocation 
-                ? shortenAddress(destinationLocation.address, 30)
-                : shortenAddress(locationData.address, 30)
-              }
-            </Text>
-          </View>
+          <MapView
+            ref={mapRef}
+            style={styles.map}
+            provider={PROVIDER_GOOGLE}
+            initialRegion={{
+              latitude: locationData.latitude,
+              longitude: locationData.longitude,
+              latitudeDelta: 0.05,
+              longitudeDelta: 0.05,
+            }}
+            showsUserLocation={false}
+            showsMyLocationButton={false}
+            showsCompass={false}
+          >
+            {/* Pickup Location Marker */}
+            <Marker
+              coordinate={{
+                latitude: locationData.latitude,
+                longitude: locationData.longitude,
+              }}
+              title="Pick-up Location"
+              description={locationData.address}
+            >
+              <Image
+                    source={require('../../assets/images/Pickup_marker-removebg-preview.png')}
+                    style={{ width: 40, height: 40 }}
+                    resizeMode="contain"
+                  />
+            </Marker>
+
+            {/* Destination Marker */}
+            {destinationLocation && (
+              <Marker
+                coordinate={{
+                  latitude: destinationLocation.latitude,
+                  longitude: destinationLocation.longitude,
+                }}
+                title="Drop-off Location"
+                description={destinationLocation.address}
+                
+              >
+                <Image
+                    source={require('../../assets/images/Dropoffmarker-removebg-preview.png')}
+                    style={{ width: 40, height: 40 }}
+                    resizeMode="contain"
+                  />
+              </Marker>
+            )}
+
+            {/* Route Line */}
+            {destinationLocation && (
+              <Polyline
+                coordinates={[
+                  {
+                    latitude: locationData.latitude,
+                    longitude: locationData.longitude,
+                  },
+                  {
+                    latitude: destinationLocation.latitude,
+                    longitude: destinationLocation.longitude,
+                  }
+                ]}
+                strokeColor="#f0d46d"
+                strokeWidth={3}
+                lineDashPattern={[1]}
+              />
+            )}
+          </MapView>
         ) : (
-          <Text style={styles.mapText}>[ Map Placeholder ]</Text>
+          <View style={styles.mapPlaceholder}>
+            <ActivityIndicator size="large" color="#f0d46d" />
+            <Text style={styles.mapText}>Loading map...</Text>
+          </View>
+        )}
+
+        {/* Map Info Badge */}
+        {destinationLocation && (
+          <View style={styles.mapInfoBadge}>
+            <Ionicons name="information-circle" size={20} color="#f0d46d" />
+            <Text style={styles.mapInfoText}>Route Preview</Text>
+          </View>
         )}
       </View>
 
+      {/* Top Navigation */}
       <View style={styles.topBar}>
         <TouchableOpacity style={styles.iconContainer} onPress={handleBackPress}>
           <Feather name="arrow-left" size={24} color="white" />
@@ -477,6 +574,7 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
         </TouchableOpacity>
       </View>
 
+      {/* Bottom Panel */}
       <Animated.View style={[styles.bottomPanel, { transform: [{ translateY: slideAnim }] }]}>
         <View style={styles.panelHeader}>
           <TouchableOpacity style={styles.headerIconContainer} onPress={handleBackPress}>
@@ -519,7 +617,7 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
                   <Text style={styles.inputLabel}>Where to?</Text>
                   <TouchableOpacity onPress={() => setShowSearchModal(true)}>
                     <Text style={[styles.inputValue, destinationLocation ? styles.selectedDestination : styles.placeholderText]}>
-                      {destinationLocation ? '📍 ' + shortenAddress(destinationLocation.address, 40) : 'Select your destination'}
+                      {destinationLocation ? '🏁 ' + shortenAddress(destinationLocation.address, 40) : 'Select your destination'}
                     </Text>
                   </TouchableOpacity>
                   {destinationLocation && (
@@ -598,13 +696,6 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={[styles.confirmButton, { backgroundColor: 'red', marginTop: 10 }]}
-            onPress={testButtonPress}
-          >
-            <Text style={styles.confirmButtonText}>DEBUG BOTH LOCATIONS</Text>
-          </TouchableOpacity>
-
           <View style={styles.bottomSpacing} />
         </ScrollView>
       </Animated.View>
@@ -619,21 +710,71 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
-  mapPlaceholder: {
+  mapContainer: {
     flex: 1,
     backgroundColor: '#333',
+    position: 'relative',
+  },
+  map: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  mapPlaceholder: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  mapText: {
+    fontSize: 16,
+    color: '#f0d46d',
+    marginTop: 10,
+  },
+  mapInfoBadge: {
+    position: 'absolute',
+    top: 100,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  mapInfoText: {
+    color: '#f0d46d',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  markerContainer: {
+    alignItems: 'center',
+  },
+  pickupMarker: {
+    backgroundColor: '#4CAF50',
+    borderRadius: 20,
+    padding: 8,
+    borderWidth: 3,
+    borderColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  destinationMarker: {
+    backgroundColor: '#f0d46d',
+    borderRadius: 20,
+    padding: 8,
+    borderWidth: 3,
+    borderColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
   },
   mapContent: {
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  mapText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#f0d46d',
-    marginBottom: 5,
   },
   mapSubtext: {
     fontSize: 14,
@@ -652,7 +793,7 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     padding: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     borderRadius: 50,
   },
   bottomPanel: {
@@ -660,7 +801,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: height * 0.75,
+    height: height * 0.60,
     backgroundColor: '#1c1c1c',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
@@ -731,7 +872,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#f0d46d',
+    backgroundColor: '#4CAF50',
   },
   line: {
     width: 1.5,
@@ -759,7 +900,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   currentLocationText: {
-    color: '#f0d46d',
+    color: '#4CAF50',
     fontWeight: '600',
   },
   placeholderText: {

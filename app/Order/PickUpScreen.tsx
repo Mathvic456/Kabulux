@@ -1,6 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from 'expo-location';
 import React, { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Image } from "react-native";
+import MapView, { Marker } from 'react-native-maps';
+import { darkMapStyle } from '../../styles/darkMapStyle';
+
 import {
   Alert,
   Animated,
@@ -38,6 +42,7 @@ export default function PickUpScreen({ setScreen, goBack }: {
   const [isGettingLocation, setIsGettingLocation] = useState(true);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const slideAnim = useRef(new Animated.Value(0)).current;
+  const mapRef = useRef<MapView>(null);
 
   useEffect(() => {
     getUserLocation();
@@ -48,6 +53,18 @@ export default function PickUpScreen({ setScreen, goBack }: {
       useNativeDriver: true,
     }).start();
   }, []);
+
+  // Animate map to user location when it's available
+  useEffect(() => {
+    if (userLocation && mapRef.current) {
+      mapRef.current.animateToRegion({
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      }, 1000);
+    }
+  }, [userLocation]);
 
   const getUserLocation = async () => {
     try {
@@ -161,23 +178,56 @@ export default function PickUpScreen({ setScreen, goBack }: {
             </TouchableOpacity>
           </View>
 
-          {/* Map Placeholder with Loading State */}
+          {/* Map View */}
           <View style={styles.mapPlaceholder}>
-            {isGettingLocation ? (
-              <View style={styles.loadingContainer}>
-                <Ionicons name="locate" size={50} color="#f6a623" />
-                <Text style={styles.loadingText}>Finding your location...</Text>
+            <MapView
+              ref={mapRef}
+              style={styles.map}
+              initialRegion={{
+                latitude: userLocation?.latitude || 5.0377,
+                longitude: userLocation?.longitude || 7.9128,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+              }}
+              showsUserLocation
+              showsMyLocationButton={false}
+              showsCompass={false}
+              customMapStyle={darkMapStyle}
+
+            >
+              {userLocation && (
+                <Marker
+                  coordinate={userLocation.coordinates}
+                  title="Pick-up Location"
+                  description={userLocation.address}
+                  
+                >
+              <Image
+                  source={require('../../assets/images/Pickup_marker-removebg-preview.png')}
+                  style={{ width: 40, height: 40 }}
+                  resizeMode="contain"
+                />
+                </Marker>
+              )}
+            </MapView>
+
+            {/* Overlay for loading state */}
+            {isGettingLocation && (
+              <View style={styles.overlayContainer}>
+                <View style={styles.loadingContainer}>
+                  <Ionicons name="locate" size={50} color="#f6a623" />
+                  <Text style={styles.loadingText}>Finding your location...</Text>
+                  <ActivityIndicator size="large" color="#f6a623" style={{ marginTop: 10 }} />
+                </View>
               </View>
-            ) : userLocation ? (
-              <View style={styles.locationFoundContainer}>
-                <Ionicons name="checkmark-circle" size={50} color="#4CAF50" />
-                <Text style={styles.locationFoundText}>Location Found!</Text>
-                <Text style={styles.addressPreview} numberOfLines={2}>
-                  {userLocation.address}
-                </Text>
+            )}
+
+            {/* Overlay for location found (brief display) */}
+            {!isGettingLocation && userLocation && (
+              <View style={styles.locationFoundBadge}>
+                <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+                <Text style={styles.locationFoundBadgeText}>Location Found!</Text>
               </View>
-            ) : (
-              <Text style={styles.mapText}>📍 Enable location services</Text>
             )}
           </View>
 
@@ -188,14 +238,12 @@ export default function PickUpScreen({ setScreen, goBack }: {
             {/* Search Bar */}
             <View style={styles.searchContainer}>
               <GooglePlacesAutocomplete
-                // Required props
                 placeholder="Search or use current location"
                 query={{
                   key: GOOGLE_API_KEY,
                   language: "en",
                   components: "country:ng",
                 }}
-                // Every possible prop has to be used......it's huge because of that
                 autoFillOnNotFound={false}
                 currentLocation={false}
                 currentLocationLabel="Current location"
@@ -371,15 +419,21 @@ const styles = StyleSheet.create({
   mapPlaceholder: {
     flex: 1,
     backgroundColor: "#333",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: 'blue',
-    padding: 20,
+    position: 'relative',
+  },
+  map: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  overlayContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loadingContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 20,
   },
   loadingText: {
     color: '#f6a623',
@@ -387,16 +441,22 @@ const styles = StyleSheet.create({
     marginTop: 10,
     textAlign: 'center',
   },
-  locationFoundContainer: {
+  locationFoundBadge: {
+    position: 'absolute',
+    top: 100,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 8,
   },
-  locationFoundText: {
+  locationFoundBadgeText: {
     color: '#4CAF50',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    marginTop: 10,
-    marginBottom: 15,
   },
   addressPreview: {
     color: '#fff',
