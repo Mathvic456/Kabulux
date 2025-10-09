@@ -14,7 +14,7 @@ export default {
     ios: {
       supportsTablet: true,
       config: {
-        googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY,
+        googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
       },
     },
 
@@ -25,6 +25,7 @@ export default {
       },
       edgeToEdgeEnabled: true,
       package: 'com.hunchoexpo.kablux',
+      usesCleartextTraffic: true, // 👈 allows HTTP (non-HTTPS) requests
       config: {
         googleMaps: {
           apiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
@@ -61,8 +62,8 @@ export default {
       eas: {
         projectId: '9d63958b-4d22-43ac-a469-796f1bb6470f',
       },
-      // This makes it easy to access your key in JS code:
-      googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY,
+      googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
+      apiUrl: process.env.EXPO_PUBLIC_API_URL,
     },
 
     owner: 'hunchoexpo',

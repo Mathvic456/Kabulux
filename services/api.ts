@@ -1,7 +1,12 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios, { AxiosInstance, RawAxiosRequestHeaders } from "axios";
+import Constants from "expo-constants";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+if (!Constants.expoConfig?.extra?.apiUrl) {
+  throw new Error("API URL is missing in expoConfig.extra");
+}
+
+const API_URL = Constants.expoConfig.extra.apiUrl;
 
 console.log("🔧 [API Config] Base URL:", API_URL);
 

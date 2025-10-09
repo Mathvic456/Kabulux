@@ -1,6 +1,7 @@
 import 'react-native-get-random-values';
 
 import { Feather, FontAwesome5, Ionicons } from '@expo/vector-icons';
+import Constants from "expo-constants";
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -17,13 +18,20 @@ import {
 } from 'react-native';
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import { darkMapStyle } from '../../styles/darkMapStyle';
 
 // Import your existing axios instance
 import { api } from '../../services/api';
 
 const { height } = Dimensions.get('window');
 
-const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_API_KEY || "";
+
+
+if (!Constants.expoConfig?.extra?.googleMapsApiKey) {
+  throw new Error("API is missing in expoConfig.extra");
+}
+
+const GOOGLE_API_KEY = Constants.expoConfig.extra.googleMapsApiKey;
 
 interface UserLocation {
   address: string;
@@ -493,6 +501,7 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
             showsUserLocation={false}
             showsMyLocationButton={false}
             showsCompass={false}
+            customMapStyle={darkMapStyle}
           >
             {/* Pickup Location Marker */}
             <Marker

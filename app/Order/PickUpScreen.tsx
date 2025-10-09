@@ -5,6 +5,8 @@ import { ActivityIndicator, Image } from "react-native";
 import MapView, { Marker } from 'react-native-maps';
 import { darkMapStyle } from '../../styles/darkMapStyle';
 
+
+import Constants from "expo-constants";
 import {
   Alert,
   Animated,
@@ -21,7 +23,11 @@ import 'react-native-get-random-values';
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 
 
-const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_API_KEY;
+if (!Constants.expoConfig?.extra?.googleMapsApiKey) {
+  throw new Error("API is missing in expoConfig.extra");
+}
+
+const GOOGLE_API_KEY = Constants.expoConfig.extra.googleMapsApiKey;
 
 
 interface UserLocation {
@@ -39,14 +45,13 @@ export default function PickUpScreen({ setScreen, goBack }: {
   goBack: () => void; 
 }) {
   const [pickup, setPickup] = useState("");
-  const [isGettingLocation, setIsGettingLocation] = useState(true);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const slideAnim = useRef(new Animated.Value(0)).current;
   const mapRef = useRef<MapView>(null);
 
   useEffect(() => {
-    getUserLocation();
-    
+    // Don't automatically get location on mount
     Animated.timing(slideAnim, {
       toValue: 0,
       duration: 500,
@@ -102,10 +107,7 @@ export default function PickUpScreen({ setScreen, goBack }: {
         
         setUserLocation(locationData);
         setPickup(formattedAddress);
-        
-        setTimeout(() => {
-          setScreen("planRide", locationData);
-        }, 1500);
+        // REMOVED: The automatic navigation that was here
       }
       
     } catch (error) {
@@ -139,12 +141,7 @@ export default function PickUpScreen({ setScreen, goBack }: {
   };
 
   const handleUseCurrentLocation = () => {
-    if (userLocation) {
-      setPickup(userLocation.address);
-      setScreen("planRide", userLocation);
-    } else {
-      getUserLocation();
-    }
+    getUserLocation();
   };
 
   const handleLocatePress = () => {
