@@ -25,7 +25,6 @@ export default {
       },
       edgeToEdgeEnabled: true,
       package: 'com.hunchoexpo.kablux',
-      usesCleartextTraffic: true, // 👈 allows HTTP (non-HTTPS) requests
       config: {
         googleMaps: {
           apiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
