@@ -104,9 +104,10 @@ export default function PickUpScreen({ setScreen, goBack }: {
             longitude: location.coords.longitude,
           }
         };
-        
+        setIsGettingLocation(false);
         setUserLocation(locationData);
         setPickup(formattedAddress);
+        
         // REMOVED: The automatic navigation that was here
       }
       
@@ -134,11 +135,17 @@ export default function PickUpScreen({ setScreen, goBack }: {
     return parts.filter(part => part && part.trim() !== '').join(', ');
   };
 
-  const handleManualConfirm = () => {
-    if (pickup.trim() && userLocation) {
-      setScreen("planRide", userLocation);
-    }
-  };
+const handleManualConfirm = () => {
+  if (userLocation) {
+    const finalLocation: UserLocation = {
+      ...userLocation,
+      address: userLocation.address || pickup || "Unnamed Location",
+    };
+    setScreen("planRide", finalLocation);
+  } else {
+    Alert.alert("No location", "Please pick a location or use your current one.");
+  }
+};
 
   const handleUseCurrentLocation = () => {
     getUserLocation();
@@ -199,11 +206,14 @@ export default function PickUpScreen({ setScreen, goBack }: {
                   description={userLocation.address}
                   
                 >
-              <Image
-                  source={require('../../assets/images/Pickup_marker-removebg-preview.png')}
+              <View style={styles.markerContainer}>
+                <Image
+                  source={require('../../assets/images/target.png')}
                   style={{ width: 40, height: 40 }}
                   resizeMode="contain"
                 />
+              </View>
+              
                 </Marker>
               )}
             </MapView>
@@ -301,13 +311,20 @@ export default function PickUpScreen({ setScreen, goBack }: {
                     flex: 0,
                     zIndex: 1,
                   },
-                  textInputContainer: {
-                    flexDirection: "row",
-                    alignItems: "center",
-                    backgroundColor: "#333",
-                    borderRadius: 8,
-                    paddingHorizontal: 8,
-                  },
+                 textInputContainer: {
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: "#2b2b2b",
+                borderRadius: 12,
+                paddingHorizontal: 12,
+                borderWidth: 1,
+                borderColor: "#444",
+                elevation: 2,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.2,
+                shadowRadius: 2,
+              },
                   textInput: {
                     flex: 1,
                     color: "white",
@@ -316,21 +333,26 @@ export default function PickUpScreen({ setScreen, goBack }: {
                     backgroundColor: "transparent",
                   },
                   listView: {
-                    backgroundColor: "#222",
-                    marginTop: 5,
-                    borderRadius: 8,
-                    position: "absolute",
-                    top: 50,
-                    left: 0,
-                    right: 0,
-                    maxHeight: 200,
+                    backgroundColor: "#1c1c1c",
+                    marginTop: 10,
+                    borderRadius: 12,
+                    maxHeight: 250,
+                    elevation: 5,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.25,
+                    shadowRadius: 3.84,
+                    borderWidth: 1,
+                    borderColor: '#333',
                   },
-                  row: {
-                    backgroundColor: "#222",
-                    padding: 13,
-                    minHeight: 44,
-                    flexDirection: "row",
-                  },
+                row: {
+                  backgroundColor: "#2b2b2b",
+                  padding: 15,
+                  minHeight: 50,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginBottom: 1,
+                },
                   separator: {
                     height: 0.5,
                     backgroundColor: "#444",
@@ -374,18 +396,18 @@ export default function PickUpScreen({ setScreen, goBack }: {
                 </Text>
               </View>
             ) : (
-              <TouchableOpacity
-                style={[
-                  styles.confirmButton,
-                  { backgroundColor: userLocation ? "#4CAF50" : "#f6a623" },
-                ]}
-                disabled={!userLocation}
-                onPress={handleManualConfirm}
-              >
-                <Text style={styles.confirmText}>
-                  {userLocation ? "✓ Use This Address" : "Confirm Pick-up"}
-                </Text>
-              </TouchableOpacity>
+             <TouchableOpacity
+            style={[
+              styles.confirmButton,
+              { backgroundColor: userLocation ? "#4CAF50" : "#f6a623" },
+            ]}
+            disabled={!userLocation}
+            onPress={handleManualConfirm}
+          >
+            <Text style={styles.confirmText}>
+              {userLocation ? "✓ Use This Address" : "Confirm Pick-up"}
+            </Text>
+          </TouchableOpacity>
             )}
           </View>
         </View>
@@ -465,6 +487,20 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "#f6a623",
+  },
+  markerContainer: {
+    height: 50,
+    width: 50,
+    borderRadius: 10,
+    backgroundColor: "#1f1f1fff",
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
   },
   bottomSheet: {
     position: "absolute",

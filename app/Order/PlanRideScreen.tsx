@@ -1,8 +1,6 @@
-import 'react-native-get-random-values';
-
 import { Feather, FontAwesome5, Ionicons } from '@expo/vector-icons';
 import Constants from "expo-constants";
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -16,8 +14,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import 'react-native-get-random-values';
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapViewDirections from "react-native-maps-directions";
 import { darkMapStyle } from '../../styles/darkMapStyle';
 
 // Import your existing axios instance
@@ -133,6 +133,7 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
       }, 1000);
     }
   }, [destinationLocation, locationData]);
+
 
   const prepareBookingData = () => {
     if (!destinationLocation) {
@@ -289,6 +290,32 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
   const handleBackPress = () => {
     goBack();
   };
+
+// Memoize the destination marker to prevent unnecessary re-renders
+const destinationMarker = useMemo(() => {
+  if (!destinationLocation) return null;
+  
+  return (
+    <Marker
+      key={`destination-${destinationLocation.latitude}-${destinationLocation.longitude}`}
+      coordinate={{
+        latitude: destinationLocation.latitude,
+        longitude: destinationLocation.longitude,
+      }}
+      centerOffset={{ x: 10, y: -10 }}
+      title="Drop-off Location"
+      description={destinationLocation.address}
+    >
+      <View style={styles.markerContainer}>
+        <Image
+          source={require('../../assets/images/send.png')}
+          style={{ width: 20, height: 20 }}
+          resizeMode="contain"
+        />
+      </View>
+    </Marker>
+  );
+}, [destinationLocation?.latitude, destinationLocation?.longitude, destinationLocation?.address]);
 
   const shortenAddress = (address: string, maxLength: number = 35) => {
     if (address.length <= maxLength) return address;
@@ -511,50 +538,41 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
               }}
               title="Pick-up Location"
               description={locationData.address}
+              centerOffset={{ x: 10, y: 0 }}
             >
-              <Image
-                    source={require('../../assets/images/Pickup_marker-removebg-preview.png')}
-                    style={{ width: 40, height: 40 }}
-                    resizeMode="contain"
-                  />
+              <View style={styles.pickupMarkerContainer}>
+                <Image
+                  source={require('../../assets/images/target.png')}
+                  style={{ width: 30, height: 30 }}
+                  resizeMode="contain"
+                />
+              </View>
             </Marker>
 
             {/* Destination Marker */}
-            {destinationLocation && (
-              <Marker
-                coordinate={{
-                  latitude: destinationLocation.latitude,
-                  longitude: destinationLocation.longitude,
-                }}
-                title="Drop-off Location"
-                description={destinationLocation.address}
-                
-              >
-                <Image
-                    source={require('../../assets/images/Dropoffmarker-removebg-preview.png')}
-                    style={{ width: 40, height: 40 }}
-                    resizeMode="contain"
-                  />
-              </Marker>
-            )}
-
+          
+           {destinationMarker}
             {/* Route Line */}
             {destinationLocation && (
-              <Polyline
-                coordinates={[
-                  {
-                    latitude: locationData.latitude,
-                    longitude: locationData.longitude,
-                  },
-                  {
-                    latitude: destinationLocation.latitude,
-                    longitude: destinationLocation.longitude,
-                  }
-                ]}
-                strokeColor="#f0d46d"
-                strokeWidth={3}
-                lineDashPattern={[1]}
-              />
+         <MapViewDirections
+           origin={{
+            latitude: locationData.latitude,
+            longitude: locationData.longitude,
+          }}
+          destination={{
+            latitude: destinationLocation.latitude,
+            longitude: destinationLocation.longitude,
+          }}
+          apikey={GOOGLE_API_KEY}
+          strokeWidth={4}
+          strokeColor="#ffbc07"
+          optimizeWaypoints={true}
+          onReady={(result: any) => {
+            console.log(`Distance: ${result.distance} km`);
+            console.log(`Duration: ${result.duration} min`);
+          }}
+          onError={(errMessage) => console.warn(errMessage)}
+        />
             )}
           </MapView>
         ) : (
@@ -756,31 +774,30 @@ const styles = StyleSheet.create({
   },
   markerContainer: {
     alignItems: 'center',
-  },
-  pickupMarker: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: "#ffbc07",
+    width: 40,
+    height: 40,
     borderRadius: 20,
-    padding: 8,
-    borderWidth: 3,
-    borderColor: 'white',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
+    justifyContent: 'center'
+
+
   },
-  destinationMarker: {
-    backgroundColor: '#f0d46d',
-    borderRadius: 20,
-    padding: 8,
-    borderWidth: 3,
-    borderColor: 'white',
+
+    pickupMarkerContainer: {
+    height: 40,
+    width: 40,
+    borderRadius: 10,
+    backgroundColor: "#1f1f1fff",
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 6,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
+    shadowRadius: 6,
   },
+
   mapContent: {
     alignItems: 'center',
     justifyContent: 'center',
