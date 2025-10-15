@@ -945,7 +945,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   bottomSheet: {
-    backgroundColor: "#fff",
+    backgroundColor: "#1a1a1a",
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 30,
@@ -957,16 +957,17 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginBottom: 12,
     textAlign: "center",
+    color: "#fff",
   },
   button: {
     paddingVertical: 14,
     alignItems: "center",
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "#d6d6d6ff",
     borderRadius: 10,
     marginVertical: 6,
   },
   cancelButton: {
-    backgroundColor: "#fff",
+    backgroundColor: "#1a1a1a",
     borderWidth: 1,
     borderColor: "#ccc",
   },
