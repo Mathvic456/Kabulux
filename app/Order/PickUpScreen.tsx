@@ -47,6 +47,7 @@ export default function PickUpScreen({ setScreen, goBack }: {
   const [pickup, setPickup] = useState("");
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [currentLocation, setCurrentLocation] = useState<string | null>(null);
   const slideAnim = useRef(new Animated.Value(0)).current;
   const mapRef = useRef<MapView>(null);
 
@@ -107,6 +108,7 @@ export default function PickUpScreen({ setScreen, goBack }: {
         setIsGettingLocation(false);
         setUserLocation(locationData);
         setPickup(formattedAddress);
+        setCurrentLocation(formattedAddress);
         
         // REMOVED: The automatic navigation that was here
       }
@@ -301,7 +303,7 @@ const handleManualConfirm = () => {
                 suppressDefaultStyles={false}
                 textInputHide={false}
                 textInputProps={{
-                  value: pickup,
+                  value: currentLocation? currentLocation: pickup,
                   onChangeText: setPickup,
                   placeholderTextColor: "#aaa",
                 }}

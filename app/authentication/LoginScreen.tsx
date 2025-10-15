@@ -1,6 +1,6 @@
 import CustomButton from "@/components/ui/CustomButton";
 import { useLoginEndPoint } from "@/services/authentication.service";
-import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
+import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
   Image,
@@ -8,7 +8,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import Logo from "../../assets/images/logo.png";
 
@@ -23,6 +23,7 @@ export default function LoginScreen({
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [remember, setRemember] = useState(false);
   const [errors, setErrors] = useState({
     email: "",
@@ -123,19 +124,29 @@ export default function LoginScreen({
             color="#aaa"
             style={styles.inputIcon}
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            placeholderTextColor="#aaa"
-            secureTextEntry
-            value={password}
-            onChangeText={(text) => {
-              setPassword(text);
-              if (errors.password) {
-                setErrors({ ...errors, password: "" });
-              }
-            }}
-          />
+           <TextInput
+              style={styles.input}
+              placeholder="Password"
+              placeholderTextColor="#aaa"
+              secureTextEntry={!isPasswordVisible} // toggle visibility
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                if (errors.password) {
+                  setErrors({ ...errors, password: "" });
+                }
+              }}
+            />
+            <TouchableOpacity
+              onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+              style={styles.eyeIcon}
+            >
+              <Ionicons
+                name={isPasswordVisible ? "eye-off" : "eye"}
+                size={18}
+                color="#ccc"
+              />
+            </TouchableOpacity>
         </View>
         {errors.password ? (
           <Text style={styles.errorText}>{errors.password}</Text>
@@ -240,6 +251,9 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     paddingHorizontal: 10,
   },
+  eyeIcon: {
+  marginLeft: 8,
+},
   inputIcon: { marginRight: 10 },
   input: { flex: 1, color: "#fff", height: 50 },
   errorText: {

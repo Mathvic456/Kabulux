@@ -2,7 +2,7 @@ import 'dotenv/config';
 
 export default {
   expo: {
-    name: 'Kabulux',
+    name: 'Kablux',
     slug: 'kablux',
     version: '1.0.0',
     orientation: 'portrait',
