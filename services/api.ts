@@ -25,38 +25,37 @@ api.interceptors.request.use(async (config) => {
     console.log(`🔧 [API Request ${requestId}] Starting request to:`, config.url);
     console.log(`🔧 [API Request ${requestId}] Method:`, config.method?.toUpperCase());
 
-  
-    if (!config.url?.includes("auth/login/")) { //I added this so we can skip token generation when logging in, that was the problem
+    // Skip token for all auth routes
+    if (!config.url?.includes("auth/")) {
       const token = await AsyncStorage.getItem("token");
-      console.log(`🔐 [API Request ${requestId}] Token found in storage:`, !!token); 
+      console.log(`🔐 [API Request ${requestId}] Token found in storage:`, !!token);
 
       if (token) {
-        console.log(`🔐 [API Request ${requestId}] Token length:`, token.length);
-        console.log(`🔐 [API Request ${requestId}] Token preview:`, token.substring(0, 20) + '...');
         config.headers.Authorization = `Bearer ${token}`;
-        console.log(`✅ [API Request ${requestId}] Authorization header set with Bearer token`);
+        console.log(`✅ [API Request ${requestId}] Authorization header set`);
       } else {
-        console.log(`❌ [API Request ${requestId}] No token found in AsyncStorage`);
+        console.log(`❌ [API Request ${requestId}] No token found`);
       }
     } else {
-      console.log(`⚡ [API Request ${requestId}] Skipping token for login endpoint`);
+      console.log(`⚡ [API Request ${requestId}] Skipping token for auth endpoint`);
     }
 
-    // Log request headers (excluding sensitive data)
     const safeHeaders = { ...config.headers };
     if (safeHeaders.Authorization && typeof safeHeaders.Authorization === "string") {
-      safeHeaders.Authorization = safeHeaders.Authorization.substring(0, 20) + '...';
+      safeHeaders.Authorization = safeHeaders.Authorization.substring(0, 20) + "...";
     }
     console.log(`📋 [API Request ${requestId}] Request headers:`, safeHeaders);
 
     if (config.data) {
       console.log(`📦 [API Request ${requestId}] Request data:`, config.data);
     }
-
   } catch (e) {
     console.error(`🚨 [API Request ${requestId}] Token read error:`, e);
   }
 
+  if (config.url?.includes("auth/") && config.headers.Authorization) {
+  delete config.headers.Authorization;
+}
   return config;
 });
 

@@ -1,7 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation } from "@tanstack/react-query";
+import { AxiosResponse } from "axios";
 import { api } from "./api";
 import { CREATEACCOUNT_TYPE } from "./type";
+
 
 // Types for modal control
 export type AuthResult = {
@@ -11,17 +13,17 @@ export type AuthResult = {
 };
 
 export const useRegisterEndPoint = () => {
-  return useMutation({
-    mutationFn: (data: CREATEACCOUNT_TYPE) => api.post("auth/register/", data),
+  const mutation = useMutation<AxiosResponse<any>, any, CREATEACCOUNT_TYPE>({
+    mutationFn: (data) => api.post("auth/register/", data),
     onSuccess: (res) => {
       console.log("Registration successful:", res.data);
-      // Don't show alert here - let component handle the modal
     },
     onError: (error: any) => {
       console.error("Registration error:", error);
-      // Return error for component to handle
     },
   });
+
+  return mutation;
 };
 
 export const useLoginEndPoint = () => {

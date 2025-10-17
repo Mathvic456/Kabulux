@@ -8,17 +8,16 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import Logo from "../../assets/images/logo.png";
 
-export default function RegisterScreen({
-  next,
-  goLogin,
-}: {
-  next: () => void;
+type RegisterScreenProps = {
+  next: (email: string) => void; // pass email to OTP screen
   goLogin: () => void;
-}) {
+};
+
+export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -35,6 +34,8 @@ export default function RegisterScreen({
     referral: "",
   });
 
+const { mutate: register, isPending } = useRegisterEndPoint();
+
   const validateForm = () => {
     let valid = true;
     const newErrors = {
@@ -46,7 +47,6 @@ export default function RegisterScreen({
       referral: "",
     };
 
-    // Full Name validation
     if (!fullName.trim()) {
       newErrors.fullName = "Full name is required";
       valid = false;
@@ -55,7 +55,6 @@ export default function RegisterScreen({
       valid = false;
     }
 
-    // Email validation
     if (!email) {
       newErrors.email = "Email is required";
       valid = false;
@@ -64,7 +63,6 @@ export default function RegisterScreen({
       valid = false;
     }
 
-    // Phone validation
     if (!phone) {
       newErrors.phone = "Phone number is required";
       valid = false;
@@ -75,7 +73,6 @@ export default function RegisterScreen({
       valid = false;
     }
 
-    // Address validation
     if (!address.trim()) {
       newErrors.address = "Address is required";
       valid = false;
@@ -84,7 +81,6 @@ export default function RegisterScreen({
       valid = false;
     }
 
-    // Password validation
     if (!password) {
       newErrors.password = "Password is required";
       valid = false;
@@ -92,37 +88,45 @@ export default function RegisterScreen({
       newErrors.password = "Password must be at least 8 characters";
       valid = false;
     } else if (!/[A-Z]/.test(password)) {
-      newErrors.password =
-        "Password must contain at least one uppercase letter";
+      newErrors.password = "Password must contain at least one uppercase letter";
       valid = false;
     } else if (!/[0-9]/.test(password)) {
       newErrors.password = "Password must contain at least one number";
       valid = false;
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      newErrors.password = "Password must contain at least one special character";
+      valid = false;
     }
-
-    // Referral is optional, so no validation needed
 
     setErrors(newErrors);
     return valid;
   };
 
-  const { mutate: register } = useRegisterEndPoint();
+const handleSubmit = () => {
+  if (!validateForm()) return;
 
-  const handleSubmit = () => {
-    if (validateForm()) {
-      const [first_name, ...rest] = fullName.trim().split(" ");
-      const last_name = rest.length > 0 ? rest.join(" ") : "";
+  const [first_name, ...rest] = fullName.trim().split(" ");
+  const last_name = rest.length > 0 ? rest.join(" ") : "";
 
-      register({
-        email,
-        password,
-        role: "rider",
-        first_name,
-        last_name,
-        phone_number: phone,
-        address,
-      });
+  register(
+    {
+      email,
+      password,
+      role: "rider",
+      first_name,
+      last_name,
+      phone_number: phone,
+      address,
+    },
+    {
+      onSuccess: () => {
+        next(email); // move to OTP or success screen
+      },
+      onError: (err) => {
+        console.error("Registration failed:", err.response?.data || err.message);
+      },
     }
+  );
   };
   return (
     <View style={styles.container}>
@@ -303,6 +307,7 @@ export default function RegisterScreen({
           onPress={handleSubmit}
           style={styles.proceedBtn}
           textStyle={styles.proceedText}
+          loading={isPending}
         />
 
         {/* Divider */}

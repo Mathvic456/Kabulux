@@ -12,8 +12,9 @@ import {
 } from "react-native";
 import Logo from '../../assets/images/logo.png';
 
-export default function ResetPasswordScreen({ next }: { 
-  next: () => void
+export default function ResetPasswordScreen({ next, goRegister }: { 
+  next: () => void;
+  goRegister: () => void;
 }) {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);

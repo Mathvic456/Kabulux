@@ -21,7 +21,6 @@ import MapViewDirections from "react-native-maps-directions";
 import { darkMapStyle } from '../../styles/darkMapStyle';
 
 // Import your existing axios instance
-import { api } from '../../services/api';
 
 const { height } = Dimensions.get('window');
 
@@ -51,7 +50,7 @@ interface DestinationLocation {
 }
 
 interface PlanRideScreenProps {
-  setScreen: (screen: string, params?: any) => void;
+  setScreen: (screen: string, navigationData: any) => void; 
   goBack: () => void;
   locationData?: UserLocation;
 }
@@ -63,6 +62,7 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
   const [currentLocation, setCurrentLocation] = useState('Current Location');
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const mapRef = useRef<MapView>(null);
 
   const suggestedLocations = [
@@ -154,127 +154,32 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
     return requestData;
   };
 
-  const handleConfirmRide = async () => {
-    console.log('=== 🚗 handleConfirmRide STARTED ===');
-    
-    console.log('📊 Current State Values:');
-    console.log('isSubmitting:', isSubmitting);
-    console.log('locationData:', locationData);
-    console.log('destinationLocation:', destinationLocation);
-    console.log('currentLocation address:', currentLocation);
+ const handleConfirmRide = () => {
+  if (!destinationLocation || !locationData) {
+    Alert.alert('Error', 'Select both pickup and destination locations');
+    return;
+  }
 
-    if (!destinationLocation) {
-      console.log('❌ No destination selected - showing alert');
-      Alert.alert('Select Destination', 'Please select a destination first');
-      return;
-    }
+  const bookingData = prepareBookingData();
 
-    if (!locationData) {
-      console.log('❌ No location data available - showing alert');
-      Alert.alert('Location Error', 'Unable to access your current location. Please try again.');
-      return;
-    }
-
-    if (isSubmitting) {
-      console.log('❌ Already submitting - ignoring press');
-      return;
-    }
-
-    console.log('✅ Starting submission process');
-    setIsSubmitting(true);
-    console.log('📊 isSubmitting set to:', true);
-
-    try {
-      const bookingData = prepareBookingData();
-      
-      console.log('=== 📍 LOCATION DATA DETAILS ===');
-      console.log('🚖 USER CURRENT LOCATION:');
-      console.log('📍 Address:', currentLocation);
-      console.log('📍 Latitude:', locationData.latitude);
-      console.log('📍 Longitude:', locationData.longitude);
-      
-      console.log('🎯 DESTINATION LOCATION:');
-      console.log('📍 Name:', destinationLocation.name);
-      console.log('📍 Address:', destinationLocation.address);
-      console.log('📍 Latitude:', destinationLocation.latitude);
-      console.log('📍 Longitude:', destinationLocation.longitude);
-      
-      console.log('=== 📦 REQUEST DATA BEING SENT ===');
-      console.log('🌐 Endpoint: POST /rides/requests/estimate');
-      console.log('📤 Request Body:', JSON.stringify(bookingData, null, 2));
-      console.log('🌐 Full request URL:', api.defaults.baseURL + '/rides/requests/estimate/');
-
-      console.log('🌐 Sending API request to /rides/requests/estimate...');
-      const response = await api.post('/rides/requests/estimate/', bookingData);
-      
-      console.log('✅ API Response received:');
-      console.log('📥 Response status:', response.status);
-      console.log('📥 Response data:', JSON.stringify(response.data, null, 2));
-
-      const navigationData = {
-        estimateData: response.data,
-        serverResponse: response.data,
-        submittedAt: new Date().toISOString(),
-        pickupLocation: {
-          address: currentLocation,
-          latitude: locationData.latitude,
-          longitude: locationData.longitude
-        },
-        destination: {
-          name: destinationLocation.name,
-          address: destinationLocation.address,
-          latitude: destinationLocation.latitude,
-          longitude: destinationLocation.longitude
-        },
-        backendRequest: bookingData,
-        estimatedPrice: response.data.price || response.data.estimated_cost,
-        estimatedDuration: response.data.duration || response.data.estimated_time,
-        distance: response.data.distance
-      };
-
-      console.log('➡️ Navigating to booking screen with data');
-      setScreen('bookingScreen', navigationData);
-      
-    } catch (error: any) {
-      console.error('❌ API Error Details:');
-      console.error('Error object:', error);
-      
-      if (error.response) {
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
-      } else if (error.request) {
-        console.error('Request made but no response received:', error.request);
-      } else {
-        console.error('Error message:', error.message);
-      }
-      
-      let errorMessage = 'Failed to get ride estimate. Please try again.';
-      
-      if (error.response) {
-        if (error.response.status === 400) {
-          errorMessage = 'Invalid location data. Please check your pickup and destination.';
-        } else if (error.response.status === 404) {
-          errorMessage = 'Ride service not available in this area.';
-        } else if (error.response.status === 422) {
-          errorMessage = 'Unable to calculate route. Please try different locations.';
-        } else if (error.response.status === 500) {
-          errorMessage = 'Service temporarily unavailable. Please try again later.';
-        } else {
-          errorMessage = error.response.data?.message || `Server error: ${error.response.status}`;
-        }
-      } else if (error.request) {
-        errorMessage = 'Network error. Please check your internet connection.';
-      } else {
-        errorMessage = `Request failed: ${error.message}`;
-      }
-      
-      Alert.alert('Estimate Failed', errorMessage);
-    } finally {
-      console.log('🏁 Process completed - resetting isSubmitting to false');
-      setIsSubmitting(false);
-      console.log('📊 isSubmitting set to:', false);
-    }
+  const navigationData = {
+    pickupLocation: {
+      address: currentLocation,
+      latitude: locationData.latitude,
+      longitude: locationData.longitude,
+    },
+    destination: {
+      name: destinationLocation.name,
+      address: destinationLocation.address,
+      latitude: destinationLocation.latitude,
+      longitude: destinationLocation.longitude,
+    },
+    backendRequest: bookingData, // optional
   };
+
+  setScreen('bookingScreen', navigationData); 
+};
+
 
   const handleSelectDestination = (location: DestinationLocation) => {
     setDestinationLocation(location);
@@ -701,7 +606,7 @@ const destinationMarker = useMemo(() => {
             style={[
               styles.confirmButton,
               { 
-                backgroundColor: destinationLocation && locationData && !isSubmitting ? '#f0d46d' : '#555',
+                backgroundColor: destinationLocation && locationData? '#f0d46d' : '#555',
                 opacity: (!destinationLocation || !locationData || isSubmitting) ? 0.6 : 1
               }
             ]}

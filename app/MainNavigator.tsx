@@ -51,7 +51,6 @@ type Screen =
   | "onboard2"
   | "login"
   | "register"
-  | "forgot"
   | "reset"
   | "verify"
   | "passwordSet"
@@ -103,6 +102,9 @@ export default function MainNavigator() {
   const [pickupLocationData, setPickupLocationData] = useState<any>(null);
   const [bookingData, setBookingData] = useState<any>(null);
 
+  const [registeredEmail, setRegisteredEmail] = useState("");
+  
+
 
   const handleSetScreen = (newScreen: Screen, params?: any) => {
     
@@ -132,28 +134,33 @@ export default function MainNavigator() {
     case "register":
       return (
         <RegisterScreen
-          next={() => setScreen("verify")}
+          next={(email) => {
+            setRegisteredEmail(email);
+            setScreen("verify");
+          }}
           goLogin={() => setScreen("login")}
         />
       );
-    case "forgot":
-      return <ForgotPasswordScreen next={() => setScreen("reset")} />;
+
+
     case "reset":
       return (
         <ResetPasswordScreen
-          next={() => setScreen("resetCredentials")}
           goRegister={() => setScreen("register")}
-          goForgot={() => setScreen("reset")}
+          next={() => {
+            setScreen("resetCredentials")
+          }}
         />
       );
     case "verify":
       return (
-        <VerifyEmailScreen
-          next={() => setScreen("passwordSet")}
-          goRegister={() => setScreen("register")}
-          goForgot={() => setScreen("reset")}
-        />
-      );
+      <VerifyEmailScreen
+      email={registeredEmail}
+      next={() => setScreen("accountSuccess")}
+      goRegister={() => setScreen("register")}
+      goForgot={() => setScreen("reset")}
+    />
+  );
     case "passwordSet":
       return (
         <PasswordSetScreen
@@ -315,7 +322,6 @@ export default function MainNavigator() {
           goBack={() => setScreen('wallet')}
         />
       );
-
     case "resetCredentials":
       return (
         <ResetCredentialsScreen
@@ -349,17 +355,22 @@ export default function MainNavigator() {
 
     case "planRide":
       return (
-        <PlanRideScreen setScreen={setScreen}
+        <PlanRideScreen setScreen={handleSetScreen}
         goBack={() => setScreen("orderScreen")} 
         locationData={pickupLocationData}
         />);
 
     case "bookingScreen":
-      return (
-        <BookingScreen setScreen={setScreen}
-        goBack={() => setScreen("planRide")}
-        {...bookingData}
-        />);  
+  return (
+    <BookingScreen 
+      setScreen={setScreen}
+      goBack={() => setScreen("planRide")}
+      pickupLat={bookingData?.pickupLocation?.latitude}
+      pickupLng={bookingData?.pickupLocation?.longitude}
+      dropoffLat={bookingData?.destination?.latitude}
+      dropoffLng={bookingData?.destination?.longitude}
+    />
+  );
 
     case "originalPriceDetails":
       return (

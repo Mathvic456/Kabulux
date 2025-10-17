@@ -1,16 +1,18 @@
+import { useLogoutEndPoint } from "@/services/authentication.service";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
+  ActivityIndicator,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SettingsScreen({ setScreen }) {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -19,10 +21,18 @@ export default function SettingsScreen({ setScreen }) {
   const [hapticFeedback, setHapticFeedback] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const handleLogout = () => {
-    // Add your logout logic here
+  const logoutMutation = useLogoutEndPoint();
+
+  const handleLogout = async() => {
+    try {
+      await logoutMutation.mutateAsync(); // Wait for logout to complete
     setShowLogoutModal(false);
     console.log("User logged out");
+     setScreen("login")
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+
   };
 
   const settingsSections = [
@@ -148,6 +158,10 @@ export default function SettingsScreen({ setScreen }) {
       ],
     },
   ];
+
+  if (logoutMutation.isPending) {
+    return <ActivityIndicator />
+    }
 
   return (
     <SafeAreaView style={styles.container}>

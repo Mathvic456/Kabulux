@@ -11,6 +11,7 @@
 // }
 
 
+import { useVerifyOtpEndPoint } from "";
 import React, { useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Logo from '../../assets/images/logo.png';
@@ -38,7 +39,7 @@ export default function AccountSuccessScreen({ next, goRegister, goForgot }: { n
   // }
 
   const handleProceed = () => {
-    next();
+    
   };
 
 

@@ -59,7 +59,7 @@ export default function LoginScreen({
     return valid;
   };
 
-  const { mutate: login } = useLoginEndPoint();
+  const { mutate: login, isPending } = useLoginEndPoint();
   const handleSubmit = () => {
     if (validateForm()) {
       login(
@@ -177,6 +177,7 @@ export default function LoginScreen({
           onPress={handleSubmit}
           style={styles.proceedBtn}
           textStyle={styles.proceedText}
+          loading={isPending}
         />
 
         {/* Divider */}

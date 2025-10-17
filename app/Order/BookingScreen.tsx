@@ -1,6 +1,9 @@
+import { getRideEstimate } from "@/services/apiservice";
 import { Feather } from "@expo/vector-icons";
-import React, { useRef, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Animated,
   Dimensions,
   Image,
@@ -15,41 +18,40 @@ import Car from "../../assets/images/car.png";
 
 const { height } = Dimensions.get("window");
 
-const rideOptions = [
-  {
-    name: "Kablux Original",
-    details: "6:23pm - 20 mins",
-    price: "N6,700",
-    originalPrice: "N9,450",
-    carType: "Mid Size Car",
-    passengers: 4,
-    image: Car,
-    screen: "originalPriceDetails", // Added screen reference
-  },
-  {
-    name: "Kablux Premium",
-    details: "6:23pm - 20 mins",
-    price: "N10,000",
-    carType: "Smart Size Car",
-    passengers: 4,
-    image: Car,
-    screen: "premiumCarSelect", // Added screen reference
-  },
-  {
-    name: "Kablux Business",
-    details: "6:23pm - 20 mins",
-    price: "N6,700",
-    carType: "Jeep Size Car",
-    passengers: 2,
-    image: Car,
-    screen: "businessCodeScreen", // Added screen reference
-  },
-];
+export default function BookingScreen({ 
+  setScreen, 
+  goBack,
+  pickupLat,
+  pickupLng,
+  dropoffLat,
+  dropoffLng
+}: { 
+  setScreen: (screen: string) => void; 
+  goBack: () => void;
+  pickupLat: number;
+  pickupLng: number;
+  dropoffLat: number;
+  dropoffLng: number;
+}){
+  type RideOption = {
+  name: string;
+  details: string;
+  price: string;
+  originalPrice?: string | null;
+  carType: string;
+  passengers: number;
+  image: any;
+  screen: string;
+  rideId: string;
+};
 
-export default function BookingScreen({ setScreen, goBack }: { setScreen: (screen: string) => void; goBack: () => void }  ) {
+
   const slideAnim = useRef(new Animated.Value(0)).current;
-  const [selectedRide, setSelectedRide] = useState(null);
+  const [selectedRide, setSelectedRide] = useState<string | null>(null);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [rideOptions, setRideOptions] = useState<RideOption[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Handle swipe gestures
   const panResponder = useRef(
@@ -77,13 +79,69 @@ export default function BookingScreen({ setScreen, goBack }: { setScreen: (scree
     })
   ).current;
 
-  // Handle confirm ride navigation - FIXED
+  useEffect(() => {
+  console.log("BookingScreen props:", pickupLat, pickupLat, dropoffLat, dropoffLng);
+}, [pickupLat, pickupLng, dropoffLat, dropoffLng]);
+
+
+ useEffect(() => {
+  const fetchRideEstimates = async () => {
+    if (!pickupLat || !pickupLng || !dropoffLat || !dropoffLng) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) throw new Error("No authentication token found");
+
+      // Build ride data
+      const rideData = {
+        pickup_lat: pickupLat,
+        pickup_lng: pickupLng,
+        dropoff_lat: dropoffLat,
+        dropoff_lng: dropoffLng,
+      };
+
+      // Call the reusable hook
+      const data = await getRideEstimate(rideData);
+      console.log("Ride estimates API response:", data);
+
+      if (data.status === "success" && data.data?.rides) {
+        const formattedRides = data.data.rides.map((ride) => ({
+          name: `Kablux ${ride.name.charAt(0).toUpperCase() + ride.name.slice(1)}`,
+          details: `${data.data.estimated_duration} - ${data.data.estimated_distance}`,
+          price: `₦${(ride.estimated_fare / 100).toLocaleString()}`,
+          originalPrice: ride.discount_price 
+            ? `₦${(ride.discount_price / 100).toLocaleString()}`
+            : null,
+          carType: ride.car_type,
+          passengers: ride.car_size,
+          image: Car,
+          screen: ride.name.toLowerCase() + "Screen",
+          rideId: ride.name,
+        }));
+
+        setRideOptions(formattedRides);
+      } else {
+        setError("Failed to fetch ride estimates");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Error fetching rides");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchRideEstimates();
+}, [pickupLat, pickupLng, dropoffLat, dropoffLng]);
+  // Handle confirm ride navigation
   const handleConfirmRide = () => {
     if (!selectedRide) return;
-    
-    // Find the selected ride option
-    const selectedOption = rideOptions.find(option => option.name === selectedRide);
-    
+
+    const selectedOption = rideOptions.find((option) => option.name === selectedRide);
+
     if (selectedOption) {
       setScreen(selectedOption.screen);
     }
@@ -108,61 +166,90 @@ export default function BookingScreen({ setScreen, goBack }: { setScreen: (scree
           <Text style={styles.headerTitle}>Choose a Ride</Text>
         </View>
 
-        {/* Ride Options */}
-        {rideOptions.map((option, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[
-              styles.rideOptionItem,
-              selectedRide === option.name && { borderColor: "#f6a623", borderWidth: 2 },
-            ]}
-            onPress={() => setSelectedRide(option.name)}
-          >
-            <Image source={Car} style={styles.rideImage} />
-            <View style={styles.rideDetails}>
-              <Text style={styles.rideName}>{option.name}</Text>
-              <Text style={styles.rideTiming}>{option.details}</Text>
-              <Text style={styles.rideInfo}>
-                {option.carType} <Feather name="user" size={12} color="#aaa" />{" "}
-                {option.passengers}
-              </Text>
-            </View>
+        {/* Loading State */}
+        {loading ? (
+          <View style={styles.centerContent}>
+            <ActivityIndicator size="large" color="#f6a623" />
+            <Text style={styles.loadingText}>Fetching available rides...</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.centerContent}>
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity 
+              style={styles.retryButton}
+              onPress={() => setRideOptions([])}
+            >
+              <Text style={styles.retryButtonText}>Try Again</Text>
+            </TouchableOpacity>
+          </View>
+        ) : rideOptions.length > 0 ? (
+          <>
+            {/* Ride Options */}
+            {rideOptions.map((option, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.rideOptionItem,
+                  selectedRide === option.name && { 
+                    borderColor: "#f6a623", 
+                    borderWidth: 2 
+                  },
+                ]}
+                onPress={() => setSelectedRide(option.name)}
+              >
+                <Image source={option.image} style={styles.rideImage} />
+                <View style={styles.rideDetails}>
+                  <Text style={styles.rideName}>{option.name}</Text>
+                  <Text style={styles.rideTiming}>{option.details}</Text>
+                  <Text style={styles.rideInfo}>
+                    {option.carType} <Feather name="user" size={12} color="#aaa" />{" "}
+                    {option.passengers}
+                  </Text>
+                </View>
 
-            <View style={styles.ridePriceContainer}>
-              <Text style={styles.ridePrice}>{option.price}</Text>
-              {option.originalPrice && (
-                <Text style={styles.rideOriginalPrice}>{option.originalPrice}</Text>
-              )}
-            </View>
-          </TouchableOpacity>
-        ))}
+                <View style={styles.ridePriceContainer}>
+                  <Text style={styles.ridePrice}>{option.price}</Text>
+                  {option.originalPrice && (
+                    <Text style={styles.rideOriginalPrice}>
+                      {option.originalPrice}
+                    </Text>
+                  )}
+                </View>
+              </TouchableOpacity>
+            ))}
 
-        {/* Payment Section */}
-        <TouchableOpacity
-          style={styles.paymentSection}
-          onPress={() => setPaymentModalVisible(true)}
-        >
-          <Feather name="credit-card" size={20} color="#388e3c" />
-          <Text style={styles.paymentText}>Pay with cash</Text>
-          <Feather
-            name="chevron-right"
-            size={20}
-            color="#aaa"
-            style={{ marginLeft: "auto" }}
-          />
-        </TouchableOpacity>
+            {/* Payment Section */}
+            <TouchableOpacity
+              style={styles.paymentSection}
+              onPress={() => setPaymentModalVisible(true)}
+            >
+              <Feather name="credit-card" size={20} color="#388e3c" />
+              <Text style={styles.paymentText}>Pay with cash</Text>
+              <Feather
+                name="chevron-right"
+                size={20}
+                color="#aaa"
+                style={{ marginLeft: "auto" }}
+              />
+            </TouchableOpacity>
 
-        {/* Confirm Button */}
-        <TouchableOpacity
-          style={[
-            styles.confirmButton,
-            { backgroundColor: selectedRide ? "#f6a623" : "#555" },
-          ]}
-          disabled={!selectedRide}
-          onPress={handleConfirmRide}
-        >
-          <Text style={styles.confirmButtonText}>Choose Ride</Text>
-        </TouchableOpacity>
+            {/* Confirm Button */}
+            <TouchableOpacity
+              style={[
+                styles.confirmButton,
+                { backgroundColor: selectedRide ? "#f6a623" : "#555" },
+              ]}
+              disabled={!selectedRide}
+              onPress={handleConfirmRide}
+            >
+              <Text style={styles.confirmButtonText}>Choose Ride</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <View style={styles.centerContent}>
+            <Text style={styles.errorText}>No rides available</Text>
+          </View>
+        )}
       </Animated.View>
 
       {/* Payment Options Modal */}
@@ -211,22 +298,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   mapText: { fontSize: 18, fontWeight: "bold", color: "#aaa" },
-  panelHeader: { 
-    flexDirection: "row", 
-    alignItems: "center", 
+  panelHeader: {
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 20,
-    paddingHorizontal: 10, // Added padding for better spacing
+    paddingHorizontal: 10,
   },
-  headerIconContainer: { 
-    padding: 10, 
-    backgroundColor: "#333", 
+  headerIconContainer: {
+    padding: 10,
+    backgroundColor: "#333",
     borderRadius: 50,
-    marginRight: 15, // Added margin for better spacing
+    marginRight: 15,
   },
-  headerTitle: { 
-    fontSize: 22, 
-    fontWeight: "bold", 
-    color: "white", 
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "white",
   },
   bottomPanel: {
     position: "absolute",
@@ -282,6 +369,32 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   confirmButtonText: { color: "white", fontSize: 18, fontWeight: "bold" },
+  centerContent: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    color: "#aaa",
+    fontSize: 16,
+    marginTop: 15,
+  },
+  errorText: {
+    color: "#ff6b6b",
+    fontSize: 16,
+    textAlign: "center",
+  },
+  retryButton: {
+    backgroundColor: "#f6a623",
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 20,
+  },
+  retryButtonText: {
+    color: "#000",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
 
   // Modal styles
   modalOverlay: {
