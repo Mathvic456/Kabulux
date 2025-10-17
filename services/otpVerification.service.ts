@@ -8,7 +8,6 @@ export const useVerifyOtpEndPoint = () => {
 
     onSuccess: (res) => {
       console.log("✅ OTP verified:", res.data);
-      // maybe navigate to login or next step here
     },
 
     onError: (error: any) => {

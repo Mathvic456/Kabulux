@@ -1,19 +1,23 @@
 import CustomButton from "@/components/ui/CustomButton";
 import { useRegisterEndPoint } from "@/services/authentication.service";
-import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
+import { FontAwesome } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState } from "react";
 import {
   Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import Logo from "../../assets/images/logo.png";
 
 type RegisterScreenProps = {
-  next: (email: string) => void; // pass email to OTP screen
+  next: (email: string) => void;
   goLogin: () => void;
 };
 
@@ -34,7 +38,7 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
     referral: "",
   });
 
-const { mutate: register, isPending } = useRegisterEndPoint();
+  const { mutate: register, isPending } = useRegisterEndPoint();
 
   const validateForm = () => {
     let valid = true;
@@ -93,7 +97,7 @@ const { mutate: register, isPending } = useRegisterEndPoint();
     } else if (!/[0-9]/.test(password)) {
       newErrors.password = "Password must contain at least one number";
       valid = false;
-    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    } else if (!/[!@#$%^&*(),.?\":{}|<>]/.test(password)) {
       newErrors.password = "Password must contain at least one special character";
       valid = false;
     }
@@ -102,231 +106,119 @@ const { mutate: register, isPending } = useRegisterEndPoint();
     return valid;
   };
 
-const handleSubmit = () => {
-  if (!validateForm()) return;
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
 
-  const [first_name, ...rest] = fullName.trim().split(" ");
-  const last_name = rest.length > 0 ? rest.join(" ") : "";
+    const [first_name, ...rest] = fullName.trim().split(" ");
+    const last_name = rest.length > 0 ? rest.join(" ") : "";
 
-  register(
-    {
-      email,
-      password,
-      role: "rider",
-      first_name,
-      last_name,
-      phone_number: phone,
-      address,
-    },
-    {
-      onSuccess: () => {
-        next(email); // move to OTP or success screen
+    await AsyncStorage.setItem("pendingEmail", email);
+    console.log("📩 Email saved for OTP verification:", email);
+
+    register(
+      {
+        email,
+        password,
+        role: "rider",
+        first_name,
+        last_name,
+        phone_number: phone,
+        address,
       },
-      onError: (err) => {
-        console.error("Registration failed:", err.response?.data || err.message);
-      },
-    }
-  );
+      {
+        onSuccess: () => {
+          next(email);
+        },
+        onError: (err) => {
+          console.error("Registration failed:", err.response?.data || err.message);
+        },
+      }
+    );
   };
+
   return (
     <View style={styles.container}>
-      {/* Top Banner */}
       <View style={styles.banner} />
 
-      {/* Card */}
-      <View style={styles.card}>
-        <View style={styles.LogoContainer}>
-          <Image source={Logo} style={styles.Logoicon} />
-        </View>
-        <Text style={styles.title}>Get Started Now</Text>
-        <Text style={styles.subtitle}>Let&apos;s create an account</Text>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContainer}
+        >
+          <View style={styles.card}>
+            <Image source={Logo} style={styles.logoIcon} />
+            <Text style={styles.title}>Get Started Now</Text>
+            <Text style={styles.subtitle}>Let&apos;s create an account</Text>
 
-        {/* Progress bar */}
-        <View style={styles.progressBackground}>
-          <View style={styles.progressFill} />
-        </View>
+            <View style={styles.progressBackground}>
+              <View style={styles.progressFill} />
+            </View>
 
-        {/* Full Name */}
-        <View style={styles.inputContainer}>
-          <FontAwesome
-            name="user"
-            size={20}
-            color="#aaa"
-            style={styles.inputIcon}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Full Name"
-            placeholderTextColor="#aaa"
-            value={fullName}
-            onChangeText={(text) => {
-              setFullName(text);
-              if (errors.fullName) {
-                setErrors({ ...errors, fullName: "" });
-              }
-            }}
-            autoCapitalize="words"
-          />
-        </View>
-        {errors.fullName ? (
-          <Text style={styles.errorText}>{errors.fullName}</Text>
-        ) : null}
+            {/* All Inputs */}
+            {renderInput("user", fullName, setFullName, "Full Name", errors.fullName, "words")}
+            {renderInput("email", email, setEmail, "Email", errors.email, "none", "email-address")}
+            {renderInput("phone", phone, setPhone, "Phone Number", errors.phone, "none", "phone-pad")}
+            {renderInput("map-marker", address, setAddress, "Address", errors.address)}
+            {renderInput("lock", password, setPassword, "Password", errors.password, "none", "default", true)}
+            {renderInput("tag", referral, setReferral, "Referral Code", errors.referral)}
 
-        {/* Email */}
-        <View style={styles.inputContainer}>
-          <MaterialIcons
-            name="email"
-            size={20}
-            color="#aaa"
-            style={styles.inputIcon}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            placeholderTextColor="#aaa"
-            value={email}
-            onChangeText={(text) => {
-              setEmail(text);
-              if (errors.email) {
-                setErrors({ ...errors, email: "" });
-              }
-            }}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-        </View>
-        {errors.email ? (
-          <Text style={styles.errorText}>{errors.email}</Text>
-        ) : null}
+            <CustomButton
+              title="Proceed"
+              onPress={handleSubmit}
+              style={styles.proceedBtn}
+              textStyle={styles.proceedText}
+              loading={isPending}
+            />
 
-        {/* Phone */}
-        <View style={styles.inputContainer}>
-          <FontAwesome
-            name="phone"
-            size={20}
-            color="#aaa"
-            style={styles.inputIcon}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Phone Number"
-            placeholderTextColor="#aaa"
-            keyboardType="phone-pad"
-            value={phone}
-            onChangeText={(text) => {
-              setPhone(text);
-              if (errors.phone) {
-                setErrors({ ...errors, phone: "" });
-              }
-            }}
-          />
-        </View>
-        {errors.phone ? (
-          <Text style={styles.errorText}>{errors.phone}</Text>
-        ) : null}
+            <View style={styles.dividerRow}>
+              <View style={styles.divider} />
+              <Text style={styles.dividerText}>or</Text>
+              <View style={styles.divider} />
+            </View>
 
-        {/* Address */}
-        <View style={styles.inputContainer}>
-          <FontAwesome
-            name="map-marker"
-            size={20}
-            color="#aaa"
-            style={styles.inputIcon}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Address"
-            placeholderTextColor="#aaa"
-            value={address}
-            onChangeText={(text) => {
-              setAddress(text);
-              if (errors.address) {
-                setErrors({ ...errors, address: "" });
-              }
-            }}
-          />
-        </View>
-        {errors.address ? (
-          <Text style={styles.errorText}>{errors.address}</Text>
-        ) : null}
-
-        {/* Password */}
-        <View style={styles.inputContainer}>
-          <FontAwesome
-            name="lock"
-            size={20}
-            color="#aaa"
-            style={styles.inputIcon}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            placeholderTextColor="#aaa"
-            secureTextEntry
-            value={password}
-            onChangeText={(text) => {
-              setPassword(text);
-              if (errors.password) {
-                setErrors({ ...errors, password: "" });
-              }
-            }}
-          />
-        </View>
-        {errors.password ? (
-          <Text style={styles.errorText}>{errors.password}</Text>
-        ) : null}
-
-        {/* Referral */}
-        <View style={styles.inputContainer}>
-          <FontAwesome
-            name="tag"
-            size={20}
-            color="#aaa"
-            style={styles.inputIcon}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Referral Code"
-            placeholderTextColor="#aaa"
-            value={referral}
-            onChangeText={(text) => {
-              setReferral(text);
-              if (errors.referral) {
-                setErrors({ ...errors, referral: "" });
-              }
-            }}
-          />
-        </View>
-        {errors.referral ? (
-          <Text style={styles.errorText}>{errors.referral}</Text>
-        ) : null}
-
-        {/* Proceed Button */}
-        <CustomButton
-          title="Proceed"
-          onPress={handleSubmit}
-          style={styles.proceedBtn}
-          textStyle={styles.proceedText}
-          loading={isPending}
-        />
-
-        {/* Divider */}
-        <View style={styles.dividerRow}>
-          <View style={styles.divider} />
-          <Text style={styles.dividerText}>or</Text>
-          <View style={styles.divider} />
-        </View>
-
-        {/* Already have account */}
-        <TouchableOpacity onPress={goLogin}>
-          <Text style={styles.footerText}>
-            Already have an account? <Text style={styles.signup}>Sign in</Text>
-          </Text>
-        </TouchableOpacity>
-      </View>
+            <TouchableOpacity onPress={goLogin}>
+              <Text style={styles.footerText}>
+                Already have an account? <Text style={styles.signup}>Sign in</Text>
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }
+
+// Helper for input rendering
+const renderInput = (
+  icon: any,
+  value: string,
+  setter: (v: string) => void,
+  placeholder: string,
+  error?: string,
+  autoCapitalize: any = "none",
+  keyboardType: any = "default",
+  secureTextEntry = false
+) => (
+  <>
+    <View style={styles.inputContainer}>
+      <FontAwesome name={icon} size={20} color="#aaa" style={styles.inputIcon} />
+      <TextInput
+        style={styles.input}
+        placeholder={placeholder}
+        placeholderTextColor="#aaa"
+        value={value}
+        onChangeText={setter}
+        autoCapitalize={autoCapitalize}
+        keyboardType={keyboardType}
+        secureTextEntry={secureTextEntry}
+      />
+    </View>
+    {error ? <Text style={styles.errorText}>{error}</Text> : null}
+  </>
+);
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000" },
@@ -336,22 +228,25 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 40,
     borderBottomRightRadius: 40,
   },
+  scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 40,
+  },
   card: {
     flex: 1,
-    marginTop: -40,
     backgroundColor: "#000",
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,
     padding: 30,
     width: "95%",
     alignSelf: "center",
+    marginTop: -40,
   },
-  logo: {
-    fontSize: 36,
-    fontWeight: "bold",
-    color: "#fcbf24",
-    textAlign: "center",
-    marginBottom: 20,
+  logoIcon: {
+    width: 130,
+    height: 100,
+    resizeMode: "contain",
+    alignSelf: "center",
   },
   title: {
     fontSize: 24,
@@ -366,7 +261,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 20,
   },
-
   progressBackground: {
     height: 6,
     backgroundColor: "#444",
@@ -379,13 +273,12 @@ const styles = StyleSheet.create({
     width: "25%",
     borderRadius: 3,
   },
-
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#111",
     borderRadius: 10,
-    marginBottom: 5,
+    marginBottom: 8,
     paddingHorizontal: 10,
   },
   inputIcon: { marginRight: 10 },
@@ -396,7 +289,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginLeft: 10,
   },
-
   proceedBtn: {
     backgroundColor: "#fcbf24",
     borderRadius: 10,
@@ -404,7 +296,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   proceedText: { color: "#000", fontWeight: "bold", fontSize: 16 },
-
   dividerRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -412,14 +303,6 @@ const styles = StyleSheet.create({
   },
   divider: { flex: 1, height: 1, backgroundColor: "#444" },
   dividerText: { color: "#aaa", marginHorizontal: 10 },
-
   footerText: { textAlign: "center", color: "#888", fontSize: 12 },
   signup: { color: "#fcbf24", fontWeight: "bold" },
-  LogoContainer: {},
-  Logoicon: {
-    width: 130,
-    height: 100,
-    resizeMode: "contain",
-    alignSelf: "center",
-  },
 });

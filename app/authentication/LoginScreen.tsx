@@ -77,6 +77,7 @@ export default function LoginScreen({
       {/* Top Banner */}
       <View style={styles.banner} />
 
+      
       {/* Card */}
       <View style={styles.card}>
         <View style={styles.LogoContainer}>

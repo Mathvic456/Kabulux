@@ -1,41 +1,66 @@
-import React, { useRef, useState } from "react";
-import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import Email from '../../assets/images/email.png';
-import Logo from '../../assets/images/logo.png';
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Email from "../../assets/images/email.png";
+import Logo from "../../assets/images/logo.png";
 import { useVerifyOtpEndPoint } from "../../services/otpVerification.service";
 
-export default function VerifyEmailScreen({ next, goRegister, goForgot }: { next: () => void, goRegister: () => void, goForgot: () => void }) {
+export default function VerifyEmailScreen({
+  next,
+  goRegister,
+}: {
+  next: () => void;
+  goRegister: () => void;
+}) {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const inputsRef = useRef<TextInput[]>([]);
-
   const verifyOtpMutation = useVerifyOtpEndPoint();
+
+  useEffect(() => {
+    const loadEmail = async () => {
+      try {
+        const savedEmail = await AsyncStorage.getItem("pendingEmail");
+        if (savedEmail) {
+          setEmail(savedEmail);
+          console.log("📬 Loaded email from storage:", savedEmail);
+        }
+      } catch (error) {
+        console.error("❌ Error loading email:", error);
+      }
+    };
+    loadEmail();
+  }, []);
 
   const handleOtpChange = (text: string, index: number) => {
     const newOtp = [...otp];
-    newOtp[index] = text.slice(-1); // only keep last character
+    newOtp[index] = text.slice(-1);
     setOtp(newOtp);
 
-    if (text && index < otp.length - 1) {
-      inputsRef.current[index + 1]?.focus(); // move to next input
-    }
-    if (!text && index > 0) {
-      inputsRef.current[index - 1]?.focus(); // move back on delete
-    }
-  };
-
-  const handleResendCode = () => {
-    console.log('Resend code tapped');
+    if (text && index < otp.length - 1) inputsRef.current[index + 1]?.focus();
+    if (!text && index > 0) inputsRef.current[index - 1]?.focus();
   };
 
   const handleProceed = async () => {
     setIsLoading(true);
     const code = otp.join("");
-
     try {
       await verifyOtpMutation.mutateAsync({ email, otp: code });
-      next(); // go to success or next screen
+      next();
     } catch (err) {
       console.error("OTP verification failed:", err);
     } finally {
@@ -44,20 +69,35 @@ export default function VerifyEmailScreen({ next, goRegister, goForgot }: { next
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.banner} />
-      <View style={styles.card}>
-        <View style={styles.LogoContainer}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      style={{ flex: 1 }}
+    >
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.banner} />
+
+        <View style={styles.card}>
           <Image source={Logo} style={styles.Logoicon} />
-        </View>
 
-        <View style={styles.envelopeContainer}>
-          <Image source={Email} style={styles.envelopeIcon} />
-        </View>
+          <View style={styles.envelopeContainer}>
+            <Image source={Email} style={styles.envelopeIcon} />
+          </View>
 
-        <View style={styles.bottomSection}>
+          <Pressable
+            style={styles.backBtn}
+            onPress={() => goRegister()}
+          >
+            <Ionicons name="arrow-back" size={22} color="#fff" />
+          </Pressable>
+
           <Text style={styles.title}>OTP Authentication</Text>
-          <Text style={styles.subtitle}>Check your email to see the verification code</Text>
+          <Text style={styles.subtitle}>
+            Check your email to see the verification code
+          </Text>
 
           <View style={styles.progressBackground}>
             <View style={styles.progressFill} />
@@ -75,7 +115,11 @@ export default function VerifyEmailScreen({ next, goRegister, goForgot }: { next
                 maxLength={1}
                 onChangeText={(text) => handleOtpChange(text, index)}
                 onKeyPress={({ nativeEvent }) => {
-                  if (nativeEvent.key === "Backspace" && !otp[index] && index > 0) {
+                  if (
+                    nativeEvent.key === "Backspace" &&
+                    !otp[index] &&
+                    index > 0
+                  ) {
                     inputsRef.current[index - 1]?.focus();
                   }
                 }}
@@ -83,41 +127,145 @@ export default function VerifyEmailScreen({ next, goRegister, goForgot }: { next
             ))}
           </View>
 
-          <TouchableOpacity style={styles.proceedButton} onPress={handleProceed}>
-            <Text style={styles.proceedButtonText}>{isLoading ? <ActivityIndicator /> : "Proceed"}</Text>
+          <TouchableOpacity
+            style={styles.proceedButton}
+            onPress={handleProceed}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#000" />
+            ) : (
+              <Text style={styles.proceedButtonText}>Proceed</Text>
+            )}
           </TouchableOpacity>
 
           <View style={styles.resendContainer}>
             <Text style={styles.resendText}>Didn't Receive code?</Text>
-            <TouchableOpacity onPress={handleResendCode}>
+            <TouchableOpacity>
               <Text style={styles.resendLink}>Resend</Text>
             </TouchableOpacity>
           </View>
         </View>
-      </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
-// Keep your existing styles unchanged
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000" },
-  banner: { height: 200, backgroundColor: "#fcbf24", borderBottomLeftRadius: 40, borderBottomRightRadius: 40, },
-  card: { flex: 1, marginTop: -40, backgroundColor: "#000", borderTopLeftRadius: 40, borderTopRightRadius: 40, padding: 30, width:'95%', alignSelf:'center',},
-  envelopeIcon: { width: 30, height: 50, resizeMode: 'contain', alignSelf: 'center' },
-  envelopeContainer: { backgroundColor: '#FEB91454', borderRadius: 50, marginTop: 30, width:50, height:50, alignSelf:'center' },
-  bottomSection: { flex: 0.6, backgroundColor: '#000', alignItems: 'center', paddingTop: 40 },
-  title: { fontSize: 24, fontFamily: 'BebasNeue', color: '#fff', marginBottom: 5 },
-  subtitle: { fontSize: 14, color: '#aaa', marginBottom: 30 },
-  otpInputContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '80%', marginBottom: 30, gap:10 },
-  otpInput: { width: 40, height: 40, borderWidth: 1, borderColor: '#ffb300', borderRadius: 8, textAlign: 'center', fontSize: 20, color: '#fff' },
-  proceedButton: { backgroundColor: '#ffb300', paddingVertical: 15, paddingHorizontal: 80, borderRadius: 10, width:'100%', alignItems: 'center' },
-  proceedButtonText: { color: '#000', fontSize: 18, fontFamily: 'BebasNeue' },
-  resendContainer: { flexDirection: 'row', marginTop: 20 },
-  resendText: { color: '#aaa', marginRight: 5 },
-  resendLink: { color: '#ffb300', fontWeight: 'bold' },
-  LogoContainer:{},
-  Logoicon:{ width: 130, height: 100, resizeMode: 'contain', alignSelf: 'center' },
-  progressBackground: { height: 6, backgroundColor: "#444", borderRadius: 3, marginBottom: 20 },
-  progressFill: { height: 6, backgroundColor: "#fcbf24", width: "45%", borderRadius: 3 },
+  container: {
+    flex: 1,
+    backgroundColor: "#000",
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 40,
+  },
+  banner: {
+    height: 200,
+    backgroundColor: "#fcbf24",
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+  },
+  card: {
+    marginTop: -40,
+    backgroundColor: "#000",
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    padding: 30,
+    width: "92%",
+    alignSelf: "center",
+    alignItems: "center",
+  },
+  Logoicon: {
+    width: 130,
+    height: 100,
+    resizeMode: "contain",
+    marginBottom: 20,
+  },
+  envelopeContainer: {
+    backgroundColor: "#FEB91454",
+    borderRadius: 50,
+    width: 60,
+    height: 60,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 30,
+  },
+  envelopeIcon: {
+    width: 30,
+    height: 30,
+    resizeMode: "contain",
+  },
+  backBtn: {
+    position: "absolute",
+    left: 30,
+    top: 30,
+  },
+  title: {
+    fontSize: 24,
+    fontFamily: "BebasNeue",
+    color: "#fff",
+    marginBottom: 5,
+    textAlign: "center",
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "#aaa",
+    marginBottom: 25,
+    textAlign: "center",
+    width: "80%",
+  },
+  progressBackground: {
+    height: 6,
+    backgroundColor: "#444",
+    borderRadius: 3,
+    width: "80%",
+    marginBottom: 25,
+  },
+  progressFill: {
+    height: 6,
+    backgroundColor: "#fcbf24",
+    width: "45%",
+    borderRadius: 3,
+  },
+  otpInputContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginBottom: 35,
+    gap: 10,
+  },
+  otpInput: {
+    width: 45,
+    height: 50,
+    borderWidth: 1,
+    borderColor: "#ffb300",
+    borderRadius: 10,
+    textAlign: "center",
+    fontSize: 20,
+    color: "#fff",
+  },
+  proceedButton: {
+    backgroundColor: "#ffb300",
+    paddingVertical: 14,
+    borderRadius: 10,
+    width: "80%",
+    alignItems: "center",
+  },
+  proceedButtonText: {
+    color: "#000",
+    fontSize: 18,
+    fontFamily: "BebasNeue",
+  },
+  resendContainer: {
+    flexDirection: "row",
+    marginTop: 20,
+  },
+  resendText: {
+    color: "#aaa",
+    marginRight: 5,
+  },
+  resendLink: {
+    color: "#ffb300",
+    fontWeight: "bold",
+  },
 });
