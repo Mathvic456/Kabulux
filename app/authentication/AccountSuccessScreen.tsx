@@ -39,7 +39,7 @@ export default function AccountSuccessScreen({ next, goRegister, goForgot }: { n
   // }
 
   const handleProceed = () => {
-    
+    next();
   };
 
 

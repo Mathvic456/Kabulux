@@ -159,7 +159,7 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
 
             {/* All Inputs */}
             {renderInput("user", fullName, setFullName, "Full Name", errors.fullName, "words")}
-            {renderInput("email", email, setEmail, "Email", errors.email, "none", "email-address")}
+            {renderInput("envelope", email, setEmail, "Email", errors.email, "none", "email-address")}
             {renderInput("phone", phone, setPhone, "Phone Number", errors.phone, "none", "phone-pad")}
             {renderInput("map-marker", address, setAddress, "Address", errors.address)}
             {renderInput("lock", password, setPassword, "Password", errors.password, "none", "default", true)}

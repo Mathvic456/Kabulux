@@ -21,9 +21,11 @@ import { useVerifyOtpEndPoint } from "../../services/otpVerification.service";
 export default function VerifyEmailScreen({
   next,
   goRegister,
+  goBack,
 }: {
   next: () => void;
   goRegister: () => void;
+  goBack: () => void;
 }) {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -89,7 +91,7 @@ export default function VerifyEmailScreen({
 
           <Pressable
             style={styles.backBtn}
-            onPress={() => goRegister()}
+            onPress={() => goBack()}
           >
             <Ionicons name="arrow-back" size={22} color="#fff" />
           </Pressable>

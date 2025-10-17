@@ -155,7 +155,7 @@ export default function MainNavigator() {
     case "verify":
       return (
       <VerifyEmailScreen
-      email={registeredEmail}
+      goBack={() => setScreen("register")}
       next={() => setScreen("accountSuccess")}
       goRegister={() => setScreen("register")}
       goForgot={() => setScreen("reset")}
