@@ -16,11 +16,13 @@ import {
 import { api } from "../../services/api";
 
 type PersonalInfoScreenProps = {
-  navigation: any; // you can type it properly if you have a StackParamList
+  navigation: any;
+  goBack: () => void;
 };
 
 export default function PersonalInfoScreen({
   navigation,
+  goBack,
 }: PersonalInfoScreenProps) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -41,7 +43,6 @@ export default function PersonalInfoScreen({
     }
   }, [profile]);
 
-  const goBack = () => navigation.goBack();
   const next = () => navigation.navigate("");
 
   // Validation functions
@@ -119,6 +120,7 @@ export default function PersonalInfoScreen({
     setIsEditingEmail(false);
     setIsEditingPhone(false);
     Keyboard.dismiss();
+    goBack();
   };
 
   // Format phone number for display
