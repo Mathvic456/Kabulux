@@ -4,11 +4,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   Dimensions,
   Image,
   Modal,
   PanResponder,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -106,6 +108,7 @@ export default function BookingScreen({
       // Call the reusable hook
       const data = await getRideEstimate(rideData);
       console.log("Ride estimates API response:", data);
+      console.log(data.data.rides[0])
 
       if (data.status === "success" && data.data?.rides) {
         const formattedRides = data.data.rides.map((ride) => ({
@@ -123,6 +126,9 @@ export default function BookingScreen({
         }));
 
         setRideOptions(formattedRides);
+        const ride_request_id = data.data.ride_request_id
+        await AsyncStorage.setItem("ride_request_id", ride_request_id);
+        console.log("Stored", ride_request_id);
       } else {
         setError("Failed to fetch ride estimates");
       }
@@ -136,16 +142,22 @@ export default function BookingScreen({
 
   fetchRideEstimates();
 }, [pickupLat, pickupLng, dropoffLat, dropoffLng]);
+
   // Handle confirm ride navigation
   const handleConfirmRide = () => {
-    if (!selectedRide) return;
-
-    const selectedOption = rideOptions.find((option) => option.name === selectedRide);
-
-    if (selectedOption) {
-      setScreen(selectedOption.screen);
-    }
-  };
+  const selectedOption = rideOptions.find((option) => option.name === selectedRide);
+  console.log(selectedOption);
+    console.log(selectedRide)
+  if (selectedRide?.includes("Standard")) {
+    setScreen("standardScreen")
+  } else {
+    Alert.alert(
+      "Unavailable",
+      "This ride option is not available at the moment. Please choose Standard.",
+      [{ text: "OK" }]
+    );
+  }
+};
 
   return (
     <View style={styles.container}>
@@ -155,101 +167,110 @@ export default function BookingScreen({
       </View>
 
       {/* Sliding Bottom Overlay */}
+
       <Animated.View
         style={[styles.bottomPanel, { transform: [{ translateY: slideAnim }] }]}
         {...panResponder.panHandlers}
       >
-        <View style={styles.panelHeader}>
-          <TouchableOpacity style={styles.headerIconContainer} onPress={goBack}>
-            <Feather name="arrow-left" size={24} color="white" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Choose a Ride</Text>
-        </View>
-
-        {/* Loading State */}
-        {loading ? (
-          <View style={styles.centerContent}>
-            <ActivityIndicator size="large" color="#f6a623" />
-            <Text style={styles.loadingText}>Fetching available rides...</Text>
-          </View>
-        ) : error ? (
-          <View style={styles.centerContent}>
-            <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity 
-              style={styles.retryButton}
-              onPress={() => setRideOptions([])}
-            >
-              <Text style={styles.retryButtonText}>Try Again</Text>
+        <ScrollView 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <View style={styles.panelHeader}>
+            <TouchableOpacity style={styles.headerIconContainer} onPress={goBack}>
+              <Feather name="arrow-left" size={24} color="white" />
             </TouchableOpacity>
+            <Text style={styles.headerTitle}>Choose a Ride</Text>
           </View>
-        ) : rideOptions.length > 0 ? (
-          <>
-            {/* Ride Options */}
-            {rideOptions.map((option, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.rideOptionItem,
-                  selectedRide === option.name && { 
-                    borderColor: "#f6a623", 
-                    borderWidth: 2 
-                  },
-                ]}
-                onPress={() => setSelectedRide(option.name)}
+
+          {/* Loading State */}
+          {loading ? (
+            <View style={styles.centerContent}>
+              <ActivityIndicator size="large" color="#f6a623" />
+              <Text style={styles.loadingText}>Fetching available rides...</Text>
+            </View>
+          ) : error ? (
+            <View style={styles.centerContent}>
+              <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity 
+                style={styles.retryButton}
+                onPress={() => setRideOptions([])}
               >
-                <Image source={option.image} style={styles.rideImage} />
-                <View style={styles.rideDetails}>
-                  <Text style={styles.rideName}>{option.name}</Text>
-                  <Text style={styles.rideTiming}>{option.details}</Text>
-                  <Text style={styles.rideInfo}>
-                    {option.carType} <Feather name="user" size={12} color="#aaa" />{" "}
-                    {option.passengers}
-                  </Text>
-                </View>
-
-                <View style={styles.ridePriceContainer}>
-                  <Text style={styles.ridePrice}>{option.price}</Text>
-                  {option.originalPrice && (
-                    <Text style={styles.rideOriginalPrice}>
-                      {option.originalPrice}
-                    </Text>
-                  )}
-                </View>
+                <Text style={styles.retryButtonText}>Try Again</Text>
               </TouchableOpacity>
-            ))}
+            </View>
+          ) : rideOptions.length > 0 ? (
+            <>
+              {/* Ride Options */}
+              {rideOptions.map((option, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.rideOptionItem,
+                    selectedRide === option.name && { 
+                      borderColor: "#f6a623", 
+                      borderWidth: 2 
+                    },
+                  ]}
+                  onPress={() => setSelectedRide(option.name)}
+                >
+                  <Image source={option.image} style={styles.rideImage} />
+                  <View style={styles.rideDetails}>
+                    <Text style={styles.rideName}>{option.name}</Text>
+                    <Text style={styles.rideTiming}>{option.details}</Text>
+                    <Text style={styles.rideInfo}>
+                      {option.carType} <Feather name="user" size={12} color="#aaa" />{" "}
+                      {option.passengers}
+                    </Text>
+                  </View>
 
-            {/* Payment Section */}
-            <TouchableOpacity
-              style={styles.paymentSection}
-              onPress={() => setPaymentModalVisible(true)}
-            >
-              <Feather name="credit-card" size={20} color="#388e3c" />
-              <Text style={styles.paymentText}>Pay with cash</Text>
-              <Feather
-                name="chevron-right"
-                size={20}
-                color="#aaa"
-                style={{ marginLeft: "auto" }}
-              />
-            </TouchableOpacity>
+                  <View style={styles.ridePriceContainer}>
+                    <Text style={styles.ridePrice}>{option.price}</Text>
+                    {option.originalPrice && (
+                      <Text style={styles.rideOriginalPrice}>
+                        {option.originalPrice}
+                      </Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              ))}
 
-            {/* Confirm Button */}
-            <TouchableOpacity
-              style={[
-                styles.confirmButton,
-                { backgroundColor: selectedRide ? "#f6a623" : "#555" },
-              ]}
-              disabled={!selectedRide}
-              onPress={handleConfirmRide}
-            >
-              <Text style={styles.confirmButtonText}>Choose Ride</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <View style={styles.centerContent}>
-            <Text style={styles.errorText}>No rides available</Text>
-          </View>
-        )}
+              {/* Payment Section */}
+              <TouchableOpacity
+                style={styles.paymentSection}
+                onPress={() => setPaymentModalVisible(true)}
+              >
+                <Feather name="credit-card" size={20} color="#388e3c" />
+                <Text style={styles.paymentText}>Pay with cash</Text>
+                <Feather
+                  name="chevron-right"
+                  size={20}
+                  color="#aaa"
+                  style={{ marginLeft: "auto" }}
+                />
+              </TouchableOpacity>
+
+              {/* Confirm Button */}
+              <TouchableOpacity
+                style={[
+                  styles.confirmButton,
+                  { backgroundColor: selectedRide ? "#f6a623" : "#555" },
+                ]}
+                disabled={!selectedRide}
+                onPress={handleConfirmRide}
+              >
+                <Text style={styles.confirmButtonText}>Choose Ride</Text>
+              </TouchableOpacity>
+
+              {/* Extra padding for scrolling */}
+              <View style={{ height: 40 }} />
+            </>
+          ) : (
+            <View style={styles.centerContent}>
+              <Text style={styles.errorText}>No rides available</Text>
+            </View>
+          )}
+        </ScrollView>
       </Animated.View>
 
       {/* Payment Options Modal */}
@@ -331,6 +352,9 @@ const styles = StyleSheet.create({
     elevation: 20,
     paddingHorizontal: 20,
     paddingTop: 20,
+  },
+  scrollContent: {
+    paddingBottom: 20,
   },
   rideOptionItem: {
     flexDirection: "row",

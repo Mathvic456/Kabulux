@@ -3,7 +3,7 @@ import { api } from "./api";
 
 export const useVerifyOtpEndPoint = () => {
   return useMutation({
-    mutationFn: (data: { email: string; otp: string }) =>
+    mutationFn: (data: { email: string; otp: string }) => 
       api.post("auth/verify_otp/", data),
 
     onSuccess: (res) => {
@@ -15,3 +15,5 @@ export const useVerifyOtpEndPoint = () => {
     },
   });
 };
+
+

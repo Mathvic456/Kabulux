@@ -57,6 +57,10 @@ export default function VerifyEmailScreen({
     if (!text && index > 0) inputsRef.current[index - 1]?.focus();
   };
 
+  const handleResend = async() => {
+    
+  }
+
   const handleProceed = async () => {
     setIsLoading(true);
     const code = otp.join("");
@@ -143,7 +147,7 @@ export default function VerifyEmailScreen({
 
           <View style={styles.resendContainer}>
             <Text style={styles.resendText}>Didn't Receive code?</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={handleReset}>
               <Text style={styles.resendLink}>Resend</Text>
             </TouchableOpacity>
           </View>

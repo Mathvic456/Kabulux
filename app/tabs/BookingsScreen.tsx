@@ -67,6 +67,7 @@ const RideCard: React.FC<RideCardProps> = ({ ride, setScreen, setSelectedRide })
           borderColor: "#f7b731",
         }}
       >
+
         {/* Top Row */}
         <View
           style={{

@@ -1,8 +1,8 @@
-import { useFonts } from "expo-font";
-import "react-native-reanimated";
-
+import { WebSocketProvider } from "@/context/WebSocketProvider";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useFonts } from "expo-font";
+import "react-native-reanimated";
 import MainNavigator from "./MainNavigator";
 const queryClient = new QueryClient();
 export default function RootLayout() {
@@ -17,8 +17,10 @@ export default function RootLayout() {
   }
 
   return (
+    <WebSocketProvider>
     <QueryClientProvider client={queryClient}>
       <MainNavigator />
     </QueryClientProvider>
+    </WebSocketProvider>
   );
 }

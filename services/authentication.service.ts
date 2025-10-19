@@ -32,14 +32,20 @@ export const useLoginEndPoint = () => {
       api.post("auth/login/", data),
     onSuccess: async (res) => {
       const token = res.data?.data?.access;
+      const userId = res.data?.data?.user?.id;
+
       if (token) {
         await AsyncStorage.setItem("token", token);
-
-          const storedToken = await AsyncStorage.getItem("token");
-        console.log("Token in AsyncStorage after login:", storedToken);
+        console.log("Token saved:", token);
       }
-      console.log("User logged in:", res.data);
-      // Don't show alert here - let component handle the modal
+
+      if (userId) {
+        await AsyncStorage.setItem("user_id", userId);
+        console.log("User ID saved:", userId);
+      }
+
+      const storedId = await AsyncStorage.getItem("user_id");
+      console.log("User ID from AsyncStorage:", storedId);
     },
     onError: (error: any) => {
       console.error("Login error:", error);

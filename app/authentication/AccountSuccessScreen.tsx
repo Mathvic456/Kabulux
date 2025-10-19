@@ -10,36 +10,22 @@
 //   );
 // }
 
-
-import { useVerifyOtpEndPoint } from "";
+import CustomButton from "@/components/ui/CustomButton";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 import Logo from '../../assets/images/logo.png';
 import Success from '../../assets/images/success.png';
 
-export default function AccountSuccessScreen({ next, goRegister, goForgot }: { next: () => void, goRegister: () => void, goForgot: () => void }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [remember, setRemember] = useState(false);
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+
+export default function AccountSuccessScreen({ next }: { next: () => void }) {
+  const [isLoading, setIsLoading] = useState(false);
   
-  const handleOtpChange = (text: string, index: number) => {
-    const newOtp = [...otp];
-    newOtp[index] = text;
-    setOtp(newOtp);
-  };
-
-  const handleResendCode = () => {
-    // Logic for resending the code
-    console.log('Resend code tapped');
-  };
-
-  // if (!fontsLoaded) {
-  //   return null;
-  // }
-
-  const handleProceed = () => {
+  const handleProceed = async() => {
+    setIsLoading(true);
+    await AsyncStorage.removeItem("pendingEmail");
     next();
+    setIsLoading(false);
   };
 
 
@@ -69,9 +55,11 @@ export default function AccountSuccessScreen({ next, goRegister, goForgot }: { n
 
             <Text style={styles.title}>Your Account is Successfully Created</Text>
 
-<TouchableOpacity style={styles.proceedButton} onPress={handleProceed}>
-          <Text style={styles.proceedButtonText}>Proceed</Text>
-        </TouchableOpacity>        
+        <CustomButton 
+          title="Proceed"
+          onPress={handleProceed}
+          loading={isLoading}
+        />
         </View>
 
         {/* Password Input */}

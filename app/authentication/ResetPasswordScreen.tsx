@@ -1,3 +1,4 @@
+import { useForgotPassword } from "@/services/forgotPassword.service";
 import { FontAwesome } from "@expo/vector-icons";
 import { useState } from "react";
 import {
@@ -20,6 +21,7 @@ export default function ResetPasswordScreen({ next, goRegister }: {
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [emailError, setEmailError] = useState("");
+  const forgotPassword = useForgotPassword();
   
   // Email validation function
   const validateEmail = (email: string) => {
@@ -27,7 +29,7 @@ export default function ResetPasswordScreen({ next, goRegister }: {
     return emailRegex.test(email);
   };
 
-  const handleProceed = () => {
+  const handleProceed = async() => {
     // Clear previous errors
     setEmailError("");
 
@@ -42,13 +44,8 @@ export default function ResetPasswordScreen({ next, goRegister }: {
       return;
     }
 
-    setIsLoading(true);
-    
-    // Simulate API call to send OTP
-    setTimeout(() => {
-      setIsLoading(false);
-      setShowModal(true); // Show success modal
-    }, 1500);
+     await forgotPassword.mutateAsync({email})
+     setShowModal(true);
   };
 
   const handleModalContinue = () => {
@@ -107,7 +104,7 @@ export default function ResetPasswordScreen({ next, goRegister }: {
               (!email.trim() || isLoading) && styles.disabledButton
             ]} 
             onPress={handleProceed}
-            disabled={!email.trim() || isLoading}
+            disabled={!email.trim() || forgotPassword.isPending}
           >
             {isLoading ? (
               <ActivityIndicator color="#000" />
@@ -309,6 +306,5 @@ const styles = StyleSheet.create({
     color: '#000',
     fontSize: 16,
     fontFamily: 'BebasNeue',
-    fontSize: 18,
   },
 });

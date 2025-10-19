@@ -17,6 +17,7 @@ import ResetCredentialsScreen from "./authentication/ResetCredentialsScreen";
 import ResetPasswordScreen from "./authentication/ResetPasswordScreen";
 import VerifyEmailScreen from "./authentication/VerifyEmailScreen";
 import LoyaltyPointsScreen from "./LoyaltyPointsScreen";
+import StandardScreen from "./offer/StandardScreen";
 import OnboardingScreen1 from "./onboarding/OnboardingScreen1";
 import OnboardingScreen2 from "./onboarding/OnboardingScreen2";
 import BookingScreen from "./Order/BookingScreen";
@@ -90,6 +91,7 @@ type Screen =
   | "resetCredentials"
   | "businessCodeScreen"
   | "paystack"
+  | "standardScreen"
 
 
 export default function MainNavigator() {
@@ -371,6 +373,13 @@ export default function MainNavigator() {
       dropoffLng={bookingData?.destination?.longitude}
     />
   );
+
+  case "standardScreen":
+    return (
+      <StandardScreen
+        goBack={() => setScreen("bookingScreen")}
+      />
+    )
 
     case "originalPriceDetails":
       return (
