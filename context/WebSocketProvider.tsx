@@ -15,23 +15,36 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
   const ws = useRef<WebSocket | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Watch token changes from AsyncStorage
+  // Load token ONCE on mount
   useEffect(() => {
-    const initToken = async () => {
-      const storedToken = await AsyncStorage.getItem("auth_token");
-      setToken(storedToken);
+    const loadToken = async () => {
+      try {
+        const storedToken = await AsyncStorage.getItem("token");
+        console.log("🔐 Token loaded:", storedToken ? "✓ Found" : "✗ Not found");
+        setToken(storedToken);
+      } catch (err) {
+        console.error("❌ Failed to load token:", err);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    // Listen for login changes
-    const interval = setInterval(initToken, 500); // simple polling
-    initToken();
-
-    return () => clearInterval(interval);
+    loadToken();
   }, []);
 
+  // Connect WebSocket when token is available
   useEffect(() => {
-    if (!token) return;
+    if (isLoading) {
+      console.log("⏳ Still loading token...");
+      return;
+    }
+
+    if (!token) {
+      console.log("⚠️ No token available, skipping WebSocket connection");
+      return;
+    }
 
     console.log("🔑 Connecting WebSocket with token:", token);
 
@@ -58,10 +71,10 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
     };
 
     return () => {
-      console.log("🧹 Closing old WS");
+      console.log("🧹 Closing WebSocket");
       ws.current?.close();
     };
-  }, [token]);
+  }, [token, isLoading]);
 
   return (
     <SocketContext.Provider value={{ socket: ws.current, isConnected }}>
