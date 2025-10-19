@@ -1,5 +1,12 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
 import React, { createContext, useEffect, useRef, useState } from "react";
+
+if (!Constants.expoConfig?.extra?.wssUrl) {
+  throw new Error("WSS URL is missing in expoConfig.extra");
+}
+
+export const WSS_URL = Constants.expoConfig.extra.wssUrl;
 
 interface SocketContextValue {
   socket: WebSocket | null;
@@ -17,7 +24,6 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load token ONCE on mount
   useEffect(() => {
     const loadToken = async () => {
       try {
@@ -33,8 +39,6 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
 
     loadToken();
   }, []);
-
-  // Connect WebSocket when token is available
   useEffect(() => {
     if (isLoading) {
       console.log("⏳ Still loading token...");
@@ -48,7 +52,7 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
 
     console.log("🔑 Connecting WebSocket with token:", token);
 
-    ws.current = new WebSocket(`wss://api.kabluxe.com/api/v1/ws/?token=${token}`);
+    ws.current = new WebSocket(`${WSS_URL}?token=${token}`);
 
     ws.current.onopen = () => {
       console.log("✅ Connected to WebSocket");

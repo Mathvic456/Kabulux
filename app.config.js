@@ -63,6 +63,7 @@ export default {
       },
       googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
       apiUrl: process.env.EXPO_PUBLIC_API_URL,
+      wssUrl: process.env.EXPO_PUBLIC_WSS_URL,
     },
 
     owner: 'hunchoexpo',
