@@ -161,7 +161,7 @@ const PhotoChoiceModal = ({ isVisible, onClose, onImageSelected }: PhotoChoiceMo
                 style={[styles.button, styles.cancelButton]}
                 onPress={onClose}
               >
-                <Text style={[styles.buttonText, { color: "#333" }]}>
+                <Text style={[styles.buttonText, { color: "#fff" }]}>
                   Cancel
                 </Text>
               </TouchableOpacity>

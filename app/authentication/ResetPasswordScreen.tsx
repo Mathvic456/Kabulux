@@ -1,5 +1,6 @@
 import { useForgotPassword } from "@/services/forgotPassword.service";
 import { FontAwesome } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -14,7 +15,7 @@ import {
 import Logo from '../../assets/images/logo.png';
 
 export default function ResetPasswordScreen({ next, goRegister }: { 
-  next: () => void;
+  next: (email: any) => void;
   goRegister: () => void;
 }) {
   const [email, setEmail] = useState("");
@@ -45,12 +46,14 @@ export default function ResetPasswordScreen({ next, goRegister }: {
     }
 
      await forgotPassword.mutateAsync({email})
+     await AsyncStorage.setItem("forgotPasswordEmail", email);
+    console.log("📩 Email saved for OTP verification:", email);
      setShowModal(true);
   };
 
   const handleModalContinue = () => {
     setShowModal(false);
-    next(); // Navigate to next screen (OTP verification)
+    next(email); // Navigate to next screen (OTP verification)
   };
 
   const handleEmailChange = (text: string) => {

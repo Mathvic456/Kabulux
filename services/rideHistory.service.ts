@@ -1,4 +1,3 @@
-// services/rideHistory.service.ts
 import { useQuery } from "@tanstack/react-query";
 import { api } from "./api";
 

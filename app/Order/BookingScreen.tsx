@@ -1,7 +1,8 @@
+import { SocketContext } from "@/context/WebSocketProvider";
 import { getRideEstimate } from "@/services/apiservice";
 import { Feather } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -19,6 +20,7 @@ import {
 import Car from "../../assets/images/car.png";
 
 const { height } = Dimensions.get("window");
+
 
 export default function BookingScreen({ 
   setScreen, 
@@ -52,8 +54,11 @@ export default function BookingScreen({
   const [selectedRide, setSelectedRide] = useState<string | null>(null);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [rideOptions, setRideOptions] = useState<RideOption[]>([]);
+  const [rideId, setRideId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+    const { socket, isConnected } = useContext(SocketContext);
 
   // Handle swipe gestures
   const panResponder = useRef(
@@ -127,7 +132,7 @@ export default function BookingScreen({
 
         setRideOptions(formattedRides);
         const ride_request_id = data.data.ride_request_id
-        await AsyncStorage.setItem("ride_request_id", ride_request_id);
+        setRideId(ride_request_id);
         console.log("Stored", ride_request_id);
       } else {
         setError("Failed to fetch ride estimates");
@@ -144,11 +149,12 @@ export default function BookingScreen({
 }, [pickupLat, pickupLng, dropoffLat, dropoffLng]);
 
   // Handle confirm ride navigation
-  const handleConfirmRide = () => {
+  const handleConfirmRide = async() => {
   const selectedOption = rideOptions.find((option) => option.name === selectedRide);
   console.log(selectedOption);
     console.log(selectedRide)
   if (selectedRide?.includes("Standard")) {
+    sendSubscription(socket, rideId)
     setScreen("standardScreen")
   } else {
     Alert.alert(
@@ -158,6 +164,27 @@ export default function BookingScreen({
     );
   }
 };
+
+  function sendSubscription(socket: WebSocket, rideId: string, attempt = 0) {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(
+        JSON.stringify({
+          type: "subscribe_driver_offer_view",
+          data: { ride_id: rideId },
+        })
+      );
+      console.log("📡 Subscribed to driver offer updates");
+      return;
+    }
+
+    if (attempt < 5) {
+      const delay = Math.min(1000 * Math.pow(2, attempt), 5000); // exponential backoff, max 5s
+      console.warn(`⚠️ WebSocket not ready, retrying in ${delay}ms... (attempt ${attempt + 1})`);
+      setTimeout(() => sendSubscription(socket, rideId, attempt + 1), delay);
+    } else {
+      console.error("❌ Failed to subscribe after max retries");
+    }
+  };
 
   return (
     <View style={styles.container}>

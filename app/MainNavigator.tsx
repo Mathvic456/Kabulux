@@ -105,6 +105,7 @@ export default function MainNavigator() {
   const [bookingData, setBookingData] = useState<any>(null);
 
   const [registeredEmail, setRegisteredEmail] = useState("");
+  const [ forgotPasswordEmail, setForgotPasswordEmail] = useState("")
   
 
 
@@ -149,7 +150,8 @@ export default function MainNavigator() {
       return (
         <ResetPasswordScreen
           goRegister={() => setScreen("register")}
-          next={() => {
+          next={(email) => {
+            setForgotPasswordEmail(email);
             setScreen("resetCredentials")
           }}
         />

@@ -64,9 +64,10 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
       console.log("📩 WS message:", data);
     };
 
-    ws.current.onclose = () => {
+    ws.current.onclose = (event) => {
       console.log("🚪 WS closed");
       setIsConnected(false);
+      console.warn("⚠️ WebSocket closed:", event.code, event.reason);
     };
 
     ws.current.onerror = (err) => {
