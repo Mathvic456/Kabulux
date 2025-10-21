@@ -16,6 +16,7 @@ export default function RootLayout() {
     return null;
   }
 
+  
   return (
     <WebSocketProvider>
     <QueryClientProvider client={queryClient}>

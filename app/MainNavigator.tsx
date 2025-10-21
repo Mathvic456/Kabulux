@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useState } from "react";
 import AddFundsScreen from "./addFunds/AddFundsScreen";
 import CryptoDepositScreenOne from "./addFunds/CryptoDepositScreenOne";
@@ -99,6 +100,7 @@ export default function MainNavigator() {
 
   // Keep track of the selected ride
   const [selectedRide, setSelectedRide] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [rideOptions, setRideOptions] = useState<any>(null);
   const [pickupLocationData, setPickupLocationData] = useState<any>(null);
@@ -120,12 +122,29 @@ export default function MainNavigator() {
     setScreen(newScreen);
   };
 
+ const checkIfRemembered = async () => {
+  const rememberedEmail = await AsyncStorage.getItem("rememberedEmail");
+  const token = await AsyncStorage.getItem("token");
+
+  if (token || rememberedEmail) {
+
+    setScreen("dashboard");
+  } else {
+
+    setScreen("login");
+  }
+};
+
+
+
+
 
   switch (screen) {
     case "onboard1":
-      return <OnboardingScreen1 next={() => setScreen("login")} />;
+        return <OnboardingScreen1 next={() => checkIfRemembered()} />;
+      
     case "onboard2":
-      return <OnboardingScreen2 next={() => setScreen("login")} />;
+    return <OnboardingScreen2 next={() => {}}/>;
     case "login":
       return (
         <LoginScreen

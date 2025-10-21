@@ -1,6 +1,7 @@
 import CustomButton from "@/components/ui/CustomButton";
 import { useLoginEndPoint } from "@/services/authentication.service";
 import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState } from "react";
 import {
   Image,
@@ -60,18 +61,29 @@ export default function LoginScreen({
   };
 
   const { mutate: login, isPending } = useLoginEndPoint();
-  const handleSubmit = () => {
-    if (validateForm()) {
-      login(
-        { email, password },
-        {
-          onSuccess: () => {
-            next();
-          },
+
+const handleSubmit = async() => {
+ if (validateForm()) {
+  login(
+    { email, password },
+    {
+      onSuccess: async (res) => {
+        const token = res.data?.data?.access;
+
+        if (remember && token) {
+          await AsyncStorage.setItem("token", token);
+        } else {
+          await AsyncStorage.removeItem("token");
         }
-      );
+          const keys = await AsyncStorage.getAllKeys();
+        console.log("📦 AsyncStorage keys now:", keys);
+        next(); 
+      },
     }
-  };
+  );
+}
+
+};
   return (
     <View style={styles.container}>
       {/* Top Banner */}

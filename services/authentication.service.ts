@@ -31,13 +31,9 @@ export const useLoginEndPoint = () => {
     mutationFn: (data: { email: string; password: string }) =>
       api.post("auth/login/", data),
     onSuccess: async (res) => {
-      const token = res.data?.data?.access;
       const userId = res.data?.data?.user?.id;
 
-      if (token) {
-        await AsyncStorage.setItem("token", token);
-        console.log("Token saved:", token);
-      }
+    
 
       if (userId) {
         await AsyncStorage.setItem("user_id", userId);

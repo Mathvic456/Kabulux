@@ -45,9 +45,12 @@ type HomeScreenProps = {
   setScreen: (screen: string) => void;
 };
 
+
+
 // Overlay Component for Photo Upload
 const UploadPhotoOverlay = ({ isVisible, onClose, onNext }: UploadPhotoOverlayProps) => {
   if (!isVisible) return null;
+
 
   return (
     <Modal
@@ -187,6 +190,11 @@ const AdditionalInfoOverlay = ({ isVisible, onClose, profileImage }: AdditionalI
 
   const [showNotificationDropdown, setShowNotificationDropdown] = useState<boolean>(false);
   const [showPaymentDropdown, setShowPaymentDropdown] = useState<boolean>(false);
+
+
+
+
+
 
   const handleNext = () => {
     // Validate and save the additional info
