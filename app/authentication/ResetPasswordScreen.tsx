@@ -1,5 +1,5 @@
 import { useForgotPassword } from "@/services/forgotPassword.service";
-import { FontAwesome } from "@expo/vector-icons";
+import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useState } from "react";
 import {
@@ -14,9 +14,9 @@ import {
 } from "react-native";
 import Logo from '../../assets/images/logo.png';
 
-export default function ResetPasswordScreen({ next, goRegister }: { 
+export default function ResetPasswordScreen({ next, goLogin }: { 
   next: (email: any) => void;
-  goRegister: () => void;
+  goLogin: () => void;
 }) {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -71,6 +71,10 @@ export default function ResetPasswordScreen({ next, goRegister }: {
 
       {/* Card */}
       <View style={styles.card}>
+        <TouchableOpacity style={styles.backButton} onPress={goLogin}>
+      <Ionicons name="arrow-back" size={22} color="#fff" />
+    </TouchableOpacity>
+
         <View style={styles.LogoContainer}>
           <Image
             source={Logo}
@@ -109,7 +113,7 @@ export default function ResetPasswordScreen({ next, goRegister }: {
             onPress={handleProceed}
             disabled={!email.trim() || forgotPassword.isPending}
           >
-            {isLoading ? (
+            {forgotPassword.isPending ? (
               <ActivityIndicator color="#000" />
             ) : (
               <Text style={styles.proceedButtonText}>Send Code</Text>
@@ -310,4 +314,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'BebasNeue',
   },
+
+  backButton: {
+  flexDirection: "row",
+  alignItems: "center",
+  marginBottom: 10,
+},
+backText: {
+  color: "#fff",
+  fontSize: 16,
+  marginLeft: 6,
+  fontFamily: "BebasNeue",
+},
+
 });

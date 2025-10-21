@@ -48,6 +48,10 @@ export default function VerifyEmailScreen({
     loadEmail();
   }, []);
 
+  function handleReset() {
+
+  }
+
   const handleOtpChange = (text: string, index: number) => {
     const newOtp = [...otp];
     newOtp[index] = text.slice(-1);
@@ -56,10 +60,6 @@ export default function VerifyEmailScreen({
     if (text && index < otp.length - 1) inputsRef.current[index + 1]?.focus();
     if (!text && index > 0) inputsRef.current[index - 1]?.focus();
   };
-
-  const handleResend = async() => {
-    
-  }
 
   const handleProceed = async () => {
     setIsLoading(true);
@@ -145,12 +145,7 @@ export default function VerifyEmailScreen({
             )}
           </TouchableOpacity>
 
-          <View style={styles.resendContainer}>
-            <Text style={styles.resendText}>Didn't Receive code?</Text>
-            <TouchableOpacity onPress={handleReset}>
-              <Text style={styles.resendLink}>Resend</Text>
-            </TouchableOpacity>
-          </View>
+        
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -262,16 +257,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: "BebasNeue",
   },
-  resendContainer: {
-    flexDirection: "row",
-    marginTop: 20,
-  },
-  resendText: {
-    color: "#aaa",
-    marginRight: 5,
-  },
-  resendLink: {
-    color: "#ffb300",
-    fontWeight: "bold",
-  },
+
 });

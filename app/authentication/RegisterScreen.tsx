@@ -1,6 +1,6 @@
 import CustomButton from "@/components/ui/CustomButton";
 import { useRegisterEndPoint } from "@/services/authentication.service";
-import { FontAwesome } from "@expo/vector-icons";
+import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState } from "react";
 import {
@@ -27,6 +27,7 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [referral, setReferral] = useState("");
 
   const [errors, setErrors] = useState({
@@ -71,7 +72,7 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
       newErrors.phone = "Phone number is required";
       valid = false;
     } else if (
-      !/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/.test(phone)
+      !/^\+?\d{10,15}$/.test(phone)
     ) {
       newErrors.phone = "Please enter a valid phone number";
       valid = false;
@@ -130,8 +131,19 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
           next(email);
         },
         onError: (err) => {
-          console.error("Registration failed:", err.response?.data || err.message);
-        },
+      const errorData = err.response?.data;
+
+      if (errorData?.email?.[0]?.includes("already exists")) {
+        setErrors((prev) => ({
+          ...prev,
+          email: "This email is already registered. Try signing in instead.",
+        }));
+      } else {
+        console.error("Registration failed:", errorData || err.message);
+        alert("Something went wrong. Please try again.");
+      }
+    },
+
       }
     );
   };
@@ -162,7 +174,7 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
             {renderInput("envelope", email, setEmail, "Email", errors.email, "none", "email-address")}
             {renderInput("phone", phone, setPhone, "Phone Number", errors.phone, "none", "phone-pad")}
             {renderInput("map-marker", address, setAddress, "Address", errors.address)}
-            {renderInput("lock", password, setPassword, "Password", errors.password, "none", "default", true)}
+            {renderInput("lock", password, setPassword, "Password", errors.password, "none", "default", !showPassword, showPassword, setShowPassword)}
             {renderInput("tag", referral, setReferral, "Referral Code", errors.referral)}
 
             <CustomButton
@@ -200,7 +212,9 @@ const renderInput = (
   error?: string,
   autoCapitalize: any = "none",
   keyboardType: any = "default",
-  secureTextEntry = false
+  secureTextEntry = false,
+  showPassword?: boolean,
+  setShowPassword?: (value: boolean) => void
 ) => (
   <>
     <View style={styles.inputContainer}>
@@ -215,6 +229,15 @@ const renderInput = (
         keyboardType={keyboardType}
         secureTextEntry={secureTextEntry}
       />
+       {placeholder === "Password" && (
+        <TouchableOpacity onPress={() => setShowPassword?.(!showPassword)}>
+          <Ionicons
+            name={showPassword ? "eye-off" : "eye"}
+            size={20}
+            color="#aaa"
+          />
+        </TouchableOpacity>
+      )}
     </View>
     {error ? <Text style={styles.errorText}>{error}</Text> : null}
   </>

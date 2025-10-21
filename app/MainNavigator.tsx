@@ -149,7 +149,7 @@ export default function MainNavigator() {
     case "reset":
       return (
         <ResetPasswordScreen
-          goRegister={() => setScreen("register")}
+          goLogin={() => setScreen("login")}
           next={(email) => {
             setForgotPasswordEmail(email);
             setScreen("resetCredentials")
@@ -329,6 +329,7 @@ export default function MainNavigator() {
     case "resetCredentials":
       return (
         <ResetCredentialsScreen
+          back={() => setScreen('reset')}
           next={() => setScreen("login")}
         />
       );
