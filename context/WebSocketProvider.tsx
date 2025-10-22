@@ -13,7 +13,7 @@ interface SocketContextValue {
   isConnected: boolean;
 }
 
-export const SocketContext = createContext<SocketContextValue>({
+export const SocketContext = createContext<SocketContextValue & { setTokenFromOutside?: (t: string) => void }>({
   socket: null,
   isConnected: false,
 });
@@ -24,34 +24,9 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const loadToken = async () => {
-      try {
-        const storedToken = await AsyncStorage.getItem("token");
-        console.log("🔐 Token loaded:", storedToken ? "✓ Found" : "✗ Not found");
-        setToken(storedToken);
-      } catch (err) {
-        console.error("❌ Failed to load token:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
 
-    loadToken();
-  }, []);
-  useEffect(() => {
-    if (isLoading) {
-      console.log("⏳ Still loading token...");
-      return;
-    }
-
-    if (!token) {
-      console.log("⚠️ No token available, skipping WebSocket connection");
-      return;
-    }
-
+    const connectWebSocket = (token: string) => {
     console.log("🔑 Connecting WebSocket with token:", token);
-
     ws.current = new WebSocket(`${WSS_URL}?token=${token}`);
 
     ws.current.onopen = () => {
@@ -64,25 +39,47 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
       console.log("📩 WS message:", data);
     };
 
-    ws.current.onclose = (event) => {
+    ws.current.onclose = () => {
       console.log("🚪 WS closed");
       setIsConnected(false);
-      console.warn("⚠️ WebSocket closed:", event.code, event.reason);
     };
 
     ws.current.onerror = (err) => {
       console.error("⚠️ WS error:", err);
       setIsConnected(false);
     };
+  };
+
+  
+
+  useEffect(() => {
+    const loadToken = async () => {
+      try {
+        const storedToken = await AsyncStorage.getItem("token");
+        console.log("🔐 Token loaded:", storedToken ? "✓ Found" : "✗ Not found");
+        setToken(storedToken);
+        if (storedToken) connectWebSocket(storedToken);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadToken();
 
     return () => {
-      console.log("🧹 Closing WebSocket");
       ws.current?.close();
     };
-  }, [token, isLoading]);
+  }, []);
+
+    const setTokenFromOutside = (newToken: string) => {
+    setToken(newToken);
+    connectWebSocket(newToken);
+  };
+  
 
   return (
-    <SocketContext.Provider value={{ socket: ws.current, isConnected }}>
+    <SocketContext.Provider value={{ socket: ws.current, isConnected, setTokenFromOutside }}>
       {children}
     </SocketContext.Provider>
   );

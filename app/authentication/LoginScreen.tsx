@@ -1,8 +1,9 @@
 import CustomButton from "@/components/ui/CustomButton";
+import { SocketContext } from "@/context/WebSocketProvider";
 import { useLoginEndPoint } from "@/services/authentication.service";
 import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import {
   Image,
   StyleSheet,
@@ -30,6 +31,8 @@ export default function LoginScreen({
     email: "",
     password: "",
   });
+
+  const { setTokenFromOutside } = useContext(SocketContext);
 
   const validateForm = () => {
     let valid = true;
@@ -62,6 +65,7 @@ export default function LoginScreen({
 
   const { mutate: login, isPending } = useLoginEndPoint();
 
+
 const handleSubmit = async() => {
  if (validateForm()) {
   login(
@@ -77,6 +81,7 @@ const handleSubmit = async() => {
         }
           const keys = await AsyncStorage.getAllKeys();
         console.log("📦 AsyncStorage keys now:", keys);
+        setTokenFromOutside?.(token);
         next(); 
       },
     }
