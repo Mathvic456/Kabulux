@@ -168,7 +168,7 @@ export default function SettingsScreen({ setScreen }) {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => setScreen("dashboard")} style={styles.backButton}>
+          <TouchableOpacity onPress={() => setScreen('profile')} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Settings</Text>
