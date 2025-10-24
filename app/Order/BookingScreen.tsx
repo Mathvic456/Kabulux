@@ -22,6 +22,32 @@ import Car from "../../assets/images/car.png";
 const { height } = Dimensions.get("window");
 
 
+/*const paystackHTML = (email, amount, reference) => `
+  <!DOCTYPE html>
+  <html lang="en">
+  <head><meta charset="UTF-8"><title>Paystack Payment</title></head>
+  <body>
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+    <script>
+      const handler = PaystackPop.setup({
+        key: 'pk_test_xxxxxxxxxxxxxx', // 🔑 your public key
+        email: '${email}',
+        amount: ${amount * 100}, // Paystack expects kobo
+        ref: '${reference}',
+        onClose: function(){
+          window.ReactNativeWebView.postMessage(JSON.stringify({ event: 'cancelled' }));
+        },
+        callback: function(response){
+          window.ReactNativeWebView.postMessage(JSON.stringify({ event: 'success', reference: response.reference }));
+        }
+      });
+      handler.openIframe();
+    </script>
+  </body>
+  </html>
+`;*/
+
+
 export default function BookingScreen({ 
   setScreen, 
   goBack,
@@ -189,6 +215,22 @@ export default function BookingScreen({
   return (
     <View style={styles.container}>
       {/* Map Placeholder */}
+      <View
+        style={{ position: 'absolute', top: 20, left: 20 }}
+        >
+      <TouchableOpacity
+        onPress={() => goBack}
+      >
+        <Feather
+        name="arrow-left"
+        color={"white"}
+        size={14}
+        
+      />
+      </TouchableOpacity>
+      </View>
+
+      
       <View style={styles.mapPlaceholder}>
         <Text style={styles.mapText}>[ Map Placeholder ]</Text>
       </View>

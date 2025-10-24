@@ -26,6 +26,11 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
 
 
     const connectWebSocket = (token: string) => {
+
+    if (ws.current) {
+    console.log("🔌 Closing existing WebSocket before reconnecting...");
+    ws.current.close();
+  }
     console.log("🔑 Connecting WebSocket with token:", token);
     ws.current = new WebSocket(`${WSS_URL}?token=${token}`);
 

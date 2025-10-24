@@ -44,7 +44,7 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
     { icon: "gift-outline", label: "Refer & Earn", screen: "referAndEarn" },
     { icon: "help-circle-outline", label: "Help & Support", screen: "helpAndSupport" },
     { icon: "document-text-outline", label: "Legal", screen: "legal" },
-    { icon: "log-out-outline", label: "Log Out", isAction: true, action: openLogoutModal },
+
   ];
 
   
