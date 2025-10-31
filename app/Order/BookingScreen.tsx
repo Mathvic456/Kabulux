@@ -17,36 +17,104 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import MapViewDirections from "react-native-maps-directions";
 import Car from "../../assets/images/car.png";
 
 const { height } = Dimensions.get("window");
 
+// Google Maps API Key - replace with your actual key
+const GOOGLE_API_KEY = "YOUR_GOOGLE_MAPS_API_KEY";
 
-/*const paystackHTML = (email, amount, reference) => `
-  <!DOCTYPE html>
-  <html lang="en">
-  <head><meta charset="UTF-8"><title>Paystack Payment</title></head>
-  <body>
-    <script src="https://js.paystack.co/v1/inline.js"></script>
-    <script>
-      const handler = PaystackPop.setup({
-        key: 'pk_test_xxxxxxxxxxxxxx', // 🔑 your public key
-        email: '${email}',
-        amount: ${amount * 100}, // Paystack expects kobo
-        ref: '${reference}',
-        onClose: function(){
-          window.ReactNativeWebView.postMessage(JSON.stringify({ event: 'cancelled' }));
-        },
-        callback: function(response){
-          window.ReactNativeWebView.postMessage(JSON.stringify({ event: 'success', reference: response.reference }));
-        }
-      });
-      handler.openIframe();
-    </script>
-  </body>
-  </html>
-`;*/
+// Dark map style
+const darkMapStyle = [
+  { elementType: "geometry", stylers: [{ color: "#212121" }] },
+  { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#212121" }] },
+  {
+    featureType: "administrative",
+    elementType: "geometry",
+    stylers: [{ color: "#757575" }],
+  },
+  {
+    featureType: "administrative.country",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#9e9e9e" }],
+  },
+  {
+    featureType: "poi",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#757575" }],
+  },
+  {
+    featureType: "poi.park",
+    elementType: "geometry",
+    stylers: [{ color: "#181818" }],
+  },
+  {
+    featureType: "poi.park",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#616161" }],
+  },
+  {
+    featureType: "road",
+    elementType: "geometry.fill",
+    stylers: [{ color: "#2c2c2c" }],
+  },
+  {
+    featureType: "road",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#8a8a8a" }],
+  },
+  {
+    featureType: "road.arterial",
+    elementType: "geometry",
+    stylers: [{ color: "#373737" }],
+  },
+  {
+    featureType: "road.highway",
+    elementType: "geometry",
+    stylers: [{ color: "#3c3c3c" }],
+  },
+  {
+    featureType: "road.highway.controlled_access",
+    elementType: "geometry",
+    stylers: [{ color: "#4e4e4e" }],
+  },
+  {
+    featureType: "road.local",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#616161" }],
+  },
+  {
+    featureType: "transit",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#757575" }],
+  },
+  {
+    featureType: "water",
+    elementType: "geometry",
+    stylers: [{ color: "#000000" }],
+  },
+  {
+    featureType: "water",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#3d3d3d" }],
+  },
+];
 
+type RideOption = {
+  name: string;
+  details: string;
+  price: string;
+  originalPrice?: string | null;
+  carType: string;
+  passengers: number;
+  image: any;
+  screen: string;
+  rideId: string;
+};
 
 export default function BookingScreen({ 
   setScreen, 
@@ -62,21 +130,9 @@ export default function BookingScreen({
   pickupLng: number;
   dropoffLat: number;
   dropoffLng: number;
-}){
-  type RideOption = {
-  name: string;
-  details: string;
-  price: string;
-  originalPrice?: string | null;
-  carType: string;
-  passengers: number;
-  image: any;
-  screen: string;
-  rideId: string;
-};
-
-
+}) {
   const slideAnim = useRef(new Animated.Value(0)).current;
+  const mapRef = useRef<MapView>(null);
   const [selectedRide, setSelectedRide] = useState<string | null>(null);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [rideOptions, setRideOptions] = useState<RideOption[]>([]);
@@ -84,7 +140,7 @@ export default function BookingScreen({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-    const { socket, isConnected } = useContext(SocketContext);
+  const { socket, isConnected } = useContext(SocketContext);
 
   // Handle swipe gestures
   const panResponder = useRef(
@@ -113,85 +169,103 @@ export default function BookingScreen({
   ).current;
 
   useEffect(() => {
-  console.log("BookingScreen props:", pickupLat, pickupLat, dropoffLat, dropoffLng);
-}, [pickupLat, pickupLng, dropoffLat, dropoffLng]);
+    console.log("BookingScreen props:", pickupLat, pickupLng, dropoffLat, dropoffLng);
+  }, [pickupLat, pickupLng, dropoffLat, dropoffLng]);
 
+  // Fit map to show both markers
+  useEffect(() => {
+    if (mapRef.current && pickupLat && pickupLng && dropoffLat && dropoffLng) {
+      setTimeout(() => {
+        mapRef.current?.fitToCoordinates(
+          [
+            { latitude: pickupLat, longitude: pickupLng },
+            { latitude: dropoffLat, longitude: dropoffLng },
+          ],
+          {
+            edgePadding: { top: 100, right: 50, bottom: 400, left: 50 },
+            animated: true,
+          }
+        );
+      }, 500);
+    }
+  }, [pickupLat, pickupLng, dropoffLat, dropoffLng]);
 
- useEffect(() => {
-  const fetchRideEstimates = async () => {
-    if (!pickupLat || !pickupLng || !dropoffLat || !dropoffLng) return;
+  useEffect(() => {
+    const fetchRideEstimates = async () => {
+      if (!pickupLat || !pickupLng || !dropoffLat || !dropoffLng) return;
 
-    setLoading(true);
-    setError(null);
+      setLoading(true);
+      setError(null);
 
-    try {
-      const token = await AsyncStorage.getItem("token");
-      if (!token) throw new Error("No authentication token found");
+      try {
+        const token = await AsyncStorage.getItem("token");
+        if (!token) throw new Error("No authentication token found");
 
-      // Build ride data
-      const rideData = {
-        pickup_lat: pickupLat,
-        pickup_lng: pickupLng,
-        dropoff_lat: dropoffLat,
-        dropoff_lng: dropoffLng,
-      };
+        // Build ride data
+        const rideData = {
+          pickup_lat: pickupLat,
+          pickup_lng: pickupLng,
+          dropoff_lat: dropoffLat,
+          dropoff_lng: dropoffLng,
+        };
 
-      // Call the reusable hook
-      const data = await getRideEstimate(rideData);
-      console.log("Ride estimates API response:", data);
-      console.log(data.data.rides[0])
+        // Call the reusable hook
+        const data = await getRideEstimate(rideData);
+        console.log("Ride estimates API response:", data);
+        console.log(data.data.rides[0]);
 
-      if (data.status === "success" && data.data?.rides) {
-        const formattedRides = data.data.rides.map((ride) => ({
-          name: `Kablux ${ride.name.charAt(0).toUpperCase() + ride.name.slice(1)}`,
-          details: `${data.data.estimated_duration} - ${data.data.estimated_distance}`,
-          price: `₦${(ride.estimated_fare / 100).toLocaleString()}`,
-          originalPrice: ride.discount_price 
-            ? `₦${(ride.discount_price / 100).toLocaleString()}`
-            : null,
-          carType: ride.car_type,
-          passengers: ride.car_size,
-          image: Car,
-          screen: ride.name.toLowerCase() + "Screen",
-          rideId: ride.name,
-        }));
+        if (data.status === "success" && data.data?.rides) {
+          const formattedRides = data.data.rides.map((ride: any) => ({
+            name: `Kablux ${ride.name.charAt(0).toUpperCase() + ride.name.slice(1)}`,
+            details: `${data.data.estimated_duration} - ${data.data.estimated_distance}`,
+            price: `₦${(ride.estimated_fare / 100).toLocaleString()}`,
+            originalPrice: ride.discount_price 
+              ? `₦${(ride.discount_price / 100).toLocaleString()}`
+              : null,
+            carType: ride.car_type,
+            passengers: ride.car_size,
+            image: Car,
+            screen: ride.name.toLowerCase() + "Screen",
+            rideId: ride.name,
+          }));
 
-        setRideOptions(formattedRides);
-        const ride_request_id = data.data.ride_request_id
-        setRideId(ride_request_id);
-        console.log("Stored", ride_request_id);
-      } else {
-        setError("Failed to fetch ride estimates");
+          setRideOptions(formattedRides);
+          const ride_request_id = data.data.ride_request_id;
+          setRideId(ride_request_id);
+          console.log("Stored", ride_request_id);
+        } else {
+          setError("Failed to fetch ride estimates");
+        }
+      } catch (err: any) {
+        console.error(err);
+        setError(err.message || "Error fetching rides");
+      } finally {
+        setLoading(false);
       }
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Error fetching rides");
-    } finally {
-      setLoading(false);
+    };
+
+    fetchRideEstimates();
+  }, [pickupLat, pickupLng, dropoffLat, dropoffLng]);
+
+  // Handle confirm ride navigation
+  const handleConfirmRide = async () => {
+    const selectedOption = rideOptions.find((option) => option.name === selectedRide);
+    console.log(selectedOption);
+    console.log(selectedRide);
+    
+    if (selectedRide?.includes("Standard")) {
+      sendSubscription(socket, rideId);
+      setScreen("standardScreen");
+    } else {
+      Alert.alert(
+        "Unavailable",
+        "This ride option is not available at the moment. Please choose Standard.",
+        [{ text: "OK" }]
+      );
     }
   };
 
-  fetchRideEstimates();
-}, [pickupLat, pickupLng, dropoffLat, dropoffLng]);
-
-  // Handle confirm ride navigation
-  const handleConfirmRide = async() => {
-  const selectedOption = rideOptions.find((option) => option.name === selectedRide);
-  console.log(selectedOption);
-    console.log(selectedRide)
-  if (selectedRide?.includes("Standard")) {
-    sendSubscription(socket, rideId)
-    setScreen("standardScreen")
-  } else {
-    Alert.alert(
-      "Unavailable",
-      "This ride option is not available at the moment. Please choose Standard.",
-      [{ text: "OK" }]
-    );
-  }
-};
-
-  function sendSubscription(socket: WebSocket, rideId: string, attempt = 0) {
+  function sendSubscription(socket: WebSocket | null, rideId: string, attempt = 0) {
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(
         JSON.stringify({
@@ -204,86 +278,90 @@ export default function BookingScreen({
     }
 
     if (attempt < 5) {
-      const delay = Math.min(1000 * Math.pow(2, attempt), 5000); // exponential backoff, max 5s
+      const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
       console.warn(`⚠️ WebSocket not ready, retrying in ${delay}ms... (attempt ${attempt + 1})`);
       setTimeout(() => sendSubscription(socket, rideId, attempt + 1), delay);
     } else {
       console.error("❌ Failed to subscribe after max retries");
     }
-  };
+  }
 
   return (
     <View style={styles.container}>
-      {/* Map Placeholder */}
-        {pickupLat && pickupLng && dropoffLat && dropoffLng ? (
-          <MapView
-            ref={mapRef}
-            style={styles.map}
-            provider={PROVIDER_GOOGLE}
-            initialRegion={{
-              latitude: locationData.latitude,
-              longitude: locationData.longitude,
-              latitudeDelta: 0.05,
-              longitudeDelta: 0.05,
+      {/* Map View */}
+      {pickupLat && pickupLng && dropoffLat && dropoffLng ? (
+        <MapView
+          ref={mapRef}
+          style={styles.map}
+          provider={PROVIDER_GOOGLE}
+          initialRegion={{
+            latitude: (pickupLat + dropoffLat) / 2,
+            longitude: (pickupLng + dropoffLng) / 2,
+            latitudeDelta: Math.abs(pickupLat - dropoffLat) * 2 || 0.05,
+            longitudeDelta: Math.abs(pickupLng - dropoffLng) * 2 || 0.05,
+          }}
+          showsUserLocation={false}
+          showsMyLocationButton={false}
+          showsCompass={false}
+          customMapStyle={darkMapStyle}
+        >
+          {/* Pickup Location Marker */}
+          <Marker
+            coordinate={{
+              latitude: pickupLat,
+              longitude: pickupLng,
             }}
-            showsUserLocation={false}
-            showsMyLocationButton={false}
-            showsCompass={false}
-            customMapStyle={darkMapStyle}
+            title="Pick-up Location"
+            centerOffset={{ x: 0, y: -15 }}
           >
-            {/* Pickup Location Marker */}
-            <Marker
-              coordinate={{
-                latitude: locationData.latitude,
-                longitude: locationData.longitude,
-              }}
-              title="Pick-up Location"
-              description={locationData.address}
-              centerOffset={{ x: 10, y: 0 }}
-            >
-              <View style={styles.pickupMarkerContainer}>
-                <Image
-                  source={require('../../assets/images/target.png')}
-                  style={{ width: 30, height: 30 }}
-                  resizeMode="contain"
-                />
-              </View>
-            </Marker>
+            <View style={styles.pickupMarkerContainer}>
+              <Image
+                source={require('../../assets/images/target.png')}
+                style={{ width: 30, height: 30 }}
+                resizeMode="contain"
+              />
+            </View>
+          </Marker>
 
-            {/* Destination Marker */}
-          
-           {destinationMarker}
-            {/* Route Line */}
-            {destinationLocation && (
-         <MapViewDirections
-           origin={{
-            latitude: locationData.latitude,
-            longitude: locationData.longitude,
-          }}
-          destination={{
-            latitude: destinationLocation.latitude,
-            longitude: destinationLocation.longitude,
-          }}
-          apikey={GOOGLE_API_KEY}
-          strokeWidth={4}
-          strokeColor="#ffbc07"
-          optimizeWaypoints={true}
-          onReady={(result: any) => {
-            console.log(`Distance: ${result.distance} km`);
-            console.log(`Duration: ${result.duration} min`);
-          }}
-          onError={(errMessage) => console.warn(errMessage)}
-        />
-            )}
-          </MapView>
-        ) : (
-          <View style={styles.mapPlaceholder}>
-            <ActivityIndicator size="large" color="#f0d46d" />
-            <Text style={styles.mapText}>Loading map...</Text>
-          </View>
-        )}
+          {/* Dropoff Location Marker */}
+          <Marker
+            coordinate={{
+              latitude: dropoffLat,
+              longitude: dropoffLng,
+            }}
+            title="Drop-off Location"
+            pinColor="#f6a623"
+          />
+
+          {/* Route Line */}
+          <MapViewDirections
+            origin={{
+              latitude: pickupLat,
+              longitude: pickupLng,
+            }}
+            destination={{
+              latitude: dropoffLat,
+              longitude: dropoffLng,
+            }}
+            apikey={GOOGLE_API_KEY}
+            strokeWidth={4}
+            strokeColor="#ffbc07"
+            optimizeWaypoints={true}
+            onReady={(result: any) => {
+              console.log(`Distance: ${result.distance} km`);
+              console.log(`Duration: ${result.duration} min`);
+            }}
+            onError={(errorMessage) => console.warn(errorMessage)}
+          />
+        </MapView>
+      ) : (
+        <View style={styles.mapPlaceholder}>
+          <ActivityIndicator size="large" color="#f0d46d" />
+          <Text style={styles.mapText}>Loading map...</Text>
+        </View>
+      )}
+
       {/* Sliding Bottom Overlay */}
-
       <Animated.View
         style={[styles.bottomPanel, { transform: [{ translateY: slideAnim }] }]}
         {...panResponder.panHandlers}
@@ -310,7 +388,10 @@ export default function BookingScreen({
               <Text style={styles.errorText}>{error}</Text>
               <TouchableOpacity 
                 style={styles.retryButton}
-                onPress={() => setRideOptions([])}
+                onPress={() => {
+                  setError(null);
+                  setLoading(true);
+                }}
               >
                 <Text style={styles.retryButtonText}>Try Again</Text>
               </TouchableOpacity>
@@ -406,7 +487,7 @@ export default function BookingScreen({
                 style={styles.modalOption}
                 onPress={() => {
                   setPaymentModalVisible(false);
-                  alert(`Selected: Pay with ${method}`);
+                  Alert.alert("Payment Method", `Selected: Pay with ${method}`);
                 }}
               >
                 <Text style={styles.modalOptionText}>{`Pay with ${method}`}</Text>
@@ -428,6 +509,9 @@ export default function BookingScreen({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000" },
+  map: {
+    flex: 1,
+  },
   mapPlaceholder: {
     flex: 1,
     backgroundColor: "#333",
@@ -435,6 +519,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   mapText: { fontSize: 18, fontWeight: "bold", color: "#aaa" },
+  pickupMarkerContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
   panelHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -513,6 +601,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    paddingVertical: 40,
   },
   loadingText: {
     color: "#aaa",
