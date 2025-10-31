@@ -215,26 +215,73 @@ export default function BookingScreen({
   return (
     <View style={styles.container}>
       {/* Map Placeholder */}
-      <View
-        style={{ position: 'absolute', top: 20, left: 20 }}
-        >
-      <TouchableOpacity
-        onPress={() => goBack}
-      >
-        <Feather
-        name="arrow-left"
-        color={"white"}
-        size={14}
-        
-      />
-      </TouchableOpacity>
-      </View>
+        {pickupLat && pickupLng && dropoffLat && dropoffLng ? (
+          <MapView
+            ref={mapRef}
+            style={styles.map}
+            provider={PROVIDER_GOOGLE}
+            initialRegion={{
+              latitude: locationData.latitude,
+              longitude: locationData.longitude,
+              latitudeDelta: 0.05,
+              longitudeDelta: 0.05,
+            }}
+            showsUserLocation={false}
+            showsMyLocationButton={false}
+            showsCompass={false}
+            customMapStyle={darkMapStyle}
+          >
+            {/* Pickup Location Marker */}
+            <Marker
+              coordinate={{
+                latitude: locationData.latitude,
+                longitude: locationData.longitude,
+              }}
+              title="Pick-up Location"
+              description={locationData.address}
+              centerOffset={{ x: 10, y: 0 }}
+            >
+              <View style={styles.pickupMarkerContainer}>
+                <Image
+                  source={require('../../assets/images/target.png')}
+                  style={{ width: 30, height: 30 }}
+                  resizeMode="contain"
+                />
+              </View>
+            </Marker>
 
-      
-      <View style={styles.mapPlaceholder}>
-        <Text style={styles.mapText}>[ Map Placeholder ]</Text>
-      </View>
-
+            {/* Destination Marker */}
+          
+           {destinationMarker}
+            {/* Route Line */}
+            {destinationLocation && (
+         <MapViewDirections
+           origin={{
+            latitude: locationData.latitude,
+            longitude: locationData.longitude,
+          }}
+          destination={{
+            latitude: destinationLocation.latitude,
+            longitude: destinationLocation.longitude,
+          }}
+          apikey={GOOGLE_API_KEY}
+          strokeWidth={4}
+          strokeColor="#ffbc07"
+          optimizeWaypoints={true}
+          onReady={(result: any) => {
+            console.log(`Distance: ${result.distance} km`);
+            console.log(`Duration: ${result.duration} min`);
+          }}
+          onError={(errMessage) => console.warn(errMessage)}
+        />
+            )}
+          </MapView>
+        ) : (
+          <View style={styles.mapPlaceholder}>
+            <ActivityIndicator size="large" color="#f0d46d" />
+            <Text style={styles.mapText}>Loading map...</Text>
+          </View>
+        )}
       {/* Sliding Bottom Overlay */}
 
       <Animated.View

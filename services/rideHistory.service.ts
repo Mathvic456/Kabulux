@@ -3,7 +3,6 @@ import { api } from "./api";
 
 export type RideHistoryItem = {
   id: number;
-  // Add actual fields from your backend when available
   vehicle?: {
     model: string;
     type: string;

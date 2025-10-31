@@ -118,7 +118,7 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
           longitude: destinationLocation.longitude,
         }
       ];
-
+        //this basically makes sure that both coordinates fit into the map
       mapRef.current.fitToCoordinates(coordinates, {
         edgePadding: { top: 100, right: 50, bottom: 300, left: 50 },
         animated: true,
