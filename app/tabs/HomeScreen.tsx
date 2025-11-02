@@ -341,7 +341,16 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
 
   // Check if login success modal has been shown before
   useEffect(() => {
-    checkLoginSuccessShown();
+    const afterMount = async() => {
+      const token = await AsyncStorage.getItem("token");
+      const Rtoken = await AsyncStorage.getItem("refreshToken");
+      console.log(`Access token: ${token} Refresh Token: ${Rtoken}`);
+      checkLoginSuccessShown();
+    }
+    afterMount();
+    
+   //AsyncStorage.removeItem("token")
+    
   }, []);
 
   const checkLoginSuccessShown = async () => {

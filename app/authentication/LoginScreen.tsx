@@ -73,11 +73,14 @@ const handleSubmit = async() => {
     {
       onSuccess: async (res) => {
         const token = res.data?.data?.access;
+        const refreshToken = res.data?.data?.refresh;
 
-        if (remember && token) {
+        if (remember && token && refreshToken) {
           await AsyncStorage.setItem("token", token);
+          await AsyncStorage.setItem("refreshToken", refreshToken)
         } else {
           await AsyncStorage.removeItem("token");
+          await AsyncStorage.removeItem("refreshToken");
         }
           const keys = await AsyncStorage.getAllKeys();
         console.log("📦 AsyncStorage keys now:", keys);

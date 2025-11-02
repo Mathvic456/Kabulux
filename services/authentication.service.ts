@@ -17,6 +17,7 @@ export const useRegisterEndPoint = () => {
     mutationFn: (data) => api.post("auth/register/", data),
     onSuccess: (res) => {
       console.log("Registration successful:", res.data);
+      
     },
     onError: (error: any) => {
       console.error("Registration error:", error);

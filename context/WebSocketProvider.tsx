@@ -1,87 +1,129 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
+import { jwtDecode } from "jwt-decode";
 import React, { createContext, useEffect, useRef, useState } from "react";
 
-if (!Constants.expoConfig?.extra?.wssUrl) {
-  throw new Error("WSS URL is missing in expoConfig.extra");
+if (!Constants.expoConfig?.extra?.wssUrl || !Constants.expoConfig?.extra?.apiUrl) {
+  throw new Error("WSS URL or API URL missing in expoConfig.extra");
 }
 
 export const WSS_URL = Constants.expoConfig.extra.wssUrl;
+export const API_URL = Constants.expoConfig.extra.apiUrl;
 
 interface SocketContextValue {
   socket: WebSocket | null;
   isConnected: boolean;
+  setTokenFromOutside?: (token: string) => void;
 }
 
-export const SocketContext = createContext<SocketContextValue & { setTokenFromOutside?: (t: string) => void }>({
+export const SocketContext = createContext<SocketContextValue>({
   socket: null,
   isConnected: false,
 });
 
 export const WebSocketProvider = ({ children }: { children: React.ReactNode }) => {
   const ws = useRef<WebSocket | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [token, setToken] = useState<string | null>(null);
 
+  // ✅ Helper: check if token is expired
+  const isExpired = (token: string) => {
+    try {
+      const { exp } = jwtDecode<{ exp: number }>(token);
+      return exp * 1000 < Date.now();
+    } catch {
+      return true;
+    }
+  };
 
-    const connectWebSocket = (token: string) => {
+  // ✅ Helper: refresh token when expired
+  const refreshAccessToken = async () => {
+    try {
+      const refresh = await AsyncStorage.getItem("refreshToken");
+      if (!refresh) throw new Error("No refresh token");
 
+      const res = await fetch(`${API_URL}auth/refresh/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh }),
+      });
+
+      if (!res.ok) throw new Error("Failed to refresh");
+      const data = await res.json();
+
+      if (data.access) {
+        await AsyncStorage.setItem("token", data.access);
+        console.log("🔁 Token refreshed!");
+        return data.access;
+      }
+      return null;
+    } catch (err) {
+      console.error("Token refresh failed:", err);
+      return null;
+    }
+  };
+
+  // ✅ Core: connect WebSocket
+  const connectWebSocket = (accessToken: string) => {
     if (ws.current) {
-    console.log("🔌 Closing existing WebSocket before reconnecting...");
-    ws.current.close();
-  }
-    console.log("🔑 Connecting WebSocket with token:", token);
-    ws.current = new WebSocket(`${WSS_URL}?token=${token}`);
+      console.log("🔌 Closing existing WebSocket...");
+      ws.current.close();
+    }
 
-    ws.current.onopen = () => {
-      console.log("✅ Connected to WebSocket");
+    console.log("🔑 Connecting WebSocket with token:", accessToken);
+    const socket = new WebSocket(`${WSS_URL}?token=${accessToken}`);
+    ws.current = socket;
+
+    socket.onopen = () => {
+      console.log("✅ WebSocket connected");
       setIsConnected(true);
     };
 
-    ws.current.onmessage = (event) => {
+    socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      console.log("📩 WS message:", data);
+      console.log("📩 WS Message:", data);
     };
 
-    ws.current.onclose = () => {
+    socket.onclose = () => {
       console.log("🚪 WS closed");
       setIsConnected(false);
     };
 
-    ws.current.onerror = (err) => {
-      console.error("⚠️ WS error:", err);
+    socket.onerror = (err) => {
+      console.error("⚠️ WS Error:", err);
       setIsConnected(false);
     };
   };
 
-  
-
+  // ✅ Bootstraps token and connects WebSocket
   useEffect(() => {
-    const loadToken = async () => {
-      try {
-        const storedToken = await AsyncStorage.getItem("token");
-        console.log("🔐 Token loaded:", storedToken ? "✓ Found" : "✗ Not found");
+    const init = async () => {
+      let storedToken = await AsyncStorage.getItem("token");
+      console.log("🔐 Token found?", !!storedToken);
+
+      // Refresh if expired
+      if (!storedToken || isExpired(storedToken)) {
+        console.log("🔁 Access token expired or missing, refreshing...");
+        storedToken = await refreshAccessToken();
+      }
+
+      if (storedToken) {
         setToken(storedToken);
-        if (storedToken) connectWebSocket(storedToken);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsLoading(false);
+        connectWebSocket(storedToken);
+      } else {
+        console.log("🚫 No valid token, WebSocket not connected.");
       }
     };
-    loadToken();
 
-    return () => {
-      ws.current?.close();
-    };
+    init();
+    return () => ws.current?.close();
   }, []);
 
-    const setTokenFromOutside = (newToken: string) => {
+  // ✅ Allow login screen to trigger reconnection
+  const setTokenFromOutside = (newToken: string) => {
     setToken(newToken);
     connectWebSocket(newToken);
   };
-  
 
   return (
     <SocketContext.Provider value={{ socket: ws.current, isConnected, setTokenFromOutside }}>
