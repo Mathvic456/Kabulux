@@ -1,4 +1,4 @@
-import { Entypo, Feather, FontAwesome } from '@expo/vector-icons';
+import { Entypo, Feather, FontAwesome, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from "expo-image-picker";
 import { useEffect, useState } from "react";
@@ -15,7 +15,6 @@ import {
   TouchableWithoutFeedback,
   View
 } from "react-native";
-
 
 // Type definitions
 type UploadPhotoOverlayProps = {
@@ -45,12 +44,82 @@ type HomeScreenProps = {
   setScreen: (screen: string) => void;
 };
 
+// AreaFada Overlay Component
+const AreaFadaOverlay = ({ visible, onClose }: { visible: boolean; onClose: () => void }) => {
+  if (!visible) return null;
 
+  return (
+    <Modal animationType="slide" transparent visible={visible}>
+      <View style={styles.areaFadaOverlay}>
+        <View style={styles.areaFadaModalContainer}>
+          {/* Header */}
+          <Text style={styles.areaFadaTitle}>KabLüx</Text>
+          <Text style={styles.areaFadaSubtitle}>Area Fada</Text>
+
+          {/* Crown avatar */}
+          <View style={styles.areaFadaCrownContainer}>
+            <Image
+              source={require("../../assets/images/Ava.png")}
+              style={styles.areaFadaMainAvatar}
+            />
+            <FontAwesome5
+              name="crown"
+              size={40}
+              color="#FFB800"
+              style={styles.areaFadaCrown}
+            />
+          </View>
+
+          <Text style={styles.areaFadaHighlightText}>You are ahead of your peeps</Text>
+
+          {/* Leaderboard avatars */}
+          <View style={styles.areaFadaAvatarRow}>
+            {["#D9D9D9", "#8B5E3C", "#FFB800", "#F86E6E", "#004AAD"].map(
+              (color, index) => (
+                <View key={index} style={[styles.areaFadaAvatarCircle, { borderColor: color }]}>
+                  <Image
+                    source={require("../../assets/images/Ava.png")}
+                    style={styles.areaFadaSmallAvatar}
+                  />
+                </View>
+              )
+            )}
+          </View>
+
+          {/* Stats container */}
+          <View style={styles.areaFadaStatsContainer}>
+            <View style={styles.areaFadaStatBox}>
+              <MaterialIcons name="local-taxi" size={20} color="#FFB800" />
+              <Text style={styles.areaFadaStatTitle}>Trips</Text>
+              <Text style={styles.areaFadaStatValue}>5</Text>
+            </View>
+
+            <View style={styles.areaFadaStatBox}>
+              <MaterialIcons name="route" size={20} color="#FFB800" />
+              <Text style={styles.areaFadaStatTitle}>Kilometers covered</Text>
+              <Text style={styles.areaFadaStatValue}>5</Text>
+            </View>
+
+            <View style={styles.areaFadaStatBox}>
+              <FontAwesome5 name="medal" size={20} color="#FFB800" />
+              <Text style={styles.areaFadaStatTitle}>Points</Text>
+              <Text style={styles.areaFadaStatValue}>5</Text>
+            </View>
+          </View>
+
+          {/* Close Button */}
+          <TouchableOpacity style={styles.areaFadaCloseBtn} onPress={onClose}>
+            <Text style={styles.areaFadaCloseText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+};
 
 // Overlay Component for Photo Upload
 const UploadPhotoOverlay = ({ isVisible, onClose, onNext }: UploadPhotoOverlayProps) => {
   if (!isVisible) return null;
-
 
   return (
     <Modal
@@ -190,11 +259,6 @@ const AdditionalInfoOverlay = ({ isVisible, onClose, profileImage }: AdditionalI
 
   const [showNotificationDropdown, setShowNotificationDropdown] = useState<boolean>(false);
   const [showPaymentDropdown, setShowPaymentDropdown] = useState<boolean>(false);
-
-
-
-
-
 
   const handleNext = () => {
     // Validate and save the additional info
@@ -338,6 +402,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
   const [showLoginSuccessModal, setShowLoginSuccessModal] = useState<boolean>(false);
   const [showPhotoChoiceModal, setShowPhotoChoiceModal] = useState<boolean>(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [showAreaFadaOverlay, setShowAreaFadaOverlay] = useState<boolean>(false);
 
   // Check if login success modal has been shown before
   useEffect(() => {
@@ -411,6 +476,14 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
           resizeMode='cover'
           style={{ width: 100, height: 40 }}
         />
+
+        <TouchableOpacity onPress={() => setShowAreaFadaOverlay(true)}>
+          <Image
+            source={require("../../assets/images/Ava.png")}
+            resizeMode='contain'
+            style={{ width: 100, height: 40, marginLeft:'auto' }}
+          />
+        </TouchableOpacity>
       </View>
 
       <TouchableOpacity style={styles.searchContainer} onPress={() => setScreen('orderScreen')}>
@@ -578,6 +651,12 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
         isVisible={showLoginSuccessModal}
         onClose={handleLoginSuccessClose}
       />
+
+      {/* AreaFada Overlay */}
+      <AreaFadaOverlay
+        visible={showAreaFadaOverlay}
+        onClose={() => setShowAreaFadaOverlay(false)}
+      />
     </ScrollView>
   );
 }
@@ -591,9 +670,14 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     height: 50,
-    width: 90,
+    // width: 90,
     alignItems: 'center',
     marginBottom: 20,
+    borderWidth: 1,
+    // borderColor:'white',
+    flexDirection:'row',  
+    justifyContent:'space-between',
+    
   },
   searchContainer: {
     flexDirection: "row",
@@ -999,5 +1083,106 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderWidth: 2,
     borderColor: '#FEB914',
+  },
+
+  // AreaFada Overlay Styles
+  areaFadaOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.85)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  areaFadaModalContainer: {
+    width: "88%",
+    backgroundColor: "#000",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#FFB800",
+    paddingVertical: 25,
+    alignItems: "center",
+    padding:20
+  },
+  areaFadaTitle: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#FFB800",
+  },
+  areaFadaSubtitle: {
+    color: "#fff",
+    fontSize: 18,
+    marginBottom: 10,
+  },
+  areaFadaCrownContainer: {
+    marginVertical: 15,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  areaFadaMainAvatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+  areaFadaCrown: {
+    position: "absolute",
+    top: -20,
+  },
+  areaFadaHighlightText: {
+    color: "#fff",
+    fontSize: 16,
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  areaFadaAvatarRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 25,
+  },
+  areaFadaAvatarCircle: {
+    borderWidth: 2,
+    borderRadius: 40,
+    padding: 3,
+    marginHorizontal: 5,
+  },
+  areaFadaSmallAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  areaFadaStatsContainer: {
+    flexDirection: "row",
+    backgroundColor: "#0F1B2D",
+    borderRadius: 15,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "#FFB800",
+    marginBottom: 20,
+  },
+  areaFadaStatBox: {
+    flex: 1,
+    alignItems: "center",
+    marginHorizontal: 5,
+    
+  },
+  areaFadaStatTitle: {
+    color: "#fff",
+    fontSize: 12,
+    marginTop: 4,
+  },
+  areaFadaStatValue: {
+    color: "#FFB800",
+    fontWeight: "700",
+    fontSize: 14,
+    marginTop: 2,
+  },
+  areaFadaCloseBtn: {
+    backgroundColor: "#FFB800",
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 30,
+  },
+  areaFadaCloseText: {
+    color: "#000",
+    fontWeight: "700",
   },
 });
