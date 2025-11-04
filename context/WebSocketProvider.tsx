@@ -81,7 +81,7 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
 
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      console.log("📩 WS Message:", data);
+      console.log("📩 WS Message:", event.data);
     };
 
     socket.onclose = () => {

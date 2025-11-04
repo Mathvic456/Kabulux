@@ -116,6 +116,24 @@ type RideOption = {
   rideId: string;
 };
 
+// Add this after the existing interfaces
+
+interface RideDetails {
+  pickup: {
+    pickupLat: number;
+    pickupLng: number;
+  };
+  destination: {
+    dropoffLat: number;
+    dropoffLng: number;
+  };
+  estimated_distance: string;
+  estimated_duration: string;
+  car_type: string;
+  estimated_fare: number;
+}
+
+
 export default function BookingScreen({ 
   setScreen, 
   goBack,
@@ -139,6 +157,21 @@ export default function BookingScreen({
   const [rideId, setRideId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [rideDetails, setRideDetails] = useState<RideDetails>({
+    pickup: {
+      pickupLat: 0,
+      pickupLng: 0
+    },
+    destination: {
+      dropoffLat: 0,
+      dropoffLng: 0
+    },
+    estimated_distance: '',
+    estimated_duration: '',
+    car_type: '',
+    estimated_fare: 0
+  });
+
 
   const { socket, isConnected } = useContext(SocketContext);
 
@@ -232,6 +265,14 @@ export default function BookingScreen({
           setRideOptions(formattedRides);
           const ride_request_id = data.data.ride_request_id;
           setRideId(ride_request_id);
+          setRideDetails({
+            pickup: {pickupLat, pickupLng},
+          destination: {dropoffLat, dropoffLng},
+          estimated_distance: data.data.estimated_distance,
+          estimated_duration: data.data.estimated_duration,
+          car_type: "Mid-size car",
+          estimated_fare: data.data.rides[0].estimated_fare,
+          })
           console.log("Stored", ride_request_id);
         } else {
           setError("Failed to fetch ride estimates");
@@ -268,10 +309,19 @@ export default function BookingScreen({
   function sendSubscription(socket: WebSocket | null, rideId: string, attempt = 0) {
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(
-        JSON.stringify({
-          type: "subscribe_driver_offer_view",
-          data: { ride_id: rideId },
-        })
+       JSON.stringify({
+        type: "subscribe_driver_offer_view",
+        data: {
+          ride_id: rideId,
+          pickup: rideDetails.pickup,
+          destination: rideDetails.destination,
+          estimated_distance: rideDetails.estimated_distance,
+          estimated_duration: rideDetails.estimated_duration,
+          car_type: rideDetails.car_type,
+          estimated_fare: rideDetails.estimated_fare,
+          timestamp: Date.now(),
+        },
+      })
       );
       console.log("📡 Subscribed to driver offer updates");
       return;
