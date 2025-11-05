@@ -415,6 +415,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
     afterMount();
     
    //AsyncStorage.removeItem("token")
+   //AsyncStorage.removeItem("refreshToken")
     
   }, []);
 

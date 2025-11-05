@@ -306,35 +306,52 @@ export default function BookingScreen({
     }
   };
 
-  function sendSubscription(socket: WebSocket | null, rideId: string, attempt = 0) {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(
-       JSON.stringify({
-        type: "subscribe_driver_offer_view",
-        data: {
-          ride_id: rideId,
-          pickup: rideDetails.pickup,
-          destination: rideDetails.destination,
-          estimated_distance: rideDetails.estimated_distance,
-          estimated_duration: rideDetails.estimated_duration,
-          car_type: rideDetails.car_type,
-          estimated_fare: rideDetails.estimated_fare,
-          timestamp: Date.now(),
-        },
-      })
-      );
-      console.log("📡 Subscribed to driver offer updates");
+ function sendSubscription(socket: WebSocket | null, rideId: string, attempt = 0) {
+  console.log(`🔍 [RIDER] sendSubscription called - attempt ${attempt + 1}`);
+  console.log(`🔍 [RIDER] Socket exists:`, !!socket);
+  console.log(`🔍 [RIDER] Socket readyState:`, socket?.readyState);
+  console.log(`🔍 [RIDER] WebSocket.OPEN:`, WebSocket.OPEN);
+  
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    const message = {
+      type: "subscribe_driver_offer_view",
+      data: {
+        ride_id: rideId,
+        pickup: rideDetails.pickup,
+        destination: rideDetails.destination,
+        estimated_distance: rideDetails.estimated_distance,
+        estimated_duration: rideDetails.estimated_duration,
+        car_type: rideDetails.car_type,
+        estimated_fare: rideDetails.estimated_fare,
+        timestamp: Date.now(),
+      },
+    };
+    
+    console.log("📡 [RIDER] Sending message:", JSON.stringify(message, null, 2));
+    
+    try {
+      socket.send(JSON.stringify(message));
+      console.log("✅ [RIDER] Message sent successfully!");
+      return;
+    } catch (err) {
+      console.error("❌ [RIDER] Failed to send message:", err);
       return;
     }
-
-    if (attempt < 5) {
-      const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
-      console.warn(`⚠️ WebSocket not ready, retrying in ${delay}ms... (attempt ${attempt + 1})`);
-      setTimeout(() => sendSubscription(socket, rideId, attempt + 1), delay);
-    } else {
-      console.error("❌ Failed to subscribe after max retries");
-    }
   }
+
+  if (attempt < 5) {
+    const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
+    console.warn(`⚠️ [RIDER] WebSocket not ready, retrying in ${delay}ms... (attempt ${attempt + 1})`);
+    setTimeout(() => sendSubscription(socket, rideId, attempt + 1), delay);
+  } else {
+    console.error("❌ [RIDER] Failed to subscribe after max retries");
+    Alert.alert(
+      "Connection Error",
+      "Unable to find drivers. Please check your connection and try again.",
+      [{ text: "OK" }]
+    );
+  }
+}
 
   return (
     <View style={styles.container}>

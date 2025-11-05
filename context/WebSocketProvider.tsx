@@ -26,7 +26,6 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
   const [isConnected, setIsConnected] = useState(false);
   const [token, setToken] = useState<string | null>(null);
 
-  // ✅ Helper: check if token is expired
   const isExpired = (token: string) => {
     try {
       const { exp } = jwtDecode<{ exp: number }>(token);
@@ -36,7 +35,6 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
     }
   };
 
-  // ✅ Helper: refresh token when expired
   const refreshAccessToken = async () => {
     try {
       const refresh = await AsyncStorage.getItem("refreshToken");
@@ -63,7 +61,6 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
     }
   };
 
-  // ✅ Core: connect WebSocket
   const connectWebSocket = (accessToken: string) => {
     if (ws.current) {
       console.log("🔌 Closing existing WebSocket...");
@@ -95,7 +92,7 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
     };
   };
 
-  // ✅ Bootstraps token and connects WebSocket
+
   useEffect(() => {
     const init = async () => {
       let storedToken = await AsyncStorage.getItem("token");
@@ -119,7 +116,7 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
     return () => ws.current?.close();
   }, []);
 
-  // ✅ Allow login screen to trigger reconnection
+  
   const setTokenFromOutside = (newToken: string) => {
     setToken(newToken);
     connectWebSocket(newToken);
