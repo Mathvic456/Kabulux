@@ -390,9 +390,9 @@ export default function MainNavigator() {
       setScreen={setScreen}
       goBack={() => setScreen("planRide")}
       pickupLat={bookingData?.pickupLocation?.latitude}
-      pickupLng={bookingData?.pickupLocation?.longitude}
+      pickupLong={bookingData?.pickupLocation?.longitude}
       dropoffLat={bookingData?.destination?.latitude}
-      dropoffLng={bookingData?.destination?.longitude}
+      dropoffLong={bookingData?.destination?.longitude}
     />
   );
 

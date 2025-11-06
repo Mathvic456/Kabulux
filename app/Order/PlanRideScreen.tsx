@@ -587,7 +587,7 @@ const destinationMarker = useMemo(() => {
                   </Text>
                   <Text style={styles.suggestionAddress}>{loc.address}</Text>
                   <Text style={styles.coordinatesText}>
-                    Lat: {loc.latitude.toFixed(4)}, Lng: {loc.longitude.toFixed(4)}
+                    Lat: {loc.latitude.toFixed(4)}, Long: {loc.longitude.toFixed(4)}
                   </Text>
                 </View>
               </TouchableOpacity>

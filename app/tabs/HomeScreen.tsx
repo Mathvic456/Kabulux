@@ -15,7 +15,7 @@ import {
   TouchableWithoutFeedback,
   View
 } from "react-native";
-
+//EMAIL: vs2osx54mi@daouse.com
 // Type definitions
 type UploadPhotoOverlayProps = {
   isVisible: boolean;
