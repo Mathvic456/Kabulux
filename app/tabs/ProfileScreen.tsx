@@ -1,6 +1,9 @@
+import { useLogoutEndPoint } from "@/services/authentication.service";
 import { useProfile } from "@/services/profile.service";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AxiosError } from "axios";
+import React, { useEffect, useState } from "react";
 import {
   Image,
   Modal,
@@ -8,7 +11,6 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View
 } from "react-native";
 useProfile
@@ -20,15 +22,32 @@ type ProfileScreenProps = {
 
 export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [authExpired, setAuthExpired] = useState(false);
 
-    const { data: profile, isLoading, isError } = useProfile();
+    const { data: profile, isLoading, isError, error } = useProfile();
 
-  const handleLogout = () => {
-    // Add your logout logic here
-    console.log("User logged out");
-    setLogoutModalVisible(false);
-    // For example: setScreen('login');
+  useEffect(() => {
+  if (isError && (error as AxiosError)?.response?.status === 401) {
+    setAuthExpired(true);
+  }
+}, [isError, error]);
+
+  const logoutMutation = useLogoutEndPoint();
+
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      // Always clear local tokens even if API call fails
+      await AsyncStorage.multiRemove(["token", "refreshToken"]);
+      setAuthExpired(false);
+      setLogoutModalVisible(false);
+      setScreen("login");
+    }
   };
+
 
   const openLogoutModal = () => {
     setLogoutModalVisible(true);
@@ -211,47 +230,33 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
       </View>
 
       {/* Custom Logout Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={logoutModalVisible}
-        onRequestClose={closeLogoutModal}
-      >
-
-        <TouchableWithoutFeedback onPress={closeLogoutModal}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={styles.modalContent}>
-                <View style={styles.modalIcon}>
-                  <Ionicons name="log-out-outline" size={40} color="#f7b731" />
-                </View>
-                
-                <Text style={styles.modalTitle}>Log Out</Text>
-                
-                <Text style={styles.modalMessage}>
-                  Are you sure you want to log out?
-                </Text>
-                
-                <View style={styles.modalButtons}>
-                  <TouchableOpacity 
-                    style={[styles.modalButton, styles.cancelButton]}
-                    onPress={closeLogoutModal}
-                  >
-                    <Text style={styles.cancelButtonText}>Cancel</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={[styles.modalButton, styles.logoutButton]}
-                    onPress={handleLogout}
-                  >
-                    <Text style={styles.logoutButtonText}>Log Out</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </TouchableWithoutFeedback>
+          <Modal
+      animationType="fade"
+      transparent={true}
+      visible={authExpired}
+      onRequestClose={() => setAuthExpired(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalIcon}>
+            <Ionicons name="alert-circle-outline" size={40} color="#f7b731" />
           </View>
-        </TouchableWithoutFeedback>
-      </Modal>
+
+          <Text style={styles.modalTitle}>Session Expired</Text>
+          <Text style={styles.modalMessage}>
+            There has been an error authenticating your profile. Please log in again.
+          </Text>
+
+          <TouchableOpacity
+            style={[styles.modalButton, styles.logoutButton]}
+            onPress={handleLogout}
+          >
+            <Text style={styles.logoutButtonText}>Go to Login</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+
     </View>
   );
 }
