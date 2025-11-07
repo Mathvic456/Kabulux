@@ -159,6 +159,7 @@ export default function BookingScreen({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const bookStandard = useBookStandard();
+  const [authExpired, setAuthExpired] = useState(false);
   const [rideDetails, setRideDetails] = useState<RideDetails>({
     pickup: {
       pickupLat: 0,
@@ -281,9 +282,16 @@ export default function BookingScreen({
           setError("Failed to fetch ride estimates");
         }
       } catch (err: any) {
-        console.error(err);
-        setError(err.message || "Error fetching rides");
-      } finally {
+  console.error(err);
+
+  // Check if it's an Axios 401 error
+  if (err.response?.status === 401) {
+    await AsyncStorage.multiRemove(["token", "refreshToken"]);
+    setAuthExpired(true);
+  } else {
+    setError(err.message || "Error fetching rides");
+  }
+} finally {
         setLoading(false);
       }
     };
@@ -493,6 +501,54 @@ function sendSubscription(socket: WebSocket | null, rideId: string, attempt = 0)
                   </View>
                 </TouchableOpacity>
               ))}
+
+              <Modal
+  visible={authExpired}
+  transparent={true}
+  animationType="fade"
+>
+  <View
+    style={{
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: "rgba(0,0,0,0.6)",
+    }}
+  >
+    <View
+      style={{
+        backgroundColor: "#fff",
+        borderRadius: 12,
+        padding: 25,
+        width: "80%",
+        alignItems: "center",
+      }}
+    >
+      <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>
+        Session Expired
+      </Text>
+      <Text style={{ textAlign: "center", marginBottom: 20 }}>
+        Your session has expired. Please log in again to continue.
+      </Text>
+      <TouchableOpacity
+        style={{
+          backgroundColor: "#f6a623",
+          paddingVertical: 10,
+          paddingHorizontal: 25,
+          borderRadius: 8,
+        }}
+        onPress={async() => {
+          await AsyncStorage.multiRemove(["token", "refreshToken"]);
+          setAuthExpired(false);
+          setScreen("login"); // or navigate to your login screen
+        }}
+      >
+        <Text style={{ color: "white", fontWeight: "bold" }}>Log In</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
+
 
               {/* Payment Section */}
               <TouchableOpacity

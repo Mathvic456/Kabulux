@@ -78,9 +78,12 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
 
     if (isError) {
       return (
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <Text style={{ color: "red" }}>Failed to load profile</Text>
-        </View>
+          <TouchableOpacity
+            style={[styles.modalButton, styles.logoutButton]}
+            onPress={handleLogout}
+          >
+            <Text style={styles.logoutButtonText}>Go to Login</Text>
+          </TouchableOpacity>
       );
     }
 
