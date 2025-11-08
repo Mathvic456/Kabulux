@@ -3,7 +3,7 @@ import { useProfile } from "@/services/profile.service";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AxiosError } from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Image,
   Modal,
@@ -26,11 +26,6 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
 
     const { data: profile, isLoading, isError, error } = useProfile();
 
-  useEffect(() => {
-  if (isError && (error as AxiosError)?.response?.status === 401) {
-    setAuthExpired(true);
-  }
-}, [isError, error]);
 
   const logoutMutation = useLogoutEndPoint();
 
@@ -76,14 +71,41 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
       );
     }
 
-    if (isError) {
+    if (isError && (error as AxiosError)?.response?.status === 401) 
       return (
+    <Modal
+      animationType="fade"
+      transparent={true}
+      visible={authExpired}
+      onRequestClose={() => setAuthExpired(false)}
+      >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalIcon}>
+            <Ionicons name="alert-circle-outline" size={40} color="#f7b731" />
+          </View>
+
+          <Text style={styles.modalTitle}>Session Expired</Text>
+          <Text style={styles.modalMessage}>
+            There has been an error authenticating your profile. Please log in again.
+          </Text>
+
           <TouchableOpacity
             style={[styles.modalButton, styles.logoutButton]}
             onPress={handleLogout}
           >
             <Text style={styles.logoutButtonText}>Go to Login</Text>
           </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+      )
+
+    if (isError) {
+      return (
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <Text style={{ color: "red" }}>Failed to load profile</Text>
+        </View>
       );
     }
 
@@ -231,34 +253,6 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
           <Ionicons name="person-outline" size={24} color="#f7b731" />
         </TouchableOpacity>
       </View>
-
-      {/* Custom Logout Modal */}
-          <Modal
-      animationType="fade"
-      transparent={true}
-      visible={authExpired}
-      onRequestClose={() => setAuthExpired(false)}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalIcon}>
-            <Ionicons name="alert-circle-outline" size={40} color="#f7b731" />
-          </View>
-
-          <Text style={styles.modalTitle}>Session Expired</Text>
-          <Text style={styles.modalMessage}>
-            There has been an error authenticating your profile. Please log in again.
-          </Text>
-
-          <TouchableOpacity
-            style={[styles.modalButton, styles.logoutButton]}
-            onPress={handleLogout}
-          >
-            <Text style={styles.logoutButtonText}>Go to Login</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Modal>
 
     </View>
   );

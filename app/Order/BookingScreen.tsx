@@ -1,5 +1,6 @@
 import { SocketContext } from "@/context/WebSocketProvider";
 import { getRideEstimate } from "@/services/apiservice";
+import { useLogoutEndPoint } from "@/services/authentication.service";
 import { useBookStandard } from "@/services/bookStandard";
 import { Feather } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -21,7 +22,6 @@ import {
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import MapViewDirections from "react-native-maps-directions";
 import Car from "../../assets/images/car.png";
-
 const { height } = Dimensions.get("window");
 
 // Google Maps API Key - replace with your actual key
@@ -117,7 +117,6 @@ type RideOption = {
   rideId: string;
 };
 
-// Add this after the existing interfaces
 
 interface RideDetails {
   pickup: {
@@ -177,8 +176,6 @@ export default function BookingScreen({
 
 
   const { socket, isConnected } = useContext(SocketContext);
-
-  // Handle swipe gestures
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -204,6 +201,21 @@ export default function BookingScreen({
     })
   ).current;
 
+    const logoutMutation = useLogoutEndPoint();
+  
+    const handleLogout = async () => {
+      try {
+        await logoutMutation.mutateAsync();
+      } catch (error) {
+        console.error("Logout failed:", error);
+      } finally {
+        // Always clear local tokens even if API call fails
+        await AsyncStorage.multiRemove(["token", "refreshToken"]);
+        setAuthExpired(false);
+        setScreen("login");
+      }
+    };
+  
   useEffect(() => {
     console.log("BookingScreen props:", pickupLat, pickupLong, dropoffLat, dropoffLong);
   }, [pickupLat, pickupLong, dropoffLat, dropoffLong]);
@@ -325,7 +337,6 @@ function sendSubscription(socket: WebSocket | null, rideId: string, attempt = 0)
       type: "subscribe_driver_offer_view", 
       data: {
         ride_id: rideId,
-        // ✅ FIXED: Standardize coordinate structure
         pickup: { 
           lat: rideDetails.pickup.pickupLat, 
           long: rideDetails.pickup.pickupLong 
@@ -353,7 +364,6 @@ function sendSubscription(socket: WebSocket | null, rideId: string, attempt = 0)
       return;
     }
   }
-  // ... rest of retry logic
 }
 
   return (
@@ -453,15 +463,12 @@ function sendSubscription(socket: WebSocket | null, rideId: string, attempt = 0)
               <ActivityIndicator size="large" color="#f6a623" />
               <Text style={styles.loadingText}>Fetching available rides...</Text>
             </View>
-          ) : error ? (
+          ) : error && error.includes("authentication") ? (
             <View style={styles.centerContent}>
               <Text style={styles.errorText}>{error}</Text>
               <TouchableOpacity 
                 style={styles.retryButton}
-                onPress={() => {
-                  setError(null);
-                  setLoading(true);
-                }}
+                onPress={handleLogout}
               >
                 <Text style={styles.retryButtonText}>Try Again</Text>
               </TouchableOpacity>
