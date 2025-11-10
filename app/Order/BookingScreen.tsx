@@ -1,10 +1,9 @@
 import { SocketContext } from "@/context/WebSocketProvider";
 import { getRideEstimate } from "@/services/apiservice";
 import { useLogoutEndPoint } from "@/services/authentication.service";
-import { useBookStandard } from "@/services/bookStandard";
 import { Feather } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -21,7 +20,6 @@ import {
 } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import MapViewDirections from "react-native-maps-directions";
-import Car from "../../assets/images/car.png";
 const { height } = Dimensions.get("window");
 
 // Google Maps API Key - replace with your actual key
@@ -157,7 +155,6 @@ export default function BookingScreen({
   const [rideId, setRideId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const bookStandard = useBookStandard();
   const [authExpired, setAuthExpired] = useState(false);
   const [rideDetails, setRideDetails] = useState<RideDetails>({
     pickup: {
@@ -209,7 +206,6 @@ export default function BookingScreen({
       } catch (error) {
         console.error("Logout failed:", error);
       } finally {
-        // Always clear local tokens even if API call fails
         await AsyncStorage.multiRemove(["token", "refreshToken"]);
         setAuthExpired(false);
         setScreen("login");
@@ -238,78 +234,66 @@ export default function BookingScreen({
     }
   }, [pickupLat, pickupLong, dropoffLat, dropoffLong]);
 
-  useEffect(() => {
-    const fetchRideEstimates = async () => {
-      if (!pickupLat || !pickupLong || !dropoffLat || !dropoffLong) return;
+    const fetchRideEstimates = useCallback(async () => {
+    if (!pickupLat || !pickupLong || !dropoffLat || !dropoffLong) return;
 
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
-      try {
-        const token = await AsyncStorage.getItem("token");
-        if (!token) throw new Error("No authentication token found");
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) throw new Error("No authentication token found");
 
-        // Build ride data
-        const rideData = {
-          pickup_lat: pickupLat,
-          pickup_lng: pickupLong,
-          dropoff_lat: dropoffLat,
-          dropoff_lng: dropoffLong,
-        };
+      const rideData = {
+        pickup_lat: pickupLat,
+        pickup_lng: pickupLong,
+        dropoff_lat: dropoffLat,
+        dropoff_lng: dropoffLong,
+      };
 
-        // Call the reusable hook
-        const data = await getRideEstimate(rideData);
-        console.log("Ride estimates API response:", data);
-        console.log(data.data.rides[0]);
+      const data = await getRideEstimate(rideData);
+      console.log("Ride estimates API response:", data);
 
-        if (data.status === "success" && data.data?.rides) {
-          const formattedRides = data.data.rides.map((ride: any) => ({
-            name: `Kablux ${ride.name.charAt(0).toUpperCase() + ride.name.slice(1)}`,
-            details: `${data.data.estimated_duration} - ${data.data.estimated_distance}`,
-            price: `₦${(ride.estimated_fare / 100).toLocaleString()}`,
-            originalPrice: ride.discount_price 
-              ? `₦${(ride.discount_price / 100).toLocaleString()}`
-              : null,
-            carType: ride.car_type,
-            passengers: ride.car_size,
-            image: Car,
-            screen: ride.name.toLowerCase() + "Screen",
-            rideId: ride.name,
-          }));
+      if (data.status === "success" && data.data?.rides) {
+        const formattedRides = data.data.rides.map((ride: any) => ({
+          name: `Kablux ${ride.name.charAt(0).toUpperCase() + ride.name.slice(1)}`,
+          details: `${data.data.estimated_duration} - ${data.data.estimated_distance}`,
+          price: `₦${(ride.estimated_fare / 100).toLocaleString()}`,
+          originalPrice: ride.discount_price 
+            ? `₦${(ride.discount_price / 100).toLocaleString()}`
+            : null,
+          carType: ride.car_type,
+          passengers: ride.car_size,
+          rideId: ride.name,
+        }));
 
-          setRideOptions(formattedRides);
-          const ride_request_id = data.data.ride_request_id;
-          setRideId(ride_request_id);
-          setRideDetails({
-            pickup: {pickupLat, pickupLong},
-          destination: {dropoffLat, dropoffLong},
-          estimated_distance: data.data.estimated_distance,
-          estimated_duration: data.data.estimated_duration,
-          car_type: "Mid-size car",
-          estimated_fare: data.data.rides[0].estimated_fare,
-          })
-          await AsyncStorage.setItem("ride_request_id", ride_request_id);
-          console.log("Stored", ride_request_id);
-        } else {
-          setError("Failed to fetch ride estimates");
-        }
-      } catch (err: any) {
-  console.error(err);
-
-  // Check if it's an Axios 401 error
-  if (err.response?.status === 401) {
-    await AsyncStorage.multiRemove(["token", "refreshToken"]);
-    setAuthExpired(true);
-  } else {
-    setError(err.message || "Error fetching rides");
-  }
-} finally {
-        setLoading(false);
+        setRideOptions(formattedRides);
+        const ride_request_id = data.data.ride_request_id;
+        setRideId(ride_request_id);
+        await AsyncStorage.setItem("ride_request_id", ride_request_id);
+      } else {
+        setError("Failed to fetch ride estimates");
       }
-    };
-
-    fetchRideEstimates();
+    } catch (err: any) {
+      console.error(err);
+      if (err.response?.status === 401) {
+        await AsyncStorage.multiRemove(["token", "refreshToken"]);
+        setAuthExpired(true);
+      } else {
+        setError(err.message || "Error fetching rides");
+      }
+    } finally {
+      setLoading(false);
+    }
   }, [pickupLat, pickupLong, dropoffLat, dropoffLong]);
+
+  useEffect(() => {
+    fetchRideEstimates();
+  }, [fetchRideEstimates]);
+
+  function handleRetry() {
+    fetchRideEstimates();
+  }
 
   // Handle confirm ride navigation
   const handleConfirmRide = async () => {
@@ -463,7 +447,7 @@ function sendSubscription(socket: WebSocket | null, rideId: string, attempt = 0)
               <ActivityIndicator size="large" color="#f6a623" />
               <Text style={styles.loadingText}>Fetching available rides...</Text>
             </View>
-          ) : error && error.includes("authentication") ? (
+          ) : error && authExpired ? (
             <View style={styles.centerContent}>
               <Text style={styles.errorText}>{error}</Text>
               <TouchableOpacity 
@@ -473,7 +457,17 @@ function sendSubscription(socket: WebSocket | null, rideId: string, attempt = 0)
                 <Text style={styles.retryButtonText}>Try Again</Text>
               </TouchableOpacity>
             </View>
-          ) : rideOptions.length > 0 ? (
+          ) : error? (
+            <View style={styles.centerContent}>
+              <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity 
+                style={styles.retryButton}
+                onPress={handleRetry}
+              >
+                <Text style={styles.retryButtonText}>Try Again</Text>
+              </TouchableOpacity>
+            </View>            
+          ): rideOptions.length > 0 ? (
             <>
               {/* Ride Options */}
               {rideOptions.map((option, index) => (

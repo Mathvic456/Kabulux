@@ -3,7 +3,7 @@ import { useProfile } from "@/services/profile.service";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AxiosError } from "axios";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Image,
   Modal,
@@ -26,6 +26,11 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
 
     const { data: profile, isLoading, isError, error } = useProfile();
 
+  useEffect(() => {
+  if (isError && (error as AxiosError)?.response?.status === 401) {
+    setAuthExpired(true);
+  }
+}, [isError, error]);
 
   const logoutMutation = useLogoutEndPoint();
 
@@ -91,7 +96,7 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
           </Text>
 
           <TouchableOpacity
-            style={[styles.modalButton, styles.logoutButton]}
+            style={styles.logoutButton}
             onPress={handleLogout}
           >
             <Text style={styles.logoutButtonText}>Go to Login</Text>
@@ -317,6 +322,8 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     backgroundColor: '#f7b731',
+    padding: 10,
+    borderRadius: 5
   },
   cancelButtonText: {
     color: '#f7b731',

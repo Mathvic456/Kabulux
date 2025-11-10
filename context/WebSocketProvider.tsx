@@ -48,11 +48,12 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
 
       if (!res.ok) throw new Error("Failed to refresh");
       const data = await res.json();
-
-      if (data.access) {
-        await AsyncStorage.setItem("token", data.access);
+      console.log(data);
+      console.log("New token?", data.data.access);
+      if (data.data.access) {
+        await AsyncStorage.setItem("token", data.data.access);
         console.log("🔁 Token refreshed!");
-        return data.access;
+        return data.data.access;
       }
       return null;
     } catch (err) {
@@ -102,6 +103,7 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
       if (!storedToken || isExpired(storedToken)) {
         console.log("🔁 Access token expired or missing, refreshing...");
         storedToken = await refreshAccessToken();
+        console.log("Token refreshed!")
       }
 
       if (storedToken) {
