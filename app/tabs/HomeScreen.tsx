@@ -23,6 +23,11 @@ type UploadPhotoOverlayProps = {
   onNext: () => void;
 };
 
+type ComingSoonModalProps = {
+  isVisible: boolean;
+  onClose: () => void;
+};
+
 type PhotoChoiceModalProps = {
   isVisible: boolean;
   onClose: () => void;
@@ -42,6 +47,45 @@ type LoginSuccessModalProps = {
 
 type HomeScreenProps = {
   setScreen: (screen: string) => void;
+};
+
+
+
+// Add ComingSoonModal component
+const ComingSoonModal = ({ isVisible, onClose }: ComingSoonModalProps) => {
+  return (
+    <Modal
+      animationType="fade"
+      transparent={true}
+      visible={isVisible}
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.comingSoonModalContent}>
+          <View style={styles.comingSoonIconContainer}>
+            <FontAwesome5 name="crown" size={50} color="#FEB914" />
+          </View>
+          
+          <Text style={styles.comingSoonModalTitle}>Coming Soon! 🚀</Text>
+          
+          <Text style={styles.comingSoonModalMessage}>
+            Our Premium Package is currently under development and will be available soon.
+          </Text>
+          
+          <Text style={styles.comingSoonModalSubtext}>
+            Stay tuned for exciting new features and exclusive benefits!
+          </Text>
+
+          <TouchableOpacity 
+            style={styles.comingSoonModalButton}
+            onPress={onClose}
+          >
+            <Text style={styles.comingSoonModalButtonText}>Got It!</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
 };
 
 // AreaFada Overlay Component
@@ -397,6 +441,8 @@ const LoginSuccessModal = ({ isVisible, onClose }: LoginSuccessModalProps) => {
 };
 
 export default function HomeScreen({ setScreen }: HomeScreenProps) {
+
+  const [showComingSoonModal, setShowComingSoonModal] = useState<boolean>(false);
   const [showPhotoOverlay, setShowPhotoOverlay] = useState<boolean>(true);
   const [showAdditionalInfoOverlay, setShowAdditionalInfoOverlay] = useState<boolean>(false);
   const [showLoginSuccessModal, setShowLoginSuccessModal] = useState<boolean>(false);
@@ -504,7 +550,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
 
       <Text style={styles.sectionTitle}>Suggestion</Text>
       <View style={styles.suggestionRow}>
-        <TouchableOpacity style={styles.suggestionCard}>
+        <TouchableOpacity style={styles.suggestionCard} onPress={() => setScreen('orderScreen')}>
           <Image
             source={require("../../assets/images/car.png")}
             style={styles.suggestionIcon}
@@ -512,7 +558,8 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
           <Text style={styles.suggestionText}>Ride</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.suggestionCard}>
+        <TouchableOpacity style={styles.suggestionCard} onPress={() => setShowComingSoonModal(true)}
+>
           <Image
             source={require("../../assets/images/courier.png")}
             style={styles.suggestionIcon}
@@ -520,7 +567,8 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
           <Text style={styles.suggestionText}>Courier</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.suggestionCard}>
+        <TouchableOpacity style={styles.suggestionCard} onPress={() => setShowComingSoonModal(true)}
+>
           <Image
             source={require("../../assets/images/reserve.png")}
             style={styles.suggestionIcon}
@@ -535,57 +583,54 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={styles.banner}>
+          <TouchableOpacity 
+            style={styles.banner}
+            onPress={() => setShowComingSoonModal(true)}
+            activeOpacity={0.8}
+          >
             <View>
               <Text style={styles.bannerText}>{item.text}</Text>
-              <TouchableOpacity style={styles.bannerBtn}>
+              <TouchableOpacity 
+                style={styles.bannerBtn}
+                onPress={() => setShowComingSoonModal(true)}
+              >
                 <Text style={styles.bannerBtnText}>Try our Premium Package</Text>
               </TouchableOpacity>
             </View>
             <Image source={item.image} style={styles.bannerImage} />
-          </View>
+          </TouchableOpacity>
         )}
         contentContainerStyle={{ paddingRight: 20 }}
       />
 
+
+       <ComingSoonModal
+        isVisible={showComingSoonModal}
+        onClose={() => setShowComingSoonModal(false)}
+      />
+
       <View style={styles.recentRideHeader}>
         <Text style={styles.sectionTitle}>Recent Ride</Text>
-        <TouchableOpacity>
-          <Text style={styles.seeAll}>See all</Text>
+        {/* Remove the See All button since there's no history to see */}
+      </View>
+
+      {/* Recent Ride Components */}
+       <View style={styles.emptyRideCard}>
+        <View style={styles.emptyRideIconContainer}>
+          <FontAwesome5 name="car" size={40} color="#FEB914" />
+        </View>
+        <Text style={styles.emptyRideTitle}>No Recent Rides</Text>
+        <Text style={styles.emptyRideMessage}>
+          Take a ride to see your ride history here
+        </Text>
+        <TouchableOpacity 
+          style={styles.emptyRideButton}
+          onPress={() => setScreen('orderScreen')}
+        >
+          <Text style={styles.emptyRideButtonText}>Book a Ride</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.rideCard}>
-        <Image
-          source={require("../../assets/images/car1.png")}
-          style={styles.rideImage}
-          resizeMode="contain"
-        />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.price}>₦26,000</Text>
-          <Text style={styles.subText}>SUV CAR</Text>
-          <Text style={styles.subText}>4 seater</Text>
-          <Text style={styles.subText}>Available in your area</Text>
-        </View>
-        <View style={styles.ratingContainer}>
-          <FontAwesome name="star" size={16} color="#FEB914" />
-          <Text style={styles.rating}>3.2</Text>
-        </View>
-      </View>
-
-      <View style={styles.rideCard}>
-        <Image
-          source={require("../../assets/images/car2.png")}
-          style={styles.rideImage}
-          resizeMode="contain"
-        />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.price}>₦26,000</Text>
-          <Text style={styles.subText}>SUV CAR - 4 seater</Text>
-          <Text style={styles.subText}>5.3km from you</Text>
-        </View>
-        <Text style={styles.rating}>⭐ 3.2</Text>
-      </View>
 
       {/* Ride Analytics Section */}
       <View style={styles.analyticsCard}>
@@ -705,6 +750,101 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     gap: 7,
   },
+
+    // Add Coming Soon Modal Styles
+  comingSoonModalContent: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 20,
+    padding: 30,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 350,
+    borderWidth: 2,
+    borderColor: '#FEB914',
+  },
+  comingSoonIconContainer: {
+    marginBottom: 20,
+  },
+  comingSoonModalTitle: {
+    fontSize: 24,
+    color: '#fff',
+    marginBottom: 15,
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+
+   emptyRideCard: {
+    backgroundColor: "#1a1a1a",
+    borderRadius: 20,
+    padding: 30,
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#333",
+    borderStyle: 'dashed',
+  },
+  emptyRideIconContainer: {
+    backgroundColor: '#000',
+    borderRadius: 50,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: '#FEB914',
+  },
+  emptyRideTitle: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  emptyRideMessage: {
+    color: "#aaa",
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  emptyRideButton: {
+    backgroundColor: "#FEB914",
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+  },
+  emptyRideButtonText: {
+    color: "#000",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  
+  comingSoonModalMessage: {
+    fontSize: 16,
+    color: '#ccc',
+    textAlign: 'center',
+    marginBottom: 10,
+    lineHeight: 22,
+  },
+  comingSoonModalSubtext: {
+    fontSize: 14,
+    color: '#aaa',
+    textAlign: 'center',
+    marginBottom: 25,
+    lineHeight: 20,
+  },
+  comingSoonModalButton: {
+    backgroundColor: '#FEB914',
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 10,
+    width: '100%',
+    alignItems: 'center',
+  },
+  comingSoonModalButtonText: {
+    color: '#000',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+
   laterText: {
     color: "#fff",
     fontSize: 14,
