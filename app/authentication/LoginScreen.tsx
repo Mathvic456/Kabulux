@@ -13,6 +13,7 @@ import {
   View
 } from "react-native";
 import Logo from "../../assets/images/logo.png";
+import GoogleSignIn from "../GoogleSignUp";
 
 export default function LoginScreen({
   next,
@@ -209,10 +210,7 @@ const handleSubmit = async() => {
         </View>
 
         {/* Google Sign In */}
-        <TouchableOpacity style={styles.googleBtn}>
-          <FontAwesome name="google" size={18} color="#fff" />
-          <Text style={styles.googleText}>Sign in with Google</Text>
-        </TouchableOpacity>
+        <GoogleSignIn />
 
         {/* Sign Up */}
         <TouchableOpacity onPress={goRegister}>
