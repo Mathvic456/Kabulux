@@ -40,8 +40,7 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {
-      // Always clear local tokens even if API call fails
-      await AsyncStorage.multiRemove(["token", "refreshToken"]);
+      await AsyncStorage.multiRemove(["token", "refreshToken", "rememberedEmail"]);
       setAuthExpired(false);
       setLogoutModalVisible(false);
       setScreen("login");

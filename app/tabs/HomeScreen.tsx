@@ -450,6 +450,18 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [showAreaFadaOverlay, setShowAreaFadaOverlay] = useState<boolean>(false);
 
+ // const { data: notifications, refetch: refetchNotifications } = useNotifications();
+
+
+ /* useEffect(() => {
+  const interval = setInterval(() => {
+    refetchNotifications();
+  }, 10000); // 10 seconds
+  console.log(notifications); 
+  return () => clearInterval(interval);
+  
+}, [refetchNotifications]);*/
+
   // Check if login success modal has been shown before
   useEffect(() => {
     const afterMount = async() => {

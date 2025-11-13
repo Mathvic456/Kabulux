@@ -3,6 +3,11 @@ import Constants from "expo-constants";
 import { jwtDecode } from "jwt-decode";
 import React, { createContext, useEffect, useRef, useState } from "react";
 
+interface DriverOffer {
+  driver_name: string;
+  offer: number;
+}
+
 if (!Constants.expoConfig?.extra?.wssUrl || !Constants.expoConfig?.extra?.apiUrl) {
   throw new Error("WSS URL or API URL missing in expoConfig.extra");
 }
@@ -14,17 +19,22 @@ interface SocketContextValue {
   socket: WebSocket | null;
   isConnected: boolean;
   setTokenFromOutside?: (token: string) => void;
+  driverResponses: DriverOffer[];
+  clearDriverResponses: () => void;
 }
 
 export const SocketContext = createContext<SocketContextValue>({
   socket: null,
   isConnected: false,
+  driverResponses: [],
+  clearDriverResponses: () => {},
 });
 
 export const WebSocketProvider = ({ children }: { children: React.ReactNode }) => {
   const ws = useRef<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [token, setToken] = useState<string | null>(null);
+  const [driverResponses, setDriverResponses] = useState<DriverOffer[]>([]);
 
   const isExpired = (token: string) => {
     try {
@@ -62,6 +72,38 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
     }
   };
 
+  const handleWsMessage = (event: MessageEvent) => {
+    try {
+        const data = JSON.parse(event.data);
+        console.log("📩 WS Message:", event.data);
+
+        if (data.type === 'driver_offer' && data.data) {
+            const newOffer: DriverOffer = {
+                driver_name: data.data.driver_name,
+                offer: data.data.offer,
+            };
+
+            setDriverResponses(prev => {
+                const existingIndex = prev.findIndex(d => d.driver_name === newOffer.driver_name);
+
+                if (existingIndex > -1) {
+                    const updatedResponses = [...prev];
+                    updatedResponses[existingIndex] = newOffer;
+                    console.log(`Driver ${newOffer.driver_name} updated offer.`);
+                    return updatedResponses;
+                }
+                
+                console.log(`New offer received from ${newOffer.driver_name}.`);
+                return [...prev, newOffer];
+            });
+        }
+
+    } catch (error) {
+        console.error("Failed to parse WS message:", error);
+    }
+  };
+
+
   const connectWebSocket = (accessToken: string) => {
     if (ws.current) {
       console.log("🔌 Closing existing WebSocket...");
@@ -77,10 +119,7 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
       setIsConnected(true);
     };
 
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log("📩 WS Message:", event.data);
-    };
+    socket.onmessage = handleWsMessage;
 
     socket.onclose = () => {
       console.log("🚪 WS closed");
@@ -124,8 +163,20 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
     connectWebSocket(newToken);
   };
 
+  const clearDriverResponses = () => {
+    setDriverResponses([]);
+  };
+
   return (
-    <SocketContext.Provider value={{ socket: ws.current, isConnected, setTokenFromOutside }}>
+    <SocketContext.Provider 
+        value={{ 
+            socket: ws.current, 
+            isConnected, 
+            setTokenFromOutside, 
+            driverResponses,
+            clearDriverResponses,
+        }}
+    >
       {children}
     </SocketContext.Provider>
   );
