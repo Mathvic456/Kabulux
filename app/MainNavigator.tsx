@@ -18,6 +18,7 @@ import ResetCredentialsScreen from "./authentication/ResetCredentialsScreen";
 import ResetPasswordScreen from "./authentication/ResetPasswordScreen";
 import VerifyEmailScreen from "./authentication/VerifyEmailScreen";
 import LoyaltyPointsScreen from "./LoyaltyPointsScreen";
+import RiderOffersScreen from "./offer/RidersOfferScreen";
 import StandardScreen from "./offer/StandardScreen";
 import OnboardingScreen1 from "./onboarding/OnboardingScreen1";
 import OnboardingScreen2 from "./onboarding/OnboardingScreen2";
@@ -93,6 +94,7 @@ type Screen =
   | "businessCodeScreen"
   | "paystack"
   | "standardScreen"
+  | "offerScreen"
 
 
 export default function MainNavigator() {
@@ -210,6 +212,14 @@ export default function MainNavigator() {
           goForgot={() => setScreen("reset")}
         />
       );
+
+      case "offerScreen":
+        return (
+          <RiderOffersScreen
+            goBack={() => setScreen('standardScreen')}
+            next={() => setScreen('dashboard')}
+          />
+        )
     case "passwordChangeSuccess":
       return (
         <PasswordChangeSuccessScreen
@@ -400,6 +410,7 @@ export default function MainNavigator() {
     return (
       <StandardScreen
         goBack={() => setScreen("bookingScreen")}
+        next={() => setScreen("offerScreen")}
       />
     )
 

@@ -2,21 +2,22 @@ import { useBookStandard } from "@/services/bookStandard";
 import { Feather } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 interface StandardScreenProps {
   goBack: () => void;
+  next: () => void;
 }
 
-export default function StandardScreen({ goBack }: StandardScreenProps) {
+export default function StandardScreen({ goBack, next }: StandardScreenProps) {
   const [riderOffer, setRiderOffer] = useState<string>("");
   const { mutate: bookStandard, isPending } = useBookStandard();
 
@@ -39,7 +40,7 @@ export default function StandardScreen({ goBack }: StandardScreenProps) {
           Alert.alert(
             "Success",
             "Your offer has been sent to the driver!",
-            [{ text: "OK", onPress: goBack }]
+            [{ text: "OK", onPress: next }]
           );
         },
         onError: (error: any) => {
@@ -50,6 +51,8 @@ export default function StandardScreen({ goBack }: StandardScreenProps) {
         },
       }
     );
+
+    
   };
 
   return (
