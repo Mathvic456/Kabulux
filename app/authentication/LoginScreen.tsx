@@ -13,7 +13,6 @@ import {
   View
 } from "react-native";
 import Logo from "../../assets/images/logo.png";
-import GoogleSignIn from "../GoogleSignUp";
 
 export default function LoginScreen({
   next,
@@ -212,9 +211,9 @@ const handleSubmit = async() => {
           <View style={styles.divider} />
         </View>
 
-        {/* Google Sign In */}
+        {/* Google Sign In
         <GoogleSignIn />
-
+ */}
         {/* Sign Up */}
         <TouchableOpacity onPress={goRegister}>
           <Text style={styles.footerText}>
@@ -323,7 +322,7 @@ const styles = StyleSheet.create({
   divider: { flex: 1, height: 1, backgroundColor: "#444" },
   dividerText: { color: "#aaa", marginHorizontal: 10 },
 
-  googleBtn: {
+  googleBtn: {  
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",

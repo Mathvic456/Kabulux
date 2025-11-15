@@ -1,4 +1,4 @@
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+/*import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { Alert, Button, View } from 'react-native';
 
 GoogleSignin.configure({
@@ -44,4 +44,4 @@ export default function GoogleSignIn() {
       <Button title="Sign in with Google" onPress={signIn} />
     </View>
   );
-}
+}*/
