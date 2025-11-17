@@ -216,7 +216,7 @@ export default function MainNavigator() {
       case "offerScreen":
         return (
           <RiderOffersScreen
-            goBack={() => setScreen('standardScreen')}
+            goBack={() => setScreen('dashboard')}
             next={() => setScreen('dashboard')}
           />
         )

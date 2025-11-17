@@ -69,29 +69,36 @@ export default function LoginScreen({
 const handleSubmit = async() => {
  if (validateForm()) {
   login(
-    { email, password },
-    {
-      onSuccess: async (res) => {
-        const token = res.data?.data?.access;
-        const refreshToken = res.data?.data?.refresh;
-        //const email = res.data?.data?.email;
+  { email, password },
+  {
+    onSuccess: async (res) => {
+      const token = res.data?.data?.access;
+      const refreshToken = res.data?.data?.refresh;
 
-        if (remember && token && refreshToken) {
-          await AsyncStorage.setItem("token", token);
-          await AsyncStorage.setItem("refreshToken", refreshToken)
-          //await AsyncStorage.setItem("rememberedEmail", email)
-        } else {
-          await AsyncStorage.removeItem("token");
-          await AsyncStorage.removeItem("refreshToken");
-          
-        }
-          const keys = await AsyncStorage.getAllKeys();
-        console.log("📦 AsyncStorage keys now:", keys);
-        setTokenFromOutside?.(token);
-        next(); 
-      },
-    }
-  );
+      if (remember && token && refreshToken) {
+        await AsyncStorage.setItem("token", token);
+        await AsyncStorage.setItem("refreshToken", refreshToken);
+      } else {
+        await AsyncStorage.removeItem("token");
+        await AsyncStorage.removeItem("refreshToken");
+      }
+
+      setTokenFromOutside?.(token);
+      next();
+    },
+
+    onError: (error: any) => {
+      console.log("❌ LOGIN FAILED:", error.response?.data || error);
+
+      // show quick error under inputs
+      setErrors({
+        email: "",
+        password: error.response?.data?.message || "Invalid email or password",
+      });
+    },
+  }
+);
+
 }
 
 };

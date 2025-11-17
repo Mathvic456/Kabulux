@@ -1,6 +1,6 @@
 import { SocketContext } from "@/context/WebSocketProvider";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
 import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -17,6 +17,8 @@ import {
 
 type IncomingDriverOfferMsg = {
   type: string;
+  event: string;
+  ride_id: string;
   data?: any;
 };
 
@@ -41,7 +43,7 @@ interface RiderOfferProps {
 export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
   const { socket } = useContext(SocketContext);
   const route = useRoute();
-  const navigation = useNavigation();
+
 
   const { ride_request_id } = (route.params as any) || {};
 
@@ -140,10 +142,13 @@ const [acceptedModalVisible, setAcceptedModalVisible] = useState(false);
 
       }
 
-      if (msg.type === "accept_ride" && msg.data) {
-  setAcceptedRide(msg.data);
-  setAcceptedModalVisible(true);
-}
+    const eventType = msg.type || msg.event;
+
+    if (eventType === "accept_ride_success") {
+      setAcceptedRide(msg.data || msg.ride_id);
+      setAcceptedModalVisible(true);
+    }
+
     } catch (err) {
       console.error("❌ Failed to parse WS message in RiderOffersScreen:", err);
     }
@@ -248,7 +253,7 @@ const handleAcceptOffer = useCallback((offerId: string) => {
     const payload = {
       type: "accept_ride",
       data : {
-        ride_request_view_id: rideId,
+        ride_request_view_id: offerId,
       }
       
     };
@@ -378,7 +383,7 @@ const handleAcceptOffer = useCallback((offerId: string) => {
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 8 }}>
+        <TouchableOpacity onPress={goBack} style={{ padding: 8 }}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Driver Offers ({offersArray.length})</Text>

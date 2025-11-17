@@ -1,211 +1,958 @@
-import { FontAwesome } from "@expo/vector-icons";
-import React, { useState } from "react";
-import {
-  ActivityIndicator,
-  Image,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
-} from "react-native";
-import Lock from '../../assets/images/lock.png';
-import Logo from '../../assets/images/logo.png';
-import { useVerifyOtpEndPoint } from "../Kabulux/services/otpVerification.service";
-
-export default function ResetPasswordScreen({ next, goRegister, goForgot }: { 
-  next: () => void, 
-  goRegister: () => void, 
-  goForgot: () => void 
-}) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [remember, setRemember] = useState(false);
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const verifyOtpMutation = useVerifyOtpEndPoint();
-  
-  const handleOtpChange = (text: string, index: number) => {
-    const newOtp = [...otp];
-    newOtp[index] = text;
-    setOtp(newOtp);
-  };
-
-  const handleResendCode = () => {
-    console.log('Resend code tapped');
-  };
-
-  const handleProceed = async () => {
-    setIsLoading(true);
-    const code = otp.join("");
-
-    try {
-      await verifyOtpMutation.mutateAsync({
-        email,
-        otp: code,
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.banner} />
-
-      <View style={styles.card}>
-        <View style={styles.LogoContainer}>
-          <Image
-            source={Logo}
-            style={styles.Logoicon}
-          />
-        </View>
-
-        <View style={styles.envelopeContainer}>
-          <Image
-            source={Lock}
-            style={styles.envelopeIcon}
-          />
-        </View>
-
-        <View style={styles.bottomSection}>
-          <Text style={styles.title}>Set New Password</Text>
-          <Text style={styles.subtitle}>Enter a new Password to complete the reset process</Text>
-
-          <View style={styles.inputContainer}>
-            <FontAwesome name="lock" size={20} color="#aaa" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor="#aaa"
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <FontAwesome name="lock" size={20} color="#aaa" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm Password"
-              placeholderTextColor="#aaa"
-              secureTextEntry
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-            />
-          </View>
-
-          <TouchableOpacity 
-            style={styles.proceedButton} 
-            onPress={handleProceed}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#000" />
-            ) : (
-              <Text style={styles.proceedButtonText}>Proceed</Text>
-            )}
-          </TouchableOpacity>        
-        </View>
-      </View>
-    </View>
-  );
+LOG  📡 [DRIVER] Sending counter offer: {
+  "type": "create_driver_offer",
+  "data": {
+    "ride_request_id": "d9e2d5eea3aa4d44a1bddcbec32d2e3b",
+    "counter_offer": 186300
+  }
 }
+ LOG  ✅ [DRIVER] Counter offer sent successfully!
+ LOG  📩 Raw incoming message: {"status": "created", "data": {"id": "9e3763efa26f41a88ab69c08cf13ad33", "ride_request_id": "d9e2d5eea3aa4d44a1bddcbec32d2e3b", "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "counter_offer": 186300, "expires_at": "2025-11-17T12:25:48.052023+00:00", "status": "active"}}
+ LOG  📩 Incoming WS message: {"data": {"counter_offer": 186300, "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "expires_at": "2025-11-17T12:25:48.052023+00:00", "id": "9e3763efa26f41a88ab69c08cf13ad33", "ride_request_id": "d9e2d5eea3aa4d44a1bddcbec32d2e3b", "status": "active"}, "status": "created"}
+ LOG  ℹ️ Unknown message type: undefined
+ LOG  📩 [DRIVER HOME] Incoming message: {"data": {"counter_offer": 186300, "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "expires_at": "2025-11-17T12:25:48.052023+00:00", "id": "9e3763efa26f41a88ab69c08cf13ad33", "ride_request_id": "d9e2d5eea3aa4d44a1bddcbec32d2e3b", "status": "active"}, "status": "created"}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+ LOG  💰 Counter offer: {"address": "Address not provided", "distance_km": 6.8161, "estimated_fare": undefined, "message": "New standard ride request available. Pickup from None going to None. Estimated fare is 10.0 (Rider offer: 186000). rider is approximately 6.8161 km away from you.", "notification_type": "RIDE_REQUESTED", "offer_amount": 186000, "ride_id": "d9e2d5eea3aa4d44a1bddcbec32d2e3b", "ride_type": "standard", "rider_name": "Unknown Rider", "rider_rating": "4.5", "time_to_pickup": "817.9319999999999"}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+ LOG  📡 [DRIVER] Sending counter offer: {
+  "type": "create_driver_offer",
+  "data": {
+    "ride_request_id": "d9e2d5eea3aa4d44a1bddcbec32d2e3b",
+    "counter_offer": 186500
+  }
+}
+ LOG  ✅ [DRIVER] Counter offer sent successfully!
+ LOG  📩 Raw incoming message: {"status": "created", "data": {"id": "11ea73dbbafc4c88b3482f694f73a7d7", "ride_request_id": "d9e2d5eea3aa4d44a1bddcbec32d2e3b", "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "counter_offer": 186500, "expires_at": "2025-11-17T12:27:25.739263+00:00", "status": "active"}}
+ LOG  📩 Incoming WS message: {"data": {"counter_offer": 186500, "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "expires_at": "2025-11-17T12:27:25.739263+00:00", "id": "11ea73dbbafc4c88b3482f694f73a7d7", "ride_request_id": "d9e2d5eea3aa4d44a1bddcbec32d2e3b", "status": "active"}, "status": "created"}
+ LOG  ℹ️ Unknown message type: undefined
+ LOG  📩 [DRIVER HOME] Incoming message: {"data": {"counter_offer": 186500, "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "expires_at": "2025-11-17T12:27:25.739263+00:00", "id": "11ea73dbbafc4c88b3482f694f73a7d7", "ride_request_id": "d9e2d5eea3aa4d44a1bddcbec32d2e3b", "status": "active"}, "status": "created"}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+ LOG  💰 Counter offer: {"address": "Address not provided", "distance_km": 6.8161, "estimated_fare": undefined, "message": "New standard ride request available. Pickup from None going to None. Estimated fare is 10.0 (Rider offer: 186000). rider is approximately 6.8161 km away from you.", "notification_type": "RIDE_REQUESTED", "offer_amount": 186000, "ride_id": "d9e2d5eea3aa4d44a1bddcbec32d2e3b", "ride_type": "standard", "rider_name": "Unknown Rider", "rider_rating": "4.5", "time_to_pickup": "817.9319999999999"}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+ LOG  📡 [DRIVER] Sending counter offer: {
+  "type": "create_driver_offer",
+  "data": {
+    "ride_request_id": "d9e2d5eea3aa4d44a1bddcbec32d2e3b",
+    "counter_offer": 186100
+  }
+}
+ LOG  ✅ [DRIVER] Counter offer sent successfully!
+ LOG  📩 Raw incoming message: {"status": "created", "data": {"id": "d9e1774440724492bee3da24f5f2acfc", "ride_request_id": "d9e2d5eea3aa4d44a1bddcbec32d2e3b", "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "counter_offer": 186100, "expires_at": "2025-11-17T12:27:43.326850+00:00", "status": "active"}}
+ LOG  📩 Incoming WS message: {"data": {"counter_offer": 186100, "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "expires_at": "2025-11-17T12:27:43.326850+00:00", "id": "d9e1774440724492bee3da24f5f2acfc", "ride_request_id": "d9e2d5eea3aa4d44a1bddcbec32d2e3b", "status": "active"}, "status": "created"}
+ LOG  ℹ️ Unknown message type: undefined
+ LOG  📩 [DRIVER HOME] Incoming message: {"data": {"counter_offer": 186100, "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "expires_at": "2025-11-17T12:27:43.326850+00:00", "id": "d9e1774440724492bee3da24f5f2acfc", "ride_request_id": "d9e2d5eea3aa4d44a1bddcbec32d2e3b", "status": "active"}, "status": "created"}
+ LOG  📍 Location update sent: {"lat": 4.9720492, "long": 7.9603749}
+› Reloading apps
+ LOG  🛑 Location tracking stopped
+Android Bundled 608ms index.js (1 module)
+ LOG  🔧 [API Config] Base URL: https://api.kabluxe.com/api/v1/
+ LOG  🔧 [API Init] API instance created with interceptors
+ LOG  ✅ Token available, connecting WebSocket...
+ LOG  ✅ WebSocket connected (Driver) eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA
+ LOG  📍 Initial location set: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  ✅ Location tracking started
+ LOG  📍 Location updated: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  🔧 [API Request 4v8gmn] Starting request to: users/me
+ LOG  🔧 [API Request 4v8gmn] Method: GET
+ LOG  🔐 [API Request 4v8gmn] Token found in storage: true
+ LOG  ✅ [API Request 4v8gmn] Authorization header set
+ LOG  📋 [API Request 4v8gmn] Request headers: {"Accept": "application/json, text/plain, */*", "Access-Control-Allow-Origin": "*", "Authorization": "Bearer eyJhbGciOiJIU...", "Content-Type": "application/json"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  ✅ [API Response users/me] Status: 200
+ LOG  ✅ [API Response users/me] Data: {"data": {"address": "Read through Things", "email": "p8kh2sox5z@cmhvzylmfc.com", "first_name": "Mitsuki", "has_completed_kyc": false, "id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "is_online": false, "last_name": "", "phone_number": "08041257896", "profile_image": null, "rating": 5, "referral_code": "IAWNE7L3TA-601B", "type": ""}, "errors": {}, "message": "User profile retrieved successfully", "status": "success"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+› Reloading apps
+Android Bundled 485ms index.js (1 module)
+ LOG  🔧 [API Config] Base URL: https://api.kabluxe.com/api/v1/
+ LOG  🔧 [API Init] API instance created with interceptors
+ LOG  ✅ Token available, connecting WebSocket...
+ LOG  ✅ WebSocket connected (Driver) eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA
+ LOG  🔧 [API Request jy3hc] Starting request to: users/me
+ LOG  🔧 [API Request jy3hc] Method: GET
+ LOG  📍 Initial location set: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  🔐 [API Request jy3hc] Token found in storage: true
+ LOG  ✅ [API Request jy3hc] Authorization header set
+ LOG  📋 [API Request jy3hc] Request headers: {"Accept": "application/json, text/plain, */*", "Access-Control-Allow-Origin": "*", "Authorization": "Bearer eyJhbGciOiJIU...", "Content-Type": "application/json"}
+ LOG  ✅ Location tracking started
+ LOG  📍 Location updated: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  ✅ [API Response users/me] Status: 200
+ LOG  ✅ [API Response users/me] Data: {"data": {"address": "Read through Things", "email": "p8kh2sox5z@cmhvzylmfc.com", "first_name": "Mitsuki", "has_completed_kyc": false, "id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "is_online": false, "last_name": "", "phone_number": "08041257896", "profile_image": null, "rating": 5, "referral_code": "IAWNE7L3TA-601B", "type": ""}, "errors": {}, "message": "User profile retrieved successfully", "status": "success"}
+ LOG  📩 Raw incoming message: {"type": "notify", "event": {"notification_type": "RIDE_REQUESTED", "ride_type": "standard", "ride_id": "104094e523c84b3280af4aaf74f5ed6f", "message": "New standard ride request available. Pickup from None going to None. Estimated fare is 11.0 (Rider offer: 186000). rider is approximately 7.0477 km away from you."}}
+ LOG  📩 Incoming WS message: {"event": {"message": "New standard ride request available. Pickup from None going to None. Estimated fare is 11.0 (Rider offer: 186000). rider is approximately 7.0477 km away from you.", "notification_type": "RIDE_REQUESTED", "ride_id": "104094e523c84b3280af4aaf74f5ed6f", "ride_type": "standard"}, "type": "notify"}
+ LOG  🚗 New ride request received: {"message": "New standard ride request available. Pickup from None going to None. Estimated fare is 11.0 (Rider offer: 186000). rider is approximately 7.0477 km away from you.", "notification_type": "RIDE_REQUESTED", "ride_id": "104094e523c84b3280af4aaf74f5ed6f", "ride_type": "standard"}
+ LOG  📩 [DRIVER HOME] Incoming message: {"event": {"message": "New standard ride request available. Pickup from None going to None. Estimated fare is 11.0 (Rider offer: 186000). rider is approximately 7.0477 km away from you.", "notification_type": "RIDE_REQUESTED", "ride_id": "104094e523c84b3280af4aaf74f5ed6f", "ride_type": "standard"}, "type": "notify"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  💰 Counter offer: {"address": "Address not provided", "distance_km": 7.0477, "estimated_fare": undefined, "message": "New standard ride request available. Pickup from None going to None. Estimated fare is 11.0 (Rider offer: 186000). rider is approximately 7.0477 km away from you.", "notification_type": "RIDE_REQUESTED", "offer_amount": 186000, "ride_id": "104094e523c84b3280af4aaf74f5ed6f", "ride_type": "standard", "rider_name": "Unknown Rider", "rider_rating": "4.5", "time_to_pickup": "845.7239999999999"}
+ WARN  Non-serializable values were found in the navigation state. Check:
 
-const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#000" 
-  },
-  banner: { 
-    height: 200, 
-    backgroundColor: "#fcbf24", 
-    borderBottomLeftRadius: 40, 
-    borderBottomRightRadius: 40 
-  },
-  card: { 
-    flex: 1, 
-    marginTop: -40, 
-    backgroundColor: "#000", 
-    borderTopLeftRadius: 40, 
-    borderTopRightRadius: 40, 
-    padding: 30, 
-    width: '95%', 
-    alignSelf: 'center' 
-  },
-  inputContainer: { 
-    flexDirection: "row", 
-    alignItems: "center", 
-    backgroundColor: "#111", 
-    borderRadius: 10, 
-    marginBottom: 15, 
-    paddingHorizontal: 10, 
-    borderWidth: 2, 
-    borderColor: 'white', 
-    marginTop: 0 
-  },
-  inputIcon: { 
-    marginRight: 10 
-  },
-  input: { 
-    flex: 1, 
-    color: "#fff", 
-    height: 50 
-  },
-  envelopeIcon: {
-    width: 30,
-    height: 50,
-    resizeMode: 'contain',
-    alignSelf: 'center',
-  },
-  envelopeContainer: {
-    backgroundColor: '#FEB91454',
-    borderRadius: 50,
-    marginTop: 30,
-    width: 50,
-    height: 50,
-    alignSelf: 'center'
-  },
-  bottomSection: {
-    flex: 0.6,
-    backgroundColor: '#000',
-    alignItems: 'center',
-    paddingTop: 40,
-  },
-  title: {
-    fontSize: 24,
-    fontFamily: 'BebasNeue',
-    color: '#fff',
-    marginBottom: 5,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#aaa',
-    marginBottom: 30,
-  },
-  proceedButton: {
-    backgroundColor: '#ffb300',
-    paddingVertical: 15,
-    paddingHorizontal: 80,
-    borderRadius: 15,
-    width: '100%',
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  proceedButtonText: {
-    color: '#000',
-    fontSize: 18,
-    fontFamily: 'BebasNeue',
-  },
-  LogoContainer: {
-  },
-  Logoicon: {
-    width: 130,
-    height: 100,
-    resizeMode: 'contain',
-    alignSelf: 'center',
-  },
-});
+OrderScreen > params.socket._subscriptions[0].remove (Function)
+
+This can break usage such as persisting and restoring state. This might happen if you passed non-serializable values such as function, class instances etc. in params. If you need to use components with callbacks in your options, you can use 'navigation.setOptions' instead. See https://reactnavigation.org/docs/troubleshooting#i-get-the-warning-non-serializable-values-were-found-in-the-navigation-state for more details.
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📡 [DRIVER] Sending counter offer: {
+  "type": "create_driver_offer",
+  "data": {
+    "ride_request_id": "104094e523c84b3280af4aaf74f5ed6f",
+    "counter_offer": 186500
+  }
+}
+ LOG  ✅ [DRIVER] Counter offer sent successfully!
+ LOG  📩 Raw incoming message: {"status": "created", "data": {"id": "0e7d118b2e1e4471873d870ea901ba3b", "ride_request_id": "104094e523c84b3280af4aaf74f5ed6f", "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "counter_offer": 186500, "expires_at": "2025-11-17T12:34:32.358378+00:00", "status": "active"}}
+ LOG  📩 Incoming WS message: {"data": {"counter_offer": 186500, "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "expires_at": "2025-11-17T12:34:32.358378+00:00", "id": "0e7d118b2e1e4471873d870ea901ba3b", "ride_request_id": "104094e523c84b3280af4aaf74f5ed6f", "status": "active"}, "status": "created"}
+ LOG  ℹ️ Unknown message type: undefined
+ LOG  📩 [DRIVER HOME] Incoming message: {"data": {"counter_offer": 186500, "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "expires_at": "2025-11-17T12:34:32.358378+00:00", "id": "0e7d118b2e1e4471873d870ea901ba3b", "ride_request_id": "104094e523c84b3280af4aaf74f5ed6f", "status": "active"}, "status": "created"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  🗑️ Cleared all notifications
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📩 Raw incoming message: {"type": "notify", "event": {"notification_type": "RIDE_REQUESTED", "ride_type": "standard", "ride_id": "6a733585253b4d438602a0b6d5259b83", "message": "New standard ride request available. Pickup from None going to None. Estimated fare is 11.0 (Rider offer: 186000). rider is approximately 7.0477 km away from you."}}
+ LOG  📩 Incoming WS message: {"event": {"message": "New standard ride request available. Pickup from None going to None. Estimated fare is 11.0 (Rider offer: 186000). rider is approximately 7.0477 km away from you.", "notification_type": "RIDE_REQUESTED", "ride_id": "6a733585253b4d438602a0b6d5259b83", "ride_type": "standard"}, "type": "notify"}
+ LOG  🚗 New ride request received: {"message": "New standard ride request available. Pickup from None going to None. Estimated fare is 11.0 (Rider offer: 186000). rider is approximately 7.0477 km away from you.", "notification_type": "RIDE_REQUESTED", "ride_id": "6a733585253b4d438602a0b6d5259b83", "ride_type": "standard"}
+ LOG  📩 [DRIVER HOME] Incoming message: {"event": {"message": "New standard ride request available. Pickup from None going to None. Estimated fare is 11.0 (Rider offer: 186000). rider is approximately 7.0477 km away from you.", "notification_type": "RIDE_REQUESTED", "ride_id": "6a733585253b4d438602a0b6d5259b83", "ride_type": "standard"}, "type": "notify"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  💰 Counter offer: {"address": "Address not provided", "distance_km": 7.0477, "estimated_fare": undefined, "message": "New standard ride request available. Pickup from None going to None. Estimated fare is 11.0 (Rider offer: 186000). rider is approximately 7.0477 km away from you.", "notification_type": "RIDE_REQUESTED", "offer_amount": 186000, "ride_id": "6a733585253b4d438602a0b6d5259b83", "ride_type": "standard", "rider_name": "Unknown Rider", "rider_rating": "4.5", "time_to_pickup": "845.7239999999999"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📡 [DRIVER] Sending counter offer: {
+  "type": "create_driver_offer",
+  "data": {
+    "ride_request_id": "6a733585253b4d438602a0b6d5259b83",
+    "counter_offer": 186500
+  }
+}
+ LOG  ✅ [DRIVER] Counter offer sent successfully!
+ LOG  📩 Raw incoming message: {"status": "created", "data": {"id": "ccf9502c5597406c89b390894723b0c4", "ride_request_id": "6a733585253b4d438602a0b6d5259b83", "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "counter_offer": 186500, "expires_at": "2025-11-17T12:38:02.183350+00:00", "status": "active"}}
+ LOG  📩 Incoming WS message: {"data": {"counter_offer": 186500, "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "expires_at": "2025-11-17T12:38:02.183350+00:00", "id": "ccf9502c5597406c89b390894723b0c4", "ride_request_id": "6a733585253b4d438602a0b6d5259b83", "status": "active"}, "status": "created"}
+ LOG  ℹ️ Unknown message type: undefined
+ LOG  📩 [DRIVER HOME] Incoming message: {"data": {"counter_offer": 186500, "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "expires_at": "2025-11-17T12:38:02.183350+00:00", "id": "ccf9502c5597406c89b390894723b0c4", "ride_request_id": "6a733585253b4d438602a0b6d5259b83", "status": "active"}, "status": "created"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📩 Raw incoming message: {"type": "negotiation_update", "data": {"notification_type": "negotiation_decrement", "ride_request_view_id": "ccf9502c5597406c89b390894723b0c4", "counter_offer": 1500, "action": "decrement", "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd"}}
+ LOG  📩 Incoming WS message: {"data": {"action": "decrement", "counter_offer": 1500, "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "notification_type": "negotiation_decrement", "ride_request_view_id": "ccf9502c5597406c89b390894723b0c4"}, "type": "negotiation_update"}
+ LOG  ℹ️ Unknown message type: negotiation_update
+ LOG  📩 [DRIVER HOME] Incoming message: {"data": {"action": "decrement", "counter_offer": 1500, "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "notification_type": "negotiation_decrement", "ride_request_view_id": "ccf9502c5597406c89b390894723b0c4"}, "type": "negotiation_update"}
+ LOG  🔄 [DRIVER] Received negotiation update: {"action": "decrement", "counter_offer": 1500, "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "notification_type": "negotiation_decrement", "ride_request_view_id": "ccf9502c5597406c89b390894723b0c4"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+› Reloading apps
+ LOG  🛑 Location tracking stopped
+Android Bundled 978ms index.js (1 module)
+ LOG  🔧 [API Config] Base URL: https://api.kabluxe.com/api/v1/
+ LOG  🔧 [API Init] API instance created with interceptors
+ LOG  ✅ Token available, connecting WebSocket...
+ LOG  ✅ WebSocket connected (Driver) eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA
+ LOG  🔧 [API Request 6hsnp5] Starting request to: users/me
+ LOG  🔧 [API Request 6hsnp5] Method: GET
+ LOG  🔐 [API Request 6hsnp5] Token found in storage: true
+ LOG  ✅ [API Request 6hsnp5] Authorization header set
+ LOG  📋 [API Request 6hsnp5] Request headers: {"Accept": "application/json, text/plain, */*", "Access-Control-Allow-Origin": "*", "Authorization": "Bearer eyJhbGciOiJIU...", "Content-Type": "application/json"}
+ LOG  ✅ [API Response users/me] Status: 200
+ LOG  ✅ [API Response users/me] Data: {"data": {"address": "Read through Things", "email": "p8kh2sox5z@cmhvzylmfc.com", "first_name": "Mitsuki", "has_completed_kyc": false, "id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "is_online": false, "last_name": "", "phone_number": "08041257896", "profile_image": null, "rating": 5, "referral_code": "IAWNE7L3TA-601B", "type": ""}, "errors": {}, "message": "User profile retrieved successfully", "status": "success"}
+ LOG  📍 Initial location set: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  ✅ Location tracking started
+ LOG  📍 Location updated: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ ERROR  ⚠️ WS Error (Driver): {"_bubbles": false, "_cancelable": false, "_composed": false, "_defaultPrevented": false, "_timeStamp": 387733538.488033, "_type": "error", Symbol(composedPath): [{"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": [NativeEventEmitter], "_socketId": 3, "_subscriptions": [Array], "protocol": "", "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): [Map], Symbol(eventHandlerAttributeMap): [Map]}], Symbol(currentTarget): {"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": {}, "_socketId": 3, "_subscriptions": [[Object], [Object], [Object], [Object]], "protocol": "", "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): Map {"open" => [Map], "message" => [Map], "close" => [Map], "error" => [Map]}, Symbol(eventHandlerAttributeMap): Map {"open" => [Object], "message" => [Object], "close" => [Object], "error" => [Object]}}, Symbol(eventPhase): 2, Symbol(inPassiveListenerFlag): false, Symbol(isTrusted): false, Symbol(stopPropagationFlag): false, Symbol(stopPropagationFlag): false, Symbol(target): {"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": {}, "_socketId": 3, "_subscriptions": [[Object], [Object], [Object], [Object]], "protocol": "", "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): Map {"open" => [Map], "message" => [Map], "close" => [Map], "error" => [Map]}, Symbol(eventHandlerAttributeMap): Map {"open" => [Object], "message" => [Object], "close" => [Object], "error" => [Object]}}, Symbol(Event.dispatch): true}
+ LOG  🚪 WS closed (Driver) 1006
+ LOG  🛑 Location tracking stopped
+ LOG  ⏰ Scheduling connection retry in 1000ms (attempt 1)
+ LOG  ✅ Token available, connecting WebSocket...
+ ERROR  ⚠️ WS Error (Driver): {"_bubbles": false, "_cancelable": false, "_composed": false, "_defaultPrevented": false, "_timeStamp": 387734930.831956, "_type": "error", Symbol(composedPath): [{"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": [NativeEventEmitter], "_socketId": 4, "_subscriptions": [Array], "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): [Map], Symbol(eventHandlerAttributeMap): [Map]}], Symbol(currentTarget): {"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": {}, "_socketId": 4, "_subscriptions": [[Object], [Object], [Object], [Object]], "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): Map {"open" => [Map], "message" => [Map], "close" => [Map], "error" => [Map]}, Symbol(eventHandlerAttributeMap): Map {"open" => [Object], "message" => [Object], "close" => [Object], "error" => [Object]}}, Symbol(eventPhase): 2, Symbol(inPassiveListenerFlag): false, Symbol(isTrusted): false, Symbol(stopPropagationFlag): false, Symbol(stopPropagationFlag): false, Symbol(target): {"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": {}, "_socketId": 4, "_subscriptions": [[Object], [Object], [Object], [Object]], "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): Map {"open" => [Map], "message" => [Map], "close" => [Map], "error" => [Map]}, Symbol(eventHandlerAttributeMap): Map {"open" => [Object], "message" => [Object], "close" => [Object], "error" => [Object]}}, Symbol(Event.dispatch): true}
+ LOG  🚪 WS closed (Driver) 1006 Failed to connect to api.kabluxe.com/144.126.199.206:443
+ LOG  🛑 Location tracking stopped
+ LOG  ⏰ Scheduling connection retry in 2000ms (attempt 2)
+ LOG  ✅ Token available, connecting WebSocket...
+ ERROR  ⚠️ WS Error (Driver): {"_bubbles": false, "_cancelable": false, "_composed": false, "_defaultPrevented": false, "_timeStamp": 387737117.249572, "_type": "error", Symbol(composedPath): [{"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": [NativeEventEmitter], "_socketId": 5, "_subscriptions": [Array], "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): [Map], Symbol(eventHandlerAttributeMap): [Map]}], Symbol(currentTarget): {"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": {}, "_socketId": 5, "_subscriptions": [[Object], [Object], [Object], [Object]], "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): Map {"open" => [Map], "message" => [Map], "close" => [Map], "error" => [Map]}, Symbol(eventHandlerAttributeMap): Map {"open" => [Object], "message" => [Object], "close" => [Object], "error" => [Object]}}, Symbol(eventPhase): 2, Symbol(inPassiveListenerFlag): false, Symbol(isTrusted): false, Symbol(stopPropagationFlag): false, Symbol(stopPropagationFlag): false, Symbol(target): {"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": {}, "_socketId": 5, "_subscriptions": [[Object], [Object], [Object], [Object]], "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): Map {"open" => [Map], "message" => [Map], "close" => [Map], "error" => [Map]}, Symbol(eventHandlerAttributeMap): Map {"open" => [Object], "message" => [Object], "close" => [Object], "error" => [Object]}}, Symbol(Event.dispatch): true}
+ LOG  🚪 WS closed (Driver) 1006 Failed to connect to api.kabluxe.com/144.126.199.206:443
+ LOG  🛑 Location tracking stopped
+ LOG  ⏰ Scheduling connection retry in 4000ms (attempt 3)
+ LOG  ✅ Token available, connecting WebSocket...
+ ERROR  ⚠️ WS Error (Driver): {"_bubbles": false, "_cancelable": false, "_composed": false, "_defaultPrevented": false, "_timeStamp": 387741282.059341, "_type": "error", Symbol(composedPath): [{"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": [NativeEventEmitter], "_socketId": 6, "_subscriptions": [Array], "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): [Map], Symbol(eventHandlerAttributeMap): [Map]}], Symbol(currentTarget): {"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": {}, "_socketId": 6, "_subscriptions": [[Object], [Object], [Object], [Object]], "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): Map {"open" => [Map], "message" => [Map], "close" => [Map], "error" => [Map]}, Symbol(eventHandlerAttributeMap): Map {"open" => [Object], "message" => [Object], "close" => [Object], "error" => [Object]}}, Symbol(eventPhase): 2, Symbol(inPassiveListenerFlag): false, Symbol(isTrusted): false, Symbol(stopPropagationFlag): false, Symbol(stopPropagationFlag): false, Symbol(target): {"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": {}, "_socketId": 6, "_subscriptions": [[Object], [Object], [Object], [Object]], "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): Map {"open" => [Map], "message" => [Map], "close" => [Map], "error" => [Map]}, Symbol(eventHandlerAttributeMap): Map {"open" => [Object], "message" => [Object], "close" => [Object], "error" => [Object]}}, Symbol(Event.dispatch): true}
+ LOG  🚪 WS closed (Driver) 1006 Failed to connect to api.kabluxe.com/144.126.199.206:443
+ LOG  🛑 Location tracking stopped
+ LOG  ⏰ Scheduling connection retry in 8000ms (attempt 4)
+› Reloading apps
+ LOG  ✅ Token available, connecting WebSocket...
+ LOG  🛑 Location tracking stopped
+› Reloading apps
+Android Bundled 103108ms index.js (1 module)
+ LOG  🔧 [API Config] Base URL: https://api.kabluxe.com/api/v1/
+ LOG  🔧 [API Init] API instance created with interceptors
+ LOG  ✅ Token available, connecting WebSocket...
+ LOG  ✅ WebSocket connected (Driver) eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA
+ LOG  📍 Initial location set: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  ✅ Location tracking started
+ LOG  📍 Location updated: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  🔧 [API Request ye375p] Starting request to: users/me
+ LOG  🔧 [API Request ye375p] Method: GET
+ LOG  🔐 [API Request ye375p] Token found in storage: true
+ LOG  ✅ [API Request ye375p] Authorization header set
+ LOG  📋 [API Request ye375p] Request headers: {"Accept": "application/json, text/plain, */*", "Access-Control-Allow-Origin": "*", "Authorization": "Bearer eyJhbGciOiJIU...", "Content-Type": "application/json"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  ✅ [API Response users/me] Status: 200
+ LOG  ✅ [API Response users/me] Data: {"data": {"address": "Read through Things", "email": "p8kh2sox5z@cmhvzylmfc.com", "first_name": "Mitsuki", "has_completed_kyc": false, "id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "is_online": false, "last_name": "", "phone_number": "08041257896", "profile_image": null, "rating": 5, "referral_code": "IAWNE7L3TA-601B", "type": ""}, "errors": {}, "message": "User profile retrieved successfully", "status": "success"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📩 Raw incoming message: {"type": "notify", "event": {"notification_type": "RIDE_REQUESTED", "ride_type": "standard", "ride_id": "720dc46cfdd4477b9956015e33e971ea", "message": "New standard ride request available. Pickup from None going to None. Estimated fare is 10.0 (Rider offer: 186000). rider is approximately 7.0477 km away from you."}}
+ LOG  📩 Incoming WS message: {"event": {"message": "New standard ride request available. Pickup from None going to None. Estimated fare is 10.0 (Rider offer: 186000). rider is approximately 7.0477 km away from you.", "notification_type": "RIDE_REQUESTED", "ride_id": "720dc46cfdd4477b9956015e33e971ea", "ride_type": "standard"}, "type": "notify"}
+ LOG  🚗 New ride request received: {"message": "New standard ride request available. Pickup from None going to None. Estimated fare is 10.0 (Rider offer: 186000). rider is approximately 7.0477 km away from you.", "notification_type": "RIDE_REQUESTED", "ride_id": "720dc46cfdd4477b9956015e33e971ea", "ride_type": "standard"}
+ LOG  📩 [DRIVER HOME] Incoming message: {"event": {"message": "New standard ride request available. Pickup from None going to None. Estimated fare is 10.0 (Rider offer: 186000). rider is approximately 7.0477 km away from you.", "notification_type": "RIDE_REQUESTED", "ride_id": "720dc46cfdd4477b9956015e33e971ea", "ride_type": "standard"}, "type": "notify"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  💰 Counter offer: {"address": "Address not provided", "distance_km": 7.0477, "estimated_fare": undefined, "message": "New standard ride request available. Pickup from None going to None. Estimated fare is 10.0 (Rider offer: 186000). rider is approximately 7.0477 km away from you.", "notification_type": "RIDE_REQUESTED", "offer_amount": 186000, "ride_id": "720dc46cfdd4477b9956015e33e971ea", "ride_type": "standard", "rider_name": "Unknown Rider", "rider_rating": "4.5", "time_to_pickup": "845.7239999999999"}
+ WARN  Non-serializable values were found in the navigation state. Check:
+
+OrderScreen > params.socket._subscriptions[0].remove (Function)
+
+This can break usage such as persisting and restoring state. This might happen if you passed non-serializable values such as function, class instances etc. in params. If you need to use components with callbacks in your options, you can use 'navigation.setOptions' instead. See https://reactnavigation.org/docs/troubleshooting#i-get-the-warning-non-serializable-values-were-found-in-the-navigation-state for more details.
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📡 [DRIVER] Sending counter offer: {
+  "type": "create_driver_offer",
+  "data": {
+    "ride_request_id": "720dc46cfdd4477b9956015e33e971ea",
+    "counter_offer": 186600
+  }
+}
+ LOG  ✅ [DRIVER] Counter offer sent successfully!
+ LOG  📩 Raw incoming message: {"status": "created", "data": {"id": "ea772c767eef448599fe3fa1130a6e62", "ride_request_id": "720dc46cfdd4477b9956015e33e971ea", "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "counter_offer": 186600, "expires_at": "2025-11-17T13:02:12.765964+00:00", "status": "active"}}
+ LOG  📩 Incoming WS message: {"data": {"counter_offer": 186600, "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "expires_at": "2025-11-17T13:02:12.765964+00:00", "id": "ea772c767eef448599fe3fa1130a6e62", "ride_request_id": "720dc46cfdd4477b9956015e33e971ea", "status": "active"}, "status": "created"}
+ LOG  ℹ️ Unknown message type: undefined
+ LOG  📩 [DRIVER HOME] Incoming message: {"data": {"counter_offer": 186600, "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "expires_at": "2025-11-17T13:02:12.765964+00:00", "id": "ea772c767eef448599fe3fa1130a6e62", "ride_request_id": "720dc46cfdd4477b9956015e33e971ea", "status": "active"}, "status": "created"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📩 Raw incoming message: {"type": "negotiation_update", "data": {"notification_type": "negotiation_increment", "ride_request_view_id": "ea772c767eef448599fe3fa1130a6e62", "counter_offer": "2500", "action": "increment", "ride_request_id": "720dc46cfdd4477b9956015e33e971ea", "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd"}}
+ LOG  📩 Incoming WS message: {"data": {"action": "increment", "counter_offer": "2500", "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "notification_type": "negotiation_increment", "ride_request_id": "720dc46cfdd4477b9956015e33e971ea", "ride_request_view_id": "ea772c767eef448599fe3fa1130a6e62"}, "type": "negotiation_update"}
+ LOG  ℹ️ Unknown message type: negotiation_update
+ LOG  📩 [DRIVER HOME] Incoming message: {"data": {"action": "increment", "counter_offer": "2500", "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "notification_type": "negotiation_increment", "ride_request_id": "720dc46cfdd4477b9956015e33e971ea", "ride_request_view_id": "ea772c767eef448599fe3fa1130a6e62"}, "type": "negotiation_update"}
+ LOG  🔄 [DRIVER] Received negotiation update: {"action": "increment", "counter_offer": "2500", "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "notification_type": "negotiation_increment", "ride_request_id": "720dc46cfdd4477b9956015e33e971ea", "ride_request_view_id": "ea772c767eef448599fe3fa1130a6e62"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  ✅ Accept ride message sent: {"data": {"ride_request_view_id": "ea772c767eef448599fe3fa1130a6e62"}, "type": "accept_ride"}
+ LOG  🗑️ Cleared notification for ride: undefined
+ LOG  📩 Raw incoming message: {"event": "accept_ride_success", "ride_id": "77322c5e7af84463a538bce1eb9e7a69"}
+ LOG  📩 Incoming WS message: {"event": "accept_ride_success", "ride_id": "77322c5e7af84463a538bce1eb9e7a69"}
+ LOG  ℹ️ Unknown message type: undefined
+ LOG  📩 [DRIVER HOME] Incoming message: {"event": "accept_ride_success", "ride_id": "77322c5e7af84463a538bce1eb9e7a69"}
+ LOG  📩 Raw incoming message: {"type": "notify", "event": "ride_created", "payload": {"ride_id": "77322c5e7af84463a538bce1eb9e7a69", "rider_id": "14bc436bd1f1415eb9c83d64dd951e9e"}}
+ LOG  📩 Incoming WS message: {"event": "ride_created", "payload": {"ride_id": "77322c5e7af84463a538bce1eb9e7a69", "rider_id": "14bc436bd1f1415eb9c83d64dd951e9e"}, "type": "notify"}
+ LOG  ℹ️ Other notification type: undefined
+ LOG  📩 [DRIVER HOME] Incoming message: {"event": "ride_created", "payload": {"ride_id": "77322c5e7af84463a538bce1eb9e7a69", "rider_id": "14bc436bd1f1415eb9c83d64dd951e9e"}, "type": "notify"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ ERROR  ⚠️ WS Error (Driver): {"_bubbles": false, "_cancelable": false, "_composed": false, "_defaultPrevented": false, "_timeStamp": 388273345.568911, "_type": "error", Symbol(composedPath): [{"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": [NativeEventEmitter], "_socketId": 3, "_subscriptions": [Array], "protocol": "", "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): [Map], Symbol(eventHandlerAttributeMap): [Map]}], Symbol(currentTarget): {"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": {}, "_socketId": 3, "_subscriptions": [[Object], [Object], [Object], [Object]], "protocol": "", "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): Map {"open" => [Map], "message" => [Map], "close" => [Map], "error" => [Map]}, Symbol(eventHandlerAttributeMap): Map {"open" => [Object], "message" => [Object], "close" => [Object], "error" => [Object]}}, Symbol(eventPhase): 2, Symbol(inPassiveListenerFlag): false, Symbol(isTrusted): false, Symbol(stopPropagationFlag): false, Symbol(stopPropagationFlag): false, Symbol(target): {"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": {}, "_socketId": 3, "_subscriptions": [[Object], [Object], [Object], [Object]], "protocol": "", "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): Map {"open" => [Map], "message" => [Map], "close" => [Map], "error" => [Map]}, Symbol(eventHandlerAttributeMap): Map {"open" => [Object], "message" => [Object], "close" => [Object], "error" => [Object]}}, Symbol(Event.dispatch): true}
+ LOG  🚪 WS closed (Driver) 1006
+ LOG  🛑 Location tracking stopped
+ LOG  ⏰ Scheduling connection retry in 1000ms (attempt 1)
+ LOG  ✅ Token available, connecting WebSocket...
+ ERROR  ⚠️ WS Error (Driver): {"_bubbles": false, "_cancelable": false, "_composed": false, "_defaultPrevented": false, "_timeStamp": 388274533.38745, "_type": "error", Symbol(composedPath): [{"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": [NativeEventEmitter], "_socketId": 4, "_subscriptions": [Array], "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): [Map], Symbol(eventHandlerAttributeMap): [Map]}], Symbol(currentTarget): {"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": {}, "_socketId": 4, "_subscriptions": [[Object], [Object], [Object], [Object]], "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): Map {"open" => [Map], "message" => [Map], "close" => [Map], "error" => [Map]}, Symbol(eventHandlerAttributeMap): Map {"open" => [Object], "message" => [Object], "close" => [Object], "error" => [Object]}}, Symbol(eventPhase): 2, Symbol(inPassiveListenerFlag): false, Symbol(isTrusted): false, Symbol(stopPropagationFlag): false, Symbol(stopPropagationFlag): false, Symbol(target): {"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": {}, "_socketId": 4, "_subscriptions": [[Object], [Object], [Object], [Object]], "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): Map {"open" => [Map], "message" => [Map], "close" => [Map], "error" => [Map]}, Symbol(eventHandlerAttributeMap): Map {"open" => [Object], "message" => [Object], "close" => [Object], "error" => [Object]}}, Symbol(Event.dispatch): true}
+ LOG  🚪 WS closed (Driver) 1006 Failed to connect to api.kabluxe.com/144.126.199.206:443
+ LOG  🛑 Location tracking stopped
+ LOG  ⏰ Scheduling connection retry in 2000ms (attempt 2)
+ LOG  ✅ Token available, connecting WebSocket...
+ ERROR  ⚠️ WS Error (Driver): {"_bubbles": false, "_cancelable": false, "_composed": false, "_defaultPrevented": false, "_timeStamp": 388276689.080604, "_type": "error", Symbol(composedPath): [{"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": [NativeEventEmitter], "_socketId": 5, "_subscriptions": [Array], "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): [Map], Symbol(eventHandlerAttributeMap): [Map]}], Symbol(currentTarget): {"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": {}, "_socketId": 5, "_subscriptions": [[Object], [Object], [Object], [Object]], "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): Map {"open" => [Map], "message" => [Map], "close" => [Map], "error" => [Map]}, Symbol(eventHandlerAttributeMap): Map {"open" => [Object], "message" => [Object], "close" => [Object], "error" => [Object]}}, Symbol(eventPhase): 2, Symbol(inPassiveListenerFlag): false, Symbol(isTrusted): false, Symbol(stopPropagationFlag): false, Symbol(stopPropagationFlag): false, Symbol(target): {"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": {}, "_socketId": 5, "_subscriptions": [[Object], [Object], [Object], [Object]], "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): Map {"open" => [Map], "message" => [Map], "close" => [Map], "error" => [Map]}, Symbol(eventHandlerAttributeMap): Map {"open" => [Object], "message" => [Object], "close" => [Object], "error" => [Object]}}, Symbol(Event.dispatch): true}
+ LOG  🚪 WS closed (Driver) 1006 Failed to connect to api.kabluxe.com/144.126.199.206:443
+ LOG  🛑 Location tracking stopped
+ LOG  ⏰ Scheduling connection retry in 4000ms (attempt 3)
+ LOG  ✅ Token available, connecting WebSocket...
+ ERROR  ⚠️ WS Error (Driver): {"_bubbles": false, "_cancelable": false, "_composed": false, "_defaultPrevented": false, "_timeStamp": 388280866.125604, "_type": "error", Symbol(composedPath): [{"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": [NativeEventEmitter], "_socketId": 6, "_subscriptions": [Array], "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): [Map], Symbol(eventHandlerAttributeMap): [Map]}], Symbol(currentTarget): {"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": {}, "_socketId": 6, "_subscriptions": [[Object], [Object], [Object], [Object]], "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): Map {"open" => [Map], "message" => [Map], "close" => [Map], "error" => [Map]}, Symbol(eventHandlerAttributeMap): Map {"open" => [Object], "message" => [Object], "close" => [Object], "error" => [Object]}}, Symbol(eventPhase): 2, Symbol(inPassiveListenerFlag): false, Symbol(isTrusted): false, Symbol(stopPropagationFlag): false, Symbol(stopPropagationFlag): false, Symbol(target): {"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": {}, "_socketId": 6, "_subscriptions": [[Object], [Object], [Object], [Object]], "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): Map {"open" => [Map], "message" => [Map], "close" => [Map], "error" => [Map]}, Symbol(eventHandlerAttributeMap): Map {"open" => [Object], "message" => [Object], "close" => [Object], "error" => [Object]}}, Symbol(Event.dispatch): true}
+ LOG  🚪 WS closed (Driver) 1006 Failed to connect to api.kabluxe.com/144.126.199.206:443
+ LOG  🛑 Location tracking stopped
+ LOG  ⏰ Scheduling connection retry in 8000ms (attempt 4)
+ LOG  ✅ Token available, connecting WebSocket...
+ ERROR  ⚠️ WS Error (Driver): {"_bubbles": false, "_cancelable": false, "_composed": false, "_defaultPrevented": false, "_timeStamp": 388289969.206143, "_type": "error", Symbol(composedPath): [{"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": [NativeEventEmitter], "_socketId": 7, "_subscriptions": [Array], "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): [Map], Symbol(eventHandlerAttributeMap): [Map]}], Symbol(currentTarget): {"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": {}, "_socketId": 7, "_subscriptions": [[Object], [Object], [Object], [Object]], "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): Map {"open" => [Map], "message" => [Map], "close" => [Map], "error" => [Map]}, Symbol(eventHandlerAttributeMap): Map {"open" => [Object], "message" => [Object], "close" => [Object], "error" => [Object]}}, Symbol(eventPhase): 2, Symbol(inPassiveListenerFlag): false, Symbol(isTrusted): false, Symbol(stopPropagationFlag): false, Symbol(stopPropagationFlag): false, Symbol(target): {"CLOSED": 3, "CLOSING": 2, "CONNECTING": 0, "OPEN": 1, "_eventEmitter": {}, "_socketId": 7, "_subscriptions": [[Object], [Object], [Object], [Object]], "readyState": 3, "url": "wss://api.kabluxe.com/api/v1/ws/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA", Symbol(bubblingListeners): Map {"open" => [Map], "message" => [Map], "close" => [Map], "error" => [Map]}, Symbol(eventHandlerAttributeMap): Map {"open" => [Object], "message" => [Object], "close" => [Object], "error" => [Object]}}, Symbol(Event.dispatch): true}
+ LOG  🚪 WS closed (Driver) 1006 Expected HTTP 101 response but was '502 Bad Gateway'
+ LOG  🛑 Location tracking stopped
+ LOG  ⏰ Scheduling connection retry in 16000ms (attempt 5)
+ LOG  ✅ Token available, connecting WebSocket...
+ LOG  ✅ WebSocket connected (Driver) eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA
+ LOG  📍 Initial location set: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  ✅ Location tracking started
+ LOG  📍 Location updated: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+› Reloading apps
+ LOG  🛑 Location tracking stopped
+Android Bundled 1516ms index.js (1 module)
+ LOG  🔧 [API Config] Base URL: https://api.kabluxe.com/api/v1/
+ LOG  🔧 [API Init] API instance created with interceptors
+ LOG  ✅ Token available, connecting WebSocket...
+ LOG  ✅ WebSocket connected (Driver) eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA
+ LOG  📍 Initial location set: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  ✅ Location tracking started
+ LOG  📍 Location updated: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  🔧 [API Request pucwjr] Starting request to: users/me
+ LOG  🔧 [API Request pucwjr] Method: GET
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  🔐 [API Request pucwjr] Token found in storage: true
+ LOG  ✅ [API Request pucwjr] Authorization header set
+ LOG  📋 [API Request pucwjr] Request headers: {"Accept": "application/json, text/plain, */*", "Access-Control-Allow-Origin": "*", "Authorization": "Bearer eyJhbGciOiJIU...", "Content-Type": "application/json"}
+ LOG  ✅ [API Response users/me] Status: 200
+ LOG  ✅ [API Response users/me] Data: {"data": {"address": "Read through Things", "email": "p8kh2sox5z@cmhvzylmfc.com", "first_name": "Mitsuki", "has_completed_kyc": false, "id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "is_online": false, "last_name": "", "phone_number": "08041257896", "profile_image": null, "rating": 5, "referral_code": "IAWNE7L3TA-601B", "type": ""}, "errors": {}, "message": "User profile retrieved successfully", "status": "success"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📩 Raw incoming message: {"type": "notify", "event": {"notification_type": "RIDE_REQUESTED", "ride_type": "standard", "ride_id": "e72624cf73a748a7b4ff58d3974f6c8e", "message": "New standard ride request available. Pickup from None going to None. Estimated fare is 10.0 (Rider offer: 1860.0). rider is approximately 7.0477 km away from you."}}
+ LOG  📩 Incoming WS message: {"event": {"message": "New standard ride request available. Pickup from None going to None. Estimated fare is 10.0 (Rider offer: 1860.0). rider is approximately 7.0477 km away from you.", "notification_type": "RIDE_REQUESTED", "ride_id": "e72624cf73a748a7b4ff58d3974f6c8e", "ride_type": "standard"}, "type": "notify"}
+ LOG  🚗 New ride request received: {"message": "New standard ride request available. Pickup from None going to None. Estimated fare is 10.0 (Rider offer: 1860.0). rider is approximately 7.0477 km away from you.", "notification_type": "RIDE_REQUESTED", "ride_id": "e72624cf73a748a7b4ff58d3974f6c8e", "ride_type": "standard"}
+ LOG  📩 [DRIVER HOME] Incoming message: {"event": {"message": "New standard ride request available. Pickup from None going to None. Estimated fare is 10.0 (Rider offer: 1860.0). rider is approximately 7.0477 km away from you.", "notification_type": "RIDE_REQUESTED", "ride_id": "e72624cf73a748a7b4ff58d3974f6c8e", "ride_type": "standard"}, "type": "notify"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  💰 Counter offer: {"address": "Address not provided", "distance_km": 7.0477, "estimated_fare": undefined, "message": "New standard ride request available. Pickup from None going to None. Estimated fare is 10.0 (Rider offer: 1860.0). rider is approximately 7.0477 km away from you.", "notification_type": "RIDE_REQUESTED", "offer_amount": 1860, "ride_id": "e72624cf73a748a7b4ff58d3974f6c8e", "ride_type": "standard", "rider_name": "Unknown Rider", "rider_rating": "4.5", "time_to_pickup": "845.7239999999999"}
+ WARN  Non-serializable values were found in the navigation state. Check:
+
+OrderScreen > params.socket._subscriptions[0].remove (Function)
+
+This can break usage such as persisting and restoring state. This might happen if you passed non-serializable values such as function, class instances etc. in params. If you need to use components with callbacks in your options, you can use 'navigation.setOptions' instead. See https://reactnavigation.org/docs/troubleshooting#i-get-the-warning-non-serializable-values-were-found-in-the-navigation-state for more details.
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📡 [DRIVER] Sending counter offer: {
+  "type": "create_driver_offer",
+  "data": {
+    "ride_request_id": "e72624cf73a748a7b4ff58d3974f6c8e",
+    "counter_offer": 2160
+  }
+}
+ LOG  ✅ [DRIVER] Counter offer sent successfully!
+ LOG  📩 Raw incoming message: {"status": "created", "data": {"id": "9a1bd0c18b1c4defb1c4d0569331dcdb", "ride_request_id": "e72624cf73a748a7b4ff58d3974f6c8e", "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "counter_offer": 2160, "expires_at": "2025-11-17T13:06:15.434083+00:00", "status": "active"}}
+ LOG  📩 Incoming WS message: {"data": {"counter_offer": 2160, "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "expires_at": "2025-11-17T13:06:15.434083+00:00", "id": "9a1bd0c18b1c4defb1c4d0569331dcdb", "ride_request_id": "e72624cf73a748a7b4ff58d3974f6c8e", "status": "active"}, "status": "created"}
+ LOG  ℹ️ Unknown message type: undefined
+ LOG  📩 [DRIVER HOME] Incoming message: {"data": {"counter_offer": 2160, "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "expires_at": "2025-11-17T13:06:15.434083+00:00", "id": "9a1bd0c18b1c4defb1c4d0569331dcdb", "ride_request_id": "e72624cf73a748a7b4ff58d3974f6c8e", "status": "active"}, "status": "created"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📩 Raw incoming message: {"type": "negotiation_update", "data": {"notification_type": "negotiation_decrement", "ride_request_view_id": "9a1bd0c18b1c4defb1c4d0569331dcdb", "counter_offer": "2000", "ride_request_id": "e72624cf73a748a7b4ff58d3974f6c8e", "action": "decrement", "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd"}}
+ LOG  📩 Incoming WS message: {"data": {"action": "decrement", "counter_offer": "2000", "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "notification_type": "negotiation_decrement", "ride_request_id": "e72624cf73a748a7b4ff58d3974f6c8e", "ride_request_view_id": "9a1bd0c18b1c4defb1c4d0569331dcdb"}, "type": "negotiation_update"}
+ LOG  ℹ️ Unknown message type: negotiation_update
+ LOG  📩 [DRIVER HOME] Incoming message: {"data": {"action": "decrement", "counter_offer": "2000", "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "notification_type": "negotiation_decrement", "ride_request_id": "e72624cf73a748a7b4ff58d3974f6c8e", "ride_request_view_id": "9a1bd0c18b1c4defb1c4d0569331dcdb"}, "type": "negotiation_update"}
+ LOG  🔄 [DRIVER] Received negotiation update: {"action": "decrement", "counter_offer": "2000", "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "notification_type": "negotiation_decrement", "ride_request_id": "e72624cf73a748a7b4ff58d3974f6c8e", "ride_request_view_id": "9a1bd0c18b1c4defb1c4d0569331dcdb"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  ✅ Counter offer sent: {"data": {"counter_offer": 2100, "ride_request_id": undefined}, "type": "create_driver_offer"}
+ LOG  📩 Raw incoming message: {"error": "Internal server error"}
+ LOG  📩 Incoming WS message: {"error": "Internal server error"}
+ LOG  ℹ️ Unknown message type: undefined
+ LOG  📩 [DRIVER HOME] Incoming message: {"error": "Internal server error"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+› Reloading apps
+ LOG  🛑 Location tracking stopped
+Android Bundled 3301ms index.js (1 module)
+ LOG  🔧 [API Config] Base URL: https://api.kabluxe.com/api/v1/
+ LOG  🔧 [API Init] API instance created with interceptors
+ LOG  ✅ Token available, connecting WebSocket...
+ LOG  ✅ WebSocket connected (Driver) eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNTUwOTQyLCJpYXQiOjE3NjMzNzgxNDIsImp0aSI6ImUxZDM4MWU3YTYzMTQzNmI4NzRhMDg0MDQ3NTg0YTFkIiwidXNlcl9pZCI6ImU1M2JkMWQ3YTNlZjQ5OGI4NmM0OTBkYzU5ZmJiNmZkIn0.XPQOeUZSopJnCk6_MI5iwQiE_R7lv5705EiHaGaXvdA
+ LOG  📍 Initial location set: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  ✅ Location tracking started
+ LOG  📍 Location updated: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  🔧 [API Request ijtnxl] Starting request to: users/me
+ LOG  🔧 [API Request ijtnxl] Method: GET
+ LOG  🔐 [API Request ijtnxl] Token found in storage: true
+ LOG  ✅ [API Request ijtnxl] Authorization header set
+ LOG  📋 [API Request ijtnxl] Request headers: {"Accept": "application/json, text/plain, */*", "Access-Control-Allow-Origin": "*", "Authorization": "Bearer eyJhbGciOiJIU...", "Content-Type": "application/json"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  ✅ [API Response users/me] Status: 200
+ LOG  ✅ [API Response users/me] Data: {"data": {"address": "Read through Things", "email": "p8kh2sox5z@cmhvzylmfc.com", "first_name": "Mitsuki", "has_completed_kyc": false, "id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "is_online": false, "last_name": "", "phone_number": "08041257896", "profile_image": null, "rating": 5, "referral_code": "IAWNE7L3TA-601B", "type": ""}, "errors": {}, "message": "User profile retrieved successfully", "status": "success"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📩 Raw incoming message: {"type": "notify", "event": {"notification_type": "RIDE_REQUESTED", "ride_type": "standard", "ride_id": "c8a815949f32416daaa195b0f70f9d05", "message": "New standard ride request available. Pickup from None going to None. Estimated fare is 11.0 (Rider offer: 1860.0). rider is approximately 7.0477 km away from you."}}
+ LOG  📩 Incoming WS message: {"event": {"message": "New standard ride request available. Pickup from None going to None. Estimated fare is 11.0 (Rider offer: 1860.0). rider is approximately 7.0477 km away from you.", "notification_type": "RIDE_REQUESTED", "ride_id": "c8a815949f32416daaa195b0f70f9d05", "ride_type": "standard"}, "type": "notify"}
+ LOG  🚗 New ride request received: {"message": "New standard ride request available. Pickup from None going to None. Estimated fare is 11.0 (Rider offer: 1860.0). rider is approximately 7.0477 km away from you.", "notification_type": "RIDE_REQUESTED", "ride_id": "c8a815949f32416daaa195b0f70f9d05", "ride_type": "standard"}
+ LOG  📩 [DRIVER HOME] Incoming message: {"event": {"message": "New standard ride request available. Pickup from None going to None. Estimated fare is 11.0 (Rider offer: 1860.0). rider is approximately 7.0477 km away from you.", "notification_type": "RIDE_REQUESTED", "ride_id": "c8a815949f32416daaa195b0f70f9d05", "ride_type": "standard"}, "type": "notify"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  💰 Counter offer: {"address": "Address not provided", "distance_km": 7.0477, "estimated_fare": undefined, "message": "New standard ride request available. Pickup from None going to None. Estimated fare is 11.0 (Rider offer: 1860.0). rider is approximately 7.0477 km away from you.", "notification_type": "RIDE_REQUESTED", "offer_amount": 1860, "ride_id": "c8a815949f32416daaa195b0f70f9d05", "ride_type": "standard", "rider_name": "Unknown Rider", "rider_rating": "4.5", "time_to_pickup": "845.7239999999999"}
+ WARN  Non-serializable values were found in the navigation state. Check:
+
+OrderScreen > params.socket._subscriptions[0].remove (Function)
+
+This can break usage such as persisting and restoring state. This might happen if you passed non-serializable values such as function, class instances etc. in params. If you need to use components with callbacks in your options, you can use 'navigation.setOptions' instead. See https://reactnavigation.org/docs/troubleshooting#i-get-the-warning-non-serializable-values-were-found-in-the-navigation-state for more details.
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📡 [DRIVER] Sending counter offer: {
+  "type": "create_driver_offer",
+  "data": {
+    "ride_request_id": "c8a815949f32416daaa195b0f70f9d05",
+    "counter_offer": 2160
+  }
+}
+ LOG  ✅ [DRIVER] Counter offer sent successfully!
+ LOG  📩 Raw incoming message: {"status": "created", "data": {"id": "cea22bb4b25e4071a8e1f3695c275361", "ride_request_id": "c8a815949f32416daaa195b0f70f9d05", "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "counter_offer": 2160, "expires_at": "2025-11-17T13:17:18.707411+00:00", "status": "active"}}
+ LOG  📩 Incoming WS message: {"data": {"counter_offer": 2160, "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "expires_at": "2025-11-17T13:17:18.707411+00:00", "id": "cea22bb4b25e4071a8e1f3695c275361", "ride_request_id": "c8a815949f32416daaa195b0f70f9d05", "status": "active"}, "status": "created"}
+ LOG  ℹ️ Unknown message type: undefined
+ LOG  📩 [DRIVER HOME] Incoming message: {"data": {"counter_offer": 2160, "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "expires_at": "2025-11-17T13:17:18.707411+00:00", "id": "cea22bb4b25e4071a8e1f3695c275361", "ride_request_id": "c8a815949f32416daaa195b0f70f9d05", "status": "active"}, "status": "created"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📩 Raw incoming message: {"type": "negotiation_update", "data": {"notification_type": "negotiation_decrement", "ride_request_view_id": "cea22bb4b25e4071a8e1f3695c275361", "counter_offer": "2000", "ride_request_id": "c8a815949f32416daaa195b0f70f9d05", "action": "decrement", "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd"}}
+ LOG  📩 Incoming WS message: {"data": {"action": "decrement", "counter_offer": "2000", "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "notification_type": "negotiation_decrement", "ride_request_id": "c8a815949f32416daaa195b0f70f9d05", "ride_request_view_id": "cea22bb4b25e4071a8e1f3695c275361"}, "type": "negotiation_update"}
+ LOG  ℹ️ Unknown message type: negotiation_update
+ LOG  📩 [DRIVER HOME] Incoming message: {"data": {"action": "decrement", "counter_offer": "2000", "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "notification_type": "negotiation_decrement", "ride_request_id": "c8a815949f32416daaa195b0f70f9d05", "ride_request_view_id": "cea22bb4b25e4071a8e1f3695c275361"}, "type": "negotiation_update"}
+ LOG  🔄 [DRIVER] Received negotiation update: {"action": "decrement", "counter_offer": "2000", "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "notification_type": "negotiation_decrement", "ride_request_id": "c8a815949f32416daaa195b0f70f9d05", "ride_request_view_id": "cea22bb4b25e4071a8e1f3695c275361"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  ✅ Counter offer sent: {"data": {"counter_offer": 2100, "ride_request_id": "c8a815949f32416daaa195b0f70f9d05"}, "type": "create_driver_offer"}
+ LOG  📩 Raw incoming message: {"status": "created", "data": {"id": "30182473255a4febb5c3d4a98c451ad1", "ride_request_id": "c8a815949f32416daaa195b0f70f9d05", "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "counter_offer": 2100, "expires_at": "2025-11-17T13:17:55.538399+00:00", "status": "active"}}
+ LOG  📩 Incoming WS message: {"data": {"counter_offer": 2100, "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "expires_at": "2025-11-17T13:17:55.538399+00:00", "id": "30182473255a4febb5c3d4a98c451ad1", "ride_request_id": "c8a815949f32416daaa195b0f70f9d05", "status": "active"}, "status": "created"}
+ LOG  ℹ️ Unknown message type: undefined
+ LOG  📩 [DRIVER HOME] Incoming message: {"data": {"counter_offer": 2100, "driver_id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "driver_name": "Mitsuki", "expires_at": "2025-11-17T13:17:55.538399+00:00", "id": "30182473255a4febb5c3d4a98c451ad1", "ride_request_id": "c8a815949f32416daaa195b0f70f9d05", "status": "active"}, "status": "created"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📩 Raw incoming message: {"type": "notify", "event": "ride_created", "payload": {"ride_id": "a504931f5b2c43e596b8e59eb45930f7", "rider_id": "14bc436bd1f1415eb9c83d64dd951e9e"}}
+ LOG  📩 Incoming WS message: {"event": "ride_created", "payload": {"ride_id": "a504931f5b2c43e596b8e59eb45930f7", "rider_id": "14bc436bd1f1415eb9c83d64dd951e9e"}, "type": "notify"}
+ LOG  ℹ️ Other notification type: undefined
+ LOG  📩 [DRIVER HOME] Incoming message: {"event": "ride_created", "payload": {"ride_id": "a504931f5b2c43e596b8e59eb45930f7", "rider_id": "14bc436bd1f1415eb9c83d64dd951e9e"}, "type": "notify"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  🔧 [API Request pttthl] Starting request to: users/me
+ LOG  🔧 [API Request pttthl] Method: GET
+ LOG  🔐 [API Request pttthl] Token found in storage: true
+ LOG  ✅ [API Request pttthl] Authorization header set
+ LOG  📋 [API Request pttthl] Request headers: {"Accept": "application/json, text/plain, */*", "Access-Control-Allow-Origin": "*", "Authorization": "Bearer eyJhbGciOiJIU...", "Content-Type": "application/json"}
+ LOG  ✅ [API Response users/me] Status: 200
+ LOG  ✅ [API Response users/me] Data: {"data": {"address": "Read through Things", "email": "p8kh2sox5z@cmhvzylmfc.com", "first_name": "Mitsuki", "has_completed_kyc": false, "id": "e53bd1d7a3ef498b86c490dc59fbb6fd", "is_online": false, "last_name": "", "phone_number": "08041257896", "profile_image": null, "rating": 5, "referral_code": "IAWNE7L3TA-601B", "type": ""}, "errors": {}, "message": "User profile retrieved successfully", "status": "success"}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
+ LOG  📍 Location update sent: {"lat": 4.9720474, "long": 7.960377}
