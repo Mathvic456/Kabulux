@@ -1,4 +1,4 @@
-package com.hunchoexpo.kablux
+package com.crashingout.kablux
 
 import android.app.Application
 import android.content.res.Configuration

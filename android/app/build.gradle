@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.hunchoexpo.kablux'
+    namespace 'com.crashingout.kablux'
     defaultConfig {
-        applicationId 'com.hunchoexpo.kablux'
+        applicationId 'com.crashingout.kablux'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

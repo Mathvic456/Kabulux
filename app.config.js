@@ -50,7 +50,6 @@ export default {
         },
       ],
       'expo-web-browser',
-      "@react-native-google-signin/google-signin",
     ],
 
     experiments: {

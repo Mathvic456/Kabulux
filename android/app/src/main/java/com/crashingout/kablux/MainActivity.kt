@@ -1,4 +1,4 @@
-package com.hunchoexpo.kablux
+package com.crashingout.kablux
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build
