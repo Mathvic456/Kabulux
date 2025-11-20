@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { jwtDecode } from "jwt-decode";
 import React, { createContext, useEffect, useRef, useState } from "react";
+import { AppState } from "react-native";
 
 interface DriverOffer {
   driver_name: string;
@@ -32,6 +33,7 @@ export const SocketContext = createContext<SocketContextValue>({
 
 export const WebSocketProvider = ({ children }: { children: React.ReactNode }) => {
   const ws = useRef<WebSocket | null>(null);
+  const shouldReconnect = useRef(true);
   const [isConnected, setIsConnected] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [driverResponses, setDriverResponses] = useState<DriverOffer[]>([]);
@@ -45,137 +47,133 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
     }
   };
 
-  const refreshAccessToken = async () => {
-    try {
-      const refresh = await AsyncStorage.getItem("refreshToken");
-      if (!refresh) throw new Error("No refresh token");
 
-      const res = await fetch(`${API_URL}auth/refresh/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refresh }),
-      });
 
-      if (!res.ok) throw new Error("Failed to refresh");
-      const data = await res.json();
-      console.log(data);
-      console.log("New token?", data.data.access);
-      if (data.data.access) {
-        await AsyncStorage.setItem("token", data.data.access);
-        console.log("🔁 Token refreshed!");
-        return data.data.access;
+
+
+  useEffect(() => {
+    const init = async () => {
+      const storedToken = await AsyncStorage.getItem("token");
+      if (storedToken) setToken(storedToken);
+    };
+
+    init();
+
+  const subscription = AppState.addEventListener("change", (state) => {
+    if (state === "active") {
+      console.log("App returned to foreground");
+
+      if (token && !isExpired(token)) {
+        console.log("Reconnecting WS after resume...");
+        connectWebSocket(token);
       }
-      return null;
-    } catch (err) {
-      console.error("Token refresh failed:", err);
-      return null;
+    } else {
+      // App went background — close WS but allow reconnect on resume
+      console.log("App in background, closing WS gracefully");
+      ws.current?.close();
     }
+  });
+
+  return () => {
+    subscription.remove();
+    shouldReconnect.current = false;
+    ws.current?.close();
   };
+}, []);
+
+
+
+  
+
+  useEffect(() => {
+    if (token && !isExpired(token)) connectWebSocket(token);
+  }, [token]);
 
   const handleWsMessage = (event: MessageEvent) => {
+    if (!event?.data) return;
+
     try {
-        const data = JSON.parse(event.data);
-        console.log("📩 WS Message:", event.data);
+      const data = JSON.parse(event.data);
 
-        if (data.type === 'driver_offer' && data.data) {
-            const newOffer: DriverOffer = {
-                driver_name: data.data.driver_name,
-                offer: data.data.offer,
-            };
+      if (data.type === "driver_offer" && data.data) {
+        const newOffer: DriverOffer = {
+          driver_name: data.data.driver_name,
+          offer: data.data.offer,
+        };
 
-            setDriverResponses(prev => {
-                const existingIndex = prev.findIndex(d => d.driver_name === newOffer.driver_name);
+        setDriverResponses((prev) => {
+          const index = prev.findIndex((d) => d.driver_name === newOffer.driver_name);
 
-                if (existingIndex > -1) {
-                    const updatedResponses = [...prev];
-                    updatedResponses[existingIndex] = newOffer;
-                    console.log(`Driver ${newOffer.driver_name} updated offer.`);
-                    return updatedResponses;
-                }
-                
-                console.log(`New offer received from ${newOffer.driver_name}.`);
-                return [...prev, newOffer];
-            });
-        }
+          if (index > -1) {
+            const updated = [...prev];
+            updated[index] = newOffer;
+            return updated;
+          }
 
+          return [...prev, newOffer];
+        });
+      }
     } catch (error) {
-        console.error("Failed to parse WS message:", error);
+      console.error("Failed WS parse:", error);
     }
   };
 
-
   const connectWebSocket = (accessToken: string) => {
-    if (ws.current) {
-      console.log("🔌 Closing existing WebSocket...");
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
       ws.current.close();
     }
 
-    console.log("🔑 Connecting WebSocket with token:", accessToken);
+    if (isExpired(accessToken)) {
+      console.warn("❌ Token expired — skipping WS connection.");
+      return;
+    }
+
     const socket = new WebSocket(`${WSS_URL}?token=${accessToken}`);
     ws.current = socket;
 
     socket.onopen = () => {
-      console.log("✅ WebSocket connected");
+      console.log("WS connected");
       setIsConnected(true);
     };
 
     socket.onmessage = handleWsMessage;
 
-    socket.onclose = () => {
-      console.log("🚪 WS closed");
+    socket.onclose = (event) => {
+      console.log("WS closed:", event.code, event.reason);
       setIsConnected(false);
+
+      if (event.code === 4001 || event.code === 4003) {
+        console.warn("❌ WS closed due to invalid/expired token — not reconnecting.");
+        return;
+      }
+
+      if (shouldReconnect.current && !isExpired(accessToken)) {
+        console.log("Reconnecting in 3s…");
+        setTimeout(() => connectWebSocket(accessToken), 3000);
+      }
     };
 
     socket.onerror = (err) => {
-      console.error("⚠️ WS Error:", err);
+      console.error("WS error:", err);
       setIsConnected(false);
     };
   };
 
-
-  useEffect(() => {
-    const init = async () => {
-      let storedToken = await AsyncStorage.getItem("token");
-      console.log("🔐 Token found?", !!storedToken);
-
-      // Refresh if expired
-      if (!storedToken || isExpired(storedToken)) {
-        console.log("🔁 Access token expired or missing, refreshing...");
-        storedToken = await refreshAccessToken();
-        console.log("Token refreshed!")
-      }
-
-      if (storedToken) {
-        setToken(storedToken);
-        connectWebSocket(storedToken);
-      } else {
-        console.log("🚫 No valid token, WebSocket not connected.");
-      }
-    };
-
-    init();
-    return () => ws.current?.close();
-  }, []);
-
-  
   const setTokenFromOutside = (newToken: string) => {
-    setToken(newToken);
-    connectWebSocket(newToken);
+    setToken(newToken); 
   };
 
-  const clearDriverResponses = () => {
-    setDriverResponses([]);
-  };
+  const clearDriverResponses = () => setDriverResponses([]);
 
   return (
-    <SocketContext.Provider 
-        value={{ 
-            socket: ws.current, 
-            isConnected, 
-            setTokenFromOutside, 
-            driverResponses,
-            clearDriverResponses,
-        }}
+    <SocketContext.Provider
+      value={{
+        socket: ws.current,
+        isConnected,
+        setTokenFromOutside,
+        driverResponses,
+        clearDriverResponses,
+      }}
     >
       {children}
     </SocketContext.Provider>

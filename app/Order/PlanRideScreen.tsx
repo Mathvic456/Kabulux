@@ -174,7 +174,7 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
       latitude: destinationLocation.latitude,
       longitude: destinationLocation.longitude,
     },
-    backendRequest: bookingData, // optional
+    backendRequest: bookingData, 
   };
 
   setScreen('bookingScreen', navigationData); 
@@ -539,11 +539,11 @@ const destinationMarker = useMemo(() => {
                   <Text style={[styles.inputValue, styles.currentLocationText]}>
                     {locationData ? '📍 ' + shortenAddress(currentLocation, 40) : 'Current Location'}
                   </Text>
-                  {locationData && (
+                  {/* {locationData && (
                     <Text style={styles.locationAccuracy}>
                       ✓ Latitude: {locationData.latitude.toFixed(6)}, Longitude: {locationData.longitude.toFixed(6)}
                     </Text>
-                  )}
+                  )} */}
                 </View>
                 <View style={styles.inputBox}>
                   <Text style={styles.inputLabel}>Where to?</Text>
@@ -552,11 +552,11 @@ const destinationMarker = useMemo(() => {
                       {destinationLocation ? '🏁 ' + shortenAddress(destinationLocation.address, 40) : 'Select your destination'}
                     </Text>
                   </TouchableOpacity>
-                  {destinationLocation && (
+                  {/* {destinationLocation && (
                     <Text style={styles.locationAccuracy}>
                       ✓ Latitude: {destinationLocation.latitude.toFixed(6)}, Longitude: {destinationLocation.longitude.toFixed(6)}
                     </Text>
-                  )}
+                  )} */}
                 </View>
               </View>
             </View>

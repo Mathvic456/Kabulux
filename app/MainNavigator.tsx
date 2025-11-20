@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AddFundsScreen from "./addFunds/AddFundsScreen";
 import CryptoDepositScreenOne from "./addFunds/CryptoDepositScreenOne";
 import CryptoDepositScreenTwo from "./addFunds/CryptoDepositScreenTwo";
@@ -18,6 +18,7 @@ import ResetCredentialsScreen from "./authentication/ResetCredentialsScreen";
 import ResetPasswordScreen from "./authentication/ResetPasswordScreen";
 import VerifyEmailScreen from "./authentication/VerifyEmailScreen";
 import LoyaltyPointsScreen from "./LoyaltyPointsScreen";
+import { registerSetScreen } from "./navigationRef";
 import RiderOffersScreen from "./offer/RidersOfferScreen";
 import StandardScreen from "./offer/StandardScreen";
 import OnboardingScreen1 from "./onboarding/OnboardingScreen1";
@@ -100,6 +101,8 @@ type Screen =
 export default function MainNavigator() {
   const [screen, setScreen] = useState<Screen>("onboard1");
 
+
+
   // Keep track of the selected ride
   const [selectedRide, setSelectedRide] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -107,11 +110,17 @@ export default function MainNavigator() {
   const [rideOptions, setRideOptions] = useState<any>(null);
   const [pickupLocationData, setPickupLocationData] = useState<any>(null);
   const [bookingData, setBookingData] = useState<any>(null);
+  const [rideData, setRideData] = useState<any>(null);
 
   const [registeredEmail, setRegisteredEmail] = useState("");
   const [ forgotPasswordEmail, setForgotPasswordEmail] = useState("")
   
 
+  useEffect(() => {
+    registerSetScreen((scr: string) => {
+  setScreen(scr as Screen);
+});
+  }, []);
 
   const handleSetScreen = (newScreen: Screen, params?: any) => {
     
@@ -120,6 +129,9 @@ export default function MainNavigator() {
     }
     if (newScreen === "bookingScreen" && params) {
       setBookingData(params);
+    }
+    if (newScreen === "standardScreen" && params) {
+      setRideData(params);
     }
     setScreen(newScreen);
   };
@@ -136,6 +148,9 @@ export default function MainNavigator() {
     setScreen("login");
   }
 };
+
+
+
 
 
 
@@ -394,10 +409,12 @@ export default function MainNavigator() {
         locationData={pickupLocationData}
         />);
 
-    case "bookingScreen":
+// MainNavigator.tsx
+
+case "bookingScreen":
   return (
     <BookingScreen 
-      setScreen={setScreen}
+      setScreen={handleSetScreen} 
       goBack={() => setScreen("planRide")}
       pickupLat={bookingData?.pickupLocation?.latitude}
       pickupLong={bookingData?.pickupLocation?.longitude}
@@ -406,13 +423,15 @@ export default function MainNavigator() {
     />
   );
 
-  case "standardScreen":
-    return (
-      <StandardScreen
-        goBack={() => setScreen("bookingScreen")}
-        next={() => setScreen("offerScreen")}
-      />
-    )
+case "standardScreen":
+  return (
+    <StandardScreen
+      goBack={() => setScreen("bookingScreen")}
+      next={() => setScreen("offerScreen")}
+      rideData={rideData}
+    />
+  );
+
 
     case "originalPriceDetails":
       return (

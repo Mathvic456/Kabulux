@@ -30,6 +30,7 @@ export default function VerifyEmailScreen({
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const inputsRef = useRef<TextInput[]>([]);
   const verifyOtpMutation = useVerifyOtpEndPoint();
 
@@ -61,18 +62,31 @@ export default function VerifyEmailScreen({
     if (!text && index > 0) inputsRef.current[index - 1]?.focus();
   };
 
-  const handleProceed = async () => {
-    setIsLoading(true);
-    const code = otp.join("");
-    try {
-      await verifyOtpMutation.mutateAsync({ email, otp: code });
-      next();
-    } catch (err) {
-      console.error("OTP verification failed:", err);
-    } finally {
-      setIsLoading(false);
+
+
+const handleProceed = async () => {
+  setIsLoading(true);
+  setErrorMessage(null);
+  const code = otp.join("");
+
+  try {
+    await verifyOtpMutation.mutateAsync({ email, otp: code });
+    next();
+  } catch (err: any) {
+    console.error("OTP verification failed:", err);
+
+    if (err?.response?.data?.message) {
+      setErrorMessage(err.response.data.message);
+    } else {
+      setErrorMessage("Something went wrong. Please try again.");
     }
-  };
+  } finally {
+    setOtp(['', '', '', '', '', '']);
+    inputsRef.current[0]?.focus();
+    setIsLoading(false);
+  }
+};
+
 
   return (
     <KeyboardAvoidingView
@@ -133,6 +147,11 @@ export default function VerifyEmailScreen({
             ))}
           </View>
 
+            {errorMessage && (
+    <Text style={{ color: "red", marginBottom: 10, textAlign: "center" }}>
+      {errorMessage}
+    </Text>
+  )}
           <TouchableOpacity
             style={styles.proceedButton}
             onPress={handleProceed}

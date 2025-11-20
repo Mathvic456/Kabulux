@@ -162,6 +162,12 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
         >
           <View style={styles.card}>
             <Image source={Logo} style={styles.logoIcon} />
+        <TouchableOpacity 
+        style={styles.backButton} 
+        onPress={goLogin}
+      >
+        <Ionicons name="chevron-back" size={24} color="#ffffff" />
+      </TouchableOpacity>
             <Text style={styles.title}>Get Started Now</Text>
             <Text style={styles.subtitle}>Let&apos;s create an account</Text>
 
@@ -328,4 +334,9 @@ const styles = StyleSheet.create({
   dividerText: { color: "#aaa", marginHorizontal: 10 },
   footerText: { textAlign: "center", color: "#888", fontSize: 12 },
   signup: { color: "#fcbf24", fontWeight: "bold" },
+    backButton: {
+    position: "absolute",
+    left: 30,
+    top: 60,
+  },
 });

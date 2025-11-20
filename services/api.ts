@@ -1,3 +1,4 @@
+import { globalLogout } from "@/scripts/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios, { AxiosInstance, RawAxiosRequestHeaders } from "axios";
 import Constants from "expo-constants";
@@ -18,46 +19,48 @@ export const api: AxiosInstance = axios.create({
   } as RawAxiosRequestHeaders,
 });
 
+
+
 api.interceptors.request.use(async (config) => {
-  const requestId = Math.random().toString(36).substring(7);
-
-  try {
-    console.log(`🔧 [API Request ${requestId}] Starting request to:`, config.url);
-    console.log(`🔧 [API Request ${requestId}] Method:`, config.method?.toUpperCase());
-
-    // Skip token for all auth routes
-    if (!config.url?.includes("auth/")) {
-      const token = await AsyncStorage.getItem("token");
-      console.log(`🔐 [API Request ${requestId}] Token found in storage:`, !!token);
-
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-        console.log(`✅ [API Request ${requestId}] Authorization header set`);
-      } else {
-        console.log(`❌ [API Request ${requestId}] No token found`);
-      }
-    } else {
-      console.log(`⚡ [API Request ${requestId}] Skipping token for auth endpoint`);
-    }
-
-    const safeHeaders = { ...config.headers };
-    if (safeHeaders.Authorization && typeof safeHeaders.Authorization === "string") {
-      safeHeaders.Authorization = safeHeaders.Authorization.substring(0, 20) + "...";
-    }
-    console.log(`📋 [API Request ${requestId}] Request headers:`, safeHeaders);
-
-    if (config.data) {
-      console.log(`📦 [API Request ${requestId}] Request data:`, config.data);
-    }
-  } catch (e) {
-    console.error(`🚨 [API Request ${requestId}] Token read error:`, e);
-  }
-
-  if (config.url?.includes("auth/") && config.headers.Authorization) {
-  delete config.headers.Authorization;
-}
+  const token = await AsyncStorage.getItem("token");
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
+
+let isRefreshing = false;
+let queue: ((token: string) => void)[] = [];
+
+api.interceptors.response.use(
+  res => res,
+  async (error) => {
+    const status = error?.response?.status;
+    const original = error.config;
+
+    if (status !== 401) return Promise.reject(error);
+
+    if (original._retry) return Promise.reject(error);
+    original._retry = true;
+
+    try {
+      const refresh = await AsyncStorage.getItem("refreshToken");
+      if (!refresh) throw new Error("Missing refresh token");
+
+      const res = await api.post("/auth/refresh/", { refresh });
+
+      const newToken = res.data.access;
+      await AsyncStorage.setItem("token", newToken);
+
+      original.headers.Authorization = `Bearer ${newToken}`;
+      return api(original);
+
+    } catch (err) {
+      await globalLogout();
+      return Promise.reject(err);
+    }
+  }
+);
+
+
 
 
 api.interceptors.response.use(
@@ -107,28 +110,6 @@ api.interceptors.response.use(
   }
 );
 
-// Test function to verify API configuration
-export const testApiConnection = async () => {
-  console.log("🧪 [API Test] Testing API connection...");
-  
-  try {
-    const token = await AsyncStorage.getItem("token");
-    console.log("🧪 [API Test] Stored token:", token ? `Exists (${token.length} chars)` : "None");
-    
-    console.log("🧪 [API Test] Base URL:", API_URL);
-    console.log("🧪 [API Test] All storage keys:", await AsyncStorage.getAllKeys());
-    
-    return {
-      hasToken: !!token,
-      tokenLength: token?.length || 0,
-      baseUrl: API_URL,
-      storageKeys: await AsyncStorage.getAllKeys()
-    };
-  } catch (error) {
-    console.error("🧪 [API Test] Error during test:", error);
-    throw error;
-  }
-};
 
 export const logoutApi: AxiosInstance = axios.create({
   baseURL: API_URL,

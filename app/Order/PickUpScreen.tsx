@@ -157,15 +157,16 @@ const handleManualConfirm = () => {
     getUserLocation();
   };
 
-  const renderAddressDetails = () => {
-    if (!userLocation) return null;
+//  const renderAddressDetails = () => {
+//     if (!userLocation) return null;
 
-    return (
-      <View style={styles.locationDetails}>
-        {/* Address details commented out */}
-      </View>
-    );
-  };
+//     return (
+//       <View style={styles.locationDetails}>
+//         {/* Address details commented out */}
+//       </View>
+//     );
+//   };
+ 
 
   return (
     <KeyboardAvoidingView 
@@ -231,13 +232,13 @@ const handleManualConfirm = () => {
               </View>
             )}
 
-            {/* Overlay for location found (brief display) */}
+            {/* Overlay for location found (brief display) 
             {!isGettingLocation && userLocation && (
               <View style={styles.locationFoundBadge}>
                 <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
                 <Text style={styles.locationFoundBadgeText}>Location Found!</Text>
               </View>
-            )}
+            )}*/}
           </View>
 
           {/* Bottom Sheet */}
@@ -387,9 +388,8 @@ const handleManualConfirm = () => {
               />
             </View>
 
-            {/* Address Details */}
-            {userLocation && renderAddressDetails()}
-
+           
+            
             {/* Loading State or Confirm Button */}
             {isGettingLocation ? (
               <View style={[styles.confirmButton, { backgroundColor: "#555" }]}>

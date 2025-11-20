@@ -107,6 +107,7 @@ type RideOption = {
   name: string;
   details: string;
   price: string;
+  rawPrice: number; 
   originalPrice?: string | null;
   carType: string;
   passengers: number;
@@ -140,7 +141,7 @@ export default function BookingScreen({
   dropoffLat,
   dropoffLong
 }: { 
-  setScreen: (screen: string) => void; 
+  setScreen: (screen: string, navigationData?: any) => void;
   goBack: () => void;
   pickupLat: number;
   pickupLong: number;
@@ -156,6 +157,7 @@ export default function BookingScreen({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authExpired, setAuthExpired] = useState(false);
+  const [rideOption, setRideOption] = useState<any>(null);
   const [rideDetails, setRideDetails] = useState<RideDetails>({
     pickup: {
       pickupLat: 0,
@@ -234,58 +236,70 @@ export default function BookingScreen({
     }
   }, [pickupLat, pickupLong, dropoffLat, dropoffLong]);
 
-    const fetchRideEstimates = useCallback(async () => {
-    if (!pickupLat || !pickupLong || !dropoffLat || !dropoffLong) return;
+const fetchRideEstimates = useCallback(async () => {
+  if (!pickupLat || !pickupLong || !dropoffLat || !dropoffLong) return;
 
-    setLoading(true);
-    setError(null);
+  setLoading(true);
+  setError(null);
 
-    try {
-      const token = await AsyncStorage.getItem("token");
-      if (!token) throw new Error("No authentication token found");
+  try {
+    const token = await AsyncStorage.getItem("token");
+    if (!token) throw new Error("No authentication token found");
 
-      const rideData = {
-        pickup_lat: pickupLat,
-        pickup_lng: pickupLong,
-        dropoff_lat: dropoffLat,
-        dropoff_lng: dropoffLong,
-      };
+    const rideData = {
+      pickup_lat: pickupLat,
+      pickup_lng: pickupLong,
+      dropoff_lat: dropoffLat,
+      dropoff_lng: dropoffLong,
+    };
 
-      const data = await getRideEstimate(rideData);
-      console.log("Ride estimates API response:", data);
+    const data = await getRideEstimate(rideData);
+    console.log("Ride estimates API response:", data);
 
-      if (data.status === "success" && data.data?.rides) {
-        const formattedRides = data.data.rides.map((ride: any) => ({
-          name: `Kablux ${ride.name.charAt(0).toUpperCase() + ride.name.slice(1)}`,
-          details: `${data.data.estimated_duration} - ${data.data.estimated_distance}`,
-          price: `₦${(ride.estimated_fare / 100).toLocaleString()}`,
-          originalPrice: ride.discount_price 
-            ? `₦${(ride.discount_price / 100).toLocaleString()}`
-            : null,
-          carType: ride.car_type,
-          passengers: ride.car_size,
-          rideId: ride.name,
-        }));
+    if (data.status === "success" && data.data?.rides) {
+      
+      // 1. UPDATE THE GENERAL RIDE DETAILS STATE
+      setRideDetails({
+        pickup: { pickupLat, pickupLong },
+        destination: { dropoffLat, dropoffLong },
+        estimated_distance: data.data.estimated_distance,
+        estimated_duration: data.data.estimated_duration,
+        car_type: "", // Will be set on selection
+        estimated_fare: 0 // Will be set on selection
+      });
 
-        setRideOptions(formattedRides);
-        const ride_request_id = data.data.ride_request_id;
-        setRideId(ride_request_id);
-        await AsyncStorage.setItem("ride_request_id", ride_request_id);
-      } else {
-        setError("Failed to fetch ride estimates");
-      }
-    } catch (err: any) {
-      console.error(err);
-      if (err.response?.status === 401) {
-        await AsyncStorage.multiRemove(["token", "refreshToken"]);
-        setAuthExpired(true);
-      } else {
-        setError(err.message || "Error fetching rides");
-      }
-    } finally {
-      setLoading(false);
+      const formattedRides = data.data.rides.map((ride: any) => ({
+        name: `Kablux ${ride.name.charAt(0).toUpperCase() + ride.name.slice(1)}`,
+        details: `${data.data.estimated_duration} - ${data.data.estimated_distance}`,
+        price: `₦${(ride.estimated_fare / 100).toLocaleString()}`,
+        rawPrice: ride.estimated_fare, // <--- STORE THE RAW PRICE HERE
+        originalPrice: ride.discount_price 
+          ? `₦${(ride.discount_price / 100).toLocaleString()}`
+          : null,
+        carType: ride.car_type,
+        passengers: ride.car_size,
+        rideId: ride.name,
+      }));
+
+      setRideOptions(formattedRides);
+      const ride_request_id = data.data.ride_request_id;
+      setRideId(ride_request_id);
+      await AsyncStorage.setItem("ride_request_id", ride_request_id);
+    } else {
+      setError("Failed to fetch ride estimates");
     }
-  }, [pickupLat, pickupLong, dropoffLat, dropoffLong]);
+  } catch (err: any) {
+    console.error(err);
+    if (err.response?.status === 401) {
+      await AsyncStorage.multiRemove(["token", "refreshToken"]);
+      setAuthExpired(true);
+    } else {
+      setError(err.message || "Error fetching rides");
+    }
+  } finally {
+    setLoading(false);
+  }
+}, [pickupLat, pickupLong, dropoffLat, dropoffLong]);
 
   useEffect(() => {
     fetchRideEstimates();
@@ -295,25 +309,53 @@ export default function BookingScreen({
     fetchRideEstimates();
   }
 
-  // Handle confirm ride navigation
-  const handleConfirmRide = async () => {
-    const selectedOption = rideOptions.find((option) => option.name === selectedRide);
-    console.log(selectedOption);
-    console.log(selectedRide);
-    
-    if (selectedRide?.includes("Standard")) {
-      sendSubscription(socket, rideId);
-      setScreen("standardScreen");
-    } else {
-      Alert.alert(
-        "Unavailable",
-        "This ride option is not available at the moment. Please choose Standard.",
-        [{ text: "OK" }]
-      );
-    }
-  };
+ 
 
-function sendSubscription(socket: WebSocket | null, rideId: string, attempt = 0) {
+  // Handle confirm ride navigation
+const handleConfirmRide = async () => {
+  const selectedOption = rideOptions.find((option) => option.name === selectedRide);
+  
+  if (!selectedOption) {
+    Alert.alert("Error", "Please select a ride option");
+    return;
+  }
+
+  console.log("Selected ride option:", selectedOption);
+
+  // Construct the data object carefully using selectedOption
+  const finalRideData = {
+      ...selectedOption,
+      rideDetails: {
+        pickup: {
+          pickupLat: pickupLat,
+          pickupLong: pickupLong,
+        },
+        destination: {
+          dropoffLat: dropoffLat,
+          dropoffLong: dropoffLong,
+        },
+        // Use values from state (set in fetch) or fallback to option details
+        estimated_distance: rideDetails.estimated_distance, 
+        estimated_duration: rideDetails.estimated_duration,
+        car_type: selectedOption.carType,
+        // CRITICAL FIX: Use the rawPrice from the selected option
+        estimated_fare: selectedOption.rawPrice, 
+      },
+      ride_request_id: rideId,
+  };
+  
+  if (selectedRide?.includes("Standard")) {
+    // Update the socket call to use the specific price too
+    sendSubscription(socket, rideId, finalRideData); 
+    setScreen("standardScreen", finalRideData);
+  } else {
+    // ... handle other types
+     Alert.alert("Unavailable", "This ride option is not available.");
+  }
+};
+
+
+function sendSubscription(socket: WebSocket | null, rideId: string, data: any, attempt = 0) {
   console.log(`🔍 [RIDER] sendSubscription called - attempt ${attempt + 1}`);
   
   if (socket && socket.readyState === WebSocket.OPEN) {
@@ -322,31 +364,23 @@ function sendSubscription(socket: WebSocket | null, rideId: string, attempt = 0)
       data: {
         ride_id: rideId,
         pickup: { 
-          lat: rideDetails.pickup.pickupLat, 
-          long: rideDetails.pickup.pickupLong 
+          lat: data.rideDetails.pickup.pickupLat, 
+          long: data.rideDetails.pickup.pickupLong 
         },
         destination: { 
-          lat: rideDetails.destination.dropoffLat, 
-          long: rideDetails.destination.dropoffLong 
+          lat: data.rideDetails.destination.dropoffLat, 
+          long: data.rideDetails.destination.dropoffLong 
         },
-        estimated_distance: rideDetails.estimated_distance,
-        estimated_duration: rideDetails.estimated_duration,
-        car_type: rideDetails.car_type,
-        estimated_fare: rideDetails.estimated_fare,
+        estimated_distance: data.rideDetails.estimated_distance,
+        estimated_duration: data.rideDetails.estimated_duration,
+        car_type: data.rideDetails.car_type,
+        estimated_fare: data.rideDetails.estimated_fare, // This will now be correct
         timestamp: Date.now(),
       },
     };
     
-    console.log("📡 [RIDER] Sending message:", JSON.stringify(message, null, 2));
-    
-    try {
-      socket.send(JSON.stringify(message));
-      console.log("✅ [RIDER] Message sent successfully!");
-      return;
-    } catch (err) {
-      console.error("❌ [RIDER] Failed to send message:", err);
-      return;
-    }
+    // ... send logic
+    socket.send(JSON.stringify(message));
   }
 }
 

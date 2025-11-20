@@ -1,6 +1,6 @@
 import { useLogoutEndPoint } from "@/services/authentication.service";
 import { useProfile } from "@/services/profile.service";
-import { FontAwesome, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AxiosError } from "axios";
 import React, { useEffect, useState } from "react";
@@ -69,8 +69,8 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
 
     if (isLoading) {
       return (
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <Text style={{ color: "#fff" }}>Loading profile...</Text>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0a0a0a",  }}>
+          <Text style={{ color: "#fff"  }}>Loading profile...</Text>
         </View>
       );
     }
@@ -133,7 +133,7 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
         {/* Profile Section */}
         <View style={{ alignItems: "center", marginVertical: 20,}}>
           <Image
-            source={require("../../assets/images/profile.png")}
+            source={require("../../assets/images/Ava.png")}
             style={{
               width: 80,
               height: 80,
@@ -146,7 +146,7 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
           <Text style={{ color: "#fff", fontSize: 18, fontWeight: "600" }}>
             {profile && `${profile.first_name} ${profile.last_name}`}
         </Text>
-
+{/* 
           <View style={{ flexDirection: "row", marginTop: 5 }}>
             <Text style={{ color: "#fff", marginRight: 5 }}>4.99</Text>
             <FontAwesome name="star" size={14} color="#f7b731" />
@@ -155,6 +155,7 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
             <FontAwesome name="star" size={14} color="#f7b731" />
             <FontAwesome name="star" size={14} color="#f7b731" />
           </View>
+          */}
         </View>
 
         {/* Section 1 */}
