@@ -11,17 +11,21 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+// 1. Import the hook (adjust path as needed)
+import { useChangePassword } from "../../services/changepassword.service";
 
-export default function LoginAndSecurityScreen({ 
-  goBack, 
-  next 
-}: { 
-  next: () => void; 
-  goBack: () => void; 
+export default function LoginAndSecurityScreen({
+  goBack,
+  next,
+}: {
+  next: () => void;
+  goBack: () => void;
 }) {
-  // Your component logic
+  // 2. Initialize the mutation
+  const changePasswordMutation = useChangePassword();
+
   const [modalVisible, setModalVisible] = useState(false);
-  const [currentModal, setCurrentModal] = useState(null);
+  const [currentModal, setCurrentModal] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   // State for form inputs
@@ -29,7 +33,7 @@ export default function LoginAndSecurityScreen({
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const openModal = (modalType) => {
+  const openModal = (modalType: string) => {
     setCurrentModal(modalType);
     setModalVisible(true);
   };
@@ -44,19 +48,54 @@ export default function LoginAndSecurityScreen({
   };
 
   const handleAction = () => {
+    // 3. Handle Password Change Logic specifically
+    if (currentModal === "password") {
+      // Basic Validation
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        Alert.alert("Error", "Please fill in all fields");
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        Alert.alert("Error", "New passwords do not match");
+        return;
+      }
+
+      // Execute Mutation
+      changePasswordMutation.mutate(
+        {
+          current_password: currentPassword,
+          new_password: newPassword,
+        },
+        {
+          onSuccess: () => {
+            Alert.alert("Success", "Password changed successfully!");
+            closeModal();
+          },
+          onError: (err: any) => {
+            // Display error from backend or fallback
+            const errorMessage =
+              err.response?.data?.message ||
+              err.response?.data?.detail ||
+              "Failed to change password";
+            Alert.alert("Error", JSON.stringify(errorMessage));
+          },
+        }
+      );
+      return;
+    }
+
+    // --- Logic for other modals (Simulation) ---
     setLoading(true);
-    
+
     // Simulate API call or async operation
     setTimeout(() => {
       setLoading(false);
       closeModal();
-      
+
       // Show success message based on the action
       let message = "";
-      switch(currentModal) {
-        case "password":
-          message = "Password changed successfully!";
-          break;
+      switch (currentModal) {
         case "passkeys":
           message = "Passkeys set up successfully!";
           break;
@@ -69,13 +108,13 @@ export default function LoginAndSecurityScreen({
         default:
           message = "Action completed successfully!";
       }
-      
+
       Alert.alert("Success", message);
     }, 2000);
   };
 
   const renderModalContent = () => {
-    switch(currentModal) {
+    switch (currentModal) {
       case "password":
         return (
           <View style={styles.modalContent}>
@@ -105,18 +144,21 @@ export default function LoginAndSecurityScreen({
               onChangeText={setConfirmPassword}
             />
             <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.cancelButton]} 
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
                 onPress={closeModal}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.confirmButton]} 
+              
+              <TouchableOpacity
+                style={[styles.modalButton, styles.confirmButton]}
                 onPress={handleAction}
-                disabled={loading}
+                // 4. Disable button while mutation is pending
+                disabled={changePasswordMutation.isPending}
               >
-                {loading ? (
+                {/* 5. Show spinner based on mutation state */}
+                {changePasswordMutation.isPending ? (
                   <ActivityIndicator color="black" />
                 ) : (
                   <Text style={styles.confirmButtonText}>Change Password</Text>
@@ -130,17 +172,18 @@ export default function LoginAndSecurityScreen({
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Set up Passkeys</Text>
             <Text style={styles.modalDescription}>
-              Passkeys provide a more secure and convenient way to sign in to your account without passwords.
+              Passkeys provide a more secure and convenient way to sign in to
+              your account without passwords.
             </Text>
             <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.cancelButton]} 
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
                 onPress={closeModal}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.confirmButton]} 
+              <TouchableOpacity
+                style={[styles.modalButton, styles.confirmButton]}
                 onPress={handleAction}
                 disabled={loading}
               >
@@ -158,17 +201,19 @@ export default function LoginAndSecurityScreen({
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Link Google Account</Text>
             <Text style={styles.modalDescription}>
-              Linking your Google account allows you to sign in to KabLUX with ease. We will not use your Google account for anything else without your permission.
+              Linking your Google account allows you to sign in to KabLUX with
+              ease. We will not use your Google account for anything else
+              without your permission.
             </Text>
             <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.cancelButton]} 
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
                 onPress={closeModal}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.confirmButton]} 
+              <TouchableOpacity
+                style={[styles.modalButton, styles.confirmButton]}
                 onPress={handleAction}
                 disabled={loading}
               >
@@ -186,17 +231,18 @@ export default function LoginAndSecurityScreen({
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Invite Friends</Text>
             <Text style={styles.modalDescription}>
-              Invite your friends to join KabLUX and enjoy exclusive benefits together.
+              Invite your friends to join KabLUX and enjoy exclusive benefits
+              together.
             </Text>
             <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.cancelButton]} 
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
                 onPress={closeModal}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.confirmButton]} 
+              <TouchableOpacity
+                style={[styles.modalButton, styles.confirmButton]}
                 onPress={handleAction}
                 disabled={loading}
               >
@@ -228,35 +274,50 @@ export default function LoginAndSecurityScreen({
       <ScrollView contentContainerStyle={styles.mainContent}>
         <View style={styles.infoCard}>
           {/* Change Password */}
-          <TouchableOpacity 
-            style={styles.infoItem} 
+          <TouchableOpacity
+            style={styles.infoItem}
             onPress={() => openModal("password")}
           >
             <View style={styles.infoLeft}>
-              <Ionicons name="lock-closed-outline" size={22} color="#FEB914" style={styles.infoIcon} />
+              <Ionicons
+                name="lock-closed-outline"
+                size={22}
+                color="#FEB914"
+                style={styles.infoIcon}
+              />
               <Text style={styles.infoText}>Change Password</Text>
             </View>
           </TouchableOpacity>
 
           {/* Passkeys */}
-          <TouchableOpacity 
-            style={styles.infoItem} 
+          <TouchableOpacity
+            style={styles.infoItem}
             onPress={() => openModal("passkeys")}
           >
             <View style={styles.infoLeft}>
-              <Ionicons name="key-outline" size={22} color="#FEB914" style={styles.infoIcon} />
+              <Ionicons
+                name="key-outline"
+                size={22}
+                color="#FEB914"
+                style={styles.infoIcon}
+              />
               <Text style={styles.infoText}>Set up Passkeys</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#FEB914" />
           </TouchableOpacity>
 
           {/* Google */}
-          <TouchableOpacity 
-            style={styles.infoItem} 
+          <TouchableOpacity
+            style={styles.infoItem}
             onPress={() => openModal("google")}
           >
             <View style={styles.infoLeft}>
-              <Ionicons name="logo-google" size={22} color="#FEB914" style={styles.infoIcon} />
+              <Ionicons
+                name="logo-google"
+                size={22}
+                color="#FEB914"
+                style={styles.infoIcon}
+              />
               <Text style={styles.infoText}>Link Google</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#FEB914" />
@@ -265,14 +326,16 @@ export default function LoginAndSecurityScreen({
 
         {/* Note */}
         <Text style={styles.note}>
-          Linking a social account allows you to sign in to KabLUX with ease. We will not use your social account for anything else without your permission.
+          Linking a social account allows you to sign in to KabLUX with ease. We
+          will not use your social account for anything else without your
+          permission.
         </Text>
       </ScrollView>
 
       {/* Fixed Bottom Button */}
       <View style={styles.bottomButtonContainer}>
-        <TouchableOpacity 
-          style={styles.inviteButton} 
+        <TouchableOpacity
+          style={styles.inviteButton}
           onPress={() => openModal("invite")}
         >
           <Text style={styles.confirmButtonText}>Invite Friends</Text>
@@ -287,9 +350,7 @@ export default function LoginAndSecurityScreen({
         onRequestClose={closeModal}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            {renderModalContent()}
-          </View>
+          <View style={styles.modalContainer}>{renderModalContent()}</View>
         </View>
       </Modal>
     </View>
@@ -379,7 +440,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#1E1E1E",
     height: 120,
     // borderWidth:1,
-    borderColor:'white',
+    borderColor: "white",
   },
   confirmButton: {
     backgroundColor: "#FEB914",

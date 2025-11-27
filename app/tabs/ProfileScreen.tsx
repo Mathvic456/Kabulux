@@ -26,8 +26,9 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
 
     const { data: profile, isLoading, isError, error } = useProfile();
 
-  useEffect(() => {
+useEffect(() => {
   if (isError && (error as AxiosError)?.response?.status === 401) {
+    console.log("⚠️ Profile 401 error detected");
     setAuthExpired(true);
   }
 }, [isError, error]);

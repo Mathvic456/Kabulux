@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AddFundsScreen from "./addFunds/AddFundsScreen";
 import CryptoDepositScreenOne from "./addFunds/CryptoDepositScreenOne";
 import CryptoDepositScreenTwo from "./addFunds/CryptoDepositScreenTwo";
@@ -120,6 +120,14 @@ export default function MainNavigator() {
     registerSetScreen((scr: string) => {
   setScreen(scr as Screen);
 });
+  }, []);
+
+    useMemo(() => {
+    console.log("📱 [MainNavigator] Registering navigation ref");
+    registerSetScreen((scr: string) => {
+      console.log(`📱 [Navigation] Navigating to: ${scr}`);
+      setScreen(scr as Screen);
+    });
   }, []);
 
   const handleSetScreen = (newScreen: Screen, params?: any) => {
@@ -317,7 +325,6 @@ export default function MainNavigator() {
           next={() => setScreen("dashboard")}
         />
       );
-
     case "helpAndSupport":
       return (
         <HelpAndSupportScreen
@@ -418,8 +425,10 @@ case "bookingScreen":
       goBack={() => setScreen("planRide")}
       pickupLat={bookingData?.pickupLocation?.latitude}
       pickupLong={bookingData?.pickupLocation?.longitude}
+      pickupAddress={bookingData?.pickupLocation?.address}
       dropoffLat={bookingData?.destination?.latitude}
       dropoffLong={bookingData?.destination?.longitude}
+      dropoffAddress={bookingData?.destination?.address}
     />
   );
 

@@ -1,7 +1,7 @@
 import { Entypo, Feather, FontAwesome, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from "expo-image-picker";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import {
   Alert,
   FlatList,
@@ -15,8 +15,7 @@ import {
   TouchableWithoutFeedback,
   View
 } from "react-native";
-//EMAIL: vs2osx54mi@daouse.com
-// Type definitions
+import { RideContext } from '../../context/RideContext';
 type UploadPhotoOverlayProps = {
   isVisible: boolean;
   onClose: () => void;
@@ -397,6 +396,8 @@ const AdditionalInfoOverlay = ({ isVisible, onClose, profileImage }: AdditionalI
               <Text style={styles.skipButtonText}>Skip</Text>
             </TouchableOpacity>
           </View>
+          
+          
         </ScrollView>
       </View>
     </Modal>
@@ -440,6 +441,64 @@ const LoginSuccessModal = ({ isVisible, onClose }: LoginSuccessModalProps) => {
   );
 };
 
+// Driver On Way Modal Component
+const DriverOnWayModal = ({ 
+  isVisible, 
+  onClose,
+}: { 
+  isVisible: boolean; 
+  onClose: () => void; 
+}) => {
+  return (
+    <Modal
+      animationType="fade"
+      transparent={true}
+      visible={isVisible}
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.driverOnWayModalContent}>
+          <View style={styles.driverOnWayIconContainer}>
+            <FontAwesome5 name="car" size={50} color="#FEB914" />
+          </View>
+          
+          <Text style={styles.driverOnWayModalTitle}>Driver On The Way! 🚗</Text>
+          
+          <Text style={styles.driverOnWayModalMessage}>
+            Your driver is heading to your location
+          </Text>
+          
+          <Text style={styles.driverOnWayModalSubtext}>
+            Get ready for your ride!
+          </Text>
+
+          <TouchableOpacity 
+            style={styles.driverOnWayModalButton}
+            onPress={onClose}
+          >
+            <Text style={styles.driverOnWayModalButtonText}>OK</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+const RideInProgressBanner = ({ estimatedTime }: { estimatedTime?: number }) => {
+  const { status, loadPersisted, rideId, driverId } = useContext(RideContext);
+  return (
+    <View style={styles.rideInProgressBanner}>
+      <View style={styles.rideInProgressContent}>
+        <FontAwesome5 name="clock" size={16} color="#FEB914" />
+        <Text style={styles.rideInProgressText}>
+          {status === "driver_on_way"? "Ride has begun!" : status === "completed"? "Your ride is finished! Please rate your driver!": null}
+        </Text>
+      </View>
+      <View style={styles.rideInProgressDot} />
+    </View>
+  );
+};
+
 export default function HomeScreen({ setScreen }: HomeScreenProps) {
 
   const [showComingSoonModal, setShowComingSoonModal] = useState<boolean>(false);
@@ -449,6 +508,9 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
   const [showPhotoChoiceModal, setShowPhotoChoiceModal] = useState<boolean>(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [showAreaFadaOverlay, setShowAreaFadaOverlay] = useState<boolean>(false);
+  
+  const { status, loadPersisted } = useContext(RideContext);
+const [showDriverOnWayModal, setShowDriverOnWayModal] = useState<boolean>(false);
 
  // const { data: notifications, refetch: refetchNotifications } = useNotifications();
 
@@ -463,6 +525,15 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
 }, [refetchNotifications]);*/
 
   // Check if login success modal has been shown before
+
+  useEffect(() => {
+    loadPersisted();
+  if (status !== 'idle') {
+    setShowDriverOnWayModal(true);
+  }
+}, [status]);
+
+
   useEffect(() => {
     const afterMount = async() => {
       const token = await AsyncStorage.getItem("token");
@@ -493,6 +564,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
     }
   };
 
+  
   const handleNextFromPhoto = () => {
     setShowPhotoOverlay(false);
     setShowPhotoChoiceModal(true);
@@ -642,6 +714,8 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
         </TouchableOpacity>
       </View>
 
+      {status !== 'idle' && <RideInProgressBanner />}
+
 
       {/* Ride Analytics Section */}
       <View style={styles.analyticsCard}>
@@ -715,7 +789,11 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
         visible={showAreaFadaOverlay}
         onClose={() => setShowAreaFadaOverlay(false)}
       />
-    </ScrollView>
+      <DriverOnWayModal
+      isVisible={showDriverOnWayModal}
+      onClose={() => setShowDriverOnWayModal(false)}
+    />
+      </ScrollView>
   );
 }
 
@@ -762,7 +840,7 @@ const styles = StyleSheet.create({
     gap: 7,
   },
 
-    // Add Coming Soon Modal Styles
+
   comingSoonModalContent: {
     backgroundColor: '#1a1a1a',
     borderRadius: 20,
@@ -1338,4 +1416,78 @@ const styles = StyleSheet.create({
     color: "#000",
     fontWeight: "700",
   },
+  driverOnWayModalContent: {
+  backgroundColor: '#1a1a1a',
+  borderRadius: 20,
+  padding: 30,
+  alignItems: 'center',
+  width: '100%',
+  maxWidth: 350,
+  borderWidth: 2,
+  borderColor: '#FEB914',
+},
+driverOnWayIconContainer: {
+  marginBottom: 20,
+},
+driverOnWayModalTitle: {
+  fontSize: 24,
+  color: '#fff',
+  marginBottom: 15,
+  textAlign: 'center',
+  fontWeight: 'bold',
+},
+driverOnWayModalMessage: {
+  fontSize: 16,
+  color: '#ccc',
+  textAlign: 'center',
+  marginBottom: 10,
+  lineHeight: 22,
+},
+driverOnWayModalSubtext: {
+  fontSize: 14,
+  color: '#aaa',
+  textAlign: 'center',
+  marginBottom: 25,
+  lineHeight: 20,
+},
+driverOnWayModalButton: {
+  backgroundColor: '#FEB914',
+  paddingVertical: 12,
+  paddingHorizontal: 40,
+  borderRadius: 10,
+  width: '100%',
+  alignItems: 'center',
+},
+driverOnWayModalButtonText: {
+  color: '#000',
+  fontSize: 18,
+  fontWeight: 'bold',
+},
+rideInProgressBanner: {
+  backgroundColor: '#1a1a1a',
+  borderRadius: 12,
+  padding: 16,
+  marginBottom: 16,
+  borderWidth: 1,
+  borderColor: '#FEB914',
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+},
+rideInProgressContent: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 10,
+},
+rideInProgressText: {
+  color: '#fff',
+  fontSize: 15,
+  fontWeight: '600',
+},
+rideInProgressDot: {
+  width: 10,
+  height: 10,
+  borderRadius: 5,
+  backgroundColor: '#FEB914',
+},
 });

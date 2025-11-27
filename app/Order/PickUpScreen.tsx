@@ -47,12 +47,11 @@ export default function PickUpScreen({ setScreen, goBack }: {
   const [pickup, setPickup] = useState("");
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
-  const [currentLocation, setCurrentLocation] = useState<string | null>(null);
   const slideAnim = useRef(new Animated.Value(0)).current;
   const mapRef = useRef<MapView>(null);
+  const autocompleteRef = useRef<any>(null);
 
   useEffect(() => {
-    // Don't automatically get location on mount
     Animated.timing(slideAnim, {
       toValue: 0,
       duration: 500,
@@ -108,9 +107,11 @@ export default function PickUpScreen({ setScreen, goBack }: {
         setIsGettingLocation(false);
         setUserLocation(locationData);
         setPickup(formattedAddress);
-        setCurrentLocation(formattedAddress);
         
-        // REMOVED: The automatic navigation that was here
+        // Set the text in the autocomplete input
+        if (autocompleteRef.current) {
+          autocompleteRef.current.setAddressText(formattedAddress);
+        }
       }
       
     } catch (error) {
@@ -137,17 +138,17 @@ export default function PickUpScreen({ setScreen, goBack }: {
     return parts.filter(part => part && part.trim() !== '').join(', ');
   };
 
-const handleManualConfirm = () => {
-  if (userLocation) {
-    const finalLocation: UserLocation = {
-      ...userLocation,
-      address: userLocation.address || pickup || "Unnamed Location",
-    };
-    setScreen("planRide", finalLocation);
-  } else {
-    Alert.alert("No location", "Please pick a location or use your current one.");
-  }
-};
+  const handleManualConfirm = () => {
+    if (userLocation) {
+      const finalLocation: UserLocation = {
+        ...userLocation,
+        address: pickup || userLocation.address || "Unnamed Location",
+      };
+      setScreen("planRide", finalLocation);
+    } else {
+      Alert.alert("No location", "Please pick a location or use your current one.");
+    }
+  };
 
   const handleUseCurrentLocation = () => {
     getUserLocation();
@@ -156,17 +157,6 @@ const handleManualConfirm = () => {
   const handleLocatePress = () => {
     getUserLocation();
   };
-
-//  const renderAddressDetails = () => {
-//     if (!userLocation) return null;
-
-//     return (
-//       <View style={styles.locationDetails}>
-//         {/* Address details commented out */}
-//       </View>
-//     );
-//   };
- 
 
   return (
     <KeyboardAvoidingView 
@@ -231,14 +221,6 @@ const handleManualConfirm = () => {
                 </View>
               </View>
             )}
-
-            {/* Overlay for location found (brief display) 
-            {!isGettingLocation && userLocation && (
-              <View style={styles.locationFoundBadge}>
-                <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
-                <Text style={styles.locationFoundBadgeText}>Location Found!</Text>
-              </View>
-            )}*/}
           </View>
 
           {/* Bottom Sheet */}
@@ -248,6 +230,7 @@ const handleManualConfirm = () => {
             {/* Search Bar */}
             <View style={styles.searchContainer}>
               <GooglePlacesAutocomplete
+                ref={autocompleteRef}
                 placeholder="Search or use current location"
                 query={{
                   key: GOOGLE_API_KEY,
@@ -304,8 +287,9 @@ const handleManualConfirm = () => {
                 suppressDefaultStyles={false}
                 textInputHide={false}
                 textInputProps={{
-                  value: currentLocation? currentLocation: pickup,
-                  onChangeText: setPickup,
+                  onChangeText: (text) => {
+                    setPickup(text);
+                  },
                   placeholderTextColor: "#aaa",
                 }}
                 timeout={20000}

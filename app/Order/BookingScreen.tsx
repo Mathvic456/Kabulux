@@ -1,8 +1,10 @@
 import { SocketContext } from "@/context/WebSocketProvider";
 import { getRideEstimate } from "@/services/apiservice";
 import { useLogoutEndPoint } from "@/services/authentication.service";
+import { darkMapStyle } from "@/styles/darkMapStyle";
 import { Feather } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
 import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -22,86 +24,13 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import MapViewDirections from "react-native-maps-directions";
 const { height } = Dimensions.get("window");
 
-// Google Maps API Key - replace with your actual key
-const GOOGLE_API_KEY = "YOUR_GOOGLE_MAPS_API_KEY";
 
-// Dark map style
-const darkMapStyle = [
-  { elementType: "geometry", stylers: [{ color: "#212121" }] },
-  { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#212121" }] },
-  {
-    featureType: "administrative",
-    elementType: "geometry",
-    stylers: [{ color: "#757575" }],
-  },
-  {
-    featureType: "administrative.country",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#9e9e9e" }],
-  },
-  {
-    featureType: "poi",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#757575" }],
-  },
-  {
-    featureType: "poi.park",
-    elementType: "geometry",
-    stylers: [{ color: "#181818" }],
-  },
-  {
-    featureType: "poi.park",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#616161" }],
-  },
-  {
-    featureType: "road",
-    elementType: "geometry.fill",
-    stylers: [{ color: "#2c2c2c" }],
-  },
-  {
-    featureType: "road",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#8a8a8a" }],
-  },
-  {
-    featureType: "road.arterial",
-    elementType: "geometry",
-    stylers: [{ color: "#373737" }],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "geometry",
-    stylers: [{ color: "#3c3c3c" }],
-  },
-  {
-    featureType: "road.highway.controlled_access",
-    elementType: "geometry",
-    stylers: [{ color: "#4e4e4e" }],
-  },
-  {
-    featureType: "road.local",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#616161" }],
-  },
-  {
-    featureType: "transit",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#757575" }],
-  },
-  {
-    featureType: "water",
-    elementType: "geometry",
-    stylers: [{ color: "#000000" }],
-  },
-  {
-    featureType: "water",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#3d3d3d" }],
-  },
-];
+if (!Constants.expoConfig?.extra?.googleMapsApiKey) {
+  throw new Error("API is missing in expoConfig.extra");
+}
+
+const GOOGLE_API_KEY = Constants.expoConfig.extra.googleMapsApiKey;
+
 
 type RideOption = {
   name: string;
@@ -139,7 +68,9 @@ export default function BookingScreen({
   pickupLat,
   pickupLong,
   dropoffLat,
-  dropoffLong
+  dropoffLong,
+  pickupAddress,
+  dropoffAddress,
 }: { 
   setScreen: (screen: string, navigationData?: any) => void;
   goBack: () => void;
@@ -147,6 +78,8 @@ export default function BookingScreen({
   pickupLong: number;
   dropoffLat: number;
   dropoffLong: number;
+  pickupAddress: string;
+  dropoffAddress: string;
 }) {
   const slideAnim = useRef(new Animated.Value(0)).current;
   const mapRef = useRef<MapView>(null);
@@ -215,8 +148,8 @@ export default function BookingScreen({
     };
   
   useEffect(() => {
-    console.log("BookingScreen props:", pickupLat, pickupLong, dropoffLat, dropoffLong);
-  }, [pickupLat, pickupLong, dropoffLat, dropoffLong]);
+    console.log("BookingScreen props:", pickupLat, pickupLong, dropoffLat, dropoffLong, pickupAddress, dropoffAddress);
+  }, [pickupLat, pickupLong, dropoffLat, dropoffLong, pickupAddress, dropoffAddress]);
 
   // Fit map to show both markers
   useEffect(() => {
@@ -247,10 +180,12 @@ const fetchRideEstimates = useCallback(async () => {
     if (!token) throw new Error("No authentication token found");
 
     const rideData = {
-      pickup_lat: pickupLat,
-      pickup_lng: pickupLong,
-      dropoff_lat: dropoffLat,
-      dropoff_lng: dropoffLong,
+    pickup_lat: pickupLat,
+    pickup_address: pickupAddress,
+    pickup_lng: pickupLong,
+    dropoff_lat: dropoffLat,
+    dropoff_address: dropoffAddress,
+    dropoff_lng: dropoffLong
     };
 
     const data = await getRideEstimate(rideData);

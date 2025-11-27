@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { jwtDecode } from "jwt-decode";
-import React, { createContext, useEffect, useRef, useState } from "react";
+import React, { createContext, useCallback, useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
 
 interface DriverOffer {
@@ -34,6 +34,7 @@ export const SocketContext = createContext<SocketContextValue>({
 export const WebSocketProvider = ({ children }: { children: React.ReactNode }) => {
   const ws = useRef<WebSocket | null>(null);
   const shouldReconnect = useRef(true);
+  const reconnectTimeout = useRef<NodeJS.Timeout | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [driverResponses, setDriverResponses] = useState<DriverOffer[]>([]);
@@ -41,59 +42,21 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
   const isExpired = (token: string) => {
     try {
       const { exp } = jwtDecode<{ exp: number }>(token);
-      return exp * 1000 < Date.now();
-    } catch {
+      const isExp = exp * 1000 < Date.now();
+      console.log(`🔐 Token expiry check: ${isExp ? 'EXPIRED' : 'VALID'}`);
+      return isExp;
+    } catch (err) {
+      console.error("❌ Token decode failed:", err);
       return true;
     }
   };
 
-
-
-
-
-  useEffect(() => {
-    const init = async () => {
-      const storedToken = await AsyncStorage.getItem("token");
-      if (storedToken) setToken(storedToken);
-    };
-
-    init();
-
-  const subscription = AppState.addEventListener("change", (state) => {
-    if (state === "active") {
-      console.log("App returned to foreground");
-
-      if (token && !isExpired(token)) {
-        console.log("Reconnecting WS after resume...");
-        connectWebSocket(token);
-      }
-    } else {
-      // App went background — close WS but allow reconnect on resume
-      console.log("App in background, closing WS gracefully");
-      ws.current?.close();
-    }
-  });
-
-  return () => {
-    subscription.remove();
-    shouldReconnect.current = false;
-    ws.current?.close();
-  };
-}, []);
-
-
-
-  
-
-  useEffect(() => {
-    if (token && !isExpired(token)) connectWebSocket(token);
-  }, [token]);
-
-  const handleWsMessage = (event: MessageEvent) => {
+  const handleWsMessage = useCallback((event: MessageEvent) => {
     if (!event?.data) return;
 
     try {
       const data = JSON.parse(event.data);
+      console.log("📨 WS Message received:", data.type);
 
       if (data.type === "driver_offer" && data.data) {
         const newOffer: DriverOffer = {
@@ -114,56 +77,138 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
         });
       }
     } catch (error) {
-      console.error("Failed WS parse:", error);
+      console.error("❌ Failed WS parse:", error);
     }
-  };
+  }, []);
 
-  const connectWebSocket = (accessToken: string) => {
+  const connectWebSocket = useCallback((accessToken: string) => {
+    console.log("🔌 [connectWebSocket] Attempting connection...");
+    
+    // Clear any pending reconnect
+    if (reconnectTimeout.current) {
+      clearTimeout(reconnectTimeout.current);
+      reconnectTimeout.current = null;
+    }
+
+    // Close existing connection
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      console.log("⚠️ Closing existing WS connection");
       ws.current.close();
     }
 
+    // Validate token
     if (isExpired(accessToken)) {
-      console.warn("❌ Token expired — skipping WS connection.");
+      console.warn("❌ Token expired — skipping WS connection");
       return;
     }
 
-    const socket = new WebSocket(`${WSS_URL}?token=${accessToken}`);
+    // Create new connection
+    const wsUrl = `${WSS_URL}?token=${accessToken}`;
+    console.log("🌐 Connecting to:", WSS_URL);
+    console.log("🔑 Token (first 30 chars):", accessToken.substring(0, 30) + "...");
+    
+    const socket = new WebSocket(wsUrl);
     ws.current = socket;
 
     socket.onopen = () => {
-      console.log("WS connected");
+      console.log("✅ WS connected successfully");
       setIsConnected(true);
     };
 
     socket.onmessage = handleWsMessage;
 
     socket.onclose = (event) => {
-      console.log("WS closed:", event.code, event.reason);
+      console.log(`🔴 WS closed - Code: ${event.code}, Reason: ${event.reason || 'No reason provided'}`);
       setIsConnected(false);
 
+      // Don't reconnect on auth errors
       if (event.code === 4001 || event.code === 4003) {
-        console.warn("❌ WS closed due to invalid/expired token — not reconnecting.");
+        console.warn("❌ WS closed due to invalid/expired token — not reconnecting");
         return;
       }
 
+      // Reconnect if allowed and token is valid
       if (shouldReconnect.current && !isExpired(accessToken)) {
-        console.log("Reconnecting in 3s…");
-        setTimeout(() => connectWebSocket(accessToken), 3000);
+        console.log("🔄 Scheduling reconnect in 3s...");
+        reconnectTimeout.current = setTimeout(() => {
+          console.log("🔄 Executing reconnect...");
+          connectWebSocket(accessToken);
+        }, 3000);
       }
     };
 
     socket.onerror = (err) => {
-      console.error("WS error:", err);
+      console.error("❌ WS error:", err);
       setIsConnected(false);
     };
-  };
+  }, [handleWsMessage]); // Only depends on handleWsMessage
 
-  const setTokenFromOutside = (newToken: string) => {
-    setToken(newToken); 
-  };
+  // Initialize token from storage
+  useEffect(() => {
+    const init = async () => {
+      console.log("🚀 Initializing WebSocketProvider...");
+      const storedToken = await AsyncStorage.getItem("token");
+      if (storedToken) {
+        console.log("✅ Token loaded from storage");
+        setToken(storedToken);
+      } else {
+        console.warn("⚠️ No token found in storage");
+      }
+    };
 
-  const clearDriverResponses = () => setDriverResponses([]);
+    init();
+  }, []);
+
+  // Connect when token becomes available
+  useEffect(() => {
+    console.log(`🔄 Token changed: ${token ? 'Present' : 'Null'}`);
+    if (token && !isExpired(token)) {
+      connectWebSocket(token);
+    }
+  }, [token, connectWebSocket]);
+
+  // Handle app state changes
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      console.log(`📱 App state changed: ${state}`);
+      
+      if (state === "active") {
+        console.log("🟢 App returned to foreground");
+
+        if (token && !isExpired(token)) {
+          console.log("🔄 Reconnecting WS after resume...");
+          connectWebSocket(token);
+        } else {
+          console.warn("⚠️ Cannot reconnect: Token invalid/expired");
+        }
+      } else {
+        console.log("🟡 App in background, closing WS gracefully");
+        if (ws.current) {
+          ws.current.close();
+        }
+      }
+    });
+
+    return () => {
+      console.log("🧹 Cleaning up WebSocketProvider...");
+      subscription.remove();
+      shouldReconnect.current = false;
+      if (reconnectTimeout.current) {
+        clearTimeout(reconnectTimeout.current);
+      }
+      ws.current?.close();
+    };
+  }, [token, connectWebSocket]);
+
+  const setTokenFromOutside = useCallback((newToken: string) => {
+    console.log("🔑 Token updated externally");
+    setToken(newToken);
+  }, []);
+
+  const clearDriverResponses = useCallback(() => {
+    console.log("🗑️ Clearing driver responses");
+    setDriverResponses([]);
+  }, []);
 
   return (
     <SocketContext.Provider

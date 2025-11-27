@@ -242,6 +242,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
       Alert.alert("Error", "Invalid ride ID.");
       return;
     }
+    console.log("OFFER ID:=>>>", offerId)
 
     try {
       const payload = {
