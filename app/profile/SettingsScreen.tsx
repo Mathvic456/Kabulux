@@ -12,7 +12,6 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SettingsScreen({ setScreen }) {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -40,11 +39,6 @@ export default function SettingsScreen({ setScreen }) {
       title: "Account",
       items: [
         {
-          icon: "person-outline",
-          label: "Personal Information",
-          action: () => setScreen("personalInfo"),
-        },
-        {
           icon: "lock-closed-outline",
           label: "Login & Security",
           action: () => setScreen("loginAndSecurity"),
@@ -52,12 +46,12 @@ export default function SettingsScreen({ setScreen }) {
         {
           icon: "card-outline",
           label: "Payment Methods",
-          action: () => setScreen("paymentMethods"),
+          action: () => setScreen("paymentMethod"),
         },
-        {
+       {
           icon: "document-text-outline",
           label: "Ride Receipts",
-          action: () => setScreen("rideReceipts"),
+          action: () => setScreen("ridereceipts"),
         },
       ],
     },
@@ -105,30 +99,21 @@ export default function SettingsScreen({ setScreen }) {
       title: "Support",
       items: [
         {
-          icon: "help-circle-outline",
-          label: "Help Center",
-          action: () => setScreen("helpCenter"),
-        },
-        {
           icon: "alert-circle-outline",
           label: "Report an Issue",
-          action: () => setScreen("reportIssue"),
+          action: () => setScreen("report"),
         },
-        {
+          {
           icon: "star-outline",
           label: "Rate Our App",
-          action: () => console.log("Rate app"),
+          action: () => console.log("rateapp"),
         },
-        {
+      {
           icon: "document-text-outline",
           label: "Terms of Service",
           action: () => setScreen("terms"),
         },
-        {
-          icon: "shield-checkmark-outline",
-          label: "Privacy Policy",
-          action: () => setScreen("privacy"),
-        },
+
       ],
     },
     {
@@ -142,7 +127,7 @@ export default function SettingsScreen({ setScreen }) {
         {
           icon: "people-outline",
           label: "About Us",
-          action: () => setScreen("about"),
+          action: () => setScreen("aboutus"),
         },
         {
           icon: "business-outline",
@@ -164,7 +149,7 @@ export default function SettingsScreen({ setScreen }) {
     }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
@@ -247,22 +232,7 @@ export default function SettingsScreen({ setScreen }) {
         </TouchableWithoutFeedback>
       </Modal>
 
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity onPress={() => setScreen("dashboard")}>
-          <Ionicons name="home-outline" size={24} color="#fff" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setScreen("bookings")}>
-          <Ionicons name="book-outline" size={24} color="#fff" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setScreen("wallet")}>
-          <Ionicons name="wallet-outline" size={24} color="#fff" />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Ionicons name="person-outline" size={24} color="#FEB914" />
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -270,6 +240,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000",
+    paddingVertical: 20,
   },
   scrollContent: {
     paddingBottom: 100,

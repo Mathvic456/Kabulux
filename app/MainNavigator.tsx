@@ -26,13 +26,19 @@ import OnboardingScreen2 from "./onboarding/OnboardingScreen2";
 import BookingScreen from "./Order/BookingScreen";
 import PickUpScreen from "./Order/PickUpScreen";
 import PlanRideScreen from "./Order/PlanRideScreen";
+import AboutUs from "./profile/AboutUs";
 import HelpAndSupportScreen from "./profile/HelpAndSupportScreen";
+import Language from "./profile/Language";
 import LegalScreen from "./profile/LegalScreen";
 import LoginAndSecurityScreen from "./profile/LoginAndSecurityScreen";
 import PersonalInfoScreen from "./profile/PersonalInfoScreen";
+import RateApp from "./profile/RateApp";
 import ReferAndEarnScreen from "./profile/ReferAndEarnScreen";
+import ReportIssue from "./profile/ReportIssue";
+import RideReceipts from "./profile/RideReceipts";
 import SavedPlacesScreen from "./profile/SavePlacesScreen";
 import SettingsScreen from "./profile/SettingsScreen";
+import { TermsOfServiceScreen } from "./profile/TermsOfService";
 import AdditionalInformationScreen from "./rides/business/AdditionalInformationScreen";
 import BusinessCodeScreen from "./rides/business/BusinessCodeScreen";
 import BusinessRideSelectScreen from "./rides/business/BusinessRideSelectScreen";
@@ -42,10 +48,12 @@ import OriginalPriceDetailsScreen from "./rides/original/OriginalPriceDetailsScr
 import ModifyRideScreen from "./rides/premium/ModifyRideScreen";
 import PremiumCarSelectScreen from "./rides/premium/PremiumCarSelectScreen";
 import SpecialServicesScreen from "./rides/SpecialServicesScreen";
+import BookingsScreen from "./tabs/BookingsScreen";
 import ProfileScreen from "./tabs/ProfileScreen";
 import RideDetailsScreen from "./tabs/RideDetailsScreen";
 import TabNavigator from "./tabs/TabNavigator";
 import WalletScreen from "./tabs/WalletScreen";
+
 
 
 
@@ -96,7 +104,13 @@ type Screen =
   | "paystack"
   | "standardScreen"
   | "offerScreen"
-
+  | "bookings"
+  | "aboutus"
+  | "language"
+  | "report"
+  | "ridereceipts"
+  | "rateapp"
+  | "terms"
 
 export default function MainNavigator() {
   const [screen, setScreen] = useState<Screen>("onboard1");
@@ -286,7 +300,7 @@ export default function MainNavigator() {
           goRegister={() => setScreen("register")}
           goForgot={() => setScreen("reset")}
           goCryptoDeposit={() => setScreen("cryptoDepositOne")}
-          goBack={() => setScreen("addFunds")}
+          goBack={() => setScreen("settings")}
         />
       );
     case "cryptoDepositOne":
@@ -321,12 +335,12 @@ export default function MainNavigator() {
     case "loginAndSecurity":
       return (
         <LoginAndSecurityScreen
-          goBack={() => setScreen("profile")}
+          goBack={() => setScreen("settings")}
           next={() => setScreen("dashboard")}
         />
       );
     case "helpAndSupport":
-      return (
+      return (  
         <HelpAndSupportScreen
           goBack={() => setScreen("profile")}
           next={() => setScreen("dashboard")}
@@ -370,7 +384,43 @@ export default function MainNavigator() {
           next={() => setScreen("dashboard")}
         />
       );
+      case "aboutus":
+        return (
+          <AboutUs 
+            goBack={() => setScreen("settings")}
+          />
+        )
+        case "language":
+        return (
+          <Language
+            goBack={() => setScreen("settings")}
+          />
+        )
+        case "terms":
+          return (
+            <TermsOfServiceScreen 
+              goBack={() => setScreen("settings")}
+            />
+          )
+        case "rateapp":
+        return (
+          <RateApp 
+            goBack={() => setScreen("settings")}
+          />
+        )
 
+        case "report":
+        return (
+          <ReportIssue
+            goBack={() => setScreen("settings")}
+          />
+        )
+      case "ridereceipts":
+        return (
+          <RideReceipts 
+            goBack={() => setScreen("settings")}
+          />
+        )
     case "redeemPoints":
       return (
         <RedeemPointsScreen
@@ -472,6 +522,14 @@ case "standardScreen":
           goBack={() => setScreen("bookingScreen")}
         />
       );
+
+      case "bookings": 
+      return (
+        <BookingsScreen 
+          setScreen={setScreen}
+          setSelectedRide={setSelectedRide} 
+        />
+      )
 
     case "additionalInformation":
      return (

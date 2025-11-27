@@ -1,7 +1,7 @@
 import { Entypo, Feather, FontAwesome, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from "expo-image-picker";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   FlatList,
@@ -15,7 +15,6 @@ import {
   TouchableWithoutFeedback,
   View
 } from "react-native";
-import { RideContext } from '../../context/RideContext';
 type UploadPhotoOverlayProps = {
   isVisible: boolean;
   onClose: () => void;
@@ -484,21 +483,6 @@ const DriverOnWayModal = ({
   );
 };
 
-const RideInProgressBanner = ({ estimatedTime }: { estimatedTime?: number }) => {
-  const { status, loadPersisted, rideId, driverId } = useContext(RideContext);
-  return (
-    <View style={styles.rideInProgressBanner}>
-      <View style={styles.rideInProgressContent}>
-        <FontAwesome5 name="clock" size={16} color="#FEB914" />
-        <Text style={styles.rideInProgressText}>
-          {status === "driver_on_way"? "Ride has begun!" : status === "completed"? "Your ride is finished! Please rate your driver!": null}
-        </Text>
-      </View>
-      <View style={styles.rideInProgressDot} />
-    </View>
-  );
-};
-
 export default function HomeScreen({ setScreen }: HomeScreenProps) {
 
   const [showComingSoonModal, setShowComingSoonModal] = useState<boolean>(false);
@@ -509,7 +493,6 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [showAreaFadaOverlay, setShowAreaFadaOverlay] = useState<boolean>(false);
   
-  const { status, loadPersisted } = useContext(RideContext);
 const [showDriverOnWayModal, setShowDriverOnWayModal] = useState<boolean>(false);
 
  // const { data: notifications, refetch: refetchNotifications } = useNotifications();
@@ -526,12 +509,6 @@ const [showDriverOnWayModal, setShowDriverOnWayModal] = useState<boolean>(false)
 
   // Check if login success modal has been shown before
 
-  useEffect(() => {
-    loadPersisted();
-  if (status !== 'idle') {
-    setShowDriverOnWayModal(true);
-  }
-}, [status]);
 
 
   useEffect(() => {
@@ -713,8 +690,6 @@ const [showDriverOnWayModal, setShowDriverOnWayModal] = useState<boolean>(false)
           <Text style={styles.emptyRideButtonText}>Book a Ride</Text>
         </TouchableOpacity>
       </View>
-
-      {status !== 'idle' && <RideInProgressBanner />}
 
 
       {/* Ride Analytics Section */}

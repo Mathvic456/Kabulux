@@ -32,6 +32,10 @@ export default function LoginAndSecurityScreen({
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+const [showNew, setShowNew] = useState(false);
+const [showConfirm, setShowConfirm] = useState(false);
+const [passwordError, setPasswordError] = useState("");
 
   const openModal = (modalType: string) => {
     setCurrentModal(modalType);
@@ -48,42 +52,62 @@ export default function LoginAndSecurityScreen({
   };
 
   const handleAction = () => {
-    // 3. Handle Password Change Logic specifically
-    if (currentModal === "password") {
-      // Basic Validation
-      if (!currentPassword || !newPassword || !confirmPassword) {
-        Alert.alert("Error", "Please fill in all fields");
-        return;
-      }
+  if (currentModal === "password") {
+  // Reset error
+  setPasswordError("");
 
-      if (newPassword !== confirmPassword) {
-        Alert.alert("Error", "New passwords do not match");
-        return;
-      }
+  // Validations
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    setPasswordError("All fields are required.");
+    return;
+  }
 
-      // Execute Mutation
-      changePasswordMutation.mutate(
-        {
-          current_password: currentPassword,
-          new_password: newPassword,
-        },
-        {
-          onSuccess: () => {
-            Alert.alert("Success", "Password changed successfully!");
-            closeModal();
-          },
-          onError: (err: any) => {
-            // Display error from backend or fallback
-            const errorMessage =
-              err.response?.data?.message ||
-              err.response?.data?.detail ||
-              "Failed to change password";
-            Alert.alert("Error", JSON.stringify(errorMessage));
-          },
+  if (newPassword.length < 6) {
+    setPasswordError("New password must be at least 6 characters.");
+    return;
+  }
+
+  if (newPassword === currentPassword) {
+    setPasswordError("New password cannot be the same as the current password.");
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    setPasswordError("New passwords do not match.");
+    return;
+  }
+
+  // Execute Mutation
+  changePasswordMutation.mutate(
+    {
+      current_password: currentPassword,
+      new_password: newPassword,
+    },
+    {
+      onSuccess: () => {
+        Alert.alert("Success", "Password changed successfully!");
+        closeModal();
+      },
+      onError: (err: any) => {
+        const backendMsg =
+          err.response?.data?.detail ||
+          err.response?.data?.message ||
+          "Failed to change password";
+
+        if (
+          backendMsg.toLowerCase().includes("invalid") ||
+          backendMsg.toLowerCase().includes("incorrect")
+        ) {
+          setPasswordError("Current password is incorrect.");
+        } else {
+          setPasswordError(backendMsg);
         }
-      );
-      return;
+      },
     }
+  );
+
+  return;
+}
 
     // --- Logic for other modals (Simulation) ---
     setLoading(true);
@@ -116,57 +140,104 @@ export default function LoginAndSecurityScreen({
   const renderModalContent = () => {
     switch (currentModal) {
       case "password":
-        return (
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Change Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Current Password"
-              placeholderTextColor="#9CA3AF"
-              secureTextEntry
-              value={currentPassword}
-              onChangeText={setCurrentPassword}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="New Password"
-              placeholderTextColor="#9CA3AF"
-              secureTextEntry
-              value={newPassword}
-              onChangeText={setNewPassword}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm New Password"
-              placeholderTextColor="#9CA3AF"
-              secureTextEntry
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={closeModal}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.modalButton, styles.confirmButton]}
-                onPress={handleAction}
-                // 4. Disable button while mutation is pending
-                disabled={changePasswordMutation.isPending}
-              >
-                {/* 5. Show spinner based on mutation state */}
-                {changePasswordMutation.isPending ? (
-                  <ActivityIndicator color="black" />
-                ) : (
-                  <Text style={styles.confirmButtonText}>Change Password</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        );
+  return (
+    <View style={styles.modalContent}>
+      <Text style={styles.modalTitle}>Change Password</Text>
+
+      {/* CURRENT PASSWORD */}
+      <View style={styles.passwordField}>
+        <TextInput
+          style={styles.input}
+          placeholder="Current Password"
+          placeholderTextColor="#9CA3AF"
+          secureTextEntry={!showCurrent}
+          value={currentPassword}
+          onChangeText={setCurrentPassword}
+        />
+        <TouchableOpacity
+          style={styles.eyeIcon}
+          onPress={() => setShowCurrent(!showCurrent)}
+        >
+          <Ionicons
+            name={showCurrent ? "eye-off-outline" : "eye-outline"}
+            size={22}
+            color="#FEB914"
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* NEW PASSWORD */}
+      <View style={styles.passwordField}>
+        <TextInput
+          style={styles.input}
+          placeholder="New Password"
+          placeholderTextColor="#9CA3AF"
+          secureTextEntry={!showNew}
+          value={newPassword}
+          onChangeText={setNewPassword}
+        />
+        <TouchableOpacity
+          style={styles.eyeIcon}
+          onPress={() => setShowNew(!showNew)}
+        >
+          <Ionicons
+            name={showNew ? "eye-off-outline" : "eye-outline"}
+            size={22}
+            color="#FEB914"
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* CONFIRM PASSWORD */}
+      <View style={styles.passwordField}>
+        <TextInput
+          style={styles.input}
+          placeholder="Confirm New Password"
+          placeholderTextColor="#9CA3AF"
+          secureTextEntry={!showConfirm}
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+        />
+        <TouchableOpacity
+          style={styles.eyeIcon}
+          onPress={() => setShowConfirm(!showConfirm)}
+        >
+          <Ionicons
+            name={showConfirm ? "eye-off-outline" : "eye-outline"}
+            size={22}
+            color="#FEB914"
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* ERROR MESSAGE */}
+      {passwordError !== "" && (
+        <Text style={styles.errorText}>{passwordError}</Text>
+      )}
+
+      <View style={styles.modalButtons}>
+        <TouchableOpacity
+          style={[styles.modalButton, styles.cancelButton]}
+          onPress={closeModal}
+        >
+          <Text style={styles.cancelButtonText}>Cancel</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.modalButton, styles.confirmButton]}
+          onPress={handleAction}
+          disabled={changePasswordMutation.isPending}
+        >
+          {changePasswordMutation.isPending ? (
+            <ActivityIndicator color="black" />
+          ) : (
+            <Text style={styles.confirmButtonText}>Change</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
       case "passkeys":
         return (
           <View style={styles.modalContent}>
@@ -533,4 +604,23 @@ const styles = StyleSheet.create({
     width: "100%",
     borderRadius: 20,
   },
+  passwordField: {
+  width: "100%",
+  position: "relative",
+},
+
+eyeIcon: {
+  position: "absolute",
+  right: 12,
+  top: 18,
+},
+
+errorText: {
+  color: "#ff6b6b",
+  fontSize: 13,
+  marginBottom: 10,
+  marginTop: -5,
+  textAlign: "center",
+},
+
 });

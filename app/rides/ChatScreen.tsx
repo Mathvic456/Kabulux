@@ -14,7 +14,7 @@ import {
 // Initial messages
 const initialMessages = [
     {
-        text: 'Hello am here',
+        text: 'Hello I\'m here',
         sender: 'driver',
         timestamp: new Date(Date.now() - 300000), // 5 minutes ago
     },

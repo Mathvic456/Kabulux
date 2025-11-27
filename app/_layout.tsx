@@ -1,4 +1,3 @@
-import { RideProvider } from "@/context/RideContext";
 import { WebSocketProvider } from "@/context/WebSocketProvider";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -20,11 +19,9 @@ export default function RootLayout() {
   
   return (
     <WebSocketProvider>
-      <RideProvider>
     <QueryClientProvider client={queryClient}>
       <MainNavigator />
     </QueryClientProvider>
-    </RideProvider>
     </WebSocketProvider>
   );
 }

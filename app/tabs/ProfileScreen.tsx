@@ -242,7 +242,8 @@ useEffect(() => {
         style={{
           flexDirection: "row",
           justifyContent: "space-around",
-          padding: 15,
+          marginBottom: 50,
+          paddingVertical: 15,
           backgroundColor: "#111",
         }}
       >

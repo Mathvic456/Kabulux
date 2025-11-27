@@ -13,6 +13,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "../../services/api";
 
 type PersonalInfoScreenProps = {
@@ -132,18 +133,30 @@ export default function PersonalInfoScreen({
     return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6, 11)}`;
   };
 
-  // Handle confirm button press
-  const handleConfirm = () => {
-    if (!email || !isValidEmail(email)) {
-      Alert.alert("Invalid Email", "Please enter a valid email address");
-      return;
-    }
-    if (!phone || !isValidPhone(phone)) {
-      Alert.alert("Invalid Phone", "Phone number should not exceed 11 digits");
-      return;
-    }
-    setShowConfirmationModal(true);
-  };
+const handleConfirm = () => {
+  if (!email.trim()) {
+    Alert.alert("Email required", "Please enter your email");
+    return;
+  }
+
+  if (!phone.trim()) {
+    Alert.alert("Phone number required", "Please enter your phone number");
+    return;
+  }
+
+  if (!isValidEmail(email)) {
+    Alert.alert("Invalid Email", "Please enter a valid email address");
+    return;
+  }
+
+  if (!isValidPhone(phone)) {
+    Alert.alert("Invalid Phone", "Phone number cannot exceed 11 digits");
+    return;
+  }
+
+  setShowConfirmationModal(true);
+};
+
 
   // Handle final confirmation
   const handleFinalConfirm = async () => {
@@ -172,8 +185,10 @@ export default function PersonalInfoScreen({
   }
 
   return (
-    <TouchableWithoutFeedback onPress={cancelEdit}>
-      <View style={styles.container}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.inner}>
+
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={goBack}>
@@ -249,54 +264,35 @@ export default function PersonalInfoScreen({
         </TouchableOpacity>
 
         {/* Confirmation Modal */}
-        <Modal
-          visible={showConfirmationModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowConfirmationModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalIcon}>
-                <Ionicons name="checkmark-circle" size={40} color="#FEB914" />
-              </View>
-              <Text style={styles.modalTitle}>Confirm Information</Text>
-              <Text style={styles.modalText}>
-                Please confirm your personal information:
-              </Text>
+<Modal
+  visible={showConfirmationModal}
+  transparent
+  animationType="fade"
+  onRequestClose={() => setShowConfirmationModal(false)}
+>
+  <View style={styles.modalOverlay}>
+    <View style={styles.smallModal}>
+      <Ionicons
+        name="checkmark-circle"
+        size={48}
+        color="#FEB914"
+        style={{ marginBottom: 10 }}
+      />
+      <Text style={styles.modalTitle}>Details Edited</Text>
 
-              <View style={styles.modalInfo}>
-                <View style={styles.modalInfoRow}>
-                  <Text style={styles.modalInfoLabel}>Email:</Text>
-                  <Text style={styles.modalInfoValue}>{email}</Text>
-                </View>
-                <View style={styles.modalInfoRow}>
-                  <Text style={styles.modalInfoLabel}>Phone:</Text>
-                  <Text style={styles.modalInfoValue}>
-                    {formatPhoneNumber(phone)}
-                  </Text>
-                </View>
-              </View>
+      <TouchableOpacity
+        style={styles.modalButtonConfirm}
+        onPress={() => setShowConfirmationModal(false)}
+      >
+        <Text style={styles.modalButtonConfirmText}>OK</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
 
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.modalButtonCancel]}
-                  onPress={() => setShowConfirmationModal(false)}
-                >
-                  <Text style={styles.modalButtonCancelText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.modalButtonConfirm]}
-                  onPress={handleFinalConfirm}
-                >
-                  <Text style={styles.modalButtonConfirmText}>Confirm</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
       </View>
-    </TouchableWithoutFeedback>
+    </SafeAreaView>
+  </TouchableWithoutFeedback>
   );
 }
 
@@ -352,13 +348,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#FEB914",
     padding: 5,
-  },
-  confirmButton: {
-    backgroundColor: "#FEB914",
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: "center",
-    marginTop: "auto",
   },
   confirmText: {
     color: "black",
@@ -451,4 +440,26 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 16,
   },
+  inner: {
+  flex: 1,
+  paddingHorizontal: 20,
+},
+
+confirmButton: {
+  backgroundColor: "#FEB914",
+  paddingVertical: 14,
+  borderRadius: 10,
+  alignItems: "center",
+  marginTop: "auto",
+  marginBottom: 20, // 🎉 guaranteed above safe area
+},
+
+smallModal: {
+  backgroundColor: "#2C2C2C",
+  padding: 25,
+  borderRadius: 15,
+  width: "80%",
+  alignItems: "center",
+}
+
 });
