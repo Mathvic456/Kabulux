@@ -1,6 +1,8 @@
+import { useAuth } from "@/context/AuthContext";
+import { SocketContext } from "@/context/WebSocketProvider";
 import { useLogoutEndPoint } from "@/services/authentication.service";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -20,18 +22,33 @@ export default function SettingsScreen({ setScreen }) {
   const [hapticFeedback, setHapticFeedback] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const logoutMutation = useLogoutEndPoint();
+  const { clearTokens } = useAuth();
+  const { socket } = useContext(SocketContext);
+  const { mutate: logout, isPending: isLoggingOut } = useLogoutEndPoint(clearTokens);
 
-  const handleLogout = async() => {
-    try {
-      await logoutMutation.mutateAsync(); // Wait for logout to complete
-    setShowLogoutModal(false);
-    console.log("User logged out");
-     setScreen("login")
-    } catch (error) {
-      console.error("Logout failed:", error);
+  const handleLogout = () => {
+    console.log("🚪 [Settings] Starting logout process...");
+
+    // Close WebSocket connection first
+    if (socket) {
+      console.log("🔌 [Settings] Closing WebSocket connection...");
+      socket.close(1000, "User logged out");
     }
 
+    // Call logout mutation
+    logout(undefined, {
+      onSuccess: () => {
+        console.log("✅ [Settings] Logout successful");
+        setShowLogoutModal(false);
+        setScreen("login");
+      },
+      onError: (error) => {
+        console.error("❌ [Settings] Logout error:", error);
+        // Even on error, still navigate to login
+        setShowLogoutModal(false);
+        setScreen("login");
+      }
+    });
   };
 
   const settingsSections = [
@@ -48,7 +65,7 @@ export default function SettingsScreen({ setScreen }) {
           label: "Payment Methods",
           action: () => setScreen("paymentMethod"),
         },
-       {
+        {
           icon: "document-text-outline",
           label: "Ride Receipts",
           action: () => setScreen("ridereceipts"),
@@ -103,17 +120,16 @@ export default function SettingsScreen({ setScreen }) {
           label: "Report an Issue",
           action: () => setScreen("report"),
         },
-          {
+        {
           icon: "star-outline",
           label: "Rate Our App",
           action: () => console.log("rateapp"),
         },
-      {
+        {
           icon: "document-text-outline",
           label: "Terms of Service",
           action: () => setScreen("terms"),
         },
-
       ],
     },
     {
@@ -143,10 +159,6 @@ export default function SettingsScreen({ setScreen }) {
       ],
     },
   ];
-
-  if (logoutMutation.isPending) {
-    return <ActivityIndicator />
-    }
 
   return (
     <View style={styles.container}>
@@ -206,7 +218,7 @@ export default function SettingsScreen({ setScreen }) {
         animationType="fade"
         onRequestClose={() => setShowLogoutModal(false)}
       >
-        <TouchableWithoutFeedback onPress={() => setShowLogoutModal(false)}>
+        <TouchableWithoutFeedback onPress={() => !isLoggingOut && setShowLogoutModal(false)}>
           <View style={styles.modalOverlay}>
             <View style={styles.confirmationModal}>
               <Text style={styles.modalTitle}>Log Out</Text>
@@ -216,6 +228,7 @@ export default function SettingsScreen({ setScreen }) {
                 <TouchableOpacity 
                   style={[styles.modalButton, styles.cancelButton]}
                   onPress={() => setShowLogoutModal(false)}
+                  disabled={isLoggingOut}
                 >
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
@@ -223,15 +236,19 @@ export default function SettingsScreen({ setScreen }) {
                 <TouchableOpacity 
                   style={[styles.modalButton, styles.confirmButton]}
                   onPress={handleLogout}
+                  disabled={isLoggingOut}
                 >
-                  <Text style={styles.confirmButtonText}>Log Out</Text>
+                  {isLoggingOut ? (
+                    <ActivityIndicator size="small" color="#000" />
+                  ) : (
+                    <Text style={styles.confirmButtonText}>Log Out</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-
     </View>
   );
 }
@@ -309,17 +326,6 @@ const styles = StyleSheet.create({
     marginRight: 10,
     fontSize: 14,
   },
-  bottomNav: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    padding: 15,
-    backgroundColor: "#111",
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  // Modal styles
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.7)",

@@ -2,21 +2,22 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert, // Added Alert
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Email from "../../assets/images/email.png";
 import Logo from "../../assets/images/logo.png";
-import { useVerifyOtpEndPoint } from "../../services/otpVerification.service";
+import { useResendOtpEndPoint, useVerifyOtpEndPoint } from "../../services/otpVerification.service";
 
 export default function VerifyEmailScreen({
   next,
@@ -31,8 +32,13 @@ export default function VerifyEmailScreen({
   const [isLoading, setIsLoading] = useState(false);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  
+  const [resendTimer, setResendTimer] = useState(0);
+
   const inputsRef = useRef<TextInput[]>([]);
   const verifyOtpMutation = useVerifyOtpEndPoint();
+  
+  const resendOtpMutation = useResendOtpEndPoint();
 
   useEffect(() => {
     const loadEmail = async () => {
@@ -49,9 +55,34 @@ export default function VerifyEmailScreen({
     loadEmail();
   }, []);
 
-  function handleReset() {
+  // 👇 Timer logic: Decrement timer every second
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [resendTimer]);
 
-  }
+  // 👇 Handle Resend OTP
+  const handleResendOtp = async () => {
+    if (!email) return;
+    setErrorMessage(null);
+
+    try {
+      await resendOtpMutation.mutateAsync({ email });
+      Alert.alert("Success", "A new code has been sent to your email.");
+      setResendTimer(30); // Start 30 second cooldown
+    } catch (err: any) {
+      if (err?.response?.data?.message) {
+        setErrorMessage(err.response.data.message);
+      } else {
+        setErrorMessage("Failed to resend OTP. Please try again.");
+      }
+    }
+  };
 
   const handleOtpChange = (text: string, index: number) => {
     const newOtp = [...otp];
@@ -62,31 +93,28 @@ export default function VerifyEmailScreen({
     if (!text && index > 0) inputsRef.current[index - 1]?.focus();
   };
 
+  const handleProceed = async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    const code = otp.join("");
 
+    try {
+      await verifyOtpMutation.mutateAsync({ email, otp: code });
+      next();
+    } catch (err: any) {
+      console.error("OTP verification failed:", err);
 
-const handleProceed = async () => {
-  setIsLoading(true);
-  setErrorMessage(null);
-  const code = otp.join("");
-
-  try {
-    await verifyOtpMutation.mutateAsync({ email, otp: code });
-    next();
-  } catch (err: any) {
-    console.error("OTP verification failed:", err);
-
-    if (err?.response?.data?.message) {
-      setErrorMessage(err.response.data.message);
-    } else {
-      setErrorMessage("Something went wrong. Please try again.");
+      if (err?.response?.data?.message) {
+        setErrorMessage(err.response.data.message);
+      } else {
+        setErrorMessage("Something went wrong. Please try again.");
+      }
+    } finally {
+      setOtp(["", "", "", "", "", ""]);
+      inputsRef.current[0]?.focus();
+      setIsLoading(false);
     }
-  } finally {
-    setOtp(['', '', '', '', '', '']);
-    inputsRef.current[0]?.focus();
-    setIsLoading(false);
-  }
-};
-
+  };
 
   return (
     <KeyboardAvoidingView
@@ -149,11 +177,12 @@ const handleProceed = async () => {
             ))}
           </View>
 
-            {errorMessage && (
-    <Text style={{ color: "red", marginBottom: 10, textAlign: "center" }}>
-      {errorMessage}
-    </Text>
-  )}
+          {errorMessage && (
+            <Text style={{ color: "red", marginBottom: 10, textAlign: "center" }}>
+              {errorMessage}
+            </Text>
+          )}
+
           <TouchableOpacity
             style={styles.proceedButton}
             onPress={handleProceed}
@@ -166,7 +195,26 @@ const handleProceed = async () => {
             )}
           </TouchableOpacity>
 
-        
+          {/* 👇 RESEND BUTTON SECTION */}
+          <View style={styles.resendContainer}>
+             <Text style={styles.resendLabel}>Didn't receive code? </Text>
+             <TouchableOpacity 
+                onPress={handleResendOtp} 
+                disabled={resendTimer > 0 || resendOtpMutation.isPending}
+             >
+                {resendOtpMutation.isPending ? (
+                   <ActivityIndicator size="small" color="#ffb300" />
+                ) : (
+                  <Text style={[
+                      styles.resendLink, 
+                      resendTimer > 0 && { color: '#666' } // Grey out if timer active
+                  ]}>
+                    {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend"}
+                  </Text>
+                )}
+             </TouchableOpacity>
+          </View>
+
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -279,4 +327,18 @@ const styles = StyleSheet.create({
     fontFamily: "BebasNeue",
   },
 
+  resendContainer: {
+    marginTop: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  resendLabel: {
+    color: '#aaa',
+    fontSize: 14,
+  },
+  resendLink: {
+    color: '#ffb300',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
 });

@@ -1,19 +1,18 @@
 import CustomButton from "@/components/ui/CustomButton";
-import { SocketContext } from "@/context/WebSocketProvider";
+import { useAuth } from "@/context/AuthContext";
 import { useLoginEndPoint } from "@/services/authentication.service";
 import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
 import {
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
 import Logo from "../../assets/images/logo.png";
 
@@ -35,7 +34,7 @@ export default function LoginScreen({
     password: "",
   });
 
-  const { setTokenFromOutside } = useContext(SocketContext);
+  const { setTokens } = useAuth();
 
   const validateForm = () => {
     let valid = true;
@@ -66,45 +65,31 @@ export default function LoginScreen({
     return valid;
   };
 
-  const { mutate: login, isPending } = useLoginEndPoint();
+  const { mutate: login, isPending } = useLoginEndPoint(setTokens, remember);
 
+  const handleSubmit = () => {
+    if (validateForm()) {
+      login(
+        { email, password },
+        {
+          onSuccess: () => {
+            console.log("✅ [Login] Login successful, navigating...");
+            next();
+          },
+          onError: (error: any) => {
+            console.log("❌ [Login] LOGIN FAILED:", error.response?.data || error);
 
-const handleSubmit = async() => {
- if (validateForm()) {
-  login(
-  { email, password },
-  {
-    onSuccess: async (res) => {
-      const token = res.data?.data?.access;
-      const refreshToken = res.data?.data?.refresh;
+            // Show error under inputs
+            setErrors({
+              email: "",
+              password: error.response?.data?.message || "Invalid email or password",
+            });
+          },
+        }
+      );
+    }
+  };
 
-      if (remember && token && refreshToken) {
-        await AsyncStorage.setItem("token", token);
-        await AsyncStorage.setItem("refreshToken", refreshToken);
-      } else {
-        await AsyncStorage.removeItem("token");
-        await AsyncStorage.removeItem("refreshToken");
-      }
-
-      setTokenFromOutside?.(token);
-      next();
-    },
-
-    onError: (error: any) => {
-      console.log("❌ LOGIN FAILED:", error.response?.data || error);
-
-      // show quick error under inputs
-      setErrors({
-        email: "",
-        password: error.response?.data?.message || "Invalid email or password",
-      });
-    },
-  }
-);
-
-}
-
-};
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -116,62 +101,62 @@ const handleSubmit = async() => {
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
-      {/* Top Banner */}
-      <View style={styles.banner} />
+        {/* Top Banner */}
+        <View style={styles.banner} />
 
-      
-      {/* Card */}
-      <View style={styles.card}>
-        <View style={styles.LogoContainer}>
-          <Image source={Logo} style={styles.Logoicon} />
-        </View>
-        <Text style={styles.title}>Sign In</Text>
-        <Text style={styles.subtitle}>
-          Need a ride? Skip the stress and rent a car in minutes. Whether
-          it&apos;s a quick trip, a business ride or a family vacation, we got
-          you covered.
-        </Text>
+        {/* Card */}
+        <View style={styles.card}>
+          <View style={styles.LogoContainer}>
+            <Image source={Logo} style={styles.Logoicon} />
+          </View>
+          <Text style={styles.title}>Sign In</Text>
+          <Text style={styles.subtitle}>
+            Need a ride? Skip the stress and rent a car in minutes. Whether
+            it&apos;s a quick trip, a business ride or a family vacation, we got
+            you covered.
+          </Text>
 
-        {/* Email Input */}
-        <View style={styles.inputContainer}>
-          <MaterialIcons
-            name="email"
-            size={20}
-            color="#aaa"
-            style={styles.inputIcon}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            placeholderTextColor="#aaa"
-            value={email}
-            onChangeText={(text) => {
-              setEmail(text);
-              if (errors.email) {
-                setErrors({ ...errors, email: "" });
-              }
-            }}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-        </View>
-        {errors.email ? (
-          <Text style={styles.errorText}>{errors.email}</Text>
-        ) : null}
+          {/* Email Input */}
+          <View style={styles.inputContainer}>
+            <MaterialIcons
+              name="email"
+              size={20}
+              color="#aaa"
+              style={styles.inputIcon}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor="#aaa"
+              value={email}
+              onChangeText={(text) => {
+                setEmail(text);
+                if (errors.email) {
+                  setErrors({ ...errors, email: "" });
+                }
+              }}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              editable={!isPending}
+            />
+          </View>
+          {errors.email ? (
+            <Text style={styles.errorText}>{errors.email}</Text>
+          ) : null}
 
-        {/* Password Input */}
-        <View style={styles.inputContainer}>
-          <FontAwesome
-            name="lock"
-            size={20}
-            color="#aaa"
-            style={styles.inputIcon}
-          />
-           <TextInput
+          {/* Password Input */}
+          <View style={styles.inputContainer}>
+            <FontAwesome
+              name="lock"
+              size={20}
+              color="#aaa"
+              style={styles.inputIcon}
+            />
+            <TextInput
               style={styles.input}
               placeholder="Password"
               placeholderTextColor="#aaa"
-              secureTextEntry={!isPasswordVisible} // toggle visibility
+              secureTextEntry={!isPasswordVisible}
               value={password}
               onChangeText={(text) => {
                 setPassword(text);
@@ -179,10 +164,12 @@ const handleSubmit = async() => {
                   setErrors({ ...errors, password: "" });
                 }
               }}
+              editable={!isPending}
             />
             <TouchableOpacity
               onPress={() => setIsPasswordVisible(!isPasswordVisible)}
               style={styles.eyeIcon}
+              disabled={isPending}
             >
               <Ionicons
                 name={isPasswordVisible ? "eye-off" : "eye"}
@@ -190,57 +177,55 @@ const handleSubmit = async() => {
                 color="#ccc"
               />
             </TouchableOpacity>
-        </View>
-        {errors.password ? (
-          <Text style={styles.errorText}>{errors.password}</Text>
-        ) : null}
+          </View>
+          {errors.password ? (
+            <Text style={styles.errorText}>{errors.password}</Text>
+          ) : null}
 
-        {/* Remember & Forgot */}
-        <View style={styles.row}>
-          <TouchableOpacity
-            onPress={() => setRemember(!remember)}
-            style={styles.checkboxRow}
-          >
-            <View style={[styles.checkbox, remember && styles.checkboxChecked]}>
-              {remember && (
-                <MaterialIcons name="check" size={16} color="#000" />
-              )}
-            </View>
-            <Text style={styles.checkboxLabel}>Remember Password</Text>
+          {/* Remember & Forgot */}
+          <View style={styles.row}>
+            <TouchableOpacity
+              onPress={() => setRemember(!remember)}
+              style={styles.checkboxRow}
+              disabled={isPending}
+            >
+              <View style={[styles.checkbox, remember && styles.checkboxChecked]}>
+                {remember && (
+                  <MaterialIcons name="check" size={16} color="#000" />
+                )}
+              </View>
+              <Text style={styles.checkboxLabel}>Remember Password</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={goForgot} disabled={isPending}>
+              <Text style={styles.forgot}>Forgot Password</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Proceed */}
+          <CustomButton
+            title="Proceed"
+            onPress={handleSubmit}
+            style={styles.proceedBtn}
+            textStyle={styles.proceedText}
+            loading={isPending}
+          />
+
+          {/* Divider */}
+          <View style={styles.dividerRow}>
+            <View style={styles.divider} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.divider} />
+          </View>
+
+          {/* Sign Up */}
+          <TouchableOpacity onPress={goRegister} disabled={isPending}>
+            <Text style={styles.footerText}>
+              Don&apos;t have an account?{" "}
+              <Text style={styles.signup}>Sign up</Text>
+            </Text>
           </TouchableOpacity>
-
-          <TouchableOpacity onPress={goForgot}>
-            <Text style={styles.forgot}>Forgot Password</Text>
-          </TouchableOpacity>
         </View>
-
-        {/* Proceed */}
-        <CustomButton
-          title="Proceed"
-          onPress={handleSubmit}
-          style={styles.proceedBtn}
-          textStyle={styles.proceedText}
-          loading={isPending}
-        />
-
-        {/* Divider */}
-        <View style={styles.dividerRow}>
-          <View style={styles.divider} />
-          <Text style={styles.dividerText}>or</Text>
-          <View style={styles.divider} />
-        </View>
-
-        {/* Google Sign In
-        <GoogleSignIn />
- */}
-        {/* Sign Up */}
-        <TouchableOpacity onPress={goRegister}>
-          <Text style={styles.footerText}>
-            Don&apos;t have an account?{" "}
-            <Text style={styles.signup}>Sign up</Text>
-          </Text>
-        </TouchableOpacity>
-      </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -285,7 +270,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 20,
   },
-
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -295,8 +279,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   eyeIcon: {
-  marginLeft: 8,
-},
+    marginLeft: 8,
+  },
   inputIcon: { marginRight: 10 },
   input: { flex: 1, color: "#fff", height: 50 },
   errorText: {
@@ -305,7 +289,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginLeft: 10,
   },
-
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -326,7 +309,6 @@ const styles = StyleSheet.create({
   checkboxChecked: { backgroundColor: "#fcbf24" },
   checkboxLabel: { color: "#fff", fontSize: 12 },
   forgot: { color: "#fcbf24", fontSize: 12 },
-
   proceedBtn: {
     backgroundColor: "#fcbf24",
     borderRadius: 10,
@@ -334,7 +316,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   proceedText: { color: "#000", fontWeight: "bold", fontSize: 16 },
-
   dividerRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -342,8 +323,7 @@ const styles = StyleSheet.create({
   },
   divider: { flex: 1, height: 1, backgroundColor: "#444" },
   dividerText: { color: "#aaa", marginHorizontal: 10 },
-
-  googleBtn: {  
+  googleBtn: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
@@ -354,7 +334,6 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   googleText: { color: "#fff", marginLeft: 8 },
-
   footerText: { textAlign: "center", color: "#888", fontSize: 12 },
   signup: { color: "#fcbf24", fontWeight: "bold" },
   LogoContainer: {},

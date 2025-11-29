@@ -11,7 +11,7 @@ export const globalLogout = async () => {
     console.error("❌ [globalLogout] Failed to clear storage:", error);
   }
   
-  // Check if navigation ref is ready
+
   try {
     navigateTo("login");
     console.log("✅ [globalLogout] Navigated to login");

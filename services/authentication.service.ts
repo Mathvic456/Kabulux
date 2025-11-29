@@ -4,7 +4,6 @@ import { AxiosResponse } from "axios";
 import { api } from "./api";
 import { CREATEACCOUNT_TYPE } from "./type";
 
-
 // Types for modal control
 export type AuthResult = {
   success: boolean;
@@ -16,54 +15,71 @@ export const useRegisterEndPoint = () => {
   const mutation = useMutation<AxiosResponse<any>, any, CREATEACCOUNT_TYPE>({
     mutationFn: (data) => api.post("auth/register/", data),
     onSuccess: (res) => {
-      console.log("Registration successful:", res.data);
-      
+      console.log("✅ [Auth] Registration successful:", res.data);
     },
     onError: (error: any) => {
-      console.error("Registration error:", error);
+      console.error("❌ [Auth] Registration error:", error);
     },
   });
 
   return mutation;
 };
 
-export const useLoginEndPoint = () => {
+export const useLoginEndPoint = (
+  setTokens: (access: string, refresh: string, remember: boolean) => Promise<void>,
+  remember: boolean
+) => {
   return useMutation({
     mutationFn: (data: { email: string; password: string }) =>
       api.post("auth/login/", data),
+    
     onSuccess: async (res) => {
+      const token = res.data?.data?.access;
+      const refreshToken = res.data?.data?.refresh;
       const userId = res.data?.data?.user?.id;
 
-    
-
-      if (userId) {
-        await AsyncStorage.setItem("user_id", userId);
-        console.log("User ID saved:", userId);
+      if (!token || !refreshToken) {
+        console.error("❌ [Auth] Missing tokens in response");
+        throw new Error("Invalid login response");
       }
 
-      const storedId = await AsyncStorage.getItem("user_id");
-      console.log("User ID from AsyncStorage:", storedId);
+      console.log(`🔑 [Auth] Login successful (Remember Me: ${remember})`);
+
+      // Store tokens in AuthContext
+      // This will handle both Context (in-memory) and AsyncStorage (if remember = true)
+      await setTokens(token, refreshToken, remember);
+
+      // Store userId separately (this is not auth-related, so keep in AsyncStorage)
+      if (userId) {
+        await AsyncStorage.setItem("user_id", userId);
+        console.log("✅ [Auth] User ID saved:", userId);
+      }
     },
+    
     onError: (error: any) => {
-      console.error("Login error:", error);
-      // Return error for component to handle
+      console.error("❌ [Auth] Login error:", error);
     },
   });
 };
 
-export const useLogoutEndPoint = () => {
+export const useLogoutEndPoint = (
+  clearTokens: () => Promise<void>
+) => {
   return useMutation({
     mutationFn: async () => {
-      await AsyncStorage.removeItem("token");
+      await clearTokens();
+      
+      // Clear other non-auth data
+      await AsyncStorage.removeItem("user_id");
+      
+      console.log("🗑️ [Auth] Cleared all user data");
       return true;
     },
     onSuccess: () => {
-      console.log("User logged out");
-      // Don't show alert here - let component handle the modal
+      console.log("✅ [Auth] User logged out successfully");
     },
     onError: (error: any) => {
-      console.error("Logout error:", error);
-      // Return error for component to handle
+      console.error("❌ [Auth] Logout error:", error);
     },
   });
 };

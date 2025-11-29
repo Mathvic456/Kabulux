@@ -11,7 +11,6 @@ export const rideKeys = {
   active: () => [...rideKeys.all, "active"] as const,
 };
 
-// ==================== API Functions ====================
 
 const fetchRideDetails = async (rideId: string) => {
   console.log(`🔍 Fetching ride details for ID: ${rideId}`);
