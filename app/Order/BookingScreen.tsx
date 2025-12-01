@@ -470,10 +470,11 @@ function sendSubscription(socket: WebSocket | null, rideId: string, data: any, a
                   <View style={styles.rideDetails}>
                     <Text style={styles.rideName}>{option.name}</Text>
                     <Text style={styles.rideTiming}>{option.details}</Text>
-                    <Text style={styles.rideInfo}>
-                      {option.carType} <Feather name="user" size={12} color="#aaa" />{" "}
-                      {option.passengers}
-                    </Text>
+                  <Text style={styles.rideInfo}>
+                    {`${option.carType} `}
+                    <Feather name="user" size={12} color="#aaa" />
+                    {` ${option.passengers}`}
+                  </Text>
                   </View>
 
                   <View style={styles.ridePriceContainer}>

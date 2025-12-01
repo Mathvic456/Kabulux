@@ -1,3 +1,4 @@
+import { useUploadProfilePhoto } from "@/services/upload.service";
 import { Entypo, Feather, FontAwesome, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from "expo-image-picker";
@@ -15,10 +16,17 @@ import {
   TouchableWithoutFeedback,
   View
 } from "react-native";
+type HomeScreenProps = {
+  setScreen: (screen: string) => void;
+};
+
 type UploadPhotoOverlayProps = {
   isVisible: boolean;
   onClose: () => void;
-  onNext: () => void;
+  onUploadPress: () => void;
+  onSubmit: () => void;
+  imageUri: string | null;
+  loading: boolean;
 };
 
 type ComingSoonModalProps = {
@@ -29,7 +37,7 @@ type ComingSoonModalProps = {
 type PhotoChoiceModalProps = {
   isVisible: boolean;
   onClose: () => void;
-  onImageSelected: (uri: string) => void;
+  onImageSelected: (uri: string, fileSize?: number) => void;
 };
 
 type AdditionalInfoOverlayProps = {
@@ -43,8 +51,9 @@ type LoginSuccessModalProps = {
   onClose: () => void;
 };
 
-type HomeScreenProps = {
-  setScreen: (screen: string) => void;
+type DriverOnWayModalProps = {
+  isVisible: boolean;
+  onClose: () => void;
 };
 
 
@@ -160,124 +169,117 @@ const AreaFadaOverlay = ({ visible, onClose }: { visible: boolean; onClose: () =
 };
 
 // Overlay Component for Photo Upload
-const UploadPhotoOverlay = ({ isVisible, onClose, onNext }: UploadPhotoOverlayProps) => {
+const UploadPhotoOverlay = ({
+  isVisible,
+  onClose,
+  onUploadPress,
+  onSubmit,
+  imageUri,
+  loading
+}: UploadPhotoOverlayProps) => {
   if (!isVisible) return null;
 
   return (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={isVisible}
-      onRequestClose={onClose}
-    >
+    <Modal animationType="slide" transparent visible={isVisible} onRequestClose={onClose}>
       <View style={styles.overlayContainer}>
         <View style={styles.overlayContent}>
+
+          {/* Close */}
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Entypo name="cross" size={24} color="#fff" />
           </TouchableOpacity>
+
           <Text style={styles.overlayTitle}>Upload A Photo</Text>
           <Text style={styles.overlaySubtitle}>upload a profile photo for verification</Text>
+
+          {/* If image selected, show preview */}
           <View style={styles.uploadIconContainer}>
-            <Feather name="image" size={80} color="#f7b731" />
+            {imageUri ? (
+              <Image
+                source={{ uri: imageUri }}
+                style={{ width: 120, height: 120, borderRadius: 60 }}
+              />
+            ) : (
+              <Feather name="image" size={80} color="#f7b731" />
+            )}
           </View>
-          <TouchableOpacity style={styles.uploadButton} onPress={onNext}>
-            <Text style={styles.uploadButtonText}>Upload</Text>
+
+          {/* Upload Button */}
+          <TouchableOpacity style={styles.uploadButton} onPress={onUploadPress}>
+            <Text style={styles.uploadButtonText}>
+              {imageUri ? "Change Photo" : "Upload"}
+            </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.skipButton} onPress={onClose}>
-            <Text style={styles.skipButtonText}>Skip</Text>
-          </TouchableOpacity>
+
+          {/* Submit button appears **only if image exists** */}
+          {imageUri && (
+            <TouchableOpacity style={styles.submitButton} onPress={onSubmit} disabled={loading}>
+              <Text style={styles.submitText}>{loading ? "Uploading..." : "Submit"}</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </Modal>
   );
 };
 
+
 const PhotoChoiceModal = ({ isVisible, onClose, onImageSelected }: PhotoChoiceModalProps) => {
   if (!isVisible) return null;
 
   const pickImage = async () => {
-  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (!permission.granted) {
-    alert("Media library permission is required!");
-    return;
-  }
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) return alert("Permission required");
 
-  const result = await ImagePicker.launchImageLibraryAsync({
-    allowsEditing: true,
-    aspect: [1, 1],
-    quality: 1,
-  });
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
 
-  if (result.canceled) {
-    console.log("User cancelled picking image");
-    return;
-  }
-
-  if (result.assets[0]) {
-    onImageSelected(result.assets[0].uri);
-    onClose();
-  }
-}
+    if (!result.canceled) {
+      const asset = result.assets[0];
+      onImageSelected(asset.uri, asset.fileSize);
+      // Optionally set size if available
+      if (asset.fileSize) {
+        // You'll need to pass this back - see below
+      }
+    }
+  };
 
   const takePhoto = async () => {
-    try {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert("Permission Required", "Permission to access camera is required!");
-        return;
-      }
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") return alert("Camera permission required");
 
-      const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: false,
-        quality: 1,
-      });
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: false,
+      quality: 1,
+    });
 
-      if (!result.canceled && result.assets[0]) {
-        onImageSelected(result.assets[0].uri);
-        onClose();
-      }
-    } catch (error) {
-      console.error("Error taking photo:", error);
-      Alert.alert("Error", "Failed to take photo. Please try again.");
+    if (!result.canceled) {
+      const asset = result.assets[0];
+      onImageSelected(asset.uri, asset.fileSize);
     }
   };
 
   return (
-    <Modal
-      animationType="fade"
-      transparent={true}
-      visible={isVisible}
-      onRequestClose={onClose}
-    >
-      {/* Overlay */}
+    <Modal animationType="fade" transparent visible={isVisible} onRequestClose={onClose}>
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.overlay}>
-          {/* Bottom sheet container */}
           <TouchableWithoutFeedback>
             <View style={styles.bottomSheet}>
               <Text style={styles.title}>Select Photo</Text>
 
-              <TouchableOpacity
-                style={styles.button}
-                onPress={takePhoto}
-              >
+              <TouchableOpacity style={styles.button} onPress={takePhoto}>
                 <Text style={styles.buttonText}>Take a photo</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.button}
-                onPress={pickImage}
-              >
+              <TouchableOpacity style={styles.button} onPress={pickImage}>
                 <Text style={styles.buttonText}>Choose from gallery</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.button, styles.cancelButton]}
-                onPress={onClose}
-              >
-                <Text style={[styles.buttonText, { color: "#fff" }]}>
-                  Cancel
-                </Text>
+              <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={onClose}>
+                <Text style={[styles.buttonText, { color: "#fff" }]}>Cancel</Text>
               </TouchableOpacity>
             </View>
           </TouchableWithoutFeedback>
@@ -287,121 +289,121 @@ const PhotoChoiceModal = ({ isVisible, onClose, onImageSelected }: PhotoChoiceMo
   );
 };
 
-// New Overlay Component for Additional Information
-const AdditionalInfoOverlay = ({ isVisible, onClose, profileImage }: AdditionalInfoOverlayProps) => {
-  if (!isVisible) return null;
 
-  const notificationOptions = ['Push Notifications', 'Email', 'SMS'];
-  const paymentOptions = ['Credit Card', 'Bank Transfer', 'Mobile Wallet'];
+// const AdditionalInfoOverlay = ({ isVisible, onClose, profileImage }: AdditionalInfoOverlayProps) => {
+//   if (!isVisible) return null;
 
-  const [notificationPreference, setNotificationPreference] = useState<string>("Notification Preference");
-  const [preferablePayment, setPreferablePayment] = useState<string>("Preferable Payment");
-  const [addressBook, setAddressBook] = useState<string>("");
-  const [emergencyContact, setEmergencyContact] = useState<string>("");
+//   const notificationOptions = ['Push Notifications', 'Email', 'SMS'];
+//   const paymentOptions = ['Credit Card', 'Bank Transfer', 'Mobile Wallet'];
 
-  const [showNotificationDropdown, setShowNotificationDropdown] = useState<boolean>(false);
-  const [showPaymentDropdown, setShowPaymentDropdown] = useState<boolean>(false);
+//   const [notificationPreference, setNotificationPreference] = useState<string>("Notification Preference");
+//   const [preferablePayment, setPreferablePayment] = useState<string>("Preferable Payment");
+//   const [addressBook, setAddressBook] = useState<string>("");
+//   const [emergencyContact, setEmergencyContact] = useState<string>("");
 
-  const handleNext = () => {
-    // Validate and save the additional info
-    console.log({
-      addressBook,
-      emergencyContact,
-      notificationPreference,
-      preferablePayment,
-      profileImage,
-    });
-    onClose();
-  };
+//   const [showNotificationDropdown, setShowNotificationDropdown] = useState<boolean>(false);
+//   const [showPaymentDropdown, setShowPaymentDropdown] = useState<boolean>(false);
 
-  return (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={isVisible}
-      onRequestClose={onClose}
-    >
-      <View style={styles.overlayContainer}>
-        <ScrollView 
-          style={styles.overlayScrollView}
-          contentContainerStyle={styles.overlayScrollContent}
-        >
-          <View style={styles.overlayContent}>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Entypo name="cross" size={28} color="#fff" />
-            </TouchableOpacity>
+//   const handleNext = () => {
+//     // Validate and save the additional info
+//     console.log({
+//       addressBook,
+//       emergencyContact,
+//       notificationPreference,
+//       preferablePayment,
+//       profileImage,
+//     });
+//     onClose();
+//   };
 
-            {profileImage && (
-            <Image source={{ uri: profileImage }} style={styles.profilePreview} />
-          )}
+//   return (
+//     <Modal
+//       animationType="slide"
+//       transparent={true}
+//       visible={isVisible}
+//       onRequestClose={onClose}
+//     >
+//       <View style={styles.overlayContainer}>
+//         <ScrollView 
+//           style={styles.overlayScrollView}
+//           contentContainerStyle={styles.overlayScrollContent}
+//         >
+//           <View style={styles.overlayContent}>
+//             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+//               <Entypo name="cross" size={28} color="#fff" />
+//             </TouchableOpacity>
 
-            <Text style={styles.overlayTitle}>Additional Information</Text>
-            <Text style={styles.overlaySubtitle}>
-              Fill the details to get more information about you
-            </Text>
+//             {profileImage && (
+//             <Image source={{ uri: profileImage }} style={styles.profilePreview} />
+//           )}
 
-            {/* Address Book */}
-            <TextInput
-              style={styles.inputField}
-              placeholder="Address Book"
-              placeholderTextColor="#aaa"
-              value={addressBook}
-              onChangeText={setAddressBook}
-            />
+//             <Text style={styles.overlayTitle}>Additional Information</Text>
+//             <Text style={styles.overlaySubtitle}>
+//               Fill the details to get more information about you
+//             </Text>
 
-            {/* Emergency Contact Info */}
-            <TextInput
-              style={styles.inputField}
-              placeholder="Emergency Contact Info"
-              placeholderTextColor="#aaa"
-              value={emergencyContact}
-              onChangeText={setEmergencyContact}
-              keyboardType="phone-pad"
-            />
+//             {/* Address Book */}
+//             <TextInput
+//               style={styles.inputField}
+//               placeholder="Address Book"
+//               placeholderTextColor="#aaa"
+//               value={addressBook}
+//               onChangeText={setAddressBook}
+//             />
 
-            {/* Notification Preference */}
-            <TouchableOpacity
-              style={styles.inputField}
-              onPress={() => setShowNotificationDropdown(!showNotificationDropdown)}
-            >
-              <Text style={styles.dropdownText}>
-                {notificationPreference}
-              </Text>
-              <Entypo name="chevron-down" size={18} color="#aaa" />
-            </TouchableOpacity>
+//             {/* Emergency Contact Info */}
+//             <TextInput
+//               style={styles.inputField}
+//               placeholder="Emergency Contact Info"
+//               placeholderTextColor="#aaa"
+//               value={emergencyContact}
+//               onChangeText={setEmergencyContact}
+//               keyboardType="phone-pad"
+//             />
 
-            {/* Preferable Payment */}
-            <TouchableOpacity
-              style={styles.inputField}
-              onPress={() => setShowPaymentDropdown(!showPaymentDropdown)}
-            >
-              <Text style={styles.dropdownText}>
-                {preferablePayment}
-              </Text>
-              <Entypo name="chevron-down" size={18} color="#aaa" />
-            </TouchableOpacity>
+//             {/* Notification Preference */}
+//             <TouchableOpacity
+//               style={styles.inputField}
+//               onPress={() => setShowNotificationDropdown(!showNotificationDropdown)}
+//             >
+//               <Text style={styles.dropdownText}>
+//                 {notificationPreference}
+//               </Text>
+//               <Entypo name="chevron-down" size={18} color="#aaa" />
+//             </TouchableOpacity>
 
-            {/* Biometrics */}
-            <TouchableOpacity style={styles.biometricsToggle}>
-              <Entypo name="fingerprint" size={36} color="#FEB914" />
-              <Text style={styles.biometricsLabel}>Enable Biometrics</Text>
-            </TouchableOpacity>
+//             {/* Preferable Payment */}
+//             <TouchableOpacity
+//               style={styles.inputField}
+//               onPress={() => setShowPaymentDropdown(!showPaymentDropdown)}
+//             >
+//               <Text style={styles.dropdownText}>
+//                 {preferablePayment}
+//               </Text>
+//               <Entypo name="chevron-down" size={18} color="#aaa" />
+//             </TouchableOpacity>
 
-            {/* Buttons */}
-            <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-              <Text style={styles.nextButtonText}>Next</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.skipButton} onPress={onClose}>
-              <Text style={styles.skipButtonText}>Skip</Text>
-            </TouchableOpacity>
-          </View>
+//             {/* Biometrics */}
+//             <TouchableOpacity style={styles.biometricsToggle}>
+//               <Entypo name="fingerprint" size={36} color="#FEB914" />
+//               <Text style={styles.biometricsLabel}>Enable Biometrics</Text>
+//             </TouchableOpacity>
+
+//             {/* Buttons */}
+//             <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+//               <Text style={styles.nextButtonText}>Next</Text>
+//             </TouchableOpacity>
+//             <TouchableOpacity style={styles.skipButton} onPress={onClose}>
+//               <Text style={styles.skipButtonText}>Skip</Text>
+//             </TouchableOpacity>
+//           </View>
           
           
-        </ScrollView>
-      </View>
-    </Modal>
-  );
-};
+//         </ScrollView>
+//       </View>
+//     </Modal>
+//   );
+// };
 
 // Login Success Modal Component
 const LoginSuccessModal = ({ isVisible, onClose }: LoginSuccessModalProps) => {
@@ -444,10 +446,7 @@ const LoginSuccessModal = ({ isVisible, onClose }: LoginSuccessModalProps) => {
 const DriverOnWayModal = ({ 
   isVisible, 
   onClose,
-}: { 
-  isVisible: boolean; 
-  onClose: () => void; 
-}) => {
+}: DriverOnWayModalProps) => {
   return (
     <Modal
       animationType="fade"
@@ -493,7 +492,42 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [showAreaFadaOverlay, setShowAreaFadaOverlay] = useState<boolean>(false);
   
-const [showDriverOnWayModal, setShowDriverOnWayModal] = useState<boolean>(false);
+  const [showDriverOnWayModal, setShowDriverOnWayModal] = useState<boolean>(false);
+  const [showUploadOverlay, setShowUploadOverlay] = useState(false);
+  const [showPickerModal, setShowPickerModal] = useState(false);
+  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [imageSize, setImageSize] = useState<number>(0);
+  const uploadMutation = useUploadProfilePhoto();
+
+  const uploadPhotoToServer = async () => {
+    if (!imageUri) return;
+
+    try {
+      const formData = new FormData();
+      formData.append("file", {
+        uri: imageUri,
+        name: "profile.jpg",
+        type: "image/jpeg",
+        size: imageSize,
+      } as any);
+
+      await uploadMutation.mutateAsync(formData, {
+        onSuccess: (res) => {
+          Alert.alert("Uploaded!", "Your image was uploaded successfully.");
+          console.log("UPLOAD RESULT", res.data);
+          setImageUri(null);
+          setImageSize(0);
+          setShowUploadOverlay(false);
+        },
+        onError: (error: any) => {
+          Alert.alert("Error", error?.response?.data?.message || "Failed to upload image");
+        },
+      });
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Error", "Failed to upload image");
+    }
+  };
 
  // const { data: notifications, refetch: refetchNotifications } = useNotifications();
 
@@ -512,17 +546,15 @@ const [showDriverOnWayModal, setShowDriverOnWayModal] = useState<boolean>(false)
 
 
   useEffect(() => {
-    const afterMount = async() => {
+    const afterMount = async () => {
       const token = await AsyncStorage.getItem("token");
       const Rtoken = await AsyncStorage.getItem("refreshToken");
       console.log(`Access token: ${token} Refresh Token: ${Rtoken}`);
       checkLoginSuccessShown();
-    }
+      // Show upload photo overlay when user enters home screen
+      setShowUploadOverlay(true);
+    };
     afterMount();
-    
-   //AsyncStorage.removeItem("token")
-   //AsyncStorage.removeItem("refreshToken")
-    
   }, []);
 
   const checkLoginSuccessShown = async () => {
@@ -547,8 +579,12 @@ const [showDriverOnWayModal, setShowDriverOnWayModal] = useState<boolean>(false)
     setShowPhotoChoiceModal(true);
   };
 
-  const handleImageSelected = (uri: string) => {
+  const handleImageSelected = (uri: string, fileSize?: number) => {
     setUploadedImage(uri);
+    setImageUri(uri);
+    if (fileSize) {
+      setImageSize(fileSize);
+    }
     setShowPhotoChoiceModal(false);
     setShowAdditionalInfoOverlay(true);
   };
@@ -736,23 +772,25 @@ const [showDriverOnWayModal, setShowDriverOnWayModal] = useState<boolean>(false)
 
       {/* Overlays and Modals */}
       <UploadPhotoOverlay
-        isVisible={showPhotoOverlay}
-        onClose={() => setShowPhotoOverlay(false)}
-        onNext={handleNextFromPhoto}
+        isVisible={showUploadOverlay}
+        onClose={() => setShowUploadOverlay(false)}
+        onUploadPress={() => setShowPickerModal(true)}
+        imageUri={imageUri}
+        onSubmit={uploadPhotoToServer}
+        loading={uploadMutation.isPending}
       />
 
       <PhotoChoiceModal
-        isVisible={showPhotoChoiceModal}
-        onClose={() => setShowPhotoChoiceModal(false)}
-        onImageSelected={handleImageSelected}
+        isVisible={showPickerModal}
+        onClose={() => setShowPickerModal(false)}
+        onImageSelected={(uri: string, fileSize?: number) => {
+          setImageUri(uri);
+          if (fileSize) {
+            setImageSize(fileSize);
+          }
+          setShowPickerModal(false);
+        }}
       />
-
-    <AdditionalInfoOverlay
-      key={uploadedImage} // forces re-render when image changes
-      isVisible={showAdditionalInfoOverlay}
-      onClose={() => setShowAdditionalInfoOverlay(false)}
-      profileImage={uploadedImage}
-    />
 
       <LoginSuccessModal
         isVisible={showLoginSuccessModal}
@@ -1130,6 +1168,20 @@ const styles = StyleSheet.create({
   },
   uploadButtonText: {
     color: '#000',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  submitButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 15,
+    paddingHorizontal: 80,
+    borderRadius: 10,
+    marginBottom: 10,
+    width: '100%',
+    alignItems: 'center',
+  },
+  submitText: {
+    color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
   },

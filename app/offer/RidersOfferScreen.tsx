@@ -138,7 +138,13 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
           });
         }
 
-        const eventType = msg.type || msg.event;
+        const eventType = msg.event;
+
+        if (eventType === "ride_accepted") {
+          setAcceptedRide(msg.data || msg.ride_id);
+          setAcceptedModalVisible(true);
+        }
+        
 
         if (eventType === "accept_ride_success") {
           setAcceptedRide(msg.data || msg.ride_id);
@@ -169,7 +175,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     });
   }, []);
 
-  const sendNegotiation = useCallback(async (offerId: string, negotiated_price: number) => {
+  const sendNegotiation = useCallback(async (offerId: string, rideId: string, negotiated_price: number) => {
     const sock = wsRef.current;
     if (!sock || sock.readyState !== WebSocket.OPEN) {
       Alert.alert("Connection error", "WebSocket not connected. Please try again.");
@@ -190,15 +196,15 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
       const payload = {
         type: isIncrement ? "negotiate_increment" : "negotiate_decrement",
         data: {
-          ride_request_view_id: offerId,
+          ride_id: rideId,
           negotiated_price: negotiated_price,
+          ride_request_view_id: offerId,
         },
       };
 
       console.log("📡 [RIDER] Sending negotiation:", payload);
       sock.send(JSON.stringify(payload));
 
-      // Remove card immediately
       setOffers(prev => {
         const updated = { ...prev };
         delete updated[offerId];
@@ -384,7 +390,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
         <View style={styles.actionsSection}>
           <TouchableOpacity
             style={[styles.primaryButton, busy && styles.disabledButton]}
-            onPress={() => sendNegotiation(item.id, currentPrice)}
+            onPress={() => sendNegotiation(item.id, item.ride_request_id, currentPrice)}
             disabled={busy}
           >
             {busy ? (

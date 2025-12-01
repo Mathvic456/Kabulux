@@ -139,13 +139,20 @@ export default function PickUpScreen({ setScreen, goBack }: {
   };
 
   const handleManualConfirm = () => {
+    console.log("🔍 handleManualConfirm called");
+    console.log("📍 userLocation:", userLocation);
+    console.log("📝 pickup text:", pickup);
+    
     if (userLocation) {
       const finalLocation: UserLocation = {
         ...userLocation,
         address: pickup || userLocation.address || "Unnamed Location",
       };
+      console.log("✅ Final location prepared:", finalLocation);
+      console.log("🚀 Calling setScreen with 'planRide'");
       setScreen("planRide", finalLocation);
     } else {
+      console.log("❌ No userLocation set");
       Alert.alert("No location", "Please pick a location or use your current one.");
     }
   };

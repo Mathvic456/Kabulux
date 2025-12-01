@@ -17,15 +17,14 @@ type DynamicPayStackWebViewScreenProps = {
 
 const DynamicPayStackWebViewScreen = ({ goBack }: DynamicPayStackWebViewScreenProps) => {
   const [showWebView, setShowWebView] = useState(false);
-  const [amount, setAmount] = useState('');s
+  const [amount, setAmount] = useState('');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Your actual Paystack public key
-  const PUBLIC_KEY = 'pk_test_2706f40d3a698e9e5426e174f24df5714340d668';
+  
+  const PUBLIC_KEY = 'pk_test_2706f40d3a698e9e5426\\\e174f24df5714340d668';
 
   const handleAddFunds = () => {
-    // Validate inputs
     if (!amount || isNaN(amount) || Number(amount) < 100) {
       Alert.alert('Invalid Amount', 'Please enter a valid amount (minimum: ₦100)');
       return;

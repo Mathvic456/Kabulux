@@ -5,14 +5,15 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import {
-  Linking,
   ScrollView,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 
-const WalletScreen = ({ setScreen }: any) => {
+const WalletScreen = ({ setScreen } :
+  {setScreen: (screen: string, checkoutUrl?: string) => void}
+) => {
   const transactions = [
     {
       id: 1,
@@ -42,7 +43,7 @@ const WalletScreen = ({ setScreen }: any) => {
         onSuccess: (res) => {
           const checkoutUrl = res.data?.data?.authorization_url;
           if (checkoutUrl) {
-            Linking.openURL(checkoutUrl);
+            setScreen("paystack", checkoutUrl)
           }
         },
       }
@@ -110,7 +111,7 @@ const WalletScreen = ({ setScreen }: any) => {
                 paddingHorizontal: 25,
                 borderRadius: 30,
               }}
-              onPress={handleFundWallet} // 👈 navigate to AddFundsScreen
+              onPress={handleFundWallet}
             >
               <Ionicons name="add" size={18} color="#000" />
               <Text

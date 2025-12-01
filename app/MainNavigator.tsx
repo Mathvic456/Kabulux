@@ -125,6 +125,7 @@ export default function MainNavigator() {
   const [pickupLocationData, setPickupLocationData] = useState<any>(null);
   const [bookingData, setBookingData] = useState<any>(null);
   const [rideData, setRideData] = useState<any>(null);
+  const [url, setUrl] = useState("");
 
   const [registeredEmail, setRegisteredEmail] = useState("");
   const [ forgotPasswordEmail, setForgotPasswordEmail] = useState("")
@@ -145,16 +146,21 @@ export default function MainNavigator() {
   }, []);
 
   const handleSetScreen = (newScreen: Screen, params?: any) => {
-    
     if (newScreen === "planRide" && params) {
+      console.log("📍 Setting pickup location data:", params);
       setPickupLocationData(params);
     }
     if (newScreen === "bookingScreen" && params) {
+      console.log("📅 Setting booking data:", params);
       setBookingData(params);
     }
     if (newScreen === "standardScreen" && params) {
+      console.log("🚗 Setting ride data:", params);
       setRideData(params);
     }
+    
+    // Actually set the screen
+    console.log(`🔄 Updating screen state to: ${newScreen}`);
     setScreen(newScreen);
   };
 
@@ -445,8 +451,13 @@ export default function MainNavigator() {
     case "wallet":
       return (
         <WalletScreen
-          setScreen={setScreen}
+          setScreen={handleSetScreen}
         />);
+
+ /*   case "paystack":
+      return <PaystackWebView 
+        setScreen={setScreen}
+      />*/
 
     case "loyalty":
       return (
