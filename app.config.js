@@ -1,14 +1,14 @@
-import 'dotenv/config';
+import "dotenv/config";
 
 export default {
   expo: {
-    name: 'Kablux',
-    slug: 'kablux',
-    version: '1.0.0',
-    orientation: 'portrait',
-    icon: './assets/images/log.png',
-    scheme: 'kabulux',
-    userInterfaceStyle: 'automatic',
+    name: "Kablux",
+    slug: "kablux",
+    version: "1.0.0",
+    orientation: "portrait",
+    icon: "./assets/images/log.png",
+    scheme: "kabulux",
+    userInterfaceStyle: "automatic",
     newArchEnabled: true,
 
     ios: {
@@ -20,11 +20,11 @@ export default {
 
     android: {
       adaptiveIcon: {
-        foregroundImage: './assets/images/adaptive-icon.png',
-        backgroundColor: '#ffffff',
+        foregroundImage: "./assets/images/adaptive-icon.png",
+        backgroundColor: "#ffffff",
       },
       edgeToEdgeEnabled: true,
-      package: 'com.crashingout.kablux',
+      package: "com.crashingout.kablux",
       config: {
         googleMaps: {
           apiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
@@ -33,23 +33,23 @@ export default {
     },
 
     web: {
-      bundler: 'metro',
-      output: 'static',
-      favicon: './assets/images/favicon.png',
+      bundler: "metro",
+      output: "static",
+      favicon: "./assets/images/favicon.png",
     },
 
     plugins: [
-      'expo-router',
+      "expo-router",
       [
-        'expo-splash-screen',
+        "expo-splash-screen",
         {
-          image: './assets/images/splash-icon.png',
+          image: "./assets/images/splash-icon.png",
           imageWidth: 200,
-          resizeMode: 'contain',
-          backgroundColor: '#ffffff',
+          resizeMode: "contain",
+          backgroundColor: "#ffffff",
         },
       ],
-      'expo-web-browser',
+      "expo-web-browser",
     ],
 
     experiments: {
@@ -58,14 +58,15 @@ export default {
 
     extra: {
       router: {},
-      "eas": {
-        "projectId": "4781a8b8-1544-4b29-8400-9e0565a2e78f"
+      eas: {
+        projectId: "4781a8b8-1544-4b29-8400-9e0565a2e78f",
       },
       googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
+      googleAuthClientId: process.env.EXPO_PUBLIC_GOOGLE_AUTH_CLIENT_ID,
       apiUrl: process.env.EXPO_PUBLIC_API_URL,
       wssUrl: process.env.EXPO_PUBLIC_WSS_URL,
     },
 
-    owner: 'crashingout',
+    owner: "crashingout",
   },
 };

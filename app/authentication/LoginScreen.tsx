@@ -1,4 +1,5 @@
 import CustomButton from "@/components/ui/CustomButton";
+import { useGoogleAuth } from "@/constants/GoogleAuth";
 import { useAuth } from "@/context/AuthContext";
 import { useLoginEndPoint } from "@/services/authentication.service";
 import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
@@ -35,6 +36,7 @@ export default function LoginScreen({
   });
 
   const { setTokens } = useAuth();
+  const { signInWithGoogle, loading } = useGoogleAuth();
 
   const validateForm = () => {
     let valid = true;
@@ -217,6 +219,12 @@ export default function LoginScreen({
             <Text style={styles.dividerText}>or</Text>
             <View style={styles.divider} />
           </View>
+
+          <TouchableOpacity 
+          onPress={signInWithGoogle}
+          style={styles.googleBtn}>
+              <Text>Sign In with Google</Text>
+          </TouchableOpacity>
 
           {/* Sign Up */}
           <TouchableOpacity onPress={goRegister} disabled={isPending}>

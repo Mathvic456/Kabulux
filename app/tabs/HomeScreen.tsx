@@ -804,38 +804,34 @@ const uploadPhotoToServer = async () => {
     setShowLoginSuccessModal(false);
   };
 
-  const handleAdditionalInfoSubmit = (ridePreference: string, securityPreference: string) => {
-    console.log("\n🎯 [AdditionalInfo] User submitted preferences");
-    console.log("🚗 Ride Preference:", ridePreference);
-    console.log("🔒 Security Preference:", securityPreference);
-    console.log("🖼️ Profile Image ID:", uploadedProfileImageId);
-    
-    const payload = {
-      profile_picture: uploadedProfileImageId,
-       ride_preference: { ride: ridePreference },
-      security_preference: { security: securityPreference },
-    };
-    
-    console.log("\n📦 [AdditionalInfo] Full payload being sent:");
-    console.log(JSON.stringify(payload, null, 2));
-    console.log("\n🚀 [AdditionalInfo] Patching to rider_profile/{userId} endpoint...\n");
-    
-    updateProfileMutation.mutate(
-      payload,
-      {
-        onSuccess: () => {
-          console.log("✅ [AdditionalInfo] Profile updated successfully");
-          setShowAdditionalInfoOverlay(false);
-          setUploadedProfileImageId(null);
-          setShowProfileUpdateSuccessModal(true);
-        },
-        onError: (error: any) => {
-          console.error("❌ [AdditionalInfo] Profile update failed:", error);
-          Alert.alert("Error", "Failed to update profile preferences");
-        },
-      }
-    );
+const handleAdditionalInfoSubmit = (ridePreference: string, securityPreference: string) => {
+  console.log("\n🎯 [AdditionalInfo] User submitted preferences");
+  console.log("🚗 Ride Preference:", ridePreference);
+  console.log("🔒 Security Preference:", securityPreference);
+  console.log("🖼️ Profile Image ID:", uploadedProfileImageId);
+  
+  const payload = {
+    profile_picture: uploadedProfileImageId,
+    ride_preference: ridePreference,  // Send as string, not { ride: ... }
+    security_preference: securityPreference,  // Send as string, not { security: ... }
   };
+  
+  console.log("\n📦 [AdditionalInfo] Full payload being sent:");
+  console.log(JSON.stringify(payload, null, 2));
+  
+  updateProfileMutation.mutate(payload, {
+    onSuccess: () => {
+      console.log("✅ [AdditionalInfo] Profile updated successfully");
+      setShowAdditionalInfoOverlay(false);
+      setUploadedProfileImageId(null);
+      setShowProfileUpdateSuccessModal(true);
+    },
+    onError: (error: any) => {
+      console.error("❌ [AdditionalInfo] Profile update failed:", error);
+      Alert.alert("Error", "Failed to update profile preferences");
+    },
+  });
+};
 
   const handleProfileUpdateSuccessClose = () => {
     setShowProfileUpdateSuccessModal(false);
