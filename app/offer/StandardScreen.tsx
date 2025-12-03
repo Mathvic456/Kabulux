@@ -301,7 +301,7 @@ export default function StandardScreen({ goBack, next, rideData }: StandardScree
             </View>
           ) : (
             <>
-              <Text style={styles.submitButtonText}>Send Offer</Text>
+              <Text style={styles.submitButtonText}>Find Drivers</Text>
               <Feather name="send" size={20} color="white" style={{ marginLeft: 8 }} />
             </>
           )}

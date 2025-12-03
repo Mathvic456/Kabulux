@@ -1,9 +1,12 @@
+import { useProfile } from "@/services/profile.service";
+import { useUpdateRiderProfile } from "@/services/updateProfile.service";
 import { useUploadProfilePhoto } from "@/services/upload.service";
 import { Entypo, Feather, FontAwesome, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from "expo-image-picker";
 import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   Image,
@@ -14,7 +17,7 @@ import {
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View
+  View,
 } from "react-native";
 type HomeScreenProps = {
   setScreen: (screen: string) => void;
@@ -43,7 +46,9 @@ type PhotoChoiceModalProps = {
 type AdditionalInfoOverlayProps = {
   isVisible: boolean;
   onClose: () => void;
-  profileImage?: string | null;
+  profileImageId?: string | null;
+  onSubmit: (ridePreference: string, securityPreference: string) => void;
+  loading?: boolean;
 };
 
 type LoginSuccessModalProps = {
@@ -393,17 +398,165 @@ const PhotoChoiceModal = ({ isVisible, onClose, onImageSelected }: PhotoChoiceMo
 //             <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
 //               <Text style={styles.nextButtonText}>Next</Text>
 //             </TouchableOpacity>
-//             <TouchableOpacity style={styles.skipButton} onPress={onClose}>
-//               <Text style={styles.skipButtonText}>Skip</Text>
-//             </TouchableOpacity>
-//           </View>
-          
-          
-//         </ScrollView>
-//       </View>
-//     </Modal>
-//   );
 // };
+
+// Additional Info Overlay Component
+const AdditionalInfoOverlay = ({
+  isVisible,
+  onClose,
+  profileImageId,
+  onSubmit,
+  loading,
+}: AdditionalInfoOverlayProps) => {
+  const [ridePreference, setRidePreference] = useState<string>("Comfort");
+  const [securityPreference, setSecurityPreference] = useState<string>("Standard");
+  const [showRideDropdown, setShowRideDropdown] = useState<boolean>(false);
+  const [showSecurityDropdown, setShowSecurityDropdown] = useState<boolean>(false);
+
+  const rideOptions = ["Economy", "Comfort", "Premium"];
+  const securityOptions = ["Standard", "Verified Driver", "Premium Protection"];
+
+  const handleSubmit = () => {
+    console.log("\n🔍 [AdditionalInfoOverlay] Submit button pressed");
+    console.log("📝 Form Data:");
+    console.log("  - Ride Preference:", ridePreference);
+    console.log("  - Security Preference:", securityPreference);
+    
+    console.log("✅ [AdditionalInfoOverlay] Validation passed, calling onSubmit...");
+    onSubmit(ridePreference, securityPreference);
+  };
+
+  if (!isVisible) return null;
+
+  return (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isVisible}
+      onRequestClose={onClose}
+    >
+      <View style={styles.overlayContainer}>
+        <ScrollView
+          style={styles.overlayScrollView}
+          contentContainerStyle={styles.overlayScrollContent}
+        >
+          <View style={styles.overlayContent}>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <Entypo name="cross" size={28} color="#fff" />
+            </TouchableOpacity>
+
+            <Text style={styles.overlayTitle}>Preferences</Text>
+            <Text style={styles.overlaySubtitle}>
+              Choose your ride and security preferences
+            </Text>
+
+            {/* Ride Preference Dropdown */}
+            <TouchableOpacity
+              style={styles.inputField}
+              onPress={() => setShowRideDropdown(!showRideDropdown)}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={styles.dropdownLabel}>Ride Preference</Text>
+                <Text style={styles.dropdownText}>{ridePreference}</Text>
+              </View>
+              <Entypo
+                name={showRideDropdown ? "chevron-up" : "chevron-down"}
+                size={18}
+                color="#FEB914"
+              />
+            </TouchableOpacity>
+
+            {showRideDropdown && (
+              <View style={styles.dropdownMenu}>
+                {rideOptions.map((option) => (
+                  <TouchableOpacity
+                    key={option}
+                    style={[
+                      styles.dropdownMenuItem,
+                      ridePreference === option && styles.dropdownMenuItemSelected,
+                    ]}
+                    onPress={() => {
+                      setRidePreference(option);
+                      setShowRideDropdown(false);
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.dropdownMenuText,
+                        ridePreference === option && styles.dropdownMenuTextSelected,
+                      ]}
+                    >
+                      {option}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
+            {/* Security Preference Dropdown */}
+            <TouchableOpacity
+              style={styles.inputField}
+              onPress={() => setShowSecurityDropdown(!showSecurityDropdown)}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={styles.dropdownLabel}>Security Preference</Text>
+                <Text style={styles.dropdownText}>{securityPreference}</Text>
+              </View>
+              <Entypo
+                name={showSecurityDropdown ? "chevron-up" : "chevron-down"}
+                size={18}
+                color="#FEB914"
+              />
+            </TouchableOpacity>
+
+            {showSecurityDropdown && (
+              <View style={styles.dropdownMenu}>
+                {securityOptions.map((option) => (
+                  <TouchableOpacity
+                    key={option}
+                    style={[
+                      styles.dropdownMenuItem,
+                      securityPreference === option && styles.dropdownMenuItemSelected,
+                    ]}
+                    onPress={() => {
+                      setSecurityPreference(option);
+                      setShowSecurityDropdown(false);
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.dropdownMenuText,
+                        securityPreference === option && styles.dropdownMenuTextSelected,
+                      ]}
+                    >
+                      {option}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
+            {/* Buttons */}
+            <TouchableOpacity
+              style={styles.nextButton}
+              onPress={handleSubmit}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#000" />
+              ) : (
+                <Text style={styles.nextButtonText}>Submit</Text>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.skipButton} onPress={onClose}>
+              <Text style={styles.skipButtonText}>Skip</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+};
 
 // Login Success Modal Component
 const LoginSuccessModal = ({ isVisible, onClose }: LoginSuccessModalProps) => {
@@ -482,80 +635,138 @@ const DriverOnWayModal = ({
   );
 };
 
+// Profile Update Success Modal Component
+const ProfileUpdateSuccessModal = ({ isVisible, onClose }: LoginSuccessModalProps) => {
+  return (
+    <Modal
+      animationType="fade"
+      transparent={true}
+      visible={isVisible}
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.successModalContent}>
+          <View style={styles.successIconContainer}>
+            <FontAwesome name="check-circle" size={60} color="#4CAF50" />
+          </View>
+          
+          <Text style={styles.successModalTitle}>Profile Updated! 🎉</Text>
+          
+          <Text style={styles.successModalMessage}>
+            Your preferences have been saved successfully.
+          </Text>
+          
+          <Text style={styles.successModalSubtext}>
+            You're all set to start riding!
+          </Text>
+
+          <TouchableOpacity 
+            style={styles.successModalButton}
+            onPress={onClose}
+          >
+            <Text style={styles.successModalButtonText}>Let's Go!</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
 export default function HomeScreen({ setScreen }: HomeScreenProps) {
 
   const [showComingSoonModal, setShowComingSoonModal] = useState<boolean>(false);
-  const [showPhotoOverlay, setShowPhotoOverlay] = useState<boolean>(true);
+  const [showPhotoOverlay, setShowPhotoOverlay] = useState<boolean>(false);
   const [showAdditionalInfoOverlay, setShowAdditionalInfoOverlay] = useState<boolean>(false);
   const [showLoginSuccessModal, setShowLoginSuccessModal] = useState<boolean>(false);
   const [showPhotoChoiceModal, setShowPhotoChoiceModal] = useState<boolean>(false);
+  const [showProfileUpdateSuccessModal, setShowProfileUpdateSuccessModal] = useState<boolean>(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [showAreaFadaOverlay, setShowAreaFadaOverlay] = useState<boolean>(false);
+  const [uploadedProfileImageId, setUploadedProfileImageId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   
   const [showDriverOnWayModal, setShowDriverOnWayModal] = useState<boolean>(false);
   const [showUploadOverlay, setShowUploadOverlay] = useState(false);
   const [showPickerModal, setShowPickerModal] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [imageSize, setImageSize] = useState<number>(0);
+  
   const uploadMutation = useUploadProfilePhoto();
+  const updateProfileMutation = useUpdateRiderProfile(userId || undefined);
+  const { data: profile, isLoading: profileLoading } = useProfile();
 
-  const uploadPhotoToServer = async () => {
-    if (!imageUri) return;
+const uploadPhotoToServer = async () => {
+  if (!imageUri) return;
 
-    try {
-      const formData = new FormData();
-      formData.append("file", {
-        uri: imageUri,
-        name: "profile.jpg",
-        type: "image/jpeg",
-        size: imageSize,
-      } as any);
+  try {
+    const formData = new FormData();
+    
+    formData.append("name", "profile_photo");
 
-      await uploadMutation.mutateAsync(formData, {
-        onSuccess: (res) => {
-          Alert.alert("Uploaded!", "Your image was uploaded successfully.");
-          console.log("UPLOAD RESULT", res.data);
+    const filename = imageUri.split('/').pop() || 'profile.jpg';
+    formData.append("files", {
+      uri: imageUri,
+      type: "image/jpeg",
+      name: filename,
+    } as any);
+
+    await uploadMutation.mutateAsync(formData, {
+      onSuccess: (res) => {
+        console.log("UPLOAD RESULT", res.data);
+        // Extract the file ID from the response (not the URL)
+        const fileId = res.data?.results?.[0]?.id;
+        const fileUrl = res.data?.results?.[0]?.file;
+        console.log("📸 Extracted file ID:", fileId);
+        console.log("📸 Extracted file URL:", fileUrl);
+        if (fileId) {
+          setUploadedProfileImageId(fileId);
           setImageUri(null);
           setImageSize(0);
           setShowUploadOverlay(false);
-        },
-        onError: (error: any) => {
-          Alert.alert("Error", error?.response?.data?.message || "Failed to upload image");
-        },
-      });
-    } catch (err) {
-      console.error(err);
-      Alert.alert("Error", "Failed to upload image");
-    }
-  };
-
- // const { data: notifications, refetch: refetchNotifications } = useNotifications();
-
-
- /* useEffect(() => {
-  const interval = setInterval(() => {
-    refetchNotifications();
-  }, 10000); // 10 seconds
-  console.log(notifications); 
-  return () => clearInterval(interval);
-  
-}, [refetchNotifications]);*/
-
-  // Check if login success modal has been shown before
-
+          // Show additional info modal instead of closing
+          setShowAdditionalInfoOverlay(true);
+        }
+      },
+      onError: (error: any) => {
+        console.log("Full error:", error.response?.data);
+        Alert.alert("Error", error?.response?.data?.message || "Failed to upload image");
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    Alert.alert("Error", "Failed to upload image");
+  }
+};
 
 
   useEffect(() => {
     const afterMount = async () => {
       const token = await AsyncStorage.getItem("token");
       const Rtoken = await AsyncStorage.getItem("refreshToken");
+      const storedUserId = await AsyncStorage.getItem("user_id");
+      
       console.log(`Access token: ${token} Refresh Token: ${Rtoken}`);
+      console.log(`User ID: ${storedUserId}`);
+      
+      if (storedUserId) {
+        setUserId(storedUserId);
+      }
+      
       checkLoginSuccessShown();
-      // Show upload photo overlay when user enters home screen
-      setShowUploadOverlay(true);
     };
     afterMount();
   }, []);
+
+  // Show upload modal only if profile picture is null
+  useEffect(() => {
+    if (profile && profile.profile_image === null) {
+      console.log("📸 No profile picture found, showing upload modal");
+      setShowUploadOverlay(true);
+    } else {
+      console.log("✅ Profile picture exists, hiding upload modal");
+      setShowUploadOverlay(false);
+    }
+  }, [profile]);
 
   const checkLoginSuccessShown = async () => {
     try {
@@ -593,6 +804,43 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
     setShowLoginSuccessModal(false);
   };
 
+  const handleAdditionalInfoSubmit = (ridePreference: string, securityPreference: string) => {
+    console.log("\n🎯 [AdditionalInfo] User submitted preferences");
+    console.log("🚗 Ride Preference:", ridePreference);
+    console.log("🔒 Security Preference:", securityPreference);
+    console.log("🖼️ Profile Image ID:", uploadedProfileImageId);
+    
+    const payload = {
+      profile_picture: uploadedProfileImageId,
+       ride_preference: { ride: ridePreference },
+      security_preference: { security: securityPreference },
+    };
+    
+    console.log("\n📦 [AdditionalInfo] Full payload being sent:");
+    console.log(JSON.stringify(payload, null, 2));
+    console.log("\n🚀 [AdditionalInfo] Patching to rider_profile/{userId} endpoint...\n");
+    
+    updateProfileMutation.mutate(
+      payload,
+      {
+        onSuccess: () => {
+          console.log("✅ [AdditionalInfo] Profile updated successfully");
+          setShowAdditionalInfoOverlay(false);
+          setUploadedProfileImageId(null);
+          setShowProfileUpdateSuccessModal(true);
+        },
+        onError: (error: any) => {
+          console.error("❌ [AdditionalInfo] Profile update failed:", error);
+          Alert.alert("Error", "Failed to update profile preferences");
+        },
+      }
+    );
+  };
+
+  const handleProfileUpdateSuccessClose = () => {
+    setShowProfileUpdateSuccessModal(false);
+  };
+
   const banners = [
     {
       id: "1",
@@ -622,11 +870,19 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
         />
 
         <TouchableOpacity onPress={() => setShowAreaFadaOverlay(true)}>
-          <Image
-            source={require("../../assets/images/Ava.png")}
-            resizeMode='contain'
-            style={{ width: 100, height: 40, marginLeft:'auto' }}
-          />
+          {profile?.profile_image ? (
+            <Image
+              source={{ uri: profile.profile_image }}
+              resizeMode='contain'
+              style={{ width: 40, height: 40, borderRadius: 20, marginLeft:'auto' }}
+            />
+          ) : (
+            <Image
+              source={require("../../assets/images/Ava.png")}
+              resizeMode='contain'
+              style={{ width: 100, height: 40, marginLeft:'auto' }}
+            />
+          )}
         </TouchableOpacity>
       </View>
 
@@ -792,6 +1048,14 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
         }}
       />
 
+      <AdditionalInfoOverlay
+        isVisible={showAdditionalInfoOverlay}
+        onClose={() => setShowAdditionalInfoOverlay(false)}
+        profileImageId={uploadedProfileImageId}
+        onSubmit={handleAdditionalInfoSubmit}
+        loading={updateProfileMutation.isPending}
+      />
+
       <LoginSuccessModal
         isVisible={showLoginSuccessModal}
         onClose={handleLoginSuccessClose}
@@ -803,9 +1067,14 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
         onClose={() => setShowAreaFadaOverlay(false)}
       />
       <DriverOnWayModal
-      isVisible={showDriverOnWayModal}
-      onClose={() => setShowDriverOnWayModal(false)}
-    />
+        isVisible={showDriverOnWayModal}
+        onClose={() => setShowDriverOnWayModal(false)}
+      />
+
+      <ProfileUpdateSuccessModal
+        isVisible={showProfileUpdateSuccessModal}
+        onClose={handleProfileUpdateSuccessClose}
+      />
       </ScrollView>
   );
 }
@@ -1516,5 +1785,35 @@ rideInProgressDot: {
   height: 10,
   borderRadius: 5,
   backgroundColor: '#FEB914',
+},
+dropdownLabel: {
+  color: "#aaa",
+  fontSize: 12,
+  marginBottom: 4,
+},
+dropdownMenu: {
+  backgroundColor: "#2a2a2a",
+  borderRadius: 8,
+  borderWidth: 1,
+  borderColor: "#333",
+  marginBottom: 16,
+  overflow: "hidden",
+},
+dropdownMenuItem: {
+  paddingVertical: 12,
+  paddingHorizontal: 15,
+  borderBottomWidth: 1,
+  borderBottomColor: "#333",
+},
+dropdownMenuItemSelected: {
+  backgroundColor: "#FEB914",
+},
+dropdownMenuText: {
+  color: "#fff",
+  fontSize: 14,
+},
+dropdownMenuTextSelected: {
+  color: "#000",
+  fontWeight: "600",
 },
 });

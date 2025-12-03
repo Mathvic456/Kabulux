@@ -1,11 +1,15 @@
 import {
   useFundWalletEndPoint,
   useGetMyBalance,
+  useGetMyTransactions,
 } from "@/services/funding.service";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useState } from "react";
 import {
+  ActivityIndicator,
+  Modal,
   ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View
@@ -14,31 +18,17 @@ import {
 const WalletScreen = ({ setScreen } :
   {setScreen: (screen: string, checkoutUrl?: string) => void}
 ) => {
-  const transactions = [
-    {
-      id: 1,
-      title: "Selldragons Hotel lekki",
-      date: "Oct 30 - 14:50",
-      amount: "₦26,000",
-    },
-    {
-      id: 2,
-      title: "Selldragons Hotel lekki",
-      date: "Oct 30 - 14:50",
-      amount: "₦26,000",
-    },
-    {
-      id: 3,
-      title: "Selldragons Hotel lekki",
-      date: "Oct 30 - 14:50",
-      amount: "₦26,000",
-    },
-  ];
+  const [showPaymentMethodsModal, setShowPaymentMethodsModal] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("card");
+  const [filter, setFilter] = useState<string>("all"); // "all", "today", "week", "month"
+  
   const fundWallet = useFundWalletEndPoint();
   const { data: balanceData, isLoading } = useGetMyBalance();
+  const { data: transactionsData, isLoading: transactionsLoading } = useGetMyTransactions();
+  
   const handleFundWallet = () => {
     fundWallet.mutate(
-      { amount: 20000, channel: "card" },
+      { amount: 20000, channel: selectedPaymentMethod },
       {
         onSuccess: (res) => {
           const checkoutUrl = res.data?.data?.authorization_url;
@@ -49,6 +39,68 @@ const WalletScreen = ({ setScreen } :
       }
     );
   };
+
+  const handlePaymentMethodSelect = (method: string) => {
+    setSelectedPaymentMethod(method);
+    setShowPaymentMethodsModal(false);
+  };
+
+  // Filter transactions based on selected filter
+  const getFilteredTransactions = () => {
+    if (!transactionsData?.results) return [];
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekAgo = new Date(today);
+    weekAgo.setDate(today.getDate() - 7);
+    const monthAgo = new Date(today);
+    monthAgo.setMonth(today.getMonth() - 1);
+
+    return transactionsData.results.filter(transaction => {
+      const transactionDate = new Date(transaction.date);
+      
+      switch(filter) {
+        case "today":
+          return transactionDate.getTime() === today.getTime();
+        case "week":
+          return transactionDate >= weekAgo;
+        case "month":
+          return transactionDate >= monthAgo;
+        default:
+          return true; // "all"
+      }
+    });
+  };
+
+  // Group transactions by month
+  const groupTransactionsByMonth = (transactions: any[]) => {
+    const grouped: {[key: string]: any[]} = {};
+    
+    transactions.forEach(transaction => {
+      const date = new Date(transaction.date);
+      const monthYear = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+      
+      if (!grouped[monthYear]) {
+        grouped[monthYear] = [];
+      }
+      grouped[monthYear].push(transaction);
+    });
+    
+    return grouped;
+  };
+
+  // Format date for display
+  const formatDisplayDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const month = date.toLocaleString('default', { month: 'short' });
+    const day = date.getDate();
+    const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    return `${month} ${day} - ${time}`;
+  };
+
+  const filteredTransactions = getFilteredTransactions();
+  const groupedTransactions = groupTransactionsByMonth(filteredTransactions);
+
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
@@ -169,6 +221,7 @@ const WalletScreen = ({ setScreen } :
               borderBottomWidth: 1,
               borderBottomColor: "#FEB91433",
             }}
+            onPress={() => setShowPaymentMethodsModal(true)}
           >
             <Text style={{ color: "#fff", flex: 1 }}>
               Manage Payment Methods
@@ -188,79 +241,238 @@ const WalletScreen = ({ setScreen } :
           </TouchableOpacity>
         </View>
 
-        {/* Transaction History */}
-        <Text
-          style={{
-            color: "#fff",
-            fontSize: 18,
-            fontWeight: "bold",
-            marginLeft: 20,
-            marginBottom: 10,
-          }}
-        >
-          Transaction History
-        </Text>
-
-        <View
-          style={{
-            backgroundColor: "#111",
-            marginHorizontal: 20,
-            borderRadius: 12,
-            padding: 15,
-            borderWidth: 1,
-            borderColor: "#FEB914",
-          }}
-        >
-          {/* Month Label */}
-          <View
+        {/* Transaction History Header with Filter */}
+        <View style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginHorizontal: 20,
+          marginBottom: 10,
+        }}>
+          <Text
             style={{
-              alignSelf: "flex-end",
-              backgroundColor: "#000",
-              paddingHorizontal: 10,
-              borderRadius: 8,
-              marginBottom: 10,
+              color: "#fff",
+              fontSize: 18,
+              fontWeight: "bold",
             }}
           >
-            <Text style={{ color: "#FEB914", fontWeight: "600" }}>October</Text>
-          </View>
+            Transaction History
+          </Text>
+          
+          <TouchableOpacity
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: "#111",
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              borderRadius: 20,
+              borderWidth: 1,
+              borderColor: "#FEB914",
+            }}
+            onPress={() => {
+              // Cycle through filters
+              const filters = ["all", "today", "week", "month"];
+              const currentIndex = filters.indexOf(filter);
+              const nextIndex = (currentIndex + 1) % filters.length;
+              setFilter(filters[nextIndex]);
+            }}
+          >
+            <Ionicons name="filter" size={16} color="#FEB914" />
+            <Text style={{
+              color: "#FEB914",
+              marginLeft: 6,
+              fontSize: 14,
+              fontWeight: "600",
+            }}>
+              {filter.charAt(0).toUpperCase() + filter.slice(1)}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-          {transactions.map((tx, index) => (
+        {/* Transaction History */}
+        {transactionsLoading ? (
+          <View
+            style={{
+              backgroundColor: "#111",
+              marginHorizontal: 20,
+              borderRadius: 12,
+              padding: 30,
+              borderWidth: 1,
+              borderColor: "#FEB914",
+              alignItems: "center",
+              marginBottom: 20,
+            }}
+          >
+            <ActivityIndicator size="large" color="#FEB914" />
+            <Text style={{ color: "#fff", fontSize: 14, marginTop: 10, textAlign: "center" }}>
+              Loading transactions...
+            </Text>
+          </View>
+        ) : Object.entries(groupedTransactions).length > 0 ? (
+          Object.entries(groupedTransactions).map(([monthYear, transactions]) => (
             <View
-              key={tx.id}
+              key={monthYear}
               style={{
-                borderBottomWidth: index !== transactions.length - 1 ? 1 : 0,
-                borderBottomColor: "#FEB91433",
-                paddingVertical: 12,
+                backgroundColor: "#111",
+                marginHorizontal: 20,
+                borderRadius: 12,
+                padding: 15,
+                borderWidth: 1,
+                borderColor: "#FEB914",
+                marginBottom: 20,
               }}
             >
-              <Text style={{ color: "#fff", fontSize: 16, fontWeight: "500" }}>
-                {tx.title}
-              </Text>
+              {/* Month Label */}
               <View
                 style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  marginTop: 5,
+                  alignSelf: "flex-end",
+                  backgroundColor: "#000",
+                  paddingHorizontal: 10,
+                  borderRadius: 8,
+                  marginBottom: 10,
                 }}
               >
-                <Ionicons name="calendar-outline" size={14} color="#FEB914" />
-                <Text style={{ color: "#aaa", marginLeft: 6 }}>{tx.date}</Text>
+                <Text style={{ color: "#FEB914", fontWeight: "600" }}>{monthYear}</Text>
               </View>
-              <Text
-                style={{
-                  color: "#fff",
-                  fontSize: 16,
-                  fontWeight: "bold",
-                  marginTop: 5,
-                  textAlign: "right",
-                }}
-              >
-                {tx.amount}
-              </Text>
+
+              {transactions.map((tx, index) => (
+                <View
+                  key={tx.id}
+                  style={{
+                    borderBottomWidth: index !== transactions.length - 1 ? 1 : 0,
+                    borderBottomColor: "#FEB91433",
+                    paddingVertical: 12,
+                  }}
+                >
+                  <Text style={{ color: "#fff", fontSize: 16, fontWeight: "500" }}>
+                    {tx.description || tx.type}
+                  </Text>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      marginTop: 5,
+                    }}
+                  >
+                    <Ionicons name="calendar-outline" size={14} color="#FEB914" />
+                    <Text style={{ color: "#aaa", marginLeft: 6 }}>
+                      {formatDisplayDate(tx.date)}
+                    </Text>
+                  </View>
+                  <Text
+                    style={{
+                      color: tx.type === "credit" ? "#4CAF50" : "#fff",
+                      fontSize: 16,
+                      fontWeight: "bold",
+                      marginTop: 5,
+                      textAlign: "right",
+                    }}
+                  >
+                    {tx.type === "credit" ? "+" : "-"}₦{tx.amount.toLocaleString()}
+                  </Text>
+                </View>
+              ))}
             </View>
-          ))}
-        </View>
+          ))
+        ) : (
+          <View
+            style={{
+              backgroundColor: "#111",
+              marginHorizontal: 20,
+              borderRadius: 12,
+              padding: 30,
+              borderWidth: 1,
+              borderColor: "#FEB914",
+              alignItems: "center",
+              marginBottom: 20,
+            }}
+          >
+            <Ionicons name="receipt-outline" size={48} color="#FEB914" />
+            <Text style={{ color: "#fff", fontSize: 16, marginTop: 10, textAlign: "center" }}>
+              No transactions found for {filter} filter
+            </Text>
+          </View>
+        )}
       </ScrollView>
+
+      {/* Payment Methods Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showPaymentMethodsModal}
+        onRequestClose={() => setShowPaymentMethodsModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Payment Method</Text>
+              <TouchableOpacity onPress={() => setShowPaymentMethodsModal(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.paymentMethodsContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.paymentMethodItem,
+                  selectedPaymentMethod === "card" && styles.selectedPaymentMethod
+                ]}
+                onPress={() => handlePaymentMethodSelect("card")}
+              >
+                <View style={styles.paymentMethodLeft}>
+                  <Ionicons 
+                    name="card-outline" 
+                    size={24} 
+                    color={selectedPaymentMethod === "card" ? "#000" : "#FEB914"} 
+                  />
+                  <Text style={[
+                    styles.paymentMethodText,
+                    selectedPaymentMethod === "card" && styles.selectedPaymentMethodText
+                  ]}>
+                    Card
+                  </Text>
+                </View>
+                {selectedPaymentMethod === "card" && (
+                  <Ionicons name="checkmark-circle" size={24} color="#FEB914" />
+                )}
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[
+                  styles.paymentMethodItem,
+                  selectedPaymentMethod === "cash" && styles.selectedPaymentMethod
+                ]}
+                onPress={() => handlePaymentMethodSelect("cash")}
+              >
+                <View style={styles.paymentMethodLeft}>
+                  <Ionicons 
+                    name="cash-outline" 
+                    size={24} 
+                    color={selectedPaymentMethod === "cash" ? "#000" : "#FEB914"} 
+                  />
+                  <Text style={[
+                    styles.paymentMethodText,
+                    selectedPaymentMethod === "cash" && styles.selectedPaymentMethodText
+                  ]}>
+                    Cash
+                  </Text>
+                </View>
+                {selectedPaymentMethod === "cash" && (
+                  <Ionicons name="checkmark-circle" size={24} color="#FEB914" />
+                )}
+              </TouchableOpacity>
+            </View>
+            
+            <TouchableOpacity
+              style={styles.confirmButton}
+              onPress={() => setShowPaymentMethodsModal(false)}
+            >
+              <Text style={styles.confirmButtonText}>Confirm Selection</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Bottom Navigation */}
       <View
@@ -288,5 +500,75 @@ const WalletScreen = ({ setScreen } :
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "#111",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#FEB914",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 25,
+  },
+  modalTitle: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  paymentMethodsContainer: {
+    marginBottom: 25,
+  },
+  paymentMethodItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#222",
+    padding: 18,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  selectedPaymentMethod: {
+    backgroundColor: "#FEB914",
+    borderColor: "#FEB914",
+  },
+  paymentMethodLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  paymentMethodText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "500",
+    marginLeft: 15,
+  },
+  selectedPaymentMethodText: {
+    color: "#000",
+    fontWeight: "bold",
+  },
+  confirmButton: {
+    backgroundColor: "#FEB914",
+    paddingVertical: 16,
+    borderRadius: 30,
+    alignItems: "center",
+  },
+  confirmButtonText: {
+    color: "#000",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+});
 
 export default WalletScreen;

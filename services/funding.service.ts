@@ -3,7 +3,7 @@ import { api } from "./api";
 
 export type FundWalletPayload = {
   amount: number;
-  channel: "card";
+  channel: string;
 };
 
 export type PaystackInitResponse = {
@@ -144,3 +144,4 @@ export {
   useGetMyTransactions,
   useWithdrawFunds
 };
+

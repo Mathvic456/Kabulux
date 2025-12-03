@@ -123,9 +123,6 @@ const [passwordError, setPasswordError] = useState("");
         case "passkeys":
           message = "Passkeys set up successfully!";
           break;
-        case "google":
-          message = "Google account linked successfully!";
-          break;
         case "invite":
           message = "Invitations sent successfully!";
           break;
@@ -255,7 +252,7 @@ const [passwordError, setPasswordError] = useState("");
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.confirmButton]}
-                onPress={handleAction}
+                // onPress={handleAction}
                 disabled={loading}
               >
                 {loading ? (
@@ -267,36 +264,7 @@ const [passwordError, setPasswordError] = useState("");
             </View>
           </View>
         );
-      case "google":
-        return (
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Link Google Account</Text>
-            <Text style={styles.modalDescription}>
-              Linking your Google account allows you to sign in to KabLUX with
-              ease. We will not use your Google account for anything else
-              without your permission.
-            </Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={closeModal}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.confirmButton]}
-                onPress={handleAction}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="black" />
-                ) : (
-                  <Text style={styles.confirmButtonText}>Link Google</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        );
+     
       case "invite":
         return (
           <View style={styles.modalContent}>
@@ -378,21 +346,7 @@ const [passwordError, setPasswordError] = useState("");
           </TouchableOpacity>
 
           {/* Google */}
-          <TouchableOpacity
-            style={styles.infoItem}
-            onPress={() => openModal("google")}
-          >
-            <View style={styles.infoLeft}>
-              <Ionicons
-                name="logo-google"
-                size={22}
-                color="#FEB914"
-                style={styles.infoIcon}
-              />
-              <Text style={styles.infoText}>Link Google</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#FEB914" />
-          </TouchableOpacity>
+
         </View>
 
         {/* Note */}
@@ -404,14 +358,14 @@ const [passwordError, setPasswordError] = useState("");
       </ScrollView>
 
       {/* Fixed Bottom Button */}
-      <View style={styles.bottomButtonContainer}>
+      {/* <View style={styles.bottomButtonContainer}>
         <TouchableOpacity
           style={styles.inviteButton}
           onPress={() => openModal("invite")}
         >
           <Text style={styles.confirmButtonText}>Invite Friends</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
 
       {/* Custom Modal */}
       <Modal
@@ -431,7 +385,7 @@ const [passwordError, setPasswordError] = useState("");
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1E1E1E",
+    backgroundColor: "#000000",
   },
   header: {
     flexDirection: "row",

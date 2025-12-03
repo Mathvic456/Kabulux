@@ -333,7 +333,7 @@ export default function MainNavigator() {
     case "personalInfo":
       return (
         <PersonalInfoScreen
-          goBack={() => setScreen("settings")}
+          goBack={() => setScreen("profile")}
           next={() => setScreen("dashboard")}
         />
       );

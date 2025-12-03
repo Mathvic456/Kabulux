@@ -15,5 +15,9 @@ export type ProfileResponse = {
   is_active: boolean;
   role: string;
   referral_code: string;
-  phone_number: string
+  phone_number: string;
+  address?: string;
+  profile_image?: string | null;
+  ride_preference?: Record<string, any>;
+  security_preference?: Record<string, any>;
 };

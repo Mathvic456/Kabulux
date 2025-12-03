@@ -55,11 +55,11 @@ export default function SettingsScreen({ setScreen }) {
     {
       title: "Account",
       items: [
-        {
-          icon: "lock-closed-outline",
-          label: "Login & Security",
-          action: () => setScreen("loginAndSecurity"),
-        },
+        // {
+        //   icon: "lock-closed-outline",
+        //   label: "Login & Security",
+        //   action: () => setScreen("loginAndSecurity"),
+        // },
         {
           icon: "card-outline",
           label: "Payment Methods",

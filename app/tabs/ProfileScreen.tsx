@@ -26,12 +26,22 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
 
     const { data: profile, isLoading, isError, error } = useProfile();
 
-useEffect(() => {
-  if (isError && (error as AxiosError)?.response?.status === 401) {
-    console.log("⚠️ Profile 401 error detected");
-    setAuthExpired(true);
-  }
-}, [isError, error]);
+  useEffect(() => {
+    console.log("🔍 [ProfileScreen] Profile state changed:");
+    console.log("  - isLoading:", isLoading);
+    console.log("  - isError:", isError);
+    console.log("  - profile:", profile);
+    if (error) {
+      console.error("  - error:", error);
+    }
+  }, [profile, isLoading, isError, error]);
+
+  useEffect(() => {
+    if (isError && (error as AxiosError)?.response?.status === 401) {
+      console.warn("⚠️ [ProfileScreen] 401 error detected - auth expired");
+      setAuthExpired(true);
+    }
+  }, [isError, error]);
 
   const logoutMutation = useLogoutEndPoint();
 
@@ -133,17 +143,31 @@ useEffect(() => {
 
         {/* Profile Section */}
         <View style={{ alignItems: "center", marginVertical: 20,}}>
-          <Image
-            source={require("../../assets/images/Ava.png")}
-            style={{
-              width: 80,
-              height: 80,
-              borderRadius: 40,
-              marginBottom: 10,
-              borderWidth: 0.5,
-              borderColor: 'white',
-            }}
-          />
+          {profile?.profile_image ? (
+            <Image
+              source={{ uri: profile.profile_image }}
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: 40,
+                marginBottom: 10,
+                borderWidth: 0.5,
+                borderColor: 'white',
+              }}
+            />
+          ) : (
+            <Image
+              source={require("../../assets/images/Ava.png")}
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: 40,
+                marginBottom: 10,
+                borderWidth: 0.5,
+                borderColor: 'white',
+              }}
+            />
+          )}
           <Text style={{ color: "#fff", fontSize: 18, fontWeight: "600" }}>
             {profile && `${profile.first_name} ${profile.last_name}`}
         </Text>
