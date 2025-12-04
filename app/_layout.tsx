@@ -1,4 +1,5 @@
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { RideProvider } from '@/context/RideContext';
 import { WebSocketProvider } from "@/context/WebSocketProvider";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { globalLogout } from '@/scripts/auth'; // <--- IMPORT THE LOGOUT FUNCTION
@@ -8,6 +9,7 @@ import { useFonts } from "expo-font";
 import React, { useEffect } from 'react';
 import "react-native-reanimated";
 import MainNavigator from "./MainNavigator"; // Assuming this is your navigation stack
+
 
 const queryClient = new QueryClient();
 
@@ -49,9 +51,11 @@ export default function RootLayout() {
     <AuthProvider>
       <ApiAuthConnector /> 
       <WebSocketProvider>
+        <RideProvider>
         <QueryClientProvider client={queryClient}>
           <MainNavigator />
         </QueryClientProvider>
+        </RideProvider>
       </WebSocketProvider>
     </AuthProvider>
   );

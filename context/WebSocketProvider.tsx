@@ -42,7 +42,7 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
 
     try {
       const data = JSON.parse(event.data);
-      console.log("📨 [WS] Message received:", data.type);
+      console.log("📨 [WS] Full message:", JSON.stringify(data, null, 2));
 
       if (data.type === "driver_offer" && data.data) {
         const newOffer: DriverOffer = {

@@ -51,6 +51,7 @@ import SpecialServicesScreen from "./rides/SpecialServicesScreen";
 import BookingsScreen from "./tabs/BookingsScreen";
 import ProfileScreen from "./tabs/ProfileScreen";
 import RideDetailsScreen from "./tabs/RideDetailsScreen";
+import RideTrackingScreen from "./tabs/RideTrackingScreen";
 import TabNavigator from "./tabs/TabNavigator";
 import WalletScreen from "./tabs/WalletScreen";
 
@@ -111,6 +112,7 @@ type Screen =
   | "ridereceipts"
   | "rateapp"
   | "terms"
+  | "trackRide"
 
 export default function MainNavigator() {
   const [screen, setScreen] = useState<Screen>("onboard1");
@@ -237,6 +239,8 @@ export default function MainNavigator() {
           goForgot={() => setScreen("reset")}
         />
       );
+      case "trackRide":
+        return <RideTrackingScreen goBack={() => setScreen("dashboard")} />
     case "profile":
       return <ProfileScreen setScreen={setScreen} />;
     case "accountSuccess":

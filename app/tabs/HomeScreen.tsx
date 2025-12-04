@@ -1,7 +1,7 @@
 import { useProfile } from "@/services/profile.service";
 import { useUpdateRiderProfile } from "@/services/updateProfile.service";
 import { useUploadProfilePhoto } from "@/services/upload.service";
-import { Entypo, Feather, FontAwesome, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
+import { Entypo, Feather, FontAwesome, FontAwesome5, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from "expo-image-picker";
 import { useEffect, useState } from "react";
@@ -19,6 +19,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import { useRide } from "../../context/RideContext";
 type HomeScreenProps = {
   setScreen: (screen: string) => void;
 };
@@ -694,6 +695,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
   const uploadMutation = useUploadProfilePhoto();
   const updateProfileMutation = useUpdateRiderProfile(userId || undefined);
   const { data: profile, isLoading: profileLoading } = useProfile();
+  const { rideState, driverLocation, rideId } = useRide();
 
 const uploadPhotoToServer = async () => {
   if (!imageUri) return;
@@ -857,6 +859,31 @@ const handleAdditionalInfoSubmit = (ridePreference: string, securityPreference: 
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {rideState === "in_ride" && driverLocation && (
+  <View style={styles.driverLocationBanner}>
+    <View style={styles.bannerHeader}>
+      <View style={styles.bannerIconContainer}>
+        <FontAwesome5 name="car" size={24} color="#FEB914" />
+      </View>
+      <View style={styles.bannerTextContainer}>
+        <Text style={styles.bannerTitle}>Your Ride is Active</Text>
+        <View style={styles.statusRow}>
+          <View style={styles.liveDot} />
+          <Text style={styles.bannerSubtitle}>Driver is on the way</Text>
+        </View>
+      </View>
+    </View>
+
+    <TouchableOpacity 
+      style={styles.trackButton}
+      onPress={() => setScreen('trackRide')}
+      activeOpacity={0.8}
+    >
+      <Ionicons name="navigate" size={20} color="#000" />
+      <Text style={styles.trackButtonText}>Track Driver</Text>
+    </TouchableOpacity>
+  </View>
+)}
       {/* Main Screen Content */}
       <View style={styles.logoContainer}>
         <Image
@@ -1092,6 +1119,69 @@ const styles = StyleSheet.create({
     flexDirection:'row',  
     justifyContent:'space-between',
     
+  },
+
+  driverLocationBanner: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#FEB914',
+  },
+  bannerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 12,
+  },
+  bannerIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#000',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FEB914',
+  },
+  bannerTextContainer: {
+    flex: 1,
+  },
+  bannerTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 6,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#4CAF50',
+  },
+  bannerSubtitle: {
+    color: '#aaa',
+    fontSize: 14,
+  },
+  trackButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FEB914',
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
+  },
+  trackButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   searchContainer: {
     flexDirection: "row",
