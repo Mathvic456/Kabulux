@@ -50,6 +50,7 @@ export default {
         },
       ],
       "expo-web-browser",
+      "react-native-google-auth",
     ],
 
     experiments: {

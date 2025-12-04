@@ -1,10 +1,11 @@
 import CustomButton from "@/components/ui/CustomButton";
-import { useGoogleAuth } from "@/constants/GoogleAuth";
 import { useAuth } from "@/context/AuthContext";
 import { useLoginEndPoint } from "@/services/authentication.service";
 import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -15,6 +16,7 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+import { GoogleAuth, GoogleAuthScopes } from "react-native-google-auth";
 import Logo from "../../assets/images/logo.png";
 
 export default function LoginScreen({
@@ -30,13 +32,13 @@ export default function LoginScreen({
   const [password, setPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [remember, setRemember] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errors, setErrors] = useState({
     email: "",
     password: "",
   });
 
   const { setTokens } = useAuth();
-  const { signInWithGoogle, loading } = useGoogleAuth();
 
   const validateForm = () => {
     let valid = true;
@@ -92,6 +94,58 @@ export default function LoginScreen({
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    try {
+      // Configure Google Auth (you can also do this in App.tsx on mount)
+      await GoogleAuth.configure({
+        scopes: [GoogleAuthScopes.EMAIL, GoogleAuthScopes.PROFILE]
+      });
+
+      // Initiate sign in
+      const response = await GoogleAuth.signIn();
+
+      if (response.type === 'success') {
+        const { user, idToken } = response.data;
+        console.log('✅ [Google] Sign in successful:', user);
+        console.log('✅ [Google] ID Token:', idToken);
+
+        // Here you would send the idToken to your backend
+        // Your backend should verify the token and create/login the user
+        // Example:
+        // await yourBackendGoogleLoginEndpoint({ idToken });
+
+        // For now, just show success
+        Alert.alert(
+          'Success',
+          `Welcome ${user.name}! Now send the idToken to your backend.`,
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                // After successful backend verification, navigate
+                // next();
+              }
+            }
+          ]
+        );
+
+      } else if (response.type === 'cancelled') {
+        console.log('ℹ️ [Google] Sign in cancelled by user');
+      }
+    } catch (error: any) {
+      console.error('❌ [Google] Sign in failed:', error);
+      Alert.alert(
+        'Google Sign In Failed',
+        error.message || 'An error occurred during Google sign in'
+      );
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
+  const isAnyLoading = isPending || isGoogleLoading;
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -139,7 +193,7 @@ export default function LoginScreen({
               }}
               keyboardType="email-address"
               autoCapitalize="none"
-              editable={!isPending}
+              editable={!isAnyLoading}
             />
           </View>
           {errors.email ? (
@@ -166,12 +220,12 @@ export default function LoginScreen({
                   setErrors({ ...errors, password: "" });
                 }
               }}
-              editable={!isPending}
+              editable={!isAnyLoading}
             />
             <TouchableOpacity
               onPress={() => setIsPasswordVisible(!isPasswordVisible)}
               style={styles.eyeIcon}
-              disabled={isPending}
+              disabled={isAnyLoading}
             >
               <Ionicons
                 name={isPasswordVisible ? "eye-off" : "eye"}
@@ -189,7 +243,7 @@ export default function LoginScreen({
             <TouchableOpacity
               onPress={() => setRemember(!remember)}
               style={styles.checkboxRow}
-              disabled={isPending}
+              disabled={isAnyLoading}
             >
               <View style={[styles.checkbox, remember && styles.checkboxChecked]}>
                 {remember && (
@@ -199,7 +253,7 @@ export default function LoginScreen({
               <Text style={styles.checkboxLabel}>Remember Password</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={goForgot} disabled={isPending}>
+            <TouchableOpacity onPress={goForgot} disabled={isAnyLoading}>
               <Text style={styles.forgot}>Forgot Password</Text>
             </TouchableOpacity>
           </View>
@@ -220,14 +274,24 @@ export default function LoginScreen({
             <View style={styles.divider} />
           </View>
 
+          {/* Google Sign In Button */}
           <TouchableOpacity 
-          onPress={signInWithGoogle}
-          style={styles.googleBtn}>
-              <Text>Sign In with Google</Text>
+            style={[styles.googleBtn, isAnyLoading && styles.googleBtnDisabled]}
+            onPress={handleGoogleSignIn}
+            disabled={isAnyLoading}
+          >
+            {isGoogleLoading ? (
+              <ActivityIndicator color="#fcbf24" size="small" />
+            ) : (
+              <>
+                <MaterialIcons name="login" size={20} color="#fff" />
+                <Text style={styles.googleText}>Sign In with Google</Text>
+              </>
+            )}
           </TouchableOpacity>
 
           {/* Sign Up */}
-          <TouchableOpacity onPress={goRegister} disabled={isPending}>
+          <TouchableOpacity onPress={goRegister} disabled={isAnyLoading}>
             <Text style={styles.footerText}>
               Don&apos;t have an account?{" "}
               <Text style={styles.signup}>Sign up</Text>
@@ -341,7 +405,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     marginBottom: 30,
   },
-  googleText: { color: "#fff", marginLeft: 8 },
+  googleBtnDisabled: {
+    opacity: 0.5,
+  },
+  googleText: { 
+    color: "#fff", 
+    marginLeft: 8,
+    fontSize: 16,
+  },
   footerText: { textAlign: "center", color: "#888", fontSize: 12 },
   signup: { color: "#fcbf24", fontWeight: "bold" },
   LogoContainer: {},
