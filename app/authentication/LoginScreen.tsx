@@ -4,7 +4,6 @@ import { useLoginEndPoint } from "@/services/authentication.service";
 import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -16,7 +15,7 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import { GoogleAuth, GoogleAuthScopes } from "react-native-google-auth";
+// import { GoogleAuth, GoogleAuthScopes } from "react-native-google-auth";
 import Logo from "../../assets/images/logo.png";
 
 export default function LoginScreen({
@@ -275,10 +274,10 @@ export default function LoginScreen({
           </View>
 
           {/* Google Sign In Button */}
-          <TouchableOpacity 
+          {/* <TouchableOpacity 
             style={[styles.googleBtn, isAnyLoading && styles.googleBtnDisabled]}
-            onPress={handleGoogleSignIn}
-            disabled={isAnyLoading}
+            // onPress={handleGoogleSignIn}
+            // disabled={isAnyLoading}
           >
             {isGoogleLoading ? (
               <ActivityIndicator color="#fcbf24" size="small" />
@@ -288,7 +287,7 @@ export default function LoginScreen({
                 <Text style={styles.googleText}>Sign In with Google</Text>
               </>
             )}
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           {/* Sign Up */}
           <TouchableOpacity onPress={goRegister} disabled={isAnyLoading}>

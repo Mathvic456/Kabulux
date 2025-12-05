@@ -283,7 +283,7 @@ export default function SavedPlacesScreen({ goBack, next }: { goBack: () => void
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1E1E1E",
+    backgroundColor: "black",
   },
   scrollView: {
     flex: 1,

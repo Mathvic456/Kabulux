@@ -1,17 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-    Clipboard,
-    Modal,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    Share,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
+  Clipboard,
+  Modal,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  Share,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
 
 export default function ReferAndEarnScreen({ goBack, next }) {
@@ -327,7 +327,7 @@ export default function ReferAndEarnScreen({ goBack, next }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1E1E1E",
+    backgroundColor: "black",
   },
   scrollView: {
     flex: 1,

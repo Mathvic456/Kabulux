@@ -345,7 +345,7 @@ export default function MainNavigator() {
     case "loginAndSecurity":
       return (
         <LoginAndSecurityScreen
-          goBack={() => setScreen("settings")}
+          goBack={() => setScreen("profile")}
           next={() => setScreen("dashboard")}
         />
       );

@@ -252,7 +252,7 @@ export function TermsOfServiceScreen({ goBack }: { goBack: () => void }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1E1E1E',
+    backgroundColor: 'black',
   },
   scrollContent: {
     padding: 16,

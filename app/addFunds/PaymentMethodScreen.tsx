@@ -387,7 +387,7 @@ export default function PaymentMethodScreen({ next, goRegister, goForgot, goCryp
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1E1E1E',
+    backgroundColor: 'black',
   },
   scrollContent: {
     padding: 16,
