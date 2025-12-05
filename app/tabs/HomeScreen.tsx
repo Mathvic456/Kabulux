@@ -494,8 +494,31 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
   
   const uploadMutation = useUploadProfilePhoto();
   const updateProfileMutation = useUpdateRiderProfile(userId || undefined);
-  const { data: profile, isLoading: profileLoading } = useProfile();
+  const { 
+    data: profile, 
+    isLoading: profileLoading, 
+    error: profileError // Rename it to avoid naming conflicts
+  } = useProfile();
   const { rideState, driverLocation, rideId } = useRide();
+
+  useEffect(() => {
+    if (profileError) {
+      const status = profileError?.response?.status || (profileError as any)?.status;
+
+      console.log("❌ Profile Error Detected:", status);
+
+      if (status === 401) {
+        Alert.alert("Session Expired", "Please login again.");
+        const clearSession = async () => {
+          await AsyncStorage.multiRemove(["token", "refreshToken", "user_id", "hasShownLoginSuccess"]);
+          setScreen("login"); 
+        };
+        
+        clearSession();
+      }
+    }
+  }, [profileError, setScreen]);
+
 
   const takePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
