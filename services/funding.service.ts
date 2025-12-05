@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "./api";
 
+
 export type FundWalletPayload = {
   amount: number;
   channel: string;
@@ -16,23 +17,31 @@ export type PaystackInitResponse = {
   };
   errors: any;
 };
+
 export type WalletBalanceResponse = {
   balance: number;
-};
-export type Transaction = {
-  id: number;
-  amount: number;
-  type: "credit" | "debit";
-  description: string;
-  status: "success" | "pending" | "failed";
-  date: string;
+  currency?: string;
 };
 
+// CORRECTED: Matches the JSON log {"amount": "500.00", "id": "uuid", ...}
+export type Transaction = {
+  id: string; // Changed from number to string
+  amount: string | null; // API returns string "500.00" or null
+  channel: string;
+  direction: "credit" | "debit" | ""; // API returns "" sometimes
+  reference: string;
+  status: "success" | "pending" | "failed";
+  type: string; // API returns ""
+  created_at?: string; // Optional, as it wasn't in the provided log
+  date?: string; // Keeping for compatibility if backend adds it
+};
+
+// CORRECTED: Matches the JSON log structure {"data": [...], "status": "success"}
 export type TransactionsResponse = {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: Transaction[];
+  status: string;
+  message: string;
+  data: Transaction[]; // Key is 'data', not 'results'
+  errors: any;
 };
 
 // --- New Types for Withdrawal ---
@@ -45,7 +54,6 @@ export type WithdrawResponse = {
   message: string;
 };
 
-
 export type CreateRecipientResponse = {
   status: number;
   message: string;
@@ -54,9 +62,17 @@ export type CreateRecipientResponse = {
   };
 };
 
+export type CreateRecipientPayload = {
+  account_number: string;
+  bank_code: string;
+};
+
+// --- Hooks ---
+
 const useFundWalletEndPoint = () => {
   return useMutation({
     mutationFn: async (data: FundWalletPayload) => {
+      // Using your original endpoint
       return api.post<PaystackInitResponse>("/wallets/fund_initiate/", data);
     },
     onSuccess: (res) => {
@@ -73,15 +89,15 @@ const useGetMyBalance = () => {
   return useQuery({
     queryKey: ["balance"],
     queryFn: async () => {
+      // Using your original endpoint
       const res = await api.get<{ data: WalletBalanceResponse }>(
         "/wallets/my_balance/"
       );
-      console.log("balance:", res.data);
-      return res.data.data;
+      // Ensure we safely access the nested data
+      return res.data?.data || { balance: 0 };
     },
   });
 };
-
 
 const useGetMyTransactions = (
   options?: { enabled?: boolean; refetchInterval?: number }
@@ -89,16 +105,16 @@ const useGetMyTransactions = (
   return useQuery({
     queryKey: ["myTransactions"],
     queryFn: async () => {
+      // Using your original endpoint
       const res = await api.get<TransactionsResponse>(
         "/wallets/my_transactions/"
       );
-      console.log("Transactions data:", res.data);
+      // Return the full response object so we can access .data array in the component
       return res.data;
     },
     ...options,
   });
 };
-
 
 const useWithdrawFunds = () => {
   return useMutation({
@@ -112,12 +128,6 @@ const useWithdrawFunds = () => {
       console.error("Withdrawal error:", error);
     },
   });
-};
-
-
-export type CreateRecipientPayload = {
-    account_number: string;
-    bank_code: string;
 };
 
 const useCreateTransferRecipient = () => {
@@ -137,11 +147,10 @@ const useCreateTransferRecipient = () => {
   });
 };
 
-
 export {
-  useCreateTransferRecipient, useFundWalletEndPoint,
+  useCreateTransferRecipient,
+  useFundWalletEndPoint,
   useGetMyBalance,
   useGetMyTransactions,
   useWithdrawFunds
 };
-

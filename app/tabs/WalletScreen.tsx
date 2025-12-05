@@ -1,10 +1,11 @@
 import {
+  Transaction,
   useFundWalletEndPoint,
   useGetMyBalance,
-  useGetMyTransactions,
+  useGetMyTransactions
 } from "@/services/funding.service";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -15,6 +16,16 @@ import {
   View
 } from "react-native";
 
+// Define the clean shape the UI wants to work with
+interface CleanTransaction {
+  id: string;
+  amount: number;
+  date: Date;
+  type: "credit" | "debit" | "pending";
+  description: string;
+  status: string;
+}
+
 const WalletScreen = ({ setScreen } :
   {setScreen: (screen: string, checkoutUrl?: string) => void}
 ) => {
@@ -23,15 +34,44 @@ const WalletScreen = ({ setScreen } :
   const [filter, setFilter] = useState<string>("all"); // "all", "today", "week", "month"
   
   const fundWallet = useFundWalletEndPoint();
-  const { data: balanceData, isLoading } = useGetMyBalance();
-  const { data: transactionsData, isLoading: transactionsLoading } = useGetMyTransactions();
-  
+  const { data: balanceData, isLoading: balanceLoading } = useGetMyBalance();
+  const { data: transactionsResponse, isLoading: transactionsLoading } = useGetMyTransactions();
+
+  const cleanedTransactions = useMemo(() => {
+    const rawData = transactionsResponse?.data; 
+    
+    if (!rawData || !Array.isArray(rawData)) return [];
+
+    return rawData.map((item: Transaction, index) => {
+      const dateObj = item.created_at ? new Date(item.created_at) : new Date();
+      if (!item.created_at) dateObj.setMinutes(dateObj.getMinutes() - index * 30);
+      const cleanAmount = item.amount ? parseFloat(item.amount) : 0;
+      let description = "Transaction";
+      if (item.channel) description = `Wallet ${item.channel}`;
+      if (item.type) description = item.type;
+      let type: "credit" | "debit" | "pending" = "pending";
+      if (item.direction === "credit") type = "credit";
+      else if (item.direction === "debit") type = "debit";
+      else if (item.status === "pending") type = "pending";
+
+      return {
+        id: item.id,
+        amount: cleanAmount,
+        date: dateObj,
+        type,
+        description,
+        status: item.status
+      } as CleanTransaction;
+    });
+  }, [transactionsResponse]);
+
+
   const handleFundWallet = () => {
     fundWallet.mutate(
       { amount: 20000, channel: selectedPaymentMethod },
       {
         onSuccess: (res) => {
-          const checkoutUrl = res.data?.data?.authorization_url;
+          const checkoutUrl = res.data?.data?.authorization_url || res.data?.data.authorization_url;
           if (checkoutUrl) {
             setScreen("paystack", checkoutUrl)
           }
@@ -45,10 +85,7 @@ const WalletScreen = ({ setScreen } :
     setShowPaymentMethodsModal(false);
   };
 
-  // Filter transactions based on selected filter
   const getFilteredTransactions = () => {
-    if (!transactionsData?.results) return [];
-
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const weekAgo = new Date(today);
@@ -56,29 +93,30 @@ const WalletScreen = ({ setScreen } :
     const monthAgo = new Date(today);
     monthAgo.setMonth(today.getMonth() - 1);
 
-    return transactionsData.results.filter(transaction => {
-      const transactionDate = new Date(transaction.date);
-      
+    return cleanedTransactions.filter(transaction => {
+      // transaction.date is already a Date object from our transformer
+      const txDate = transaction.date;
+      const txDay = new Date(txDate.getFullYear(), txDate.getMonth(), txDate.getDate());
+
       switch(filter) {
         case "today":
-          return transactionDate.getTime() === today.getTime();
+          return txDay.getTime() === today.getTime();
         case "week":
-          return transactionDate >= weekAgo;
+          return txDate >= weekAgo;
         case "month":
-          return transactionDate >= monthAgo;
+          return txDate >= monthAgo;
         default:
           return true; // "all"
       }
     });
   };
 
-  // Group transactions by month
-  const groupTransactionsByMonth = (transactions: any[]) => {
-    const grouped: {[key: string]: any[]} = {};
+  // === 3. Grouping Logic ===
+  const groupTransactionsByMonth = (transactions: CleanTransaction[]) => {
+    const grouped: {[key: string]: CleanTransaction[]} = {};
     
     transactions.forEach(transaction => {
-      const date = new Date(transaction.date);
-      const monthYear = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+      const monthYear = transaction.date.toLocaleString('default', { month: 'long', year: 'numeric' });
       
       if (!grouped[monthYear]) {
         grouped[monthYear] = [];
@@ -89,9 +127,7 @@ const WalletScreen = ({ setScreen } :
     return grouped;
   };
 
-  // Format date for display
-  const formatDisplayDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+  const formatDisplayDate = (date: Date) => {
     const month = date.toLocaleString('default', { month: 'short' });
     const day = date.getDate();
     const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -132,9 +168,9 @@ const WalletScreen = ({ setScreen } :
               marginVertical: 10,
             }}
           >
-            {isLoading
+            {balanceLoading
               ? "Loading..."
-              : `₦${balanceData?.balance?.toLocaleString() ?? 0}`}
+              : `₦${balanceData?.balance?.toLocaleString() ?? "0.00"}`}
           </Text>
 
           <View
@@ -290,19 +326,10 @@ const WalletScreen = ({ setScreen } :
           </TouchableOpacity>
         </View>
 
-        {/* Transaction History */}
+        {/* Transaction History List */}
         {transactionsLoading ? (
           <View
-            style={{
-              backgroundColor: "#111",
-              marginHorizontal: 20,
-              borderRadius: 12,
-              padding: 30,
-              borderWidth: 1,
-              borderColor: "#FEB914",
-              alignItems: "center",
-              marginBottom: 20,
-            }}
+            style={styles.loadingContainer}
           >
             <ActivityIndicator size="large" color="#FEB914" />
             <Text style={{ color: "#fff", fontSize: 14, marginTop: 10, textAlign: "center" }}>
@@ -313,15 +340,7 @@ const WalletScreen = ({ setScreen } :
           Object.entries(groupedTransactions).map(([monthYear, transactions]) => (
             <View
               key={monthYear}
-              style={{
-                backgroundColor: "#111",
-                marginHorizontal: 20,
-                borderRadius: 12,
-                padding: 15,
-                borderWidth: 1,
-                borderColor: "#FEB914",
-                marginBottom: 20,
-              }}
+              style={styles.monthGroupContainer}
             >
               {/* Month Label */}
               <View
@@ -345,48 +364,59 @@ const WalletScreen = ({ setScreen } :
                     paddingVertical: 12,
                   }}
                 >
-                  <Text style={{ color: "#fff", fontSize: 16, fontWeight: "500" }}>
-                    {tx.description || tx.type}
-                  </Text>
+                  <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                    <Text style={{ color: "#fff", fontSize: 16, fontWeight: "500", textTransform: 'capitalize' }}>
+                      {tx.description}
+                    </Text>
+                    {/* Status Badge */}
+                    <Text style={{ 
+                      fontSize: 10, 
+                      color: tx.status === 'success' ? '#4CAF50' : '#FEB914',
+                      borderWidth: 1,
+                      borderColor: tx.status === 'success' ? '#4CAF50' : '#FEB914',
+                      paddingHorizontal: 6,
+                      borderRadius: 4,
+                      alignSelf: 'center'
+                    }}>
+                      {tx.status}
+                    </Text>
+                  </View>
+
                   <View
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
                       marginTop: 5,
+                      justifyContent: "space-between"
                     }}
                   >
-                    <Ionicons name="calendar-outline" size={14} color="#FEB914" />
-                    <Text style={{ color: "#aaa", marginLeft: 6 }}>
-                      {formatDisplayDate(tx.date)}
+                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                      <Ionicons name="calendar-outline" size={14} color="#FEB914" />
+                      <Text style={{ color: "#aaa", marginLeft: 6, fontSize: 12 }}>
+                        {formatDisplayDate(tx.date)}
+                      </Text>
+                    </View>
+
+                    <Text
+                      style={{
+                        color: tx.type === "credit" ? "#4CAF50" : (tx.type === "debit" ? "#F44336" : "#aaa"),
+                        fontSize: 16,
+                        fontWeight: "bold",
+                        textAlign: "right",
+                      }}
+                    >
+                      {tx.type === "credit" ? "+" : (tx.type === "debit" ? "-" : "")}
+                      {/* Handle null amounts gracefully */}
+                      ₦{tx.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                     </Text>
                   </View>
-                  <Text
-                    style={{
-                      color: tx.type === "credit" ? "#4CAF50" : "#fff",
-                      fontSize: 16,
-                      fontWeight: "bold",
-                      marginTop: 5,
-                      textAlign: "right",
-                    }}
-                  >
-                    {tx.type === "credit" ? "+" : "-"}₦{tx.amount.toLocaleString()}
-                  </Text>
                 </View>
               ))}
             </View>
           ))
         ) : (
           <View
-            style={{
-              backgroundColor: "#111",
-              marginHorizontal: 20,
-              borderRadius: 12,
-              padding: 30,
-              borderWidth: 1,
-              borderColor: "#FEB914",
-              alignItems: "center",
-              marginBottom: 20,
-            }}
+            style={styles.emptyContainer}
           >
             <Ionicons name="receipt-outline" size={48} color="#FEB914" />
             <Text style={{ color: "#fff", fontSize: 16, marginTop: 10, textAlign: "center" }}>
@@ -502,6 +532,35 @@ const WalletScreen = ({ setScreen } :
 };
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    backgroundColor: "#111",
+    marginHorizontal: 20,
+    borderRadius: 12,
+    padding: 30,
+    borderWidth: 1,
+    borderColor: "#FEB914",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  monthGroupContainer: {
+    backgroundColor: "#111",
+    marginHorizontal: 20,
+    borderRadius: 12,
+    padding: 15,
+    borderWidth: 1,
+    borderColor: "#FEB914",
+    marginBottom: 20,
+  },
+  emptyContainer: {
+    backgroundColor: "#111",
+    marginHorizontal: 20,
+    borderRadius: 12,
+    padding: 30,
+    borderWidth: 1,
+    borderColor: "#FEB914",
+    alignItems: "center",
+    marginBottom: 20,
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.7)",
