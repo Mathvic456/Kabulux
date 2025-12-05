@@ -89,6 +89,9 @@ const DynamicPayStackWebViewScreen = ({ goBack }: Props) => {
   return (
     <>
       <ScrollView contentContainerStyle={styles.container}>
+      <TouchableOpacity onPress={goBack}>
+        <Text style={{ fontSize: 28 }}>←</Text>
+      </TouchableOpacity>
         <Text style={styles.title}>Add Funds to Wallet</Text>
 
         <View style={styles.form}>
