@@ -16,6 +16,7 @@ export default {
       config: {
         googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
       },
+      // iOS notifications,  "googleServicesFile" here too (GoogleService-Info.plist)
     },
 
     android: {
@@ -24,7 +25,8 @@ export default {
         backgroundColor: "#ffffff",
       },
       edgeToEdgeEnabled: true,
-      package: "com.crashingout.kablux",
+      package: "com.crashingout.kablux", 
+      googleServicesFile: "./google-services.json",
       config: {
         googleMaps: {
           apiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
@@ -48,9 +50,18 @@ export default {
           resizeMode: "contain",
           backgroundColor: "#ffffff",
         },
+
       ],
       "expo-web-browser",
-      "react-native-google-auth",
+      "@react-native-google-signin/google-signin",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#fcbf24",
+          "defaultChannel": "default"
+        }
+      ]
     ],
 
     experiments: {

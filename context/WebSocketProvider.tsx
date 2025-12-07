@@ -80,12 +80,7 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
     }
 
     try {
-      // 1. ATTEMPT TO GET TOKEN
       const accessToken = await getValidToken();
-
-      // 2. CHECK TOKEN VALIDITY
-      // If no token or expired, we DON'T return. We wait and try again.
-      // This ensures we keep trying "at all costs" until a token appears.
       if (!accessToken || isTokenExpired(accessToken)) {
         console.warn("❌ [WS] Token invalid/missing. Retrying in 3s...");
         reconnectTimeout.current = setTimeout(connectWebSocket, 3000);
@@ -126,8 +121,6 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
 
     } catch (error) {
       console.error("❌ [WS] Fatal setup error:", error);
-      // 4. CATCH BLOCK RECOVERY
-      // If getValidToken crashes (e.g. AsyncStorage error), we still retry.
       if (shouldReconnect.current) {
          reconnectTimeout.current = setTimeout(connectWebSocket, 3000);
       }
@@ -143,21 +136,14 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
     };
   }, [connectWebSocket]);
 
-  // Handle AppState changes (Foreground/Background)
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) => {
       if (state === "active") {
-        console.log("🟢 [WS] App active, ensuring connection...");
+        console.log("[WS] App active, ensuring connection...");
         shouldReconnect.current = true;
         connectWebSocket();
       } else if (state === "background") {
-         // Optional: decide if you want to keep it alive in background
-         // or close it to save battery. Currently closing it.
-         console.log("🟡 [WS] App backgrounded");
-         // We do NOT set shouldReconnect to false here, 
-         // so if the OS keeps the app alive, it might try to reconnect.
-         // But usually, we want to close explicit sockets to be safe:
-         // ws.current?.close(); 
+         console.log("[WS] App backgrounded");
       }
     });
 
