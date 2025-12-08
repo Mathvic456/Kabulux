@@ -1,3 +1,4 @@
+import messaging from '@react-native-firebase/messaging';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { useState } from 'react';
@@ -27,22 +28,18 @@ export const usePushNotifications = () => {
     }
 
     if (Device.isDevice) {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
+      const authStatus = await messaging().requestPermission();
+      const enabled =
+        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-
-      if (finalStatus !== 'granted') {
-        alert('Failed to get push token for push notification!');
+      if (!enabled) {
+        console.log('Push notification permission denied');
         return;
       }
-      const tokenData = await Notifications.getDevicePushTokenAsync();
-      
-      // On Android, this data string IS the FCM token.
-      tokenString = tokenData.data;
+
+      // Get FCM token using Firebase Messaging
+      tokenString = await messaging().getToken();
       
       console.log("🔥 [FCM] Token generated:", tokenString);
       setFcmToken(tokenString);

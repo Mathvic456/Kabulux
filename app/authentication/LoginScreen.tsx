@@ -4,22 +4,22 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useLoginEndPoint } from "@/services/authentication.service";
 import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import {
-  GoogleSignin,
-  isErrorWithCode,
-  statusCodes
+    GoogleSignin,
+    isErrorWithCode,
+    statusCodes
 } from '@react-native-google-signin/google-signin';
 import React, { useEffect, useState } from "react";
 import {
-  Alert,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import Logo from "../../assets/images/logo.png";
@@ -48,21 +48,17 @@ export default function LoginScreen({
   const { getFCMToken } = usePushNotifications();
   const { mutate: login, isPending: isLoginPending } = useLoginEndPoint(setTokens, remember);
 
-  // 2. CONFIGURE GOOGLE SIGN IN
   useEffect(() => {
     GoogleSignin.configure({
-      // You usually only need the Web Client ID here, even for Android
-      // Get this from Google Cloud Console > APIs & Services > Credentials > OAuth 2.0 Client IDs
       webClientId: 'YOUR_WEB_CLIENT_ID_FROM_CONSOLE.apps.googleusercontent.com', 
       offlineAccess: true, 
     });
   }, []);
 
-  // 3. HANDLE GOOGLE SIGN IN
+
   const handleGoogleSignIn = async () => {
     setIsSubmitting(true);
     try {
-      // A. Check Play Services
       await GoogleSignin.hasPlayServices();
 
       // B. Get User Info from Google
@@ -84,13 +80,9 @@ export default function LoginScreen({
         console.log("⚠️ [FCM] Failed to get token during Google Auth");
       }
 
-      // D. Send to Backend (Example)
-      // Note: You might need a specific endpoint for Google Login in your API
-      // Or you can use the existing one if your backend supports swapping password for token
+
       console.log("🚀 Sending to backend:", { idToken, fcmToken });
       
-      // For now, let's just simulate success or call next()
-      // In a real app, you would call a specific mutation here like `googleLoginMutation.mutate(...)`
       next();
 
     } catch (error) {
@@ -118,7 +110,7 @@ export default function LoginScreen({
     }
   };
 
-  // ... (Your validateForm and regular handleSubmit remain exactly the same as before) ...
+
 
   const validateForm = () => {
     let valid = true;

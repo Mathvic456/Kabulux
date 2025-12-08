@@ -16,7 +16,6 @@ export default {
       config: {
         googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
       },
-      // iOS notifications,  "googleServicesFile" here too (GoogleService-Info.plist)
     },
 
     android: {
@@ -50,7 +49,6 @@ export default {
           resizeMode: "contain",
           backgroundColor: "#ffffff",
         },
-
       ],
       "expo-web-browser",
       "@react-native-google-signin/google-signin",
@@ -61,7 +59,9 @@ export default {
           "color": "#fcbf24",
           "defaultChannel": "default"
         }
-      ]
+      ],
+      "@react-native-firebase/app",
+      "@react-native-firebase/messaging"
     ],
 
     experiments: {
