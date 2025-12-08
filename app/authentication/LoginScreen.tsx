@@ -270,7 +270,7 @@ export default function LoginScreen({
             onPress={handleGoogleSignIn}
             disabled={isLoading}
           >
-            <FontAwesome name="google" size={20} color="#000" style={styles.googleIcon} />
+            <FontAwesome name="google" size={20} color="#fff" style={styles.googleIcon} />
             <Text style={styles.googleText}>
               Sign in with Google
             </Text>
@@ -319,16 +319,27 @@ const styles = StyleSheet.create({
   dividerContainer: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
   dividerLine: { flex: 1, height: 1, backgroundColor: '#333' },
   dividerText: { marginHorizontal: 10, color: '#666', fontSize: 12 },
-  googleBtn: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    backgroundColor: '#fff', 
-    borderRadius: 10, 
-    paddingVertical: 14,
-    marginTop: 0 
-  },
-  googleBtnDisabled: { opacity: 0.7, backgroundColor: '#ccc' },
-  googleIcon: { marginRight: 10 },
-  googleText: { color: '#000', fontWeight: 'bold', fontSize: 16 },
+ googleBtn: { 
+  flexDirection: 'row', 
+  alignItems: 'center', 
+  justifyContent: 'center', 
+  backgroundColor: 'transparent', 
+  borderColor: '#fcbf24',  
+  borderWidth: 1,           
+  borderRadius: 10, 
+  paddingVertical: 12,    
+  marginTop: 0 
+},
+googleBtnDisabled: { 
+  opacity: 0.7, 
+  backgroundColor: 'transparent' 
+},
+googleIcon: { 
+  marginRight: 10 
+},
+googleText: { 
+  color: '#fff',       
+  fontWeight: 'bold', 
+  fontSize: 16 
+},
 });
