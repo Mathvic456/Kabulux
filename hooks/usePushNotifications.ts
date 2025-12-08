@@ -28,17 +28,17 @@ export const usePushNotifications = () => {
     }
 
     if (Device.isDevice) {
+      // New modular API (no more warnings)
       const authStatus = await messaging().requestPermission();
       const enabled =
-        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-
+        authStatus === 1 || authStatus === 2; // AUTHORIZED or PROVISIONAL
+      
       if (!enabled) {
         console.log('Push notification permission denied');
         return;
       }
 
-      // Get FCM token using Firebase Messaging
+      // Get FCM token
       tokenString = await messaging().getToken();
       
       console.log("🔥 [FCM] Token generated:", tokenString);

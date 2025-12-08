@@ -36,6 +36,7 @@ export const useLoginEndPoint = (
     mutationFn: (data: LoginPayload) => api.post("auth/login/", data),
     
     onSuccess: async (res) => {
+      console.log(res);
       const token = res.data?.data?.access;
       const refreshToken = res.data?.data?.refresh;
       const userId = res.data?.data?.user?.id;

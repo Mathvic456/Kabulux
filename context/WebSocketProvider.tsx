@@ -74,10 +74,12 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
       reconnectTimeout.current = null;
     }
 
-    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-      console.log("⚠️ [WS] Closing existing connection");
-      ws.current.close();
-    }
+  if (ws.current && 
+      (ws.current.readyState === WebSocket.CONNECTING ||
+      ws.current.readyState === WebSocket.OPEN)) {
+    console.log("⚠️ [WS] Already connected or connecting — skipping reconnect");
+    return;
+  }
 
     try {
       const accessToken = await getValidToken();
@@ -138,15 +140,17 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) => {
-      if (state === "active") {
-        console.log("[WS] App active, ensuring connection...");
-        shouldReconnect.current = true;
-        connectWebSocket();
-      } else if (state === "background") {
-         console.log("[WS] App backgrounded");
-      }
+    if (state === "active") {
+  console.log("[WS] App active, ensuring connection...");
+  shouldReconnect.current = true;
+
+  if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+    connectWebSocket();
+  }
+}
     });
 
+    
     return () => subscription.remove();
   }, [connectWebSocket]);
 
