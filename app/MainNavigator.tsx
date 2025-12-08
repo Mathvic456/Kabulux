@@ -27,12 +27,12 @@ import BookingScreen from "./Order/BookingScreen";
 import PickUpScreen from "./Order/PickUpScreen";
 import PlanRideScreen from "./Order/PlanRideScreen";
 import AboutUs from "./profile/AboutUs";
+import RateAppScreen  from "./profile/ExtraScreens";
 import HelpAndSupportScreen from "./profile/HelpAndSupportScreen";
 import Language from "./profile/Language";
 import LegalScreen from "./profile/LegalScreen";
 import LoginAndSecurityScreen from "./profile/LoginAndSecurityScreen";
 import PersonalInfoScreen from "./profile/PersonalInfoScreen";
-import RateApp from "./profile/RateApp";
 import ReferAndEarnScreen from "./profile/ReferAndEarnScreen";
 import ReportIssue from "./profile/ReportIssue";
 import RideReceipts from "./profile/RideReceipts";
@@ -54,8 +54,6 @@ import RideDetailsScreen from "./tabs/RideDetailsScreen";
 import RideTrackingScreen from "./tabs/RideTrackingScreen";
 import TabNavigator from "./tabs/TabNavigator";
 import WalletScreen from "./tabs/WalletScreen";
-
-
 
 
 // Define screen names
@@ -111,6 +109,7 @@ type Screen =
   | "report"
   | "ridereceipts"
   | "rateapp"
+  | "rateapscreen"
   | "terms"
   | "trackRide"
 
@@ -412,9 +411,9 @@ export default function MainNavigator() {
               goBack={() => setScreen("settings")}
             />
           )
-        case "rateapp":
+        case "rateapscreen":
         return (
-          <RateApp 
+          <RateAppScreen 
             goBack={() => setScreen("settings")}
           />
         )
@@ -450,6 +449,7 @@ export default function MainNavigator() {
         <AnalyticsScreen
           // setScreen={setScreen}
           next={() => setScreen("loyalty")}
+          goBack={()=> setScreen('dashboard')}
         />);
 
     case "wallet":

@@ -16,12 +16,20 @@ import Car from '../assets/images/car1.png';
 
 const { width } = Dimensions.get('window');
 
-export default function AnalyticsScreen({next}) {
+export default function AnalyticsScreen({ goBack, next }: { goBack: () => void; next?: () => void}) {
 
     
   const handleProceed = () => {
     next();
   }
+
+  const handleBack = () => {
+    if (goBack) {
+      goBack();
+    }
+  };
+
+  // const handle
 
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [selectedMonth, setSelectedMonth] = useState('July');
@@ -251,7 +259,7 @@ export default function AnalyticsScreen({next}) {
       <ScrollView style={styles.scrollContainer}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={handleBack}>
             <Text style={styles.backArrow}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Analytics Summary</Text>

@@ -8,12 +8,21 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  Alert,
   Text,
   TextInput,
   TouchableOpacity,
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system/legacy';
+
+// import * as FileSystem from 'expo-file-system';
+// import * as FileSystem from 'expo-file-system/legacy';
+// import { File, Paths } from 'expo-file-system';
+
 
 // Ride Receipts Screen
 export function RideReceiptsScreen({ goBack }: { goBack: () => void }) {
@@ -59,13 +68,235 @@ const [receipts] = useState([
 
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
 
   const viewReceiptDetails = (receipt: any) => {
     setSelectedReceipt(receipt);
     setShowDetailModal(true);
   };
 
-  return (
+    
+  const generateReceiptHTML = (receipt: any) => {
+    const formattedDate = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Ride Receipt - ${receipt.id}</title>
+        <style>
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            padding: 20px;
+            background-color: #f5f5f5;
+          }
+          .receipt-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+          }
+          .header h1 {
+            color: #000;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 8px;
+          }
+          .header h2 {
+            color: #FEB914;
+            font-size: 20px;
+            font-weight: 600;
+          }
+          .receipt-id {
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+          }
+          .info-section {
+            margin-bottom: 25px;
+          }
+          .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #eee;
+          }
+          .info-label {
+            color: #666;
+            font-weight: 500;
+          }
+          .info-value {
+            color: #000;
+            font-weight: 600;
+            text-align: right;
+          }
+          .total-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+          }
+          .total-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 20px;
+            font-weight: bold;
+          }
+          .total-label {
+            color: #000;
+          }
+          .total-amount {
+            color: #FEB914;
+          }
+          .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+            color: #666;
+            font-size: 14px;
+          }
+          .thank-you {
+            color: #000;
+            font-weight: bold;
+            margin-bottom: 10px;
+          }
+          .divider {
+            height: 1px;
+            background-color: #eee;
+            margin: 20px 0;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="receipt-container">
+          <div class="header">
+            <h1>KABLUX</h1>
+            <h2>Ride Receipt</h2>
+            <div class="receipt-id">Receipt #${receipt.id} • Generated on ${formattedDate}</div>
+          </div>
+          
+          <div class="info-section">
+            <div class="info-row">
+              <span class="info-label">Date & Time</span>
+              <span class="info-value">${receipt.date} at ${receipt.time}</span>
+            </div>
+            <div class="divider"></div>
+            
+            <div class="info-row">
+              <span class="info-label">From</span>
+              <span class="info-value">${receipt.from}</span>
+            </div>
+            
+            <div class="info-row">
+              <span class="info-label">To</span>
+              <span class="info-value">${receipt.to}</span>
+            </div>
+            
+            <div class="info-row">
+              <span class="info-label">Driver</span>
+              <span class="info-value">${receipt.driver}</span>
+            </div>
+            
+            <div class="info-row">
+              <span class="info-label">Vehicle</span>
+              <span class="info-value">${receipt.vehicle}</span>
+            </div>
+            
+            <div class="info-row">
+              <span class="info-label">Duration</span>
+              <span class="info-value">${receipt.duration}</span>
+            </div>
+            
+            <div class="info-row">
+              <span class="info-label">Distance</span>
+              <span class="info-value">${receipt.distance}</span>
+            </div>
+          </div>
+          
+          <div class="total-section">
+            <div class="total-row">
+              <span class="total-label">TOTAL FARE</span>
+              <span class="total-amount">₦${receipt.fare.toLocaleString()}</span>
+            </div>
+          </div>
+          
+          <div class="footer">
+            <div class="thank-you">Thank you for riding with Kablux!</div>
+            <div>Need help? Contact support@kablux.com</div>
+            <div>This is an official receipt for your ride</div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  };
+const downloadReceipt = async (receipt: any) => {
+  try {
+    setIsDownloading(true);
+
+    const html = generateReceiptHTML(receipt);
+
+    // Create PDF
+    const { uri } = await Print.printToFileAsync({
+      html,
+      base64: false,
+    });
+
+    // Destination
+    const fileName = `Kablux_Receipt_${receipt.date}_${receipt.id}.pdf`;
+    const destination = FileSystem.documentDirectory + fileName;
+
+    // Move using legacy API ✅
+    await FileSystem.moveAsync({
+      from: uri,
+      to: destination,
+    });
+
+    // Share / Save
+    if (await Sharing.isAvailableAsync()) {
+      await Sharing.shareAsync(destination, {
+        mimeType: 'application/pdf',
+        dialogTitle: 'Save Receipt',
+      });
+    } else {
+      Alert.alert('Success', 'Receipt saved.');
+    }
+
+  } catch (e) {
+    console.error(e);
+    Alert.alert('Error', 'Could not download receipt');
+  } finally {
+    setIsDownloading(false);
+  }
+};
+
+return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
       
@@ -157,9 +388,19 @@ const [receipts] = useState([
                   </View>
                 </View>
 
-                <TouchableOpacity style={styles.downloadButton}>
-                  <Ionicons name="download" size={20} color="black" />
-                  <Text style={styles.downloadButtonText}>Download Receipt</Text>
+                <TouchableOpacity 
+                  style={styles.downloadButton}
+                  onPress={() => downloadReceipt(selectedReceipt)}
+                  disabled={isDownloading}
+                >
+                  {isDownloading ? (
+                    <ActivityIndicator color="black" size="small" />
+                  ) : (
+                    <>
+                      <Ionicons name="download" size={20} color="black" />
+                      <Text style={styles.downloadButtonText}>Download Receipt</Text>
+                    </>
+                  )}
                 </TouchableOpacity>
               </>
             )}
@@ -175,15 +416,6 @@ const [receipts] = useState([
 export function LanguageScreen({ goBack }: { goBack: () => void }) {
   const [languages] = useState([
     { code: 'en', name: 'English', native: 'English' },
-    { code: 'es', name: 'Spanish', native: 'Español' },
-    { code: 'fr', name: 'French', native: 'Français' },
-    { code: 'de', name: 'German', native: 'Deutsch' },
-    { code: 'it', name: 'Italian', native: 'Italiano' },
-    { code: 'pt', name: 'Portuguese', native: 'Português' },
-    { code: 'zh', name: 'Chinese', native: '中文' },
-    { code: 'ja', name: 'Japanese', native: '日本語' },
-    { code: 'ko', name: 'Korean', native: '한국어' },
-    { code: 'ar', name: 'Arabic', native: 'العربية' }
   ]);
 
   const [selectedLanguage, setSelectedLanguage] = useState('en');
@@ -226,9 +458,9 @@ export function LanguageScreen({ goBack }: { goBack: () => void }) {
           </TouchableOpacity>
         ))}
 
-        <TouchableOpacity style={styles.saveButton}>
+        {/* <TouchableOpacity style={styles.saveButton}>
           <Text style={styles.saveButtonText}>Save Language</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </ScrollView>
     </SafeAreaView>
   );
@@ -510,15 +742,25 @@ export function RateAppScreen({ goBack }: { goBack: () => void }) {
 
 // About Us Screen
 export function AboutUsScreen({ goBack }: { goBack: () => void }) {
+  const SUPPORT_EMAIL = "Hello@kabluxe.com"; // change if needed
+  const SUPPORT_PHONE = "+2348060261407";
+
+  const handleEmail = () => {
+    const mailtoUrl = `mailto:${SUPPORT_EMAIL}`;
+    Linking.openURL(mailtoUrl);
+  };
+
+  const handleCall = () => {
+    Linking.openURL(`tel:${SUPPORT_PHONE}`);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
-      
+
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={goBack}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={goBack}>
           <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>About Us</Text>
@@ -534,27 +776,32 @@ export function AboutUsScreen({ goBack }: { goBack: () => void }) {
         <View style={styles.aboutSection}>
           <Text style={styles.sectionTitle}>Our Story</Text>
           <Text style={styles.aboutText}>
-            Kablux is connecting riders with drivers across the globe. 
-            Our mission is to provide safe, reliable, and affordable transportation while creating 
-            economic opportunities for drivers.
+            Kablux is connecting riders with drivers across the globe.
+            Our mission is to provide safe, reliable, and affordable
+            transportation while creating economic opportunities
+            for drivers.
           </Text>
         </View>
 
         <View style={styles.aboutSection}>
           <Text style={styles.sectionTitle}>What We Offer</Text>
+
           <View style={styles.featureList}>
             <View style={styles.featureItem}>
               <Ionicons name="shield-checkmark" size={20} color="#FEB914" />
               <Text style={styles.featureText}>Safe & Reliable Rides</Text>
             </View>
+
             <View style={styles.featureItem}>
               <Ionicons name="cash" size={20} color="#FEB914" />
               <Text style={styles.featureText}>Affordable Pricing</Text>
             </View>
+
             <View style={styles.featureItem}>
               <Ionicons name="time" size={20} color="#FEB914" />
               <Text style={styles.featureText}>24/7 Availability</Text>
             </View>
+
             <View style={styles.featureItem}>
               <Ionicons name="headset" size={20} color="#FEB914" />
               <Text style={styles.featureText}>24/7 Support</Text>
@@ -562,46 +809,35 @@ export function AboutUsScreen({ goBack }: { goBack: () => void }) {
           </View>
         </View>
 
-        {/* <View style={styles.aboutSection}>
-          <Text style={styles.sectionTitle}>Contact Information</Text>
-          <TouchableOpacity style={styles.contactInfo}>
-            <Ionicons name="globe" size={20} color="#FEB914" />
-            <Text style={styles.contactText}>www.rideshare.com</Text>
+        {/* ✅ Contact Actions */}
+        <View style={styles.contactSection}>
+          <TouchableOpacity style={styles.contactItem} onPress={handleEmail}>
+            <View style={styles.contactLeft}>
+              <Ionicons name="mail" size={22} color="#FEB914" />
+              <Text style={styles.contactText}>Send us a mail</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#FEB914" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.contactInfo}>
-            <Ionicons name="mail" size={20} color="#FEB914" />
-            <Text style={styles.contactText}>support@rideshare.com</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.contactInfo}>
-            <Ionicons name="call" size={20} color="#FEB914" />
-            <Text style={styles.contactText}>+1 (555) 123-RIDE</Text>
-          </TouchableOpacity>
-        </View> 
 
-        <View style={styles.aboutSection}>
-          <Text style={styles.sectionTitle}>Legal</Text>
-          <TouchableOpacity style={styles.legalLink}>
-            <Text style={styles.legalText}>Terms of Service</Text>
-            <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+          <TouchableOpacity
+            style={[styles.contactItem, styles.contactItemBorder]}
+            onPress={handleCall}
+          >
+            <View style={styles.contactLeft}>
+              <Ionicons name="call" size={22} color="#FEB914" />
+              <Text style={styles.contactText}>Contact us</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#FEB914" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.legalLink}>
-            <Text style={styles.legalText}>Privacy Policy</Text>
-            <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.legalLink}>
-            <Text style={styles.legalText}>Licenses</Text>
-            <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
-          </TouchableOpacity>
-        </View>*/}
+        </View>
 
         <Text style={styles.copyright}>
-          © 2024 RideShare Inc. All rights reserved.
+          © 2025 Kablux. All rights reserved.
         </Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -1041,5 +1277,41 @@ sectionTitle: {
     fontWeight: '600',
     textAlign: 'center',
     fontSize: 16,
+  },
+  
+  /* ✅ Contact Section */
+  contactSection: {
+    backgroundColor: "#2C2C2C",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#FEB914",
+    marginTop: 16,
+  },
+  contactItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 18,
+  },
+  contactItemBorder: {
+    borderTopWidth: 1,
+    borderTopColor: "#3d3d3d",
+  },
+  contactLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  contactText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+
+  copyright: {
+    color: "#6B7280",
+    fontSize: 13,
+    textAlign: "center",
+    marginTop: 30,
   },
 });

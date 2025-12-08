@@ -135,21 +135,21 @@ export default function SettingsScreen({ setScreen }) {
     {
       title: "About",
       items: [
-        {
-          icon: "information-circle-outline",
-          label: "App Version",
-          value: "3.2.1",
-        },
+        // {
+        //   icon: "information-circle-outline",
+        //   label: "App Version",
+        //   value: "3.2.1",
+        // },
         {
           icon: "people-outline",
           label: "About Us",
           action: () => setScreen("aboutus"),
         },
-        {
-          icon: "business-outline",
-          label: "Careers",
-          action: () => console.log("Careers"),
-        },
+        // {
+        //   icon: "business-outline",
+        //   label: "Careers",
+        //   action: () => console.log("Careers"),
+        // },
         {
           icon: "log-out-outline",
           label: "Log Out",

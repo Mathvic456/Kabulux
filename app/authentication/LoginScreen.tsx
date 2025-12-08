@@ -39,35 +39,39 @@ export default function LoginScreen({
 
   const { setTokens } = useAuth();
 
-  const validateForm = () => {
-    let valid = true;
-    const newErrors = {
-      email: "",
-      password: "",
-    };
-
-    // Email validation
-    if (!email) {
-      newErrors.email = "Email is required";
-      valid = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = "Please enter a valid email address";
-      valid = false;
-    }
-
-    // Password validation
-    if (!password) {
-      newErrors.password = "Password is required";
-      valid = false;
-    } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-      valid = false;
-    }
-
-    setErrors(newErrors);
-    return valid;
+ const validateForm = () => {
+  let valid = true;
+  const newErrors = {
+    email: "",
+    password: "",
   };
 
+    
+  // Email validation
+  if (!email) {
+    newErrors.email = "Email is required";
+    valid = false;
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    newErrors.email = "Please enter a valid email address";
+    valid = false;
+  }
+
+  // Password validation
+  if (!password) {
+    newErrors.password = "Password is required";
+    valid = false;
+  } else if (password.length < 6) {
+    newErrors.password = "Password must be at least 6 characters";
+    valid = false;
+  } else if (/\s/.test(password)) {
+    // Check if password contains any whitespace characters
+    newErrors.password = "Invalid email or password";
+    valid = false;
+  }
+
+  setErrors(newErrors);
+  return valid;
+};
   const { mutate: login, isPending } = useLoginEndPoint(setTokens, remember);
 
   const handleSubmit = () => {
