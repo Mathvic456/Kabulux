@@ -375,7 +375,7 @@ export default function MainNavigator() {
     case "paystack":
       return (
         <DynamicPayStackWebViewScreen
-          goBack={() => setScreen("addFunds")}
+          goBack={() => setScreen("wallet")}
         />
       );
 

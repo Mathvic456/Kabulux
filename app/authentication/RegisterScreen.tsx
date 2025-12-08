@@ -42,111 +42,121 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
   const { mutate: register, isPending } = useRegisterEndPoint();
 
   const validateForm = () => {
-    let valid = true;
-    const newErrors = {
-      fullName: "",
-      email: "",
-      phone: "",
-      address: "",
-      password: "",
-      referral: "",
-    };
+  let valid = true;
+  let normalizedPhone = phone.trim();
 
-    if (!fullName.trim()) {
-      newErrors.fullName = "Full name is required";
-      valid = false;
-    } else if (fullName.trim().length < 3) {
-      newErrors.fullName = "Full name must be at least 3 characters";
-      valid = false;
-    }
-
-    if (!email) {
-      newErrors.email = "Email is required";
-      valid = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = "Please enter a valid email address";
-      valid = false;
-    }
-
-    if (!phone) {
-      newErrors.phone = "Phone number is required";
-      valid = false;
-    } else if (
-      !/^\+?\d{10,15}$/.test(phone)
-    ) {
-      newErrors.phone = "Please enter a valid phone number";
-      valid = false;
-    }
-
-    if (!address.trim()) {
-      newErrors.address = "Address is required";
-      valid = false;
-    } else if (address.trim().length < 10) {
-      newErrors.address = "Address must be at least 10 characters";
-      valid = false;
-    }
-
-    if (!password) {
-      newErrors.password = "Password is required";
-      valid = false;
-    } else if (password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
-      valid = false;
-    } else if (!/[A-Z]/.test(password)) {
-      newErrors.password = "Password must contain at least one uppercase letter";
-      valid = false;
-    } else if (!/[0-9]/.test(password)) {
-      newErrors.password = "Password must contain at least one number";
-      valid = false;
-    } else if (!/[!@#$%^&*(),.?\":{}|<>]/.test(password)) {
-      newErrors.password = "Password must contain at least one special character";
-      valid = false;
-    }
-
-    setErrors(newErrors);
-    return valid;
+  const newErrors = {
+    fullName: "",
+    email: "",
+    phone: "",
+    address: "",
+    password: "",
+    referral: "",
   };
 
-  const handleSubmit = async () => {
-    if (!validateForm()) return;
+  if (!fullName.trim()) {
+    newErrors.fullName = "Full name is required";
+    valid = false;
+  } else if (fullName.trim().length < 3) {
+    newErrors.fullName = "Full name must be at least 3 characters";
+    valid = false;
+  }
 
-    const [first_name, ...rest] = fullName.trim().split(" ");
-    const last_name = rest.length > 0 ? rest.join(" ") : "";
+  if (!email) {
+    newErrors.email = "Email is required";
+    valid = false;
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    newErrors.email = "Please enter a valid email address";
+    valid = false;
+  }
 
-    await AsyncStorage.setItem("pendingEmail", email);
-    console.log("📩 Email saved for OTP verification:", email);
+  // --- PHONE NORMALIZATION ---
+  if (/^0\d{9,}$/.test(normalizedPhone)) {
+    normalizedPhone = "+234" + normalizedPhone.slice(1);
+  }
 
-    register(
-      {
-        email,
-        password,
-        role: "rider",
-        first_name,
-        last_name,
-        phone_number: phone,
-        address,
-      },
-      {
-        onSuccess: () => {
-          next(email);
-        },
-        onError: (err) => {
-      const errorData = err.response?.data;
+  if (/^234\d{9,}$/.test(normalizedPhone)) {
+    normalizedPhone = "+" + normalizedPhone;
+  }
 
-      if (errorData?.email?.[0]?.includes("already exists")) {
-        setErrors((prev) => ({
-          ...prev,
-          email: "This email is already registered. Try signing in instead.",
-        }));
-      } else {
-        console.error("Registration failed:", errorData || err.message);
-        alert("Something went wrong. Please try again.");
-      }
+  if (!normalizedPhone) {
+    newErrors.phone = "Phone number is required";
+    valid = false;
+  } else if (!/^\+234\d{10}$/.test(normalizedPhone)) {
+    newErrors.phone = "Please enter a valid phone number";
+    valid = false;
+  }
+
+  // address validation…
+  if (!address.trim()) {
+    newErrors.address = "Address is required";
+    valid = false;
+  } else if (address.trim().length < 10) {
+    newErrors.address = "Address must be at least 10 characters";
+    valid = false;
+  }
+
+  // password validation…
+  if (!password) {
+    newErrors.password = "Password is required";
+    valid = false;
+  } else if (password.length < 8) {
+    newErrors.password = "Password must be at least 8 characters";
+    valid = false;
+  } else if (!/[A-Z]/.test(password)) {
+    newErrors.password = "Password must contain at least one uppercase letter";
+    valid = false;
+  } else if (!/[0-9]/.test(password)) {
+    newErrors.password = "Password must contain at least one number";
+    valid = false;
+  } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    newErrors.password = "Password must contain at least one special character";
+    valid = false;
+  }
+
+  setErrors(newErrors);
+
+  return { valid, normalizedPhone };
+};
+
+const handleSubmit = async () => {
+  const { valid, normalizedPhone } = validateForm();
+  if (!valid) return;
+
+  const [first_name, ...rest] = fullName.trim().split(" ");
+  const last_name = rest.length > 0 ? rest.join(" ") : "";
+
+  await AsyncStorage.setItem("pendingEmail", email);
+
+  register(
+    {
+      email,
+      password,
+      role: "rider",
+      first_name,
+      last_name,
+      phone_number: normalizedPhone,
+      address,
     },
+    {
+      onSuccess: () => next(email),
+      onError: (err) => {
+        const errorData = err.response?.data;
 
-      }
-    );
-  };
+        if (errorData?.email?.[0]?.includes("already exists")) {
+          setErrors((prev) => ({
+            ...prev,
+            email: "This email is already registered. Try signing in instead.",
+          }));
+        } else {
+          console.error("Registration failed:", errorData || err.message);
+          alert("Something went wrong. Please try again.");
+        }
+      },
+    }
+  );
+};
+
 
   return (
     <View style={styles.container}>

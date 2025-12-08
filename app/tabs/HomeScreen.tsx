@@ -16,10 +16,10 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { useRide } from "../../context/RideContext";
+
 type HomeScreenProps = {
   setScreen: (screen: string) => void;
 };
@@ -27,7 +27,7 @@ type HomeScreenProps = {
 type UploadPhotoOverlayProps = {
   isVisible: boolean;
   onClose: () => void;
-  onUploadPress: () => void;
+  onTakePhoto: () => void;
   onSubmit: () => void;
   imageUri: string | null;
   loading: boolean;
@@ -36,12 +36,6 @@ type UploadPhotoOverlayProps = {
 type ComingSoonModalProps = {
   isVisible: boolean;
   onClose: () => void;
-};
-
-type PhotoChoiceModalProps = {
-  isVisible: boolean;
-  onClose: () => void;
-  onImageSelected: (uri: string, fileSize?: number) => void;
 };
 
 type AdditionalInfoOverlayProps = {
@@ -62,9 +56,7 @@ type DriverOnWayModalProps = {
   onClose: () => void;
 };
 
-
-
-// Add ComingSoonModal component
+// ComingSoonModal component
 const ComingSoonModal = ({ isVisible, onClose }: ComingSoonModalProps) => {
   return (
     <Modal
@@ -109,11 +101,9 @@ const AreaFadaOverlay = ({ visible, onClose }: { visible: boolean; onClose: () =
     <Modal animationType="slide" transparent visible={visible}>
       <View style={styles.areaFadaOverlay}>
         <View style={styles.areaFadaModalContainer}>
-          {/* Header */}
           <Text style={styles.areaFadaTitle}>KabLüx</Text>
           <Text style={styles.areaFadaSubtitle}>Area Fada</Text>
 
-          {/* Crown avatar */}
           <View style={styles.areaFadaCrownContainer}>
             <Image
               source={require("../../assets/images/Ava.png")}
@@ -129,7 +119,6 @@ const AreaFadaOverlay = ({ visible, onClose }: { visible: boolean; onClose: () =
 
           <Text style={styles.areaFadaHighlightText}>You are ahead of your peeps</Text>
 
-          {/* Leaderboard avatars */}
           <View style={styles.areaFadaAvatarRow}>
             {["#D9D9D9", "#8B5E3C", "#FFB800", "#F86E6E", "#004AAD"].map(
               (color, index) => (
@@ -143,7 +132,6 @@ const AreaFadaOverlay = ({ visible, onClose }: { visible: boolean; onClose: () =
             )}
           </View>
 
-          {/* Stats container */}
           <View style={styles.areaFadaStatsContainer}>
             <View style={styles.areaFadaStatBox}>
               <MaterialIcons name="local-taxi" size={20} color="#FFB800" />
@@ -164,7 +152,6 @@ const AreaFadaOverlay = ({ visible, onClose }: { visible: boolean; onClose: () =
             </View>
           </View>
 
-          {/* Close Button */}
           <TouchableOpacity style={styles.areaFadaCloseBtn} onPress={onClose}>
             <Text style={styles.areaFadaCloseText}>Close</Text>
           </TouchableOpacity>
@@ -178,7 +165,7 @@ const AreaFadaOverlay = ({ visible, onClose }: { visible: boolean; onClose: () =
 const UploadPhotoOverlay = ({
   isVisible,
   onClose,
-  onUploadPress,
+  onTakePhoto,
   onSubmit,
   imageUri,
   loading
@@ -189,16 +176,13 @@ const UploadPhotoOverlay = ({
     <Modal animationType="slide" transparent visible={isVisible} onRequestClose={onClose}>
       <View style={styles.overlayContainer}>
         <View style={styles.overlayContent}>
-
-          {/* Close */}
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Entypo name="cross" size={24} color="#fff" />
           </TouchableOpacity>
 
-          <Text style={styles.overlayTitle}>Upload A Photo</Text>
-          <Text style={styles.overlaySubtitle}>upload a profile photo for verification</Text>
+          <Text style={styles.overlayTitle}>Take A Photo</Text>
+          <Text style={styles.overlaySubtitle}>Take a profile photo for verification</Text>
 
-          {/* If image selected, show preview */}
           <View style={styles.uploadIconContainer}>
             {imageUri ? (
               <Image
@@ -206,18 +190,16 @@ const UploadPhotoOverlay = ({
                 style={{ width: 120, height: 120, borderRadius: 60 }}
               />
             ) : (
-              <Feather name="image" size={80} color="#f7b731" />
+              <Feather name="camera" size={80} color="#f7b731" />
             )}
           </View>
 
-          {/* Upload Button */}
-          <TouchableOpacity style={styles.uploadButton} onPress={onUploadPress}>
+          <TouchableOpacity style={styles.uploadButton} onPress={onTakePhoto}>
             <Text style={styles.uploadButtonText}>
-              {imageUri ? "Change Photo" : "Upload"}
+              {imageUri ? "Retake Photo" : "Take Photo"}
             </Text>
           </TouchableOpacity>
 
-          {/* Submit button appears **only if image exists** */}
           {imageUri && (
             <TouchableOpacity style={styles.submitButton} onPress={onSubmit} disabled={loading}>
               <Text style={styles.submitText}>{loading ? "Uploading..." : "Submit"}</Text>
@@ -228,178 +210,6 @@ const UploadPhotoOverlay = ({
     </Modal>
   );
 };
-
-
-const PhotoChoiceModal = ({ isVisible, onClose, onImageSelected }: PhotoChoiceModalProps) => {
-  if (!isVisible) return null;
-
-  const pickImage = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) return alert("Permission required");
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      const asset = result.assets[0];
-      onImageSelected(asset.uri, asset.fileSize);
-      // Optionally set size if available
-      if (asset.fileSize) {
-        // You'll need to pass this back - see below
-      }
-    }
-  };
-
-  const takePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== "granted") return alert("Camera permission required");
-
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: false,
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      const asset = result.assets[0];
-      onImageSelected(asset.uri, asset.fileSize);
-    }
-  };
-
-  return (
-    <Modal animationType="fade" transparent visible={isVisible} onRequestClose={onClose}>
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback>
-            <View style={styles.bottomSheet}>
-              <Text style={styles.title}>Select Photo</Text>
-
-              <TouchableOpacity style={styles.button} onPress={takePhoto}>
-                <Text style={styles.buttonText}>Take a photo</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.button} onPress={pickImage}>
-                <Text style={styles.buttonText}>Choose from gallery</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={onClose}>
-                <Text style={[styles.buttonText, { color: "#fff" }]}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
-    </Modal>
-  );
-};
-
-
-// const AdditionalInfoOverlay = ({ isVisible, onClose, profileImage }: AdditionalInfoOverlayProps) => {
-//   if (!isVisible) return null;
-
-//   const notificationOptions = ['Push Notifications', 'Email', 'SMS'];
-//   const paymentOptions = ['Credit Card', 'Bank Transfer', 'Mobile Wallet'];
-
-//   const [notificationPreference, setNotificationPreference] = useState<string>("Notification Preference");
-//   const [preferablePayment, setPreferablePayment] = useState<string>("Preferable Payment");
-//   const [addressBook, setAddressBook] = useState<string>("");
-//   const [emergencyContact, setEmergencyContact] = useState<string>("");
-
-//   const [showNotificationDropdown, setShowNotificationDropdown] = useState<boolean>(false);
-//   const [showPaymentDropdown, setShowPaymentDropdown] = useState<boolean>(false);
-
-//   const handleNext = () => {
-//     // Validate and save the additional info
-//     console.log({
-//       addressBook,
-//       emergencyContact,
-//       notificationPreference,
-//       preferablePayment,
-//       profileImage,
-//     });
-//     onClose();
-//   };
-
-//   return (
-//     <Modal
-//       animationType="slide"
-//       transparent={true}
-//       visible={isVisible}
-//       onRequestClose={onClose}
-//     >
-//       <View style={styles.overlayContainer}>
-//         <ScrollView 
-//           style={styles.overlayScrollView}
-//           contentContainerStyle={styles.overlayScrollContent}
-//         >
-//           <View style={styles.overlayContent}>
-//             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-//               <Entypo name="cross" size={28} color="#fff" />
-//             </TouchableOpacity>
-
-//             {profileImage && (
-//             <Image source={{ uri: profileImage }} style={styles.profilePreview} />
-//           )}
-
-//             <Text style={styles.overlayTitle}>Additional Information</Text>
-//             <Text style={styles.overlaySubtitle}>
-//               Fill the details to get more information about you
-//             </Text>
-
-//             {/* Address Book */}
-//             <TextInput
-//               style={styles.inputField}
-//               placeholder="Address Book"
-//               placeholderTextColor="#aaa"
-//               value={addressBook}
-//               onChangeText={setAddressBook}
-//             />
-
-//             {/* Emergency Contact Info */}
-//             <TextInput
-//               style={styles.inputField}
-//               placeholder="Emergency Contact Info"
-//               placeholderTextColor="#aaa"
-//               value={emergencyContact}
-//               onChangeText={setEmergencyContact}
-//               keyboardType="phone-pad"
-//             />
-
-//             {/* Notification Preference */}
-//             <TouchableOpacity
-//               style={styles.inputField}
-//               onPress={() => setShowNotificationDropdown(!showNotificationDropdown)}
-//             >
-//               <Text style={styles.dropdownText}>
-//                 {notificationPreference}
-//               </Text>
-//               <Entypo name="chevron-down" size={18} color="#aaa" />
-//             </TouchableOpacity>
-
-//             {/* Preferable Payment */}
-//             <TouchableOpacity
-//               style={styles.inputField}
-//               onPress={() => setShowPaymentDropdown(!showPaymentDropdown)}
-//             >
-//               <Text style={styles.dropdownText}>
-//                 {preferablePayment}
-//               </Text>
-//               <Entypo name="chevron-down" size={18} color="#aaa" />
-//             </TouchableOpacity>
-
-//             {/* Biometrics */}
-//             <TouchableOpacity style={styles.biometricsToggle}>
-//               <Entypo name="fingerprint" size={36} color="#FEB914" />
-//               <Text style={styles.biometricsLabel}>Enable Biometrics</Text>
-//             </TouchableOpacity>
-
-//             {/* Buttons */}
-//             <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-//               <Text style={styles.nextButtonText}>Next</Text>
-//             </TouchableOpacity>
-// };
 
 // Additional Info Overlay Component
 const AdditionalInfoOverlay = ({
@@ -451,7 +261,6 @@ const AdditionalInfoOverlay = ({
               Choose your ride and security preferences
             </Text>
 
-            {/* Ride Preference Dropdown */}
             <TouchableOpacity
               style={styles.inputField}
               onPress={() => setShowRideDropdown(!showRideDropdown)}
@@ -494,7 +303,6 @@ const AdditionalInfoOverlay = ({
               </View>
             )}
 
-            {/* Security Preference Dropdown */}
             <TouchableOpacity
               style={styles.inputField}
               onPress={() => setShowSecurityDropdown(!showSecurityDropdown)}
@@ -537,7 +345,6 @@ const AdditionalInfoOverlay = ({
               </View>
             )}
 
-            {/* Buttons */}
             <TouchableOpacity
               style={styles.nextButton}
               onPress={handleSubmit}
@@ -674,72 +481,102 @@ const ProfileUpdateSuccessModal = ({ isVisible, onClose }: LoginSuccessModalProp
 };
 
 export default function HomeScreen({ setScreen }: HomeScreenProps) {
-
   const [showComingSoonModal, setShowComingSoonModal] = useState<boolean>(false);
-  const [showPhotoOverlay, setShowPhotoOverlay] = useState<boolean>(false);
   const [showAdditionalInfoOverlay, setShowAdditionalInfoOverlay] = useState<boolean>(false);
   const [showLoginSuccessModal, setShowLoginSuccessModal] = useState<boolean>(false);
-  const [showPhotoChoiceModal, setShowPhotoChoiceModal] = useState<boolean>(false);
   const [showProfileUpdateSuccessModal, setShowProfileUpdateSuccessModal] = useState<boolean>(false);
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [showAreaFadaOverlay, setShowAreaFadaOverlay] = useState<boolean>(false);
   const [uploadedProfileImageId, setUploadedProfileImageId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  
   const [showDriverOnWayModal, setShowDriverOnWayModal] = useState<boolean>(false);
   const [showUploadOverlay, setShowUploadOverlay] = useState(false);
-  const [showPickerModal, setShowPickerModal] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
-  const [imageSize, setImageSize] = useState<number>(0);
   
   const uploadMutation = useUploadProfilePhoto();
   const updateProfileMutation = useUpdateRiderProfile(userId || undefined);
-  const { data: profile, isLoading: profileLoading } = useProfile();
+  const { 
+    data: profile, 
+    isLoading: profileLoading, 
+    error: profileError // Rename it to avoid naming conflicts
+  } = useProfile();
   const { rideState, driverLocation, rideId } = useRide();
 
-const uploadPhotoToServer = async () => {
-  if (!imageUri) return;
+  useEffect(() => {
+    if (profileError) {
+      const status = profileError?.response?.status || (profileError as any)?.status;
 
-  try {
-    const formData = new FormData();
-    
-    formData.append("name", "profile_photo");
+      console.log("❌ Profile Error Detected:", status);
 
-    const filename = imageUri.split('/').pop() || 'profile.jpg';
-    formData.append("files", {
-      uri: imageUri,
-      type: "image/jpeg",
-      name: filename,
-    } as any);
+      if (status === 401) {
+        Alert.alert("Session Expired", "Please login again.");
+        const clearSession = async () => {
+          await AsyncStorage.multiRemove(["token", "refreshToken", "user_id", "hasShownLoginSuccess"]);
+          setScreen("login"); 
+        };
+        
+        clearSession();
+      }
+    }
+  }, [profileError, setScreen]);
 
-    await uploadMutation.mutateAsync(formData, {
-      onSuccess: (res) => {
-        console.log("UPLOAD RESULT", res.data);
-        // Extract the file ID from the response (not the URL)
-        const fileId = res.data?.results?.[0]?.id;
-        const fileUrl = res.data?.results?.[0]?.file;
-        console.log("📸 Extracted file ID:", fileId);
-        console.log("📸 Extracted file URL:", fileUrl);
-        if (fileId) {
-          setUploadedProfileImageId(fileId);
-          setImageUri(null);
-          setImageSize(0);
-          setShowUploadOverlay(false);
-          // Show additional info modal instead of closing
-          setShowAdditionalInfoOverlay(true);
-        }
-      },
-      onError: (error: any) => {
-        console.log("Full error:", error.response?.data);
-        Alert.alert("Error", error?.response?.data?.message || "Failed to upload image");
-      },
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission Required", "Camera permission is needed to take a photo");
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
     });
-  } catch (err) {
-    console.error(err);
-    Alert.alert("Error", "Failed to upload image");
-  }
-};
 
+    if (!result.canceled) {
+      const asset = result.assets[0];
+      setImageUri(asset.uri);
+    }
+  };
+
+  const uploadPhotoToServer = async () => {
+    if (!imageUri) return;
+
+    try {
+      const formData = new FormData();
+      formData.append("name", "profile_photo");
+
+      const filename = imageUri.split('/').pop() || 'profile.jpg';
+      formData.append("files", {
+        uri: imageUri,
+        type: "image/jpeg",
+        name: filename,
+      } as any);
+
+      await uploadMutation.mutateAsync(formData, {
+        onSuccess: (res) => {
+          console.log("UPLOAD RESULT", res.data);
+          const fileId = res.data?.results?.[0]?.id;
+          const fileUrl = res.data?.results?.[0]?.file;
+          console.log("📸 Extracted file ID:", fileId);
+          console.log("📸 Extracted file URL:", fileUrl);
+          if (fileId) {
+            setUploadedProfileImageId(fileId);
+            setImageUri(null);
+            setShowUploadOverlay(false);
+            setShowAdditionalInfoOverlay(true);
+          }
+        },
+        onError: (error: any) => {
+          console.log("Full error:", error.response?.data);
+          Alert.alert("Error", error?.response?.data?.message || "Failed to upload image");
+        },
+      });
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Error", "Failed to upload image");
+    }
+  };
 
   useEffect(() => {
     const afterMount = async () => {
@@ -759,7 +596,6 @@ const uploadPhotoToServer = async () => {
     afterMount();
   }, []);
 
-  // Show upload modal only if profile picture is null
   useEffect(() => {
     if (profile && profile.profile_image === null) {
       console.log("📸 No profile picture found, showing upload modal");
@@ -774,66 +610,48 @@ const uploadPhotoToServer = async () => {
     try {
       const hasShownLoginSuccess = await AsyncStorage.getItem('hasShownLoginSuccess');
       
-      // If it hasn't been shown before, show it and mark as shown
       if (!hasShownLoginSuccess) {
         setShowLoginSuccessModal(true);
         await AsyncStorage.setItem('hasShownLoginSuccess', 'true');
       }
     } catch (error) {
       console.error('Error checking login success modal:', error);
-      // If there's an error, default to showing the modal
       setShowLoginSuccessModal(true);
     }
-  };
-
-  
-  const handleNextFromPhoto = () => {
-    setShowPhotoOverlay(false);
-    setShowPhotoChoiceModal(true);
-  };
-
-  const handleImageSelected = (uri: string, fileSize?: number) => {
-    setUploadedImage(uri);
-    setImageUri(uri);
-    if (fileSize) {
-      setImageSize(fileSize);
-    }
-    setShowPhotoChoiceModal(false);
-    setShowAdditionalInfoOverlay(true);
   };
 
   const handleLoginSuccessClose = () => {
     setShowLoginSuccessModal(false);
   };
 
-const handleAdditionalInfoSubmit = (ridePreference: string, securityPreference: string) => {
-  console.log("\n🎯 [AdditionalInfo] User submitted preferences");
-  console.log("🚗 Ride Preference:", ridePreference);
-  console.log("🔒 Security Preference:", securityPreference);
-  console.log("🖼️ Profile Image ID:", uploadedProfileImageId);
-  
-  const payload = {
-    profile_picture: uploadedProfileImageId,
-    ride_preference: ridePreference,  // Send as string, not { ride: ... }
-    security_preference: securityPreference,  // Send as string, not { security: ... }
+  const handleAdditionalInfoSubmit = (ridePreference: string, securityPreference: string) => {
+    console.log("\n🎯 [AdditionalInfo] User submitted preferences");
+    console.log("🚗 Ride Preference:", ridePreference);
+    console.log("🔒 Security Preference:", securityPreference);
+    console.log("🖼️ Profile Image ID:", uploadedProfileImageId);
+    
+    const payload = {
+      profile_picture: uploadedProfileImageId,
+      ride_preference: ridePreference,
+      security_preference: securityPreference,
+    };
+    
+    console.log("\n📦 [AdditionalInfo] Full payload being sent:");
+    console.log(JSON.stringify(payload, null, 2));
+    
+    updateProfileMutation.mutate(payload, {
+      onSuccess: () => {
+        console.log("✅ [AdditionalInfo] Profile updated successfully");
+        setShowAdditionalInfoOverlay(false);
+        setUploadedProfileImageId(null);
+        setShowProfileUpdateSuccessModal(true);
+      },
+      onError: (error: any) => {
+        console.error("❌ [AdditionalInfo] Profile update failed:", error);
+        Alert.alert("Error", "Failed to update profile preferences");
+      },
+    });
   };
-  
-  console.log("\n📦 [AdditionalInfo] Full payload being sent:");
-  console.log(JSON.stringify(payload, null, 2));
-  
-  updateProfileMutation.mutate(payload, {
-    onSuccess: () => {
-      console.log("✅ [AdditionalInfo] Profile updated successfully");
-      setShowAdditionalInfoOverlay(false);
-      setUploadedProfileImageId(null);
-      setShowProfileUpdateSuccessModal(true);
-    },
-    onError: (error: any) => {
-      console.error("❌ [AdditionalInfo] Profile update failed:", error);
-      Alert.alert("Error", "Failed to update profile preferences");
-    },
-  });
-};
 
   const handleProfileUpdateSuccessClose = () => {
     setShowProfileUpdateSuccessModal(false);
@@ -860,31 +678,31 @@ const handleAdditionalInfoSubmit = (ridePreference: string, securityPreference: 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {rideState === "in_ride" && driverLocation && (
-  <View style={styles.driverLocationBanner}>
-    <View style={styles.bannerHeader}>
-      <View style={styles.bannerIconContainer}>
-        <FontAwesome5 name="car" size={24} color="#FEB914" />
-      </View>
-      <View style={styles.bannerTextContainer}>
-        <Text style={styles.bannerTitle}>Your Ride is Active</Text>
-        <View style={styles.statusRow}>
-          <View style={styles.liveDot} />
-          <Text style={styles.bannerSubtitle}>Driver is on the way</Text>
-        </View>
-      </View>
-    </View>
+        <View style={styles.driverLocationBanner}>
+          <View style={styles.bannerHeader}>
+            <View style={styles.bannerIconContainer}>
+              <FontAwesome5 name="car" size={24} color="#FEB914" />
+            </View>
+            <View style={styles.bannerTextContainer}>
+              <Text style={styles.bannerTitle}>Your Ride is Active</Text>
+              <View style={styles.statusRow}>
+                <View style={styles.liveDot} />
+                <Text style={styles.bannerSubtitle}>Driver is on the way</Text>
+              </View>
+            </View>
+          </View>
 
-    <TouchableOpacity 
-      style={styles.trackButton}
-      onPress={() => setScreen('trackRide')}
-      activeOpacity={0.8}
-    >
-      <Ionicons name="navigate" size={20} color="#000" />
-      <Text style={styles.trackButtonText}>Track Driver</Text>
-    </TouchableOpacity>
-  </View>
-)}
-      {/* Main Screen Content */}
+          <TouchableOpacity 
+            style={styles.trackButton}
+            onPress={() => setScreen('trackRide')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="navigate" size={20} color="#000" />
+            <Text style={styles.trackButtonText}>Track Driver</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <View style={styles.logoContainer}>
         <Image
           source={require("../../assets/images/logo.png")}
@@ -933,8 +751,7 @@ const handleAdditionalInfoSubmit = (ridePreference: string, securityPreference: 
           <Text style={styles.suggestionText}>Ride</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.suggestionCard} onPress={() => setShowComingSoonModal(true)}
->
+        <TouchableOpacity style={styles.suggestionCard} onPress={() => setShowComingSoonModal(true)}>
           <Image
             source={require("../../assets/images/courier.png")}
             style={styles.suggestionIcon}
@@ -942,8 +759,7 @@ const handleAdditionalInfoSubmit = (ridePreference: string, securityPreference: 
           <Text style={styles.suggestionText}>Courier</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.suggestionCard} onPress={() => setShowComingSoonModal(true)}
->
+        <TouchableOpacity style={styles.suggestionCard} onPress={() => setShowComingSoonModal(true)}>
           <Image
             source={require("../../assets/images/reserve.png")}
             style={styles.suggestionIcon}
@@ -978,19 +794,16 @@ const handleAdditionalInfoSubmit = (ridePreference: string, securityPreference: 
         contentContainerStyle={{ paddingRight: 20 }}
       />
 
-
-       <ComingSoonModal
+      <ComingSoonModal
         isVisible={showComingSoonModal}
         onClose={() => setShowComingSoonModal(false)}
       />
 
       <View style={styles.recentRideHeader}>
         <Text style={styles.sectionTitle}>Recent Ride</Text>
-        {/* Remove the See All button since there's no history to see */}
       </View>
 
-      {/* Recent Ride Components */}
-       <View style={styles.emptyRideCard}>
+      <View style={styles.emptyRideCard}>
         <View style={styles.emptyRideIconContainer}>
           <FontAwesome5 name="car" size={40} color="#FEB914" />
         </View>
@@ -1006,8 +819,6 @@ const handleAdditionalInfoSubmit = (ridePreference: string, securityPreference: 
         </TouchableOpacity>
       </View>
 
-
-      {/* Ride Analytics Section */}
       <View style={styles.analyticsCard}>
         <Text style={styles.analyticsTitle}>Check your ride Analytics</Text>
         <TouchableOpacity 
@@ -1018,7 +829,6 @@ const handleAdditionalInfoSubmit = (ridePreference: string, securityPreference: 
         </TouchableOpacity>
       </View>
 
-      {/* Special Service Section */}
       <Text style={styles.sectionTitle}>Special Service</Text>
       <View style={styles.specialServiceRow}>
         <TouchableOpacity style={styles.specialCard}>
@@ -1049,26 +859,13 @@ const handleAdditionalInfoSubmit = (ridePreference: string, securityPreference: 
         </TouchableOpacity>
       </View>
 
-      {/* Overlays and Modals */}
       <UploadPhotoOverlay
         isVisible={showUploadOverlay}
         onClose={() => setShowUploadOverlay(false)}
-        onUploadPress={() => setShowPickerModal(true)}
+        onTakePhoto={takePhoto}
         imageUri={imageUri}
         onSubmit={uploadPhotoToServer}
         loading={uploadMutation.isPending}
-      />
-
-      <PhotoChoiceModal
-        isVisible={showPickerModal}
-        onClose={() => setShowPickerModal(false)}
-        onImageSelected={(uri: string, fileSize?: number) => {
-          setImageUri(uri);
-          if (fileSize) {
-            setImageSize(fileSize);
-          }
-          setShowPickerModal(false);
-        }}
       />
 
       <AdditionalInfoOverlay
@@ -1084,11 +881,11 @@ const handleAdditionalInfoSubmit = (ridePreference: string, securityPreference: 
         onClose={handleLoginSuccessClose}
       />
 
-      {/* AreaFada Overlay */}
       <AreaFadaOverlay
         visible={showAreaFadaOverlay}
         onClose={() => setShowAreaFadaOverlay(false)}
       />
+
       <DriverOnWayModal
         isVisible={showDriverOnWayModal}
         onClose={() => setShowDriverOnWayModal(false)}
@@ -1098,7 +895,7 @@ const handleAdditionalInfoSubmit = (ridePreference: string, securityPreference: 
         isVisible={showProfileUpdateSuccessModal}
         onClose={handleProfileUpdateSuccessClose}
       />
-      </ScrollView>
+    </ScrollView>
   );
 }
 
@@ -1111,16 +908,11 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     height: 50,
-    // width: 90,
     alignItems: 'center',
     marginBottom: 20,
-    borderWidth: 1,
-    // borderColor:'white',
     flexDirection:'row',  
     justifyContent:'space-between',
-    
   },
-
   driverLocationBanner: {
     backgroundColor: '#1a1a1a',
     borderRadius: 16,
@@ -1207,8 +999,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     gap: 7,
   },
-
-
   comingSoonModalContent: {
     backgroundColor: '#1a1a1a',
     borderRadius: 20,
@@ -1229,8 +1019,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: 'bold',
   },
-
-   emptyRideCard: {
+  emptyRideCard: {
     backgroundColor: "#1a1a1a",
     borderRadius: 20,
     padding: 30,
@@ -1273,7 +1062,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  
   comingSoonModalMessage: {
     fontSize: 16,
     color: '#ccc',
@@ -1301,7 +1089,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-
   laterText: {
     color: "#fff",
     fontSize: 14,
@@ -1372,48 +1159,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginVertical: 15,
   },
-  seeAll: {
-    color: "#FEB914",
-    fontSize: 14,
-  },
-  rideCard: {
-    flexDirection: "row",
-    backgroundColor: "#1a1a1a",
-    borderRadius: 20,
-    padding: 16,
-    alignItems: "center",
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "#fff",
-  },
-  rideImage: {
-    width: 80,
-    height: 60,
-    borderRadius: 8,
-    marginRight: 16,
-    resizeMode: "contain",
-  },
-  price: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 4,
-  },
-  subText: {
-    color: "#aaa",
-    fontSize: 13,
-  },
-  ratingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginLeft: 10,
-  },
-  rating: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "bold",
-    marginLeft: 4,
-  },
   analyticsCard: {
     backgroundColor: "#1a1a1a",
     borderRadius: 20,
@@ -1466,8 +1211,6 @@ const styles = StyleSheet.create({
     color: "#aaa",
     fontSize: 12,
   },
-
-  // Overlay Styles
   overlayContainer: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -1511,6 +1254,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    width: 140,
+    height: 140,
   },
   uploadButton: {
     backgroundColor: '#FEB914',
@@ -1553,8 +1298,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
-
-  // Success Modal Styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -1609,8 +1352,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-
-  // Additional styles for overlays
   inputField: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -1628,18 +1369,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 14,
   },
-  biometricsToggle: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 20,
-    gap: 10,
-  },
-  biometricsLabel: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "500",
-  },
   nextButton: {
     backgroundColor: "#FEB914",
     paddingVertical: 15,
@@ -1653,52 +1382,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-  },
-  bottomSheet: {
-    backgroundColor: "#1a1a1a",
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 30,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 12,
-    textAlign: "center",
-    color: "#fff",
-  },
-  button: {
-    paddingVertical: 14,
-    alignItems: "center",
-    backgroundColor: "#d6d6d6ff",
-    borderRadius: 10,
-    marginVertical: 6,
-  },
-  cancelButton: {
-    backgroundColor: "#1a1a1a",
-    borderWidth: 1,
-    borderColor: "#ccc",
-  },
-  buttonText: {
-    fontSize: 16,
-    color: "#000",
-  },
-  profilePreview: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 20,
-    borderWidth: 2,
-    borderColor: '#FEB914',
-  },
-
-  // AreaFada Overlay Styles
   areaFadaOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.85)",
@@ -1775,7 +1458,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     marginHorizontal: 5,
-    
   },
   areaFadaStatTitle: {
     color: "#fff",
@@ -1799,107 +1481,80 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   driverOnWayModalContent: {
-  backgroundColor: '#1a1a1a',
-  borderRadius: 20,
-  padding: 30,
-  alignItems: 'center',
-  width: '100%',
-  maxWidth: 350,
-  borderWidth: 2,
-  borderColor: '#FEB914',
-},
-driverOnWayIconContainer: {
-  marginBottom: 20,
-},
-driverOnWayModalTitle: {
-  fontSize: 24,
-  color: '#fff',
-  marginBottom: 15,
-  textAlign: 'center',
-  fontWeight: 'bold',
-},
-driverOnWayModalMessage: {
-  fontSize: 16,
-  color: '#ccc',
-  textAlign: 'center',
-  marginBottom: 10,
-  lineHeight: 22,
-},
-driverOnWayModalSubtext: {
-  fontSize: 14,
-  color: '#aaa',
-  textAlign: 'center',
-  marginBottom: 25,
-  lineHeight: 20,
-},
-driverOnWayModalButton: {
-  backgroundColor: '#FEB914',
-  paddingVertical: 12,
-  paddingHorizontal: 40,
-  borderRadius: 10,
-  width: '100%',
-  alignItems: 'center',
-},
-driverOnWayModalButtonText: {
-  color: '#000',
-  fontSize: 18,
-  fontWeight: 'bold',
-},
-rideInProgressBanner: {
-  backgroundColor: '#1a1a1a',
-  borderRadius: 12,
-  padding: 16,
-  marginBottom: 16,
-  borderWidth: 1,
-  borderColor: '#FEB914',
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-},
-rideInProgressContent: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  gap: 10,
-},
-rideInProgressText: {
-  color: '#fff',
-  fontSize: 15,
-  fontWeight: '600',
-},
-rideInProgressDot: {
-  width: 10,
-  height: 10,
-  borderRadius: 5,
-  backgroundColor: '#FEB914',
-},
-dropdownLabel: {
-  color: "#aaa",
-  fontSize: 12,
-  marginBottom: 4,
-},
-dropdownMenu: {
-  backgroundColor: "#2a2a2a",
-  borderRadius: 8,
-  borderWidth: 1,
-  borderColor: "#333",
-  marginBottom: 16,
-  overflow: "hidden",
-},
-dropdownMenuItem: {
-  paddingVertical: 12,
-  paddingHorizontal: 15,
-  borderBottomWidth: 1,
-  borderBottomColor: "#333",
-},
-dropdownMenuItemSelected: {
-  backgroundColor: "#FEB914",
-},
-dropdownMenuText: {
-  color: "#fff",
-  fontSize: 14,
-},
-dropdownMenuTextSelected: {
-  color: "#000",
-  fontWeight: "600",
-},
+    backgroundColor: '#1a1a1a',
+    borderRadius: 20,
+    padding: 30,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 350,
+    borderWidth: 2,
+    borderColor: '#FEB914',
+  },
+  driverOnWayIconContainer: {
+    marginBottom: 20,
+  },
+  driverOnWayModalTitle: {
+    fontSize: 24,
+    color: '#fff',
+    marginBottom: 15,
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  driverOnWayModalMessage: {
+    fontSize: 16,
+    color: '#ccc',
+    textAlign: 'center',
+    marginBottom: 10,
+    lineHeight: 22,
+  },
+  driverOnWayModalSubtext: {
+    fontSize: 14,
+    color: '#aaa',
+    textAlign: 'center',
+    marginBottom: 25,
+    lineHeight: 20,
+  },
+  driverOnWayModalButton: {
+    backgroundColor: '#FEB914',
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 10,
+    width: '100%',
+    alignItems: 'center',
+  },
+  driverOnWayModalButtonText: {
+    color: '#000',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  dropdownLabel: {
+    color: "#aaa",
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  dropdownMenu: {
+    backgroundColor: "#2a2a2a",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#333",
+    marginBottom: 16,
+    overflow: "hidden",
+  },
+  dropdownMenuItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#333",
+  },
+  dropdownMenuItemSelected: {
+    backgroundColor: "#FEB914",
+  },
+  dropdownMenuText: {
+    color: "#fff",
+    fontSize: 14,
+  },
+  dropdownMenuTextSelected: {
+    color: "#000",
+    fontWeight: "600",
+  },
 });

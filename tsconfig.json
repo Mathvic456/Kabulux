@@ -1,7 +1,15 @@
 {
-  "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true,
+    "target": "esnext",
+
+    "jsx": "react-native",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "allowJs": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./*"
@@ -14,5 +22,6 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     "app/images.d.ts"
-  ]
+  ],
+  "extends": "expo/tsconfig.base"
 }

@@ -52,13 +52,11 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
 
         setDriverResponses((prev) => {
           const index = prev.findIndex((d) => d.driver_name === newOffer.driver_name);
-
           if (index > -1) {
             const updated = [...prev];
             updated[index] = newOffer;
             return updated;
           }
-
           return [...prev, newOffer];
         });
       }
@@ -70,34 +68,27 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
   const connectWebSocket = useCallback(async () => {
     console.log("🔌 [WS] Attempting connection...");
     
-    // Clear any pending reconnect
+    // Clear any pending reconnect to prevent double loops
     if (reconnectTimeout.current) {
       clearTimeout(reconnectTimeout.current);
       reconnectTimeout.current = null;
     }
 
-    // Close existing connection
-    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-      console.log("⚠️ [WS] Closing existing connection");
-      ws.current.close();
-    }
+  if (ws.current && 
+      (ws.current.readyState === WebSocket.CONNECTING ||
+      ws.current.readyState === WebSocket.OPEN)) {
+    console.log("⚠️ [WS] Already connected or connecting — skipping reconnect");
+    return;
+  }
 
     try {
-      // Get valid token from AuthContext
       const accessToken = await getValidToken();
-
-      if (!accessToken) {
-        console.warn("❌ [WS] No valid token available - skipping connection");
-        return;
+      if (!accessToken || isTokenExpired(accessToken)) {
+        console.warn("❌ [WS] Token invalid/missing. Retrying in 3s...");
+        reconnectTimeout.current = setTimeout(connectWebSocket, 3000);
+        return; 
       }
 
-      // Validate token
-      if (isTokenExpired(accessToken)) {
-        console.warn("❌ [WS] Token expired - skipping connection");
-        return;
-      }
-
-      // Create new connection
       const wsUrl = `${WSS_URL}?token=${accessToken}`;
       console.log("🌐 [WS] Connecting to:", WSS_URL);
       
@@ -112,70 +103,58 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
       socket.onmessage = handleWsMessage;
 
       socket.onclose = async (event) => {
-        console.log(`🔴 [WS] Closed - Code: ${event.code}, Reason: ${event.reason || 'No reason provided'}`);
+        console.log(`🔴 [WS] Closed - Code: ${event.code}`);
         setIsConnected(false);
 
-        // Don't reconnect on auth errors
-        if (event.code === 4001 || event.code === 4003) {
-          console.warn("❌ [WS] Closed due to invalid/expired token - not reconnecting");
-          return;
-        }
+        // 3. REMOVED AUTH CHECK BLOCK
+        // We removed the 'if (code === 4001)' block so it NEVER gives up.
 
-        // Reconnect if allowed
         if (shouldReconnect.current) {
-          console.log("🔄 [WS] Scheduling reconnect in 3s...");
-          reconnectTimeout.current = setTimeout(() => {
-            console.log("🔄 [WS] Executing reconnect...");
-            connectWebSocket();
-          }, 3000);
+          console.log("🔄 [WS] Connection lost. Reconnecting in 3s...");
+          reconnectTimeout.current = setTimeout(connectWebSocket, 3000);
         }
       };
 
       socket.onerror = (err) => {
         console.error("❌ [WS] Error:", err);
+        // We let onclose handle the reconnection logic
         setIsConnected(false);
       };
+
     } catch (error) {
-      console.error("❌ [WS] Connection error:", error);
+      console.error("❌ [WS] Fatal setup error:", error);
+      if (shouldReconnect.current) {
+         reconnectTimeout.current = setTimeout(connectWebSocket, 3000);
+      }
     }
   }, [getValidToken, isTokenExpired, handleWsMessage]);
 
-  // Connect when component mounts and token becomes available
   useEffect(() => {
-    console.log("🚀 [WS] Initializing WebSocketProvider...");
     connectWebSocket();
-  }, [connectWebSocket]);
-
-  // Handle app state changes
-  useEffect(() => {
-    const subscription = AppState.addEventListener("change", (state) => {
-      console.log(`📱 [WS] App state changed: ${state}`);
-      
-      if (state === "active") {
-        console.log("🟢 [WS] App returned to foreground");
-        console.log("🔄 [WS] Reconnecting after resume...");
-        connectWebSocket();
-      } else {
-        console.log("🟡 [WS] App in background, closing gracefully");
-        if (ws.current) {
-          ws.current.close();
-        }
-      }
-    });
-
     return () => {
-      console.log("🧹 [WS] Cleaning up WebSocketProvider...");
-      subscription.remove();
       shouldReconnect.current = false;
-      if (reconnectTimeout.current) {
-        clearTimeout(reconnectTimeout.current);
-      }
+      if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
       ws.current?.close();
     };
   }, [connectWebSocket]);
 
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+    if (state === "active") {
+  console.log("[WS] App active, ensuring connection...");
+  shouldReconnect.current = true;
+
+  if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+    connectWebSocket();
+  }
+}
+    });
+
+    
+    return () => subscription.remove();
+  }, [connectWebSocket]);
+
   const clearDriverResponses = useCallback(() => {
-    console.log("🗑️ [WS] Clearing driver responses");
     setDriverResponses([]);
   }, []);
 

@@ -24,7 +24,8 @@ export default {
         backgroundColor: "#ffffff",
       },
       edgeToEdgeEnabled: true,
-      package: "com.crashingout.kablux",
+      package: "com.crashingout.kablux", 
+      googleServicesFile: "./google-services.json",
       config: {
         googleMaps: {
           apiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
@@ -50,7 +51,11 @@ export default {
         },
       ],
       "expo-web-browser",
-      "react-native-google-auth",
+      "@react-native-google-signin/google-signin",
+        "expo-notifications",
+    
+      "@react-native-firebase/app",
+      "@react-native-firebase/messaging"
     ],
 
     experiments: {

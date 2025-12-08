@@ -4,11 +4,13 @@ import { AxiosResponse } from "axios";
 import { api } from "./api";
 import { CREATEACCOUNT_TYPE } from "./type";
 
-// Types for modal control
-export type AuthResult = {
-  success: boolean;
-  message: string;
-  data?: any;
+// Define the new Login Payload type
+type LoginPayload = {
+  email: string;
+  password: string;
+  role: string;
+  fcm_token: string;
+  type: string; 
 };
 
 export const useRegisterEndPoint = () => {
@@ -30,10 +32,11 @@ export const useLoginEndPoint = (
   remember: boolean
 ) => {
   return useMutation({
-    mutationFn: (data: { email: string; password: string }) =>
-      api.post("auth/login/", data),
+    // Updated mutationFn to accept the full payload
+    mutationFn: (data: LoginPayload) => api.post("auth/login/", data),
     
     onSuccess: async (res) => {
+      console.log(res);
       const token = res.data?.data?.access;
       const refreshToken = res.data?.data?.refresh;
       const userId = res.data?.data?.user?.id;
@@ -46,10 +49,9 @@ export const useLoginEndPoint = (
       console.log(`🔑 [Auth] Login successful (Remember Me: ${remember})`);
 
       // Store tokens in AuthContext
-      // This will handle both Context (in-memory) and AsyncStorage (if remember = true)
       await setTokens(token, refreshToken, remember);
 
-      // Store userId separately (this is not auth-related, so keep in AsyncStorage)
+      // Store userId separately
       if (userId) {
         await AsyncStorage.setItem("user_id", userId);
         console.log("✅ [Auth] User ID saved:", userId);
@@ -68,10 +70,7 @@ export const useLogoutEndPoint = (
   return useMutation({
     mutationFn: async () => {
       await clearTokens();
-      
-      // Clear other non-auth data
       await AsyncStorage.removeItem("user_id");
-      
       console.log("🗑️ [Auth] Cleared all user data");
       return true;
     },
