@@ -52,14 +52,8 @@ export default {
       ],
       "expo-web-browser",
       "@react-native-google-signin/google-signin",
-      [
         "expo-notifications",
-        {
-          "icon": "./assets/images/notification-icon.png",
-          "color": "#fcbf24",
-          "defaultChannel": "default"
-        }
-      ],
+    
       "@react-native-firebase/app",
       "@react-native-firebase/messaging"
     ],
