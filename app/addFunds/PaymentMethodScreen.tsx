@@ -4,9 +4,9 @@ import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert, // Added Alert
   Keyboard,
   Modal,
-  Platform,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -14,7 +14,7 @@ import {
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View,
+  View
 } from "react-native";
 
 type Card = {
@@ -53,7 +53,7 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
       setCards(parsed);
       if (parsed.length) setSelectedCardId(parsed[0].id);
     } else {
-      // Dummy cards
+      // Dummy cards logic (kept same as your code)
       const dummy: Card[] = [
         {
           id: "1",
@@ -63,12 +63,12 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
           expiry: "09/26",
         },
         {
-          id: "2",
-          last4: "8842",
-          brand: "mastercard",
-          holder: "Victor Matthew",
-          expiry: "11/25",
-        },
+            id: "2",
+            last4: "8842",
+            brand: "mastercard",
+            holder: "Victor Matthew",
+            expiry: "11/25",
+          },
       ];
       setCards(dummy);
       setSelectedCardId(dummy[0].id);
@@ -82,32 +82,89 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
   };
 
   /* ---------------------------------- */
+  /* Backend Simulation */
+  /* ---------------------------------- */
+  const simulateBackendVerification = async (cardDetails: any) => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        // Simulate a 90% success rate
+        const isSuccess = Math.random() > 0.1; 
+        if (isSuccess) {
+            resolve({ status: 'success', token: 'tok_12345' });
+        } else {
+            reject(new Error('Bank declined transaction'));
+        }
+      }, 2000); // 2 second delay
+    });
+  };
+
+  /* ---------------------------------- */
   /* Add new card */
   /* ---------------------------------- */
   const handleSaveCard = async () => {
     Keyboard.dismiss();
+
+    // 1. Basic Validation
+    if (!cardNumber || !expiry || !cvv || !cardName) {
+        Alert.alert("Missing Details", "Please fill in all card information.");
+        return;
+    }
+
+    // 2. Format Validation (Simple MM/YY check)
+    const expiryRegex = /^(0[1-9]|1[0-2])\/?([0-9]{2})$/;
+    if (!expiryRegex.test(expiry)) {
+        Alert.alert("Invalid Expiry", "Use MM/YY format (e.g., 12/25)");
+        return;
+    }
+
+    if (cardNumber.length < 12) {
+        Alert.alert("Invalid Card", "Card number is too short.");
+        return;
+    }
+
     setIsLoading(true);
 
-    const cleaned = cardNumber.replace(/\D/g, "");
-    const newCard: Card = {
-      id: Date.now().toString(),
-      last4: cleaned.slice(-4),
-      brand: cleaned.startsWith("5") ? "mastercard" : "visa",
-      holder: cardName,
-      expiry,
-    };
+    try {
+        // 3. Prepare data
+        const cleaned = cardNumber.replace(/\D/g, "");
+        const newCard: Card = {
+            id: Date.now().toString(),
+            last4: cleaned.slice(-4),
+            brand: cleaned.startsWith("5") ? "mastercard" : "visa",
+            holder: cardName,
+            expiry,
+        };
 
-    const updated = [...cards, newCard];
-    await saveCards(updated);
+        // 4. Simulate sending to backend
+        // In a real app, you would send `cardNumber`, `cvv`, etc. here securely
+        await simulateBackendVerification({
+            number: cleaned,
+            cvv,
+            expiry,
+            name: cardName
+        });
 
-    setSelectedCardId(newCard.id);
-    setShowAddModal(false);
+        // 5. On Success: Save locally
+        const updated = [...cards, newCard];
+        await saveCards(updated);
 
-    setCardNumber("");
-    setExpiry("");
-    setCvv("");
-    setCardName("");
-    setIsLoading(false);
+        setSelectedCardId(newCard.id);
+        setShowAddModal(false);
+
+        // Reset form
+        setCardNumber("");
+        setExpiry("");
+        setCvv("");
+        setCardName("");
+        
+        Alert.alert("Success", "Payment method verified and added.");
+
+    } catch (error: any) {
+        // 6. On Failure
+        Alert.alert("Verification Failed", error.message || "Could not add card.");
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (
@@ -125,7 +182,7 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
 
-          {/* ✅ Saved cards */}
+          {/* Saved cards */}
           <Text style={styles.sectionTitle}>Saved cards</Text>
 
           {cards.map((card) => (
@@ -156,7 +213,7 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
             </TouchableOpacity>
           ))}
 
-          {/* ✅ Add new card */}
+          {/* Add new card */}
           <TouchableOpacity
             style={styles.addCardButton}
             onPress={() => setShowAddModal(true)}
@@ -166,7 +223,7 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
           </TouchableOpacity>
         </ScrollView>
 
-        {/* ✅ Add Card Modal */}
+        {/* Add Card Modal */}
         <Modal transparent animationType="slide" visible={showAddModal}>
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={styles.modalOverlay}>
@@ -179,13 +236,14 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
                   placeholderTextColor="#9CA3AF"
                   keyboardType="numeric"
                   value={cardNumber}
-                  onChangeText={setCardNumber}
+                  onChangeText={(text) => setCardNumber(text.replace(/\D/g, '').slice(0, 16))} // Limit to 16 digits
                 />
                 <TextInput
                   style={styles.input}
                   placeholder="MM/YY"
                   placeholderTextColor="#9CA3AF"
                   value={expiry}
+                  maxLength={5} // Limit length
                   onChangeText={setExpiry}
                 />
                 <TextInput
@@ -195,6 +253,7 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
                   keyboardType="numeric"
                   secureTextEntry
                   value={cvv}
+                  maxLength={4}
                   onChangeText={setCvv}
                 />
                 <TextInput
@@ -206,8 +265,9 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
                 />
 
                 <TouchableOpacity
-                  style={styles.saveButton}
+                  style={[styles.saveButton, isLoading && { opacity: 0.7 }]}
                   onPress={handleSaveCard}
+                  disabled={isLoading}
                 >
                   {isLoading ? (
                     <ActivityIndicator color="black" />
@@ -215,6 +275,15 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
                     <Text style={styles.saveButtonText}>Save card</Text>
                   )}
                 </TouchableOpacity>
+                
+                {/* Optional Cancel Button */}
+                 <TouchableOpacity
+                  style={{ marginTop: 15 }}
+                  onPress={() => !isLoading && setShowAddModal(false)}
+                >
+                  <Text style={{ color: '#9CA3AF', textAlign: 'center'}}>Cancel</Text>
+                </TouchableOpacity>
+
               </View>
             </View>
           </TouchableWithoutFeedback>
@@ -224,9 +293,7 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
   );
 }
 
-/* ---------------------------------- */
-/* Styles */
-/* ---------------------------------- */
+// Styles remain exactly the same as your code...
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "black" },
   header: {

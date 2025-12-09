@@ -8,16 +8,13 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Alert,
   Text,
   TextInput,
   TouchableOpacity,
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as Print from 'expo-print';
-import * as Sharing from 'expo-sharing';
-import * as FileSystem from 'expo-file-system/legacy';
+//import * as Print from 'expo-print';
 
 // import * as FileSystem from 'expo-file-system';
 // import * as FileSystem from 'expo-file-system/legacy';
@@ -256,45 +253,45 @@ const [receipts] = useState([
       </html>
     `;
   };
-const downloadReceipt = async (receipt: any) => {
-  try {
-    setIsDownloading(true);
+// const downloadReceipt = async (receipt: any) => {
+//   try {
+//     setIsDownloading(true);
 
-    const html = generateReceiptHTML(receipt);
+//     const html = generateReceiptHTML(receipt);
 
-    // Create PDF
-    const { uri } = await Print.printToFileAsync({
-      html,
-      base64: false,
-    });
+//     // Create PDF
+//     const { uri } = await Print.printToFileAsync({
+//       html,
+//       base64: false,
+//     });
 
-    // Destination
-    const fileName = `Kablux_Receipt_${receipt.date}_${receipt.id}.pdf`;
-    const destination = FileSystem.documentDirectory + fileName;
+//     // Destination
+//     const fileName = `Kablux_Receipt_${receipt.date}_${receipt.id}.pdf`;
+//     const destination = FileSystem.documentDirectory + fileName;
 
-    // Move using legacy API ✅
-    await FileSystem.moveAsync({
-      from: uri,
-      to: destination,
-    });
+//     // Move using legacy API ✅
+//     await FileSystem.moveAsync({
+//       from: uri,
+//       to: destination,
+//     });
 
-    // Share / Save
-    if (await Sharing.isAvailableAsync()) {
-      await Sharing.shareAsync(destination, {
-        mimeType: 'application/pdf',
-        dialogTitle: 'Save Receipt',
-      });
-    } else {
-      Alert.alert('Success', 'Receipt saved.');
-    }
+//     // Share / Save
+//     if (await Sharing.isAvailableAsync()) {
+//       await Sharing.shareAsync(destination, {
+//         mimeType: 'application/pdf',
+//         dialogTitle: 'Save Receipt',
+//       });
+//     } else {
+//       Alert.alert('Success', 'Receipt saved.');
+//     }
 
-  } catch (e) {
-    console.error(e);
-    Alert.alert('Error', 'Could not download receipt');
-  } finally {
-    setIsDownloading(false);
-  }
-};
+//   } catch (e) {
+//     console.error(e);
+//     Alert.alert('Error', 'Could not download receipt');
+//   } finally {
+//     setIsDownloading(false);
+//   }
+// };
 
 return (
     <SafeAreaView style={styles.container}>
@@ -390,7 +387,7 @@ return (
 
                 <TouchableOpacity 
                   style={styles.downloadButton}
-                  onPress={() => downloadReceipt(selectedReceipt)}
+                 // onPress={() => downloadReceipt(selectedReceipt)}
                   disabled={isDownloading}
                 >
                   {isDownloading ? (
@@ -1302,16 +1299,5 @@ sectionTitle: {
     alignItems: "center",
     gap: 12,
   },
-  contactText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "500",
-  },
 
-  copyright: {
-    color: "#6B7280",
-    fontSize: 13,
-    textAlign: "center",
-    marginTop: 30,
-  },
 });

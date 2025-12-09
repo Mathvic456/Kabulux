@@ -43,7 +43,7 @@ export const RideCard: React.FC<RideCardProps> = ({ ride, onPress, onBookAgain }
   const formatCurrency = (amount: number) => {
     // Assuming backend returns Kobo/Cents (e.g. 93200 -> 932.00)
     // Adjust logic if backend returns actual Naira
-    const value = amount / 100; 
+    const value = amount; 
     return `₦${value.toLocaleString('en-NG', { 
       minimumFractionDigits: 0,
       maximumFractionDigits: 0 

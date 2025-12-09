@@ -48,14 +48,19 @@ interface StandardScreenProps {
 export default function StandardScreen({ goBack, next, rideData }: StandardScreenProps) {
   
   // --- Price Logic (Kept the functional changes from before) ---
-  const getBasePrice = () => {
+const getBasePrice = () => {
     if (!rideData) return 0;
+    
+    // Force Number() here
     if (rideData.rawPrice) {
-      return rideData.rawPrice / 100; 
+      return Number(rideData.rawPrice); 
     }
+    
+    // Force Number() here too
     if (rideData.rideDetails?.estimated_fare) {
-      return rideData.rideDetails.estimated_fare / 100;
+      return Number(rideData.rideDetails.estimated_fare);
     }
+
     const extractPrice = (priceString: string) => parseFloat(priceString.replace(/[₦,]/g, '')) || 0;
     return extractPrice(rideData.price);
   };
@@ -67,6 +72,10 @@ export default function StandardScreen({ goBack, next, rideData }: StandardScree
   useEffect(() => {
     setRiderOffer(basePrice);
   }, [basePrice]);
+
+  useEffect(() => {
+    console.log(riderOffer)
+  }, [riderOffer])
 
   const handleIncreasePrice = () => {
     setRiderOffer(prev => prev + 50);
@@ -89,7 +98,7 @@ export default function StandardScreen({ goBack, next, rideData }: StandardScree
       );
       return;
     }
-    const offerToSend = riderOffer * 100;
+    const offerToSend = riderOffer;
 
     bookStandard(
       { rider_offer: offerToSend }, 

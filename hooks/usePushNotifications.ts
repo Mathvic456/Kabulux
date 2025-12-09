@@ -16,7 +16,7 @@ export const usePushNotifications = () => {
   const [fcmToken, setFcmToken] = useState<string | undefined>();
 
   async function getFCMToken() {
-    let tokenString;
+    let tokenString: string;
 
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {

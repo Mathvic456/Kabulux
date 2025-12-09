@@ -216,10 +216,10 @@ const fetchRideEstimates = useCallback(async () => {
       const formattedRides = data.data.rides.map((ride: any) => ({
         name: `Kablux ${ride.name.charAt(0).toUpperCase() + ride.name.slice(1)}`,
         details: `${data.data.estimated_duration} - ${data.data.estimated_distance}`,
-        price: `₦${(ride.estimated_fare / 100).toLocaleString()}`,
+        price: `₦${(ride.estimated_fare).toLocaleString()}`,
         rawPrice: ride.estimated_fare, // <--- STORE THE RAW PRICE HERE
         originalPrice: ride.discount_price 
-          ? `₦${(ride.discount_price / 100).toLocaleString()}`
+          ? `₦${(ride.discount_price).toLocaleString()}`
           : null,
         carType: ride.car_type,
         passengers: ride.car_size,
@@ -295,7 +295,6 @@ const handleConfirmRide = async () => {
         estimated_distance: rideDetails.estimated_distance, 
         estimated_duration: rideDetails.estimated_duration,
         car_type: selectedOption.carType,
-        // CRITICAL FIX: Use the rawPrice from the selected option
         estimated_fare: selectedOption.rawPrice, 
       },
       ride_request_id: rideId,
