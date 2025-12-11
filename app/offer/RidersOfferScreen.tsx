@@ -104,7 +104,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
           const rideReqId = payload.ride_request_id;
           const driverId = payload.driver_id;
           const counterOffer = payload.counter_offer;
-          const status = payload.status;
+          const status = payload.status;``
           const expiresAt = payload.expires_at;
 
           if (!offerId || !driverId) {

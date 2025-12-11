@@ -138,9 +138,13 @@ const DynamicPayStackWebViewScreen = ({ goBack }: Props) => {
       <Modal visible={!!paystackUrl} animationType="slide">
         <View style={{ flex: 1, backgroundColor: "white" }}>
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setPaystackUrl(null)}>
-              <Text style={{ fontSize: 28, fontWeight: "bold" }}>×</Text>
-            </TouchableOpacity>
+        <TouchableOpacity onPress={() => {
+          setPaystackUrl(null);
+          setAmount("");
+          goBack?.();
+        }}>
+          <Text style={{ fontSize: 28, fontWeight: "bold" }}>×</Text>
+        </TouchableOpacity>
             <Text style={{ fontSize: 18, fontWeight: "600" }}>
               Complete Payment
             </Text>

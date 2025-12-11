@@ -18,6 +18,7 @@ import * as FileSystem from 'expo-file-system';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 
+
 interface BookingsScreenProps {
   setScreen: (screen: string) => void;
   setSelectedRide: (ride: any) => void;
@@ -29,20 +30,18 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
   const [selectedReceipt, setSelectedReceipt] = useState<Ride | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // Added safety check for 'true' argument, assuming it's for 'enabled'
   const { data: rideHistoryData, isLoading, refetch, isRefetching } = useRideHistory(true);
 
   const transformRides = (results: RideHistoryAPIItem[]): Ride[] => {
     if (!results || !Array.isArray(results)) return [];
 
     return results.map((item, index) => ({
-      // Use item.id if available, fallback to index
-      id: item.id ? String(item.id) : String(index), 
+      id: String(index),
       car: "Kablux Ride", 
-      date: item.start_time, // Ensure this matches your Ride interface
+      date: item.start_time,
       driver: item.driver || "Unknown Driver",
       rating: 5,
-      type: "ride", // You might want to map this dynamically if API returns type
+      type: "ride" as const,
       status: item.status || "completed",
       pickupAddress: item.pickup_address || "Unknown Location",
       dropoffAddress: item.dropoff_address || "Unknown Location",
@@ -59,7 +58,6 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
     if (!dateString) return "Date not available";
     try {
       const date = new Date(dateString);
-      // Check if date is valid
       if (isNaN(date.getTime())) return "Invalid Date";
       
       return date.toLocaleDateString('en-US', { 
@@ -74,11 +72,9 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
     }
   };
 
-  // FIXED: Reliable currency formatting for Android/iOS
   const formatCurrency = (amount: number) => {
     if (amount === undefined || amount === null) return "₦0";
     const value = amount / 100; 
-    // Uses regex to add commas, safer than toLocaleString on some Android engines
     return '₦' + value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
@@ -172,25 +168,20 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
 
       const html = generateReceiptHTML(ride);
 
-      // Create PDF
       const { uri } = await Print.printToFileAsync({
         html,
         base64: false,
       });
 
-      // Handle File Name
-      // Ensure ID is safe for filenames (remove spaces/special chars if any)
       const safeId = String(ride.id).replace(/[^a-zA-Z0-9]/g, "_");
       const fileName = `Kablux_Receipt_${safeId}.pdf`;
       const destination = `${FileSystem.documentDirectory}${fileName}`;
 
-      // Move file to document directory (Persistent storage)
       await FileSystem.moveAsync({
         from: uri,
         to: destination,
       });
 
-      // Share/Save
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(destination, {
           mimeType: 'application/pdf',
@@ -256,7 +247,6 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
     <View style={styles.container}>
       <Text style={styles.headerTitle}>My Activity</Text>
 
-      {/* Tabs */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
           onPress={() => setActiveTab("ride")}
@@ -275,7 +265,6 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
         </TouchableOpacity>
       </View>
 
-      {/* List */}
       <ScrollView 
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
         refreshControl={
@@ -283,15 +272,14 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
             refreshing={isRefetching}
             onRefresh={onRefresh}
             tintColor="#f7b731"
-            colors={["#f7b731"]} // Added colors for Android
+            colors={["#f7b731"]}
           />
         }
       >
         {filteredRides.length > 0 ? (
           filteredRides.map((ride, index) => (
             <RideCard
-              // Fallback key if id is missing or duplicate
-              key={ride.id || index}
+              key={`${ride.id}-${index}`}
               ride={ride}
               onPress={() => openReceiptModal(ride)}
             />
@@ -301,7 +289,6 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
         )}
       </ScrollView>
 
-      {/* Receipt Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -321,7 +308,6 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
 
                 <ScrollView style={styles.receiptScroll}>
                   <View style={styles.receiptDetail}>
-                    {/* Receipt ID & Status */}
                     <View style={styles.receiptHeader}>
                       <Text style={styles.receiptId}>Receipt #{selectedReceipt.id}</Text>
                       <View style={[
@@ -332,7 +318,6 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
                       </View>
                     </View>
 
-                    {/* Details */}
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Date & Time</Text>
                       <Text style={styles.detailValue}>{formatDate(selectedReceipt.date)}</Text>
@@ -358,7 +343,6 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
                       <Text style={styles.detailValue}>{selectedReceipt.car}</Text>
                     </View>
 
-                    {/* Total */}
                     <View style={styles.totalSection}>
                       <Text style={styles.totalLabel}>TOTAL FARE</Text>
                       <Text style={styles.totalValue}>
@@ -366,7 +350,6 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
                       </Text>
                     </View>
 
-                    {/* Footer */}
                     <View style={styles.receiptFooter}>
                       <Text style={styles.thankYou}>Thank you for riding with Kablux!</Text>
                       <Text style={styles.supportText}>Need help? Contact Hello@kabluxe.com</Text>
@@ -478,7 +461,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
-  // Modal styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.85)',
@@ -540,6 +522,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
@@ -548,16 +532,16 @@ const styles = StyleSheet.create({
   detailLabel: {
     color: '#888',
     fontSize: 13,
-    marginBottom: 6,
     fontWeight: '500',
   },
   detailValue: {
     color: '#fff',
     fontSize: 15,
     fontWeight: '600',
-    textAlign: 'right', // Added alignment
-    flex: 1, // Added flex to push text to right
-    marginLeft: 20,
+    textAlign: 'right',
+    flex: 1,
+    flexWrap: 'wrap',
+    marginLeft: 10,
   },
   totalSection: {
     backgroundColor: '#f7b731',

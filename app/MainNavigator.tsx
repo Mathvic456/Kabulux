@@ -27,7 +27,7 @@ import BookingScreen from "./Order/BookingScreen";
 import PickUpScreen from "./Order/PickUpScreen";
 import PlanRideScreen from "./Order/PlanRideScreen";
 import AboutUs from "./profile/AboutUs";
-import RateAppScreen  from "./profile/ExtraScreens";
+import RateAppScreen from "./profile/ExtraScreens";
 import HelpAndSupportScreen from "./profile/HelpAndSupportScreen";
 import Language from "./profile/Language";
 import LegalScreen from "./profile/LegalScreen";
