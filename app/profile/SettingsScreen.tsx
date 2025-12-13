@@ -1,4 +1,5 @@
 import { useAuth } from "@/context/AuthContext";
+import { useRide } from "@/context/RideContext";
 import { SocketContext } from "@/context/WebSocketProvider";
 import { useLogoutEndPoint } from "@/services/authentication.service";
 import { Ionicons } from "@expo/vector-icons";
@@ -23,8 +24,9 @@ export default function SettingsScreen({ setScreen }) {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const { clearTokens } = useAuth();
+  const { resetRide } = useRide();
   const { socket } = useContext(SocketContext);
-  const { mutate: logout, isPending: isLoggingOut } = useLogoutEndPoint(clearTokens);
+  const { mutate: logout, isPending: isLoggingOut } = useLogoutEndPoint(clearTokens, resetRide);
 
   const handleLogout = () => {
     console.log("🚪 [Settings] Starting logout process...");

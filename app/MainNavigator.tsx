@@ -447,7 +447,7 @@ export default function MainNavigator() {
     case "analyticsScreen":
       return (
         <AnalyticsScreen
-          // setScreen={setScreen}
+          setScreen={handleSetScreen}
           next={() => setScreen("loyalty")}
           goBack={()=> setScreen('dashboard')}
         />);
@@ -466,6 +466,8 @@ export default function MainNavigator() {
     case "loyalty":
       return (
         <LoyaltyPointsScreen
+        next={() => setScreen("aboutus")}
+        back={() => setScreen("analyticsScreen")}
         />);
 
     case "orderScreen":

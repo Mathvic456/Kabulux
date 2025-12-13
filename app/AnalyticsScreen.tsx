@@ -1,130 +1,66 @@
-import React, { useState } from 'react';
+import { useRiderAnalytics } from '@/services/riderAnalytics.service';
+import React, { useEffect, useState } from 'react';
 import {
-    Dimensions,
-    Image,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View
+  Dimensions,
+  Image,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View
 } from 'react-native';
-import Car from '../assets/images/car1.png';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
-export default function AnalyticsScreen({ goBack, next }: { goBack: () => void; next?: () => void}) {
+interface Props {
+   goBack: () => void; 
+   next?: () => void; 
+   setScreen: (screen) => void 
+}
 
-    
+export default function AnalyticsScreen({ goBack, next, setScreen }: Props) {
+
+  const { data: riderAnalyticsData, isLoading, isError, error } = useRiderAnalytics();
+
+  const totalPoints = riderAnalyticsData?.total_points ?? 0;
+  const totalDistance = riderAnalyticsData?.total_distance_km ?? 0;
+  const completedRides = riderAnalyticsData?.completed_rides ?? 0;
+
+  useEffect(() => {
+    if (riderAnalyticsData) {
+      console.log("🎯 [AnalyticsScreen] Rider Analytics Data:", riderAnalyticsData);
+    }
+  }, [riderAnalyticsData]);
+
   const handleProceed = () => {
-    next();
+    next?.();
   }
 
   const handleBack = () => {
-    if (goBack) {
-      goBack();
-    }
+    goBack?.();
   };
 
-  // const handle
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const locations = ['Lagos', 'Abuja', 'Port Harcourt', 'Ibadan', 'Kano']; //Imagining this to be consisted of states the rider has been in?
 
   const [selectedFilter, setSelectedFilter] = useState('All');
-  const [selectedMonth, setSelectedMonth] = useState('July');
+  const [selectedMonth, setSelectedMonth] = useState(months[new Date().getMonth()]);
   const [selectedLocation, setSelectedLocation] = useState('Lagos');
   const [showMonthModal, setShowMonthModal] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [showAnalyticsModal, setShowAnalyticsModal] = useState(false);
   const [currentAnalytics, setCurrentAnalytics] = useState(null);
 
-  // Sample data for different months
-  const analyticsData = {
-    January: {
-      loyaltyPoints: 1250,
-      rideKm: 342,
-      rideValue: 24500,
-    },
-    February: {
-      loyaltyPoints: 980,
-      rideKm: 278,
-      rideValue: 19800,
-    },
-    March: {
-      loyaltyPoints: 1560,
-      rideKm: 412,
-      rideValue: 31200,
-    },
-    April: {
-      loyaltyPoints: 2100,
-      rideKm: 523,
-      rideValue: 42500,
-    },
-    May: {
-      loyaltyPoints: 1870,
-      rideKm: 467,
-      rideValue: 37800,
-    },
-    June: {
-      loyaltyPoints: 2340,
-      rideKm: 589,
-      rideValue: 48700,
-    },
-    July: {
-      loyaltyPoints: 2750,
-      rideKm: 642,
-      rideValue: 53200,
-    },
-    August: {
-      loyaltyPoints: 1980,
-      rideKm: 487,
-      rideValue: 39600,
-    },
-    September: {
-      loyaltyPoints: 1630,
-      rideKm: 423,
-      rideValue: 34100,
-    },
-    October: {
-      loyaltyPoints: 2250,
-      rideKm: 556,
-      rideValue: 45800,
-    },
-    November: {
-      loyaltyPoints: 1890,
-      rideKm: 498,
-      rideValue: 40200,
-    },
-    December: {
-      loyaltyPoints: 3120,
-      rideKm: 721,
-      rideValue: 62500,
-    },
-  };
-
-  const months = Object.keys(analyticsData);
-  const locations = ['Lagos', 'Abuja', 'Port Harcourt', 'Ibadan', 'Kano'];
-
   const handleAnalyticsPress = (type) => {
-    setCurrentAnalytics({
-      type,
-      data: analyticsData[selectedMonth]
-    });
-    setShowAnalyticsModal(true);
+    setScreen(type);
   };
 
-  const getAnalyticsValue = (type) => {
-    const data = analyticsData[selectedMonth];
-    switch(type) {
-      case 'loyalty': return data.loyaltyPoints;
-      case 'rideKm': return `${data.rideKm} km`;
-      case 'rideValue': return `₦${data.rideValue.toLocaleString()}`;
-      default: return '';
-    }
-  };
-
-  const renderMonthModal = () => (
+ 
+ const renderMonthModal = () => (
     <Modal
       visible={showMonthModal}
       transparent={true}
@@ -133,29 +69,36 @@ export default function AnalyticsScreen({ goBack, next }: { goBack: () => void; 
     >
       <TouchableWithoutFeedback onPress={() => setShowMonthModal(false)}>
         <View style={styles.modalOverlay}>
+          
           <View style={styles.modalContent}>
+            {/* Title stays fixed at the top */}
             <Text style={styles.modalTitle}>Select Month</Text>
-            {months.map((month) => (
-              <TouchableOpacity
-                key={month}
-                style={[
-                  styles.modalOption,
-                  selectedMonth === month && styles.modalOptionSelected
-                ]}
-                onPress={() => {
-                  setSelectedMonth(month);
-                  setShowMonthModal(false);
-                }}
-              >
-                <Text style={[
-                  styles.modalOptionText,
-                  selectedMonth === month && styles.modalOptionTextSelected
-                ]}>
-                  {month}
-                </Text>
-              </TouchableOpacity>
-            ))}
+
+            {/* ScrollView wraps ONLY the list items */}
+            <ScrollView showsVerticalScrollIndicator={true}> 
+              {months.map((month) => (
+                <TouchableOpacity
+                  key={month}
+                  style={[
+                    styles.modalOption, 
+                    selectedMonth === month && styles.modalOptionSelected
+                  ]}
+                  onPress={() => { 
+                    setSelectedMonth(month); 
+                    setShowMonthModal(false); 
+                  }}
+                >
+                  <Text style={[
+                    styles.modalOptionText, 
+                    selectedMonth === month && styles.modalOptionTextSelected
+                  ]}>
+                    {month}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
+
         </View>
       </TouchableWithoutFeedback>
     </Modal>
@@ -175,19 +118,10 @@ export default function AnalyticsScreen({ goBack, next }: { goBack: () => void; 
             {locations.map((location) => (
               <TouchableOpacity
                 key={location}
-                style={[
-                  styles.modalOption,
-                  selectedLocation === location && styles.modalOptionSelected
-                ]}
-                onPress={() => {
-                  setSelectedLocation(location);
-                  setShowLocationModal(false);
-                }}
+                style={[styles.modalOption, selectedLocation === location && styles.modalOptionSelected]}
+                onPress={() => { setSelectedLocation(location); setShowLocationModal(false); }}
               >
-                <Text style={[
-                  styles.modalOptionText,
-                  selectedLocation === location && styles.modalOptionTextSelected
-                ]}>
+                <Text style={[styles.modalOptionText, selectedLocation === location && styles.modalOptionTextSelected]}>
                   {location}
                 </Text>
               </TouchableOpacity>
@@ -195,62 +129,6 @@ export default function AnalyticsScreen({ goBack, next }: { goBack: () => void; 
           </View>
         </View>
       </TouchableWithoutFeedback>
-    </Modal>
-  );
-
-  const renderAnalyticsModal = () => (
-    <Modal
-      visible={showAnalyticsModal}
-      transparent={true}
-      animationType="slide"
-      onRequestClose={() => setShowAnalyticsModal(false)}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.analyticsModalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>
-              {currentAnalytics?.type === 'loyalty' && 'Loyalty Points Details'}
-              {currentAnalytics?.type === 'rideKm' && 'Ride Distance Details'}
-              {currentAnalytics?.type === 'rideValue' && 'Ride Value Details'}
-            </Text>
-            <TouchableOpacity onPress={() => setShowAnalyticsModal(false)}>
-              <Text style={styles.closeButton}>✕</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <View style={styles.analyticsDetails}>
-            <Text style={styles.detailMonth}>{selectedMonth} Analytics</Text>
-            <Text style={styles.detailLocation}>Location: {selectedLocation}</Text>
-            
-            <View style={styles.detailCard}>
-              <Text style={styles.detailValue}>
-                {currentAnalytics?.type === 'loyalty' && getAnalyticsValue('loyalty')}
-                {currentAnalytics?.type === 'rideKm' && getAnalyticsValue('rideKm')}
-                {currentAnalytics?.type === 'rideValue' && getAnalyticsValue('rideValue')}
-              </Text>
-              <Text style={styles.detailLabel}>
-                {currentAnalytics?.type === 'loyalty' && 'Loyalty Points'}
-                {currentAnalytics?.type === 'rideKm' && 'Distance Traveled'}
-                {currentAnalytics?.type === 'rideValue' && 'Total Value'}
-              </Text>
-            </View>
-            
-            <View style={styles.comparisonSection}>
-              <Text style={styles.comparisonTitle}>Monthly Comparison</Text>
-              {months.map((month, index) => (
-                <View key={month} style={styles.comparisonRow}>
-                  <Text style={styles.comparisonMonth}>{month}</Text>
-                  <Text style={styles.comparisonValue}>
-                    {currentAnalytics?.type === 'loyalty' && analyticsData[month].loyaltyPoints}
-                    {currentAnalytics?.type === 'rideKm' && `${analyticsData[month].rideKm} km`}
-                    {currentAnalytics?.type === 'rideValue' && `₦${analyticsData[month].rideValue.toLocaleString()}`}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        </View>
-      </View>
     </Modal>
   );
 
@@ -281,10 +159,7 @@ export default function AnalyticsScreen({ goBack, next }: { goBack: () => void; 
             style={[styles.filterDropdown, selectedFilter === 'All' && styles.filterSelected]}
             onPress={() => setSelectedFilter('All')}
           >
-            <Text style={[styles.filterText, selectedFilter === 'All' && styles.filterTextSelected]}>
-              All
-            </Text>
-            <Text style={[styles.arrow, selectedFilter === 'All' && styles.arrowSelected]}>▼</Text>
+            <Text style={[styles.filterText, selectedFilter === 'All' && styles.filterTextSelected]}>All</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -304,35 +179,43 @@ export default function AnalyticsScreen({ goBack, next }: { goBack: () => void; 
           </TouchableOpacity>
         </View>
 
-        {/* Analytics Grid */}
+     
         <View style={styles.analyticsGrid}>
+          
+          {/* Card 1: Loyalty Points */}
           <TouchableOpacity 
             style={[styles.analyticsCard, styles.largeCard]}
-            onPress={handleProceed  }
+            onPress={() => handleAnalyticsPress('loyalty')}
           >
             <Text style={styles.icon}>🏇</Text>
-            <Text style={[styles.cardTitle, { color: '#000' }]}>Loyalty Point & Reward</Text>
-            <Text style={[styles.cardValue, { color: '#000' }]}>{getAnalyticsValue('loyalty')}</Text>
+            <Text style={[styles.cardTitle, { color: '#000' }]}>Loyalty Points & Rewards</Text>
+            {/* Display Real Points */}
+            <Text style={[styles.cardValue, { color: '#000' }]}>{totalPoints}</Text>
             <Text style={[styles.topRightIcon, { color: '#000' }]}>↗</Text>
           </TouchableOpacity>
           
+          {/* Card 2: Ride in KM */}
           <TouchableOpacity 
             style={[styles.analyticsCard, { backgroundColor: '#721c24' }]}
             onPress={() => handleAnalyticsPress('rideKm')}
           >
             <Text style={styles.icon}>🚗</Text>
             <Text style={styles.cardTitle}>Ride in Km</Text>
-            <Text style={styles.cardValue}>{getAnalyticsValue('rideKm')}</Text>
+            {/* Display Real Distance */}
+            <Text style={styles.cardValue}>{totalDistance.toFixed(2)} km</Text>
             <Text style={styles.topRightIcon}>↗</Text>
           </TouchableOpacity>
           
+          {/* Card 3: CHANGED to Completed Rides */}
           <TouchableOpacity 
             style={[styles.analyticsCard, { backgroundColor: '#3b5998' }]}
-            onPress={() => handleAnalyticsPress('rideValue')}
+            onPress={() => handleAnalyticsPress('completedRides')}
           >
-            <Text style={styles.icon}>💰</Text>
-            <Text style={styles.cardTitle}>Ride in Value</Text>
-            <Text style={styles.cardValue}>{getAnalyticsValue('rideValue')}</Text>
+            {/* Changed Icon to checkmark or car */}
+            <Text style={styles.icon}>✅</Text> 
+            <Text style={styles.cardTitle}>Completed Rides</Text>
+            {/* Display Real Completed Rides count */}
+            <Text style={styles.cardValue}>{completedRides}</Text>
             <Text style={styles.topRightIcon}>↗</Text>
           </TouchableOpacity>
         </View>
@@ -362,42 +245,11 @@ export default function AnalyticsScreen({ goBack, next }: { goBack: () => void; 
             <Text style={styles.suggestionText}>Reserve</Text>
           </View>
         </View>
-
-        {/* Special Service Section */}
-        <Text style={styles.sectionTitle}>Special Service</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.specialServiceScroll}>
-          <View style={styles.specialServiceCard}>
-            <Image
-              source={Car}
-              style={styles.specialServiceImage}
-            />
-          </View>
-          <View style={styles.specialServiceCard}>
-            <Image
-              source={Car}
-              style={styles.specialServiceImage}
-            />
-          </View>
-          <View style={styles.specialServiceCard}>
-            <Image
-              source={Car}
-              style={styles.specialServiceImage}
-            />
-          </View>
-          <View style={styles.specialServiceCard}>
-            <Image
-              source={Car}
-              style={styles.specialServiceImage}
-              resizeMethod='cover'
-            />
-          </View>
-        </ScrollView>
       </ScrollView>
 
       {/* Modals */}
       {renderMonthModal()}
       {renderLocationModal()}
-      {renderAnalyticsModal()}
     </SafeAreaView>
   );
 }
@@ -408,7 +260,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   scrollContainer: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 40,
   },
   header: {
     flexDirection: 'row',
@@ -459,6 +312,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  monthDropdown: {
+      // additional styles if needed
+  },
+  locationDropdown: {
+      // additional styles if needed
   },
   filterSelected: {
     backgroundColor: '#ffc107',
@@ -549,23 +408,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#fff',
   },
-  specialServiceScroll: {
-    flexDirection: 'row',
-    paddingBottom: 10,
-  },
-  specialServiceCard: {
-    width: 150,
-    height: 100,
-    borderRadius: 15,
-    overflow: 'hidden',
-    marginRight: 10,
-    borderWidth: 0.5,
-    borderColor: 'white',
-  },
-  specialServiceImage: {
-    width: '100%',
-    height: '100%',
-  },
   // Modal Styles
   modalOverlay: {
     flex: 1,
@@ -627,11 +469,6 @@ const styles = StyleSheet.create({
     color: '#ffc107',
     marginBottom: 5,
   },
-  detailLocation: {
-    fontSize: 14,
-    color: '#ccc',
-    marginBottom: 20,
-  },
   detailCard: {
     backgroundColor: '#333',
     borderRadius: 10,
@@ -648,30 +485,5 @@ const styles = StyleSheet.create({
   detailLabel: {
     fontSize: 16,
     color: '#ccc',
-  },
-  comparisonSection: {
-    marginTop: 10,
-  },
-  comparisonTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 10,
-  },
-  comparisonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-  },
-  comparisonMonth: {
-    color: '#ccc',
-    fontSize: 14,
-  },
-  comparisonValue: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '500',
   },
 });

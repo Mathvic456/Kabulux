@@ -65,11 +65,13 @@ export const useLoginEndPoint = (
 };
 
 export const useLogoutEndPoint = (
-  clearTokens: () => Promise<void>
+  clearTokens: () => Promise<void>,
+  resetRide: () => Promise<void>
 ) => {
   return useMutation({
     mutationFn: async () => {
       await clearTokens();
+      await resetRide();
       await AsyncStorage.removeItem("user_id");
       console.log("🗑️ [Auth] Cleared all user data");
       return true;

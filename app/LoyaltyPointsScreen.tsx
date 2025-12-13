@@ -1,248 +1,175 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
-    Animated,
-    Dimensions,
-    Easing,
-    SafeAreaView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Animated,
+  Dimensions,
+  Easing,
+  SafeAreaView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
-import { GestureHandlerRootView, PanGestureHandler, State } from 'react-native-gesture-handler';
+// Assuming you have the service alias configured, otherwise adjust path
+import { useRiderAnalytics } from '@/services/riderAnalytics.service';
 
 const { width } = Dimensions.get('window');
+const STATUS_DURATION = 5000; // 5 seconds like WhatsApp status
 
-// Different content for each tab
-const tabContents = [
-  {
-    title: "This Month",
-    points: 332,
-    distance: "150km",
-    distanceIcon: "🚗"
-  },
-  {
-    title: "Last Month",
-    points: 285,
-    distance: "125km",
-    distanceIcon: "🏎️"
-  },
-  {
-    title: "All Time",
-    points: 1247,
-    distance: "542km",
-    distanceIcon: "✈️"
-  }
-];
-
-export default function LoyaltyPointsScreen({next}: {next?:() => void}) {
-  const [activeTab, setActiveTab] = useState(0);
-  const [progress, setProgress] = useState(0);
+export default function LoyaltyPointsScreen({ back }: { back: () => void }) {
+  // 1. Fetch Data
+  const { data: riderAnalyticsData, isLoading, isError } = useRiderAnalytics();
   
+  // Safe access to points
+  const totalPoints = riderAnalyticsData?.total_points || 0;
+
+  // 2. Animation Refs
   const progressAnim = useRef(new Animated.Value(0)).current;
-  const contentOpacity = useRef(new Animated.Value(1)).current;
   
-  const progressInterval = useRef(null);
-  const isAnimating = useRef(false);
-
-  // Start progress animation for current tab
-  const startProgressAnimation = () => {
-    if (isAnimating.current) return;
-    isAnimating.current = true;
-    
-    // Reset progress
-    progressAnim.setValue(0);
-    setProgress(0);
-    
-    // Animate progress over 5 seconds
-    Animated.timing(progressAnim, {
-      toValue: 1,
-      duration: 5000,
-      easing: Easing.linear,
-      useNativeDriver: false
-    }).start(({ finished }) => {
-      if (finished) {
-        // Move to next tab when progress completes
-        moveToNextTab();
-      }
-    });
-    
-    // Update progress state for the progress bar
-    progressInterval.current = setInterval(() => {
-      setProgress(prev => {
-        const newProgress = prev + 0.2;
-        return newProgress > 100 ? 100 : newProgress;
-      });
-    }, 10);
-  };
-
-  // Stop progress animation
-  const stopProgressAnimation = () => {
-    isAnimating.current = false;
-    progressAnim.stopAnimation();
-    if (progressInterval.current) {
-      clearInterval(progressInterval.current);
-      progressInterval.current = null;
-    }
-  };
-
-  // Move to next tab
-  const moveToNextTab = () => {
-    stopProgressAnimation();
-    
-    // Fade out current content
-    Animated.timing(contentOpacity, {
-      toValue: 0,
-      duration: 300,
-      useNativeDriver: true
-    }).start(() => {
-      // Change to next tab
-      const nextTab = (activeTab + 1) % tabContents.length;
-      setActiveTab(nextTab);
-      
-      // Fade in new content
-      Animated.timing(contentOpacity, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true
-      }).start(() => {
-        // Start progress for the new tab
-        startProgressAnimation();
-      });
-    });
-  };
-
-  // Move to previous tab
-  const moveToPrevTab = () => {
-    stopProgressAnimation();
-    
-    // Fade out current content
-    Animated.timing(contentOpacity, {
-      toValue: 0,
-      duration: 300,
-      useNativeDriver: true
-    }).start(() => {
-      // Change to previous tab
-      const prevTab = activeTab === 0 ? tabContents.length - 1 : activeTab - 1;
-      setActiveTab(prevTab);
-      
-      // Fade in new content
-      Animated.timing(contentOpacity, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true
-      }).start(() => {
-        // Start progress for the new tab
-        startProgressAnimation();
-      });
-    });
-  };
-
-  // Handle swipe gestures
-  const onHandlerStateChange = ({ nativeEvent }) => {
-    if (nativeEvent.state === State.END) {
-      if (nativeEvent.translationX < -50) {
-        // Swipe left - move to next tab
-        moveToNextTab();
-      } else if (nativeEvent.translationX > 50) {
-        // Swipe right - move to previous tab
-        moveToPrevTab();
-      }
-    }
-  };
-
-  // Start animation when component mounts
+  // 3. Handle Animation & Auto-Close
   useEffect(() => {
-    startProgressAnimation();
-    
-    // Clean up on unmount
+    // Only start animation if data is loaded and not erroring
+    if (!isLoading) {
+      Animated.timing(progressAnim, {
+        toValue: 1,
+        duration: STATUS_DURATION,
+        easing: Easing.linear,
+        useNativeDriver: false, // Width changes require native driver false
+      }).start(({ finished }) => {
+        // Auto-close when finished
+        if (finished) {
+          back();
+        }
+      });
+    }
+
+    // Cleanup: Stop animation if component unmounts early
     return () => {
-      stopProgressAnimation();
+      progressAnim.stopAnimation();
     };
-  }, []);
+  }, [isLoading, back]);
 
-  // Restart animation when active tab changes
-  useEffect(() => {
-    startProgressAnimation();
-  }, [activeTab]);
+  // 4. Content Logic
+  const getMessageContent = () => {
+    if (totalPoints < 100) {
+      return {
+        icon: "🌱",
+        title: "You can do better!",
+        message: "This is your sign to use Kablux more."
+      };
+    } else if (totalPoints < 500) {
+      return {
+        icon: "🏎️",
+        title: "Cruising Along!",
+        message: "You're racking up those miles nicely."
+      };
+    } else {
+      return {
+        icon: "👑",
+        title: "Legendary Status",
+        message: "You are absolutely crushing it!"
+      };
+    }
+  };
 
-  const currentContent = tabContents[activeTab];
+  const content = getMessageContent();
+
+  // 5. Loading State
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <StatusBar barStyle="light-content" />
+        <ActivityIndicator size="large" color="#f7b731" />
+        <Text style={styles.loadingText}>Checking your points...</Text>
+      </View>
+    );
+  }
+
+  // 6. Error State (Optional simple fallback)
+  if (isError) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={[styles.loadingText, { color: 'red' }]}>Failed to load points.</Text>
+        <TouchableOpacity onPress={back} style={styles.errorButton}>
+          <Text style={styles.backButtonText}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
-    <GestureHandlerRootView style={styles.container}>
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" />
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      
+      <View style={styles.scrollContainer}>
         
-        <PanGestureHandler onHandlerStateChange={onHandlerStateChange}>
-          <View style={styles.scrollContainer}>
-            {/* Status Bar */}
-            <View style={styles.statusBar}>
-              {/* <Text style={styles.time}>9:41</Text>
-              <View style={styles.signalIcons}>
-                <Text style={styles.signalIcon}>📶</Text>
-                <Text style={styles.signalIcon}>📡</Text>
-                <Text style={styles.signalIcon}>🔋</Text>
-              </View> */}
-            </View>
-
-            {/* Navigation Tabs with Progress */}
-            <View style={styles.navTabsContainer}>
-              {tabContents.map((_, index) => (
-                <View key={index} style={styles.tabBackground}>
-                  <Animated.View 
-                    style={[
-                      styles.tabProgress,
-                      {
-                        width: index === activeTab 
-                          ? progressAnim.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: ['0%', '100%']
-                            })
-                          : index < activeTab ? '100%' : '0%'
-                      }
-                    ]}
-                  />
-                </View>
-              ))}
-            </View>
-
-            <Animated.View style={{ opacity: contentOpacity }}>
-              <Text style={styles.sectionTitle}>{currentContent.title}</Text>
-
-              {/* Points Section */}
-              <View style={styles.pointsSection}>
-                <View style={styles.loyaltyIcon}>
-                  <Text style={styles.loyaltyIconText}>🏆</Text>
-                </View>
-                <View style={styles.pointsTextContainer}>
-                  <Text style={styles.pointsText}>Your Total Point </Text>
-                  <Text style={styles.sparkleIcon}>✨</Text>
-                </View>
-                <Text style={styles.totalPoints}>{currentContent.points}</Text>
-              </View>
-
-              {/* Distance Card */}
-              <View style={styles.distanceCard}>
-                <Text style={styles.distanceText}>and your biggest{"\n"}Distance Covered</Text>
-                <View style={styles.distanceValue}>
-                  <Text style={styles.distanceIcon}>{currentContent.distanceIcon}</Text>
-                  <Text style={styles.distanceAmount}>{currentContent.distance}</Text>
-                </View>
-              </View>
-            </Animated.View>
-
-            {/* Action Buttons */}
-            <TouchableOpacity style={[styles.actionButton, styles.backButton]}>
-              <Text style={styles.backButtonText}>Back</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.actionButton, styles.shareButton]}>
-              <Text style={styles.shareButtonText}>Share</Text>
-            </TouchableOpacity>
+        {/* Progress Bar (Single "WhatsApp Status" style) */}
+        <View style={styles.progressBarContainer}>
+          <View style={styles.progressBarBackground}>
+            <Animated.View 
+              style={[
+                styles.progressBarFill,
+                {
+                  width: progressAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0%', '100%']
+                  })
+                }
+              ]}
+            />
           </View>
-        </PanGestureHandler>
-      </SafeAreaView>
-    </GestureHandlerRootView>
+        </View>
+
+        {/* Header Controls (X Button) */}
+        <View style={styles.headerControls}>
+           <TouchableOpacity onPress={back} style={styles.closeButton}>
+             {/* Simple X text, replace with Icon (e.g., Ionicons) if you have it installed */}
+             <Text style={styles.closeButtonText}>✕</Text>
+           </TouchableOpacity>
+        </View>
+
+        <View style={styles.contentContainer}>
+          <Text style={styles.sectionTitle}>All Time Stats</Text>
+
+          {/* Points Section */}
+          <View style={styles.pointsSection}>
+            <View style={styles.loyaltyIcon}>
+              <Text style={styles.loyaltyIconText}>🏆</Text>
+            </View>
+            <View style={styles.pointsTextContainer}>
+              <Text style={styles.pointsText}>Your Total Points </Text>
+              <Text style={styles.sparkleIcon}>✨</Text>
+            </View>
+            <Text style={styles.totalPoints}>{totalPoints}</Text>
+          </View>
+
+          {/* Message Card (Replaces Distance Card) */}
+          <View style={styles.messageCard}>
+            <Text style={styles.messageTitle}>{content.title}</Text>
+            <View style={styles.messageBody}>
+              <Text style={styles.distanceIcon}>{content.icon}</Text>
+              <Text style={styles.messageText}>{content.message}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Footer Actions */}
+        <View style={styles.footer}>
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.backButton]}
+            onPress={back}
+          >
+            <Text style={styles.backButtonText}>Back</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={[styles.actionButton, styles.shareButton]}>
+            <Text style={styles.shareButtonText}>Share Stats</Text>
+          </TouchableOpacity>
+        </View>
+
+      </View>
+    </SafeAreaView>
   );
 }
 
@@ -251,57 +178,78 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#333',
   },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#333',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#fff',
+    marginTop: 10,
+    fontSize: 16,
+    fontWeight: '600',
+  },
   scrollContainer: {
     flex: 1,
     backgroundColor: '#f7b731',
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
-    alignItems: 'center',
-    padding: 20,
     paddingTop: 10,
   },
-  statusBar: {
+  // Progress Bar Styles
+  progressBarContainer: {
     width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
+    paddingHorizontal: 10,
+    marginBottom: 10,
   },
-  time: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#000',
-  },
-  signalIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  signalIcon: {
-    fontSize: 16,
-    marginLeft: 8,
-  },
-  navTabsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '90%',
-    marginBottom: 30,
-  },
-  tabBackground: {
-    flex: 1,
-    height: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    borderRadius: 3,
-    marginHorizontal: 3,
+  progressBarBackground: {
+    height: 4,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    borderRadius: 2,
     overflow: 'hidden',
   },
-  tabProgress: {
+  progressBarFill: {
     height: '100%',
     backgroundColor: '#fff',
-    borderRadius: 3,
+    borderRadius: 2,
+  },
+  // Header controls
+  headerControls: {
+    paddingHorizontal: 20,
+    alignItems: 'flex-end', // Puts X on the right, change to flex-start for left
+    marginBottom: 10,
+  },
+  closeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: '#000',
+    fontSize: 18,
+    fontWeight: '800',
+    marginTop: -2, // Visual adjustment for generic fonts
+  },
+  errorButton: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: '#f7b731',
+    borderRadius: 8
+  },
+  // Main Content
+  contentContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
   },
   sectionTitle: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '600',
     marginBottom: 30,
     textAlign: 'center',
@@ -319,10 +267,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
@@ -351,47 +296,50 @@ const styles = StyleSheet.create({
     lineHeight: 80,
     marginTop: -5,
   },
-  distanceCard: {
+  // Message / Distance Card
+  messageCard: {
     backgroundColor: '#e6a72e',
     borderRadius: 20,
-    padding: 30,
-    width: '85%',
+    padding: 25,
+    width: '100%',
     alignItems: 'center',
-    marginBottom: 40,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
   },
-  distanceText: {
+  messageTitle: {
     fontSize: 20,
     fontWeight: '600',
     color: '#fff',
-    marginBottom: 20,
+    marginBottom: 15,
     textAlign: 'center',
-    lineHeight: 24,
   },
-  distanceValue: {
+  messageBody: {
     backgroundColor: '#fff',
     borderRadius: 15,
     padding: 15,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 150,
+    width: '100%',
   },
   distanceIcon: {
     fontSize: 24,
-    marginRight: 10,
+    marginRight: 15,
   },
-  distanceAmount: {
-    fontSize: 18,
+  messageText: {
+    fontSize: 16,
     fontWeight: '600',
     color: '#000',
+    flex: 1,
+  },
+  // Footer
+  footer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingBottom: 20,
   },
   actionButton: {
     width: '85%',
@@ -401,10 +349,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,

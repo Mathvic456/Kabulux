@@ -13,6 +13,7 @@ interface RideContextValue {
   rideState: RideState;
   driverLocation: DriverLocation | null;
   rideId: string | null;
+  resetRide: () => Promise<void>;
 }
 
 // Storage Keys
@@ -26,6 +27,7 @@ export const RideContext = createContext<RideContextValue>({
   rideState: "idle",
   driverLocation: null,
   rideId: null,
+  resetRide: async() => {}
 });
 
 export const useRide = () => useContext(RideContext);
@@ -71,7 +73,7 @@ export const RideProvider = ({ children }: { children: React.ReactNode }) => {
 
     try {
       const data = JSON.parse(event.data);
-      console.log("🚗 [RIDE] Message received:", data.type);
+      console.log("🚗 [RIDE] Message received:", data);
 
       if (data.type === "notify") {
         const eventType = data.event || data.data?.event || data.payload?.event;
@@ -111,13 +113,19 @@ export const RideProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       // Handle Location Updates
-      if (data.type === "broadcast_location" && data.lat && data.lng) {
+      if (data.type === "broadcast_location" && data.lat && data.lng) { 
+          console.log("📍 [RIDE] Location payload:", {
+            lat: data.lat,
+            lng: data.lng,
+            raw: data,
+          });
+
         const newLocation = { lat: data.lat, lng: data.lng };
-        
-        // Update State
+
         setDriverLocation(newLocation);
-        
-        // Persist Location (so map shows driver immediately on app restart)
+        setRideState("in_ride");
+
+        AsyncStorage.setItem(STORAGE_KEYS.RIDE_STATE, "in_ride");
         AsyncStorage.setItem(STORAGE_KEYS.DRIVER_LOC, JSON.stringify(newLocation));
       }
 
@@ -125,6 +133,22 @@ export const RideProvider = ({ children }: { children: React.ReactNode }) => {
       console.error("❌ [RIDE] Failed to parse message:", error);
     }
   }, []);
+
+  const resetRide = async () => {
+  console.log("🧹 [RIDE] Resetting ride context");
+
+  // Reset in-memory state
+  setRideState("idle");
+  setDriverLocation(null);
+  setRideId(null);
+
+  // Clear persisted storage
+  await AsyncStorage.multiRemove([
+    STORAGE_KEYS.RIDE_STATE,
+    STORAGE_KEYS.RIDE_ID,
+    STORAGE_KEYS.DRIVER_LOC,
+  ]);
+};
 
   useEffect(() => {
     if (!socket) {
@@ -147,6 +171,7 @@ export const RideProvider = ({ children }: { children: React.ReactNode }) => {
         rideState,
         driverLocation,
         rideId,
+        resetRide,
       }}
     >
       {children}

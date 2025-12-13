@@ -86,7 +86,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await AsyncStorage.setItem("rememberMe", "true");
       console.log("💾 [Auth] Tokens saved to AsyncStorage");
     } else {
-      // Clear AsyncStorage if "remember me" is disabled
       await AsyncStorage.removeItem("token");
       await AsyncStorage.removeItem("refreshToken");
       await AsyncStorage.removeItem("rememberMe");

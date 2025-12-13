@@ -1,7 +1,7 @@
 import { SocketContext } from "@/context/WebSocketProvider";
 import { Ionicons } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
-import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -14,13 +14,6 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-
-type IncomingDriverOfferMsg = {
-  type: string;
-  event: string;
-  ride_id: string;
-  data?: any;
-};
 
 type OfferItem = {
   id: string;
@@ -41,130 +34,53 @@ interface RiderOfferProps {
 }
 
 export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
-  const { socket } = useContext(SocketContext);
+  const { 
+    driverOffers, 
+    rideAccepted, 
+    sendMessage, 
+    isConnected,
+    subscribeToRideOffers,
+    clearRideAccepted 
+  } = useContext(SocketContext);
+  
   const route = useRoute();
   const { ride_request_id } = (route.params as any) || {};
 
-  const [offers, setOffers] = useState<Record<string, OfferItem>>({});
-  const [acceptedRide, setAcceptedRide] = useState<any>(null);
+  const [localOffers, setLocalOffers] = useState<Record<string, OfferItem>>({});
   const [acceptedModalVisible, setAcceptedModalVisible] = useState(false);
   const [busyMap, setBusyMap] = useState<Record<string, boolean>>({});
-  const wsRef = useRef<WebSocket | null>(null);
 
-  useEffect(() => {
-    wsRef.current = socket;
-  }, [socket]);
-
+  // Subscribe to ride offers when component mounts
   useEffect(() => {
     if (!ride_request_id) {
-      console.warn("RiderOffersScreen: missing ride_request_id");
+      console.warn("❌ [RIDER] Missing ride_request_id");
       return;
     }
 
-    if (!wsRef.current) return;
-
-    const sendSubscribe = () => {
-      try {
-        const msg = {
-          type: "subscribe_driver_offer_view",
-          data: { ride_request_id },
-        };
-        wsRef.current?.send(JSON.stringify(msg));
-        console.log("📡 [RIDER] Sent subscribe_driver_offer_view", msg);
-      } catch (err) {
-        console.error("❌ Failed to send subscribe_driver_offer_view", err);
-      }
-    };
-
-    if (wsRef.current.readyState === WebSocket.OPEN) {
-      sendSubscribe();
-    } else {
-      const onOpen = () => sendSubscribe();
-      (wsRef.current as any).addEventListener?.("open", onOpen);
-      return () => {
-        (wsRef.current as any).removeEventListener?.("open", onOpen);
-      };
+    if (!isConnected) {
+      console.warn("⚠️ [RIDER] Socket not connected yet");
+      return;
     }
-  }, [ride_request_id]);
 
-  // Listen for incoming messages
+    console.log("📡 [RIDER] Subscribing to ride offers for:", ride_request_id);
+    subscribeToRideOffers(ride_request_id);
+  }, [ride_request_id, isConnected, subscribeToRideOffers]);
+
+  // Sync driver offers from context to local state
   useEffect(() => {
-    if (!wsRef.current) return;
+    setLocalOffers(driverOffers);
+  }, [driverOffers]);
 
-    const onMessage = (ev: any) => {
-      try {
-        const raw = typeof ev.data === "string" ? ev.data : JSON.stringify(ev.data);
-        const msg: IncomingDriverOfferMsg = JSON.parse(raw);
-        console.log("📩 [RIDER] RiderOffersScreen got ws message:", msg);
-
-        // Handle driver offers
-        if (msg.type === "driver_offer" && msg.data) {
-          const payload = msg.data;
-          const offerId = payload.id;
-          const rideReqId = payload.ride_request_id;
-          const driverId = payload.driver_id;
-          const counterOffer = payload.counter_offer;
-          const status = payload.status;``
-          const expiresAt = payload.expires_at;
-
-          if (!offerId || !driverId) {
-            console.warn("❌ driver_offer missing required fields, ignoring");
-            return;
-          }
-
-          console.log("✅ [RIDER] Processing driver offer:", {
-            offerId,
-            driverId,
-            counterOffer,
-            status,
-          });
-
-          setOffers(prev => {
-            const exists = prev[offerId];
-            const newItem: OfferItem = {
-              id: String(offerId),
-              ride_request_id: String(rideReqId),
-              driver_id: String(driverId),
-              driver_name: payload.driver_name || `Driver ${driverId.slice(0, 8)}`,
-              driver_rating: payload.driver_rating || "4.5",
-              counter_offer: Number(counterOffer || 0),
-              negotiated_price: exists?.negotiated_price ?? Number(counterOffer || 0),
-              status: status,
-              expires_at: expiresAt,
-              timestamp: Date.now(),
-            };
-            console.log("💾 [RIDER] Adding/updating offer:", newItem);
-            return { ...prev, [newItem.id]: newItem };
-          });
-        }
-
-        const eventType = msg.event;
-
-        if (eventType === "ride_accepted") {
-          setAcceptedRide(msg.data || msg.ride_id);
-          setAcceptedModalVisible(true);
-        }
-        
-
-        if (eventType === "accept_ride_success") {
-          setAcceptedRide(msg.data || msg.ride_id);
-          setAcceptedModalVisible(true);
-        }
-
-      } catch (err) {
-        console.error("❌ Failed to parse WS message in RiderOffersScreen:", err);
-      }
-    };
-
-    wsRef.current.addEventListener?.("message", onMessage);
-
-    return () => {
-      wsRef.current?.removeEventListener?.("message", onMessage);
-    };
-  }, [ride_request_id]);
+  // Handle ride accepted
+  useEffect(() => {
+    if (rideAccepted) {
+      console.log("🎉 [RIDER] Showing accepted modal");
+      setAcceptedModalVisible(true);
+    }
+  }, [rideAccepted]);
 
   const updateLocalNegotiated = useCallback((offerId: string, newPrice: number) => {
-    setOffers(prev => {
+    setLocalOffers(prev => {
       const target = prev[offerId];
       if (!target) return prev;
       console.log("📝 [RIDER] Local price update:", { offerId, newPrice });
@@ -176,15 +92,14 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
   }, []);
 
   const sendNegotiation = useCallback(async (offerId: string, rideId: string, negotiated_price: number) => {
-    const sock = wsRef.current;
-    if (!sock || sock.readyState !== WebSocket.OPEN) {
-      Alert.alert("Connection error", "WebSocket not connected. Please try again.");
+    if (!isConnected) {
+      Alert.alert("Connection error", "Not connected. Please try again.");
       return;
     }
 
-    const offer = offers[offerId];
+    const offer = localOffers[offerId];
     if (!offer) {
-      console.error("❌ Offer not found:", offerId);
+      console.error("❌ [RIDER] Offer not found:", offerId);
       return;
     }
 
@@ -203,9 +118,10 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
       };
 
       console.log("📡 [RIDER] Sending negotiation:", payload);
-      sock.send(JSON.stringify(payload));
+      await sendMessage(payload);
 
-      setOffers(prev => {
+      // Remove offer after negotiation sent
+      setLocalOffers(prev => {
         const updated = { ...prev };
         delete updated[offerId];
         return updated;
@@ -214,41 +130,33 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
       setBusyMap(b => ({ ...b, [offerId]: false }));
 
     } catch (err) {
-      console.error("❌ Failed to send negotiation:", err);
+      console.error("❌ [RIDER] Failed to send negotiation:", err);
       setBusyMap(b => ({ ...b, [offerId]: false }));
       Alert.alert("Error", "Failed to send negotiation. Try again.");
     }
-  }, [offers]);
+  }, [localOffers, isConnected, sendMessage]);
 
   const adjustBy = useCallback((offerId: string, delta: number) => {
-    const item = offers[offerId];
+    const item = localOffers[offerId];
     if (!item) return;
     const current = item.negotiated_price;
     const next = Math.max(0, current + delta);
     updateLocalNegotiated(offerId, next);
-  }, [offers, updateLocalNegotiated]);
+  }, [localOffers, updateLocalNegotiated]);
 
-  const handleAcceptOffer = useCallback((offerId: string) => {
-    const sock = wsRef.current;
-    if (!sock || sock.readyState !== WebSocket.OPEN) {
-      Alert.alert("Connection error", "WebSocket not connected. Please try again.");
+  const handleAcceptOffer = useCallback(async (offerId: string) => {
+    if (!isConnected) {
+      Alert.alert("Connection error", "Not connected. Please try again.");
       return;
     }
 
-    const offer = offers[offerId];
+    const offer = localOffers[offerId];
     if (!offer) {
-      console.warn("❌ Offer not found:", offerId);
+      console.warn("❌ [RIDER] Offer not found:", offerId);
       return;
     }
 
-    const rideId = offer.id;
-
-    if (!rideId) {
-      console.warn("❌ No valid ride_request_view_id or ride_id found in offer:", offer);
-      Alert.alert("Error", "Invalid ride ID.");
-      return;
-    }
-    console.log("OFFER ID:=>>>", offerId)
+    console.log("📡 [RIDER] Accepting offer:", offerId);
 
     try {
       const payload = {
@@ -259,10 +167,10 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
       };
 
       console.log("📡 [RIDER] Sending accept:", payload);
-      sock.send(JSON.stringify(payload));
+      await sendMessage(payload);
 
       // Remove this offer from the list
-      setOffers(prev => {
+      setLocalOffers(prev => {
         const updated = { ...prev };
         delete updated[offerId];
         return updated;
@@ -270,10 +178,10 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
 
       Alert.alert("Success", "Offer accepted!");
     } catch (err) {
-      console.error("❌ Failed to accept offer:", err);
+      console.error("❌ [RIDER] Failed to accept offer:", err);
       Alert.alert("Error", "Failed to accept offer. Try again.");
     }
-  }, [offers]);
+  }, [localOffers, isConnected, sendMessage]);
 
   const handleDeclineOffer = useCallback((offerId: string) => {
     Alert.alert(
@@ -288,7 +196,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
           text: "Decline",
           style: "destructive",
           onPress: () => {
-            setOffers(prev => {
+            setLocalOffers(prev => {
               const updated = { ...prev };
               delete updated[offerId];
               return updated;
@@ -299,7 +207,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     );
   }, []);
 
-  const offersArray = Object.values(offers).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+  const offersArray = Object.values(localOffers).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
   const renderOffer = ({ item }: { item: OfferItem }) => {
     const busy = !!busyMap[item.id];
@@ -439,10 +347,20 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
           <Text style={styles.headerTitle}>Driver Offers</Text>
-          <Text style={styles.headerSubtitle}>{offersArray.length} active offers</Text>
+          <Text style={styles.headerSubtitle}>
+            {offersArray.length} active {offersArray.length === 1 ? 'offer' : 'offers'}
+          </Text>
         </View>
         <View style={styles.headerSpacer} />
       </View>
+
+      {/* Connection Status */}
+      {!isConnected && (
+        <View style={styles.connectionBanner}>
+          <Ionicons name="cloud-offline" size={16} color="#f44336" />
+          <Text style={styles.connectionText}>Reconnecting...</Text>
+        </View>
+      )}
 
       {/* Content */}
       <View style={styles.content}>
@@ -475,6 +393,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
         visible={acceptedModalVisible}
         onRequestClose={() => {
           setAcceptedModalVisible(false);
+          clearRideAccepted();
           next();
         }}
       >
@@ -491,6 +410,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
               style={styles.modalButton}
               onPress={() => {
                 setAcceptedModalVisible(false);
+                clearRideAccepted();
                 next();
               }}
             >
@@ -540,6 +460,21 @@ const styles = StyleSheet.create({
   },
   headerSpacer: {
     width: 40 
+  },
+
+  // Connection Banner
+  connectionBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#2a1a1a",
+    paddingVertical: 8,
+    gap: 8,
+  },
+  connectionText: {
+    color: "#f44336",
+    fontSize: 12,
+    fontWeight: "600",
   },
   
   // Content Styles
