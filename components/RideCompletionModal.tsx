@@ -50,86 +50,84 @@ export const RideCompletionModal = () => {
     );
   };
   const renderStars = () => {
-    return (
-      <View style={styles.starContainer}>
-        {[1, 2, 3, 4, 5].map((star) => (
-          <TouchableOpacity
-            key={star}
-            onPress={() => setRating(star)}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.starText, star <= rating ? styles.starFilled : styles.starEmpty]}>
-              {star <= rating ? '★' : '☆'}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    );
-  };
-  return (
-    <Modal visible={isVisible} animationType="fade" transparent={true}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.alertBox}>
-          
-          {viewMode === 'summary' && (
-            <>
-              <Text style={styles.alertTitle}>Ride Completed! 🏁</Text>
-              <Text style={styles.alertMessage}>You have arrived at your destination.</Text>
-              
-              <TouchableOpacity
-                style={[styles.primaryButton, { marginBottom: 15 }]}
-                onPress={() => setViewMode('rating')}
-              >
-                <Text style={styles.primaryButtonText}>Rate your Ride</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.secondaryButton}
-                onPress={handleEndWithoutRating}
-              >
-                <Text style={styles.secondaryButtonText}>End</Text>
-              </TouchableOpacity>
-            </>
-          )}
-          {viewMode === 'rating' && (
-            <>
-              <Text style={styles.alertTitle}>How was your ride?</Text>
-              
-              {renderStars()}
-              
-              <Text style={styles.label}>Comments (Optional)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="The driver was..."
-                placeholderTextColor="#666"
-                multiline
-                numberOfLines={3}
-                value={comment}
-                onChangeText={setComment}
-              />
-              <TouchableOpacity
-                style={[styles.primaryButton, { marginBottom: 15 }]}
-                onPress={handleSubmitRating}
-                disabled={isPending}
-              >
-                {isPending ? (
-                  <ActivityIndicator color="black" />
-                ) : (
-                  <Text style={styles.primaryButtonText}>Confirm Rate</Text>
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleEndWithoutRating}
-                style={styles.linkButton}
-                disabled={isPending}
-              >
-                <Text style={styles.linkText}>Skip Rating</Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
-      </View>
-    </Modal>
-  );
+    return (
+      <View style={styles.starContainer}>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <TouchableOpacity
+            key={star}
+            onPress={() => setRating(star)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.starText, star <= rating ? styles.starFilled : styles.starEmpty]}>
+              {star <= rating ? '★' : '☆'}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  };
+
+  return (
+    <Modal visible={isVisible} animationType="fade" transparent={true}>
+      <View style={styles.modalOverlay}>
+        <View style={styles.alertBox}>
+          {viewMode === 'summary' && (
+            <>
+              <Text style={styles.alertTitle}>Ride Completed! 🏁</Text>
+              <Text style={styles.alertMessage}>You have arrived at your destination.</Text>
+              <TouchableOpacity
+                style={[styles.primaryButton, { marginBottom: 15 }]}
+                onPress={() => setViewMode('rating')}
+              >
+                <Text style={styles.primaryButtonText}>Rate your Ride</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={handleEndWithoutRating}
+              >
+                <Text style={styles.secondaryButtonText}>End</Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {viewMode === 'rating' && (
+            <>
+              <Text style={styles.alertTitle}>How was your ride?</Text>
+              {renderStars()}
+              <Text style={styles.label}>Comments (Optional)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="The driver was..."
+                placeholderTextColor="#666"
+                multiline
+                numberOfLines={3}
+                value={comment}
+                onChangeText={setComment}
+              />
+              <TouchableOpacity
+                style={[styles.primaryButton, { marginBottom: 15 }]}
+                onPress={handleSubmitRating}
+                disabled={isPending}
+              >
+                {isPending ? (
+                  <ActivityIndicator color="black" />
+                ) : (
+                  <Text style={styles.primaryButtonText}>Confirm Rate</Text>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleEndWithoutRating}
+                style={styles.linkButton}
+                disabled={isPending}
+              >
+                <Text style={styles.linkText}>Skip Rating</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
 };
 
 const styles = StyleSheet.create({
