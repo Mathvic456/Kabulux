@@ -37,9 +37,15 @@ export const getRideEstimate = async (rideData: object) => {
     const response = await api.post('/rides/requests/estimate/', rideData);
     return response.data;
   } catch (error: any) {
-    console.error('❌ getRideEstimate API Error:', error);
-    throw error;
+  if (error.response) {
+    console.log("❌ Status:", error.response.status);
+    console.log("❌ Headers:", error.response.headers);
+    console.log("❌ Data:", error.response.data);
+  } else {
+    console.log("❌ Network / setup error:", error.message);
   }
+  throw error;
+}
 };
 
 /**

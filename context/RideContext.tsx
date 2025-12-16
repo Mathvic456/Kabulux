@@ -2,7 +2,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { SocketContext } from "./WebSocketProvider";
 
-type RideState = "idle" | "in_ride";
+// 1. Granular States
+export type RideState = 
+  | "idle" 
+  | "negotiating" 
+  | "driver_on_way" 
+  | "driver_arrived" 
+  | "in_progress" 
+  | "completed";
 
 interface DriverLocation {
   lat: number;
@@ -16,7 +23,6 @@ interface RideContextValue {
   resetRide: () => Promise<void>;
 }
 
-// Storage Keys
 const STORAGE_KEYS = {
   RIDE_STATE: '@ride_state',
   RIDE_ID: '@ride_id',
@@ -38,7 +44,19 @@ export const RideProvider = ({ children }: { children: React.ReactNode }) => {
   const [rideId, setRideId] = useState<string | null>(null);
   const { socket } = useContext(SocketContext);
 
-  // 1. Hydrate state from storage on mount
+  // Helper to persist state updates
+  const updateRideState = async (newState: RideState, newRideId?: string) => {
+    console.log(`🔄 [RIDE_STATE_CHANGE] ${rideState} -> ${newState}`);
+    setRideState(newState);
+    await AsyncStorage.setItem(STORAGE_KEYS.RIDE_STATE, newState);
+    
+    if (newRideId) {
+      setRideId(newRideId);
+      await AsyncStorage.setItem(STORAGE_KEYS.RIDE_ID, newRideId);
+    }
+  };
+
+  // Hydrate on mount
   useEffect(() => {
     const loadPersistedState = async () => {
       try {
@@ -52,19 +70,12 @@ export const RideProvider = ({ children }: { children: React.ReactNode }) => {
           console.log("💾 [RIDE] Restoring state:", savedState[1]);
           setRideState(savedState[1] as RideState);
         }
-        
-        if (savedId[1]) {
-          setRideId(savedId[1]);
-        }
-        
-        if (savedLoc[1]) {
-          setDriverLocation(JSON.parse(savedLoc[1]));
-        }
+        if (savedId[1]) setRideId(savedId[1]);
+        if (savedLoc[1]) setDriverLocation(JSON.parse(savedLoc[1]));
       } catch (error) {
         console.error("❌ [RIDE] Failed to load persisted state:", error);
       }
     };
-    
     loadPersistedState();
   }, []);
 
@@ -72,108 +83,80 @@ export const RideProvider = ({ children }: { children: React.ReactNode }) => {
     if (!event?.data) return;
 
     try {
-      const data = JSON.parse(event.data);
-      console.log("🚗 [RIDE] Message received:", data);
+      const msg = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+      if (msg.type === "notify" && msg.data) {
+        const eventType = msg.data.type || msg.data.event; 
+        const payload = msg.data;
 
-      if (data.type === "notify") {
-        const eventType = data.event || data.data?.event || data.payload?.event;
-        console.log("🔍 [RIDE] Processing notify event:", eventType);
+        console.log(`🔍 [RIDE] Processing Event: ${eventType}`, payload);
 
-        // Handle Ride Start
-        if (eventType === "driver_on_way") {
-          console.log("✅ [RIDE] Ride started:", eventType);
-          
-          const newRideId = data.payload?.ride_id || data.data?.ride_id || data.ride_id;
-          
-          // Update State
-          setRideState("in_ride");
-          if (newRideId) setRideId(newRideId);
+        switch (eventType) {
+          case "DRIVER_ON_WAY":
+            if (rideState !== "driver_on_way") {
+              updateRideState("driver_on_way", payload.ride_id);
+            }
+            break;
 
-          // Persist to Storage
-          AsyncStorage.setItem(STORAGE_KEYS.RIDE_STATE, "in_ride");
-          if (newRideId) AsyncStorage.setItem(STORAGE_KEYS.RIDE_ID, newRideId);
-        }
-        
-        // Handle Ride Completion
-        if (eventType === "ride_completed") {
-          console.log("🏁 [RIDE] Ride completed");
-          
-          // Reset State
-          setRideState("idle");
-          setDriverLocation(null);
-          setRideId(null);
+          case "driver_arrived":
+            if (rideState !== "driver_arrived") {
+              updateRideState("driver_arrived");
+            }
+            break;
 
-          // Clear Storage
-          AsyncStorage.multiRemove([
-            STORAGE_KEYS.RIDE_STATE, 
-            STORAGE_KEYS.RIDE_ID, 
-            STORAGE_KEYS.DRIVER_LOC
-          ]);
+          case "ride_started":
+            if (rideState !== "in_progress") {
+              updateRideState("in_progress");
+            }
+            break;
+            
+        case "ride_completed":
+          console.log("🏁 [RIDE] Ride completed - waiting for user acknowledgement");
+          if (rideState !== "completed") {
+            updateRideState("completed");
+          }
+          break;
+          default:
+            break;
         }
       }
 
       // Handle Location Updates
-      if (data.type === "broadcast_location" && data.lat && data.lng) { 
-          console.log("📍 [RIDE] Location payload:", {
-            lat: data.lat,
-            lng: data.lng,
-            raw: data,
-          });
-
-        const newLocation = { lat: data.lat, lng: data.lng };
-
+      if (msg.type === "broadcast_location" && msg.lat && msg.lng) {
+        const newLocation = { lat: msg.lat, lng: msg.lng };
         setDriverLocation(newLocation);
-        setRideState("in_ride");
-
-        AsyncStorage.setItem(STORAGE_KEYS.RIDE_STATE, "in_ride");
+        if (rideState === 'idle') {
+           updateRideState('driver_on_way');
+        }
         AsyncStorage.setItem(STORAGE_KEYS.DRIVER_LOC, JSON.stringify(newLocation));
       }
 
     } catch (error) {
       console.error("❌ [RIDE] Failed to parse message:", error);
     }
-  }, []);
+  }, [rideState]);
 
   const resetRide = async () => {
-  console.log("🧹 [RIDE] Resetting ride context");
-
-  // Reset in-memory state
-  setRideState("idle");
-  setDriverLocation(null);
-  setRideId(null);
-
-  // Clear persisted storage
-  await AsyncStorage.multiRemove([
-    STORAGE_KEYS.RIDE_STATE,
-    STORAGE_KEYS.RIDE_ID,
-    STORAGE_KEYS.DRIVER_LOC,
-  ]);
-};
+    console.log("🧹 [RIDE] Resetting ride context to IDLE");
+    setRideState("idle");
+    setDriverLocation(null);
+    setRideId(null);
+    await AsyncStorage.multiRemove([
+      STORAGE_KEYS.RIDE_STATE,
+      STORAGE_KEYS.RIDE_ID,
+      STORAGE_KEYS.DRIVER_LOC,
+    ]);
+  };
 
   useEffect(() => {
-    if (!socket) {
-      console.log("⚠️ [RIDE] No socket connection");
-      return;
-    }
-
-    console.log("🔌 [RIDE] Attaching message listener");
+    if (!socket) return;
     socket.addEventListener("message", handleWsMessage);
-
     return () => {
-      console.log("🧹 [RIDE] Removing message listener");
       socket.removeEventListener("message", handleWsMessage);
     };
   }, [socket, handleWsMessage]);
 
   return (
-    <RideContext.Provider
-      value={{
-        rideState,
-        driverLocation,
-        rideId,
-        resetRide,
-      }}
-    >
+    <RideContext.Provider value={{ rideState, driverLocation, rideId, resetRide }}>
       {children}
     </RideContext.Provider>
   );

@@ -1,4 +1,4 @@
-import { useAuth } from "@/context/AuthContext"; // <--- ADDED
+import { useAuth } from "@/context/AuthContext";
 import { SocketContext } from "@/context/WebSocketProvider";
 import { getRideEstimate } from "@/services/apiservice";
 import { useLogoutEndPoint } from "@/services/authentication.service";
@@ -23,8 +23,8 @@ import {
 } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import MapViewDirections from "react-native-maps-directions";
-const { height } = Dimensions.get("window");
 
+const { height } = Dimensions.get("window");
 
 if (!Constants.expoConfig?.extra?.googleMapsApiKey) {
   throw new Error("API is missing in expoConfig.extra");
@@ -32,12 +32,11 @@ if (!Constants.expoConfig?.extra?.googleMapsApiKey) {
 
 const GOOGLE_API_KEY = Constants.expoConfig.extra.googleMapsApiKey;
 
-
 type RideOption = {
   name: string;
   details: string;
   price: string;
-  rawPrice: number; 
+  rawPrice: number;
   originalPrice?: string | null;
   carType: string;
   passengers: number;
@@ -45,7 +44,6 @@ type RideOption = {
   screen: string;
   rideId: string;
 };
-
 
 interface RideDetails {
   pickup: {
@@ -62,9 +60,8 @@ interface RideDetails {
   estimated_fare: number;
 }
 
-
-export default function BookingScreen({ 
-  setScreen, 
+export default function BookingScreen({
+  setScreen,
   goBack,
   pickupLat,
   pickupLong,
@@ -72,7 +69,7 @@ export default function BookingScreen({
   dropoffLong,
   pickupAddress,
   dropoffAddress,
-}: { 
+}: {
   setScreen: (screen: string, navigationData?: any) => void;
   goBack: () => void;
   pickupLat: number;
@@ -86,32 +83,30 @@ export default function BookingScreen({
   const mapRef = useRef<MapView>(null);
   const [selectedRide, setSelectedRide] = useState<string | null>(null);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null); // <--- ADDED
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [rideOptions, setRideOptions] = useState<RideOption[]>([]);
   const [rideId, setRideId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authExpired, setAuthExpired] = useState(false);
-  const [rideOption, setRideOption] = useState<any>(null);
   const [rideDetails, setRideDetails] = useState<RideDetails>({
     pickup: {
       pickupLat: 0,
-      pickupLong: 0
+      pickupLong: 0,
     },
     destination: {
       dropoffLat: 0,
-      dropoffLong: 0
+      dropoffLong: 0,
     },
-    estimated_distance: '',
-    estimated_duration: '',
-    car_type: '',
-    estimated_fare: 0
+    estimated_distance: "",
+    estimated_duration: "",
+    car_type: "",
+    estimated_fare: 0,
   });
 
-
   const { socket, isConnected } = useContext(SocketContext);
-  const { clearTokens, getValidToken } = useAuth(); // <--- DESTRUCTURE getValidToken and clearTokens
-  
+  const { clearTokens, getValidToken } = useAuth();
+
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -137,26 +132,24 @@ export default function BookingScreen({
     })
   ).current;
 
-    const logoutMutation = useLogoutEndPoint();
-  
-    const handleLogout = async () => {
-      try {
-        await logoutMutation.mutateAsync();
-      } catch (error) {
-        console.error("Logout failed:", error);
-      } finally {
-        // Use the context's cleaner function, which should handle both state and storage
-        await clearTokens(); // <--- FIX: Use clearTokens from AuthContext
-        setAuthExpired(false);
-        setScreen("login"); // Assuming setScreen handles navigation like navigateTo
-      }
-    };
-  
+  const logoutMutation = useLogoutEndPoint();
+
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      await clearTokens();
+      setAuthExpired(false);
+      setScreen("login");
+    }
+  };
+
   useEffect(() => {
     console.log("BookingScreen props:", pickupLat, pickupLong, dropoffLat, dropoffLong, pickupAddress, dropoffAddress);
   }, [pickupLat, pickupLong, dropoffLat, dropoffLong, pickupAddress, dropoffAddress]);
 
-  // Fit map to show both markers
   useEffect(() => {
     if (mapRef.current && pickupLat && pickupLong && dropoffLat && dropoffLong) {
       setTimeout(() => {
@@ -174,83 +167,83 @@ export default function BookingScreen({
     }
   }, [pickupLat, pickupLong, dropoffLat, dropoffLong]);
 
-const fetchRideEstimates = useCallback(async () => {
-  if (!pickupLat || !pickupLong || !dropoffLat || !dropoffLong) return;
+  const round6 = (n: number) => Number(n.toFixed(6));
 
-  setLoading(true);
-  setError(null);
+  // Image mapping for ride types
+  const images = [
+    require("../../assets/images/car.png"),
+    require("../../assets/images/car1.png"),
+    require("../../assets/images/car2.png"),
+  ];
 
-  try {
-    // FIX: Retrieve the token using the AuthContext's getter function.
-    // This ensures we get the token whether it's from AsyncStorage or in-memory state.
-    const token = await getValidToken(); 
-    if (!token) throw new Error("No active authentication token found (session missing)");
+  const fetchRideEstimates = useCallback(async () => {
+    if (!pickupLat || !pickupLong || !dropoffLat || !dropoffLong) return;
 
-    const rideData = {
-    pickup_lat: pickupLat,
-    pickup_address: pickupAddress,
-    pickup_lng: pickupLong,
-    dropoff_lat: dropoffLat,
-    dropoff_address: dropoffAddress,
-    dropoff_lng: dropoffLong
-    };
+    setLoading(true);
+    setError(null);
 
-    // NOTE: getRideEstimate should use the 'api' instance which automatically handles tokens
-    // via the request interceptor, so passing the token here might be redundant if the API 
-    // service is set up correctly. We rely on the interceptor set up in the previous step.
-    const data = await getRideEstimate(rideData); 
-    console.log("Ride estimates API response:", data);
+    try {
+      const token = await getValidToken();
+      if (!token) throw new Error("No active authentication token found (session missing)");
 
-    if (data.status === "success" && data.data?.rides) {
-      
-      // 1. UPDATE THE GENERAL RIDE DETAILS STATE
-      setRideDetails({
-        pickup: { pickupLat, pickupLong },
-        destination: { dropoffLat, dropoffLong },
-        estimated_distance: data.data.estimated_distance,
-        estimated_duration: data.data.estimated_duration,
-        car_type: "", // Will be set on selection
-        estimated_fare: 0 // Will be set on selection
-      });
+      const rideData = {
+        pickup_lat: round6(pickupLat),
+        pickup_lng: round6(pickupLong),
+        dropoff_lat: round6(dropoffLat),
+        dropoff_lng: round6(dropoffLong),
+        pickup_address: pickupAddress,
+        dropoff_address: dropoffAddress,
+      };
+      console.log("Ride payload:", JSON.stringify(rideData, null, 2));
 
-      const formattedRides = data.data.rides.map((ride: any) => ({
-        name: `Kablux ${ride.name.charAt(0).toUpperCase() + ride.name.slice(1)}`,
-        details: `${data.data.estimated_duration} - ${data.data.estimated_distance}`,
-        price: `₦${(ride.estimated_fare).toLocaleString()}`,
-        rawPrice: ride.estimated_fare, // <--- STORE THE RAW PRICE HERE
-        originalPrice: ride.discount_price 
-          ? `₦${(ride.discount_price).toLocaleString()}`
-          : null,
-        carType: ride.car_type,
-        passengers: ride.car_size,
-        rideId: ride.name,
-      }));
+      const response = await getRideEstimate(rideData);
+      console.log("Ride estimates API response:", JSON.stringify(response, null, 2));
 
-      setRideOptions(formattedRides);
-      const ride_request_id = data.data.ride_request_id;
-      setRideId(ride_request_id);
-      await AsyncStorage.setItem("ride_request_id", ride_request_id);
-    } else {
-      setError("Failed to fetch ride estimates");
+      // Updated to match your API response structure
+      if (response.status_code === 200 && response.data?.rides) {
+        const apiData = response.data;
+
+        setRideDetails({
+          pickup: { pickupLat, pickupLong },
+          destination: { dropoffLat, dropoffLong },
+          estimated_distance: apiData.estimated_distance.toString(),
+          estimated_duration: apiData.estimated_duration.toString(),
+          car_type: "",
+          estimated_fare: 0,
+        });
+
+        const formattedRides = apiData.rides.map((ride: any, index: number) => ({
+          name: `Kablux ${ride.name.charAt(0).toUpperCase() + ride.name.slice(1)}`,
+          details: `${Math.round(apiData.estimated_duration / 60)} min - ${apiData.estimated_distance.toFixed(2)} km`,
+          price: `₦${ride.estimated_fare.toLocaleString()}`,
+          rawPrice: ride.estimated_fare,
+          originalPrice: null, // No discount in current API response
+          carType: ride.car_type,
+          passengers: ride.car_size,
+          rideId: ride.name,
+          image: images[index] || images[0], // Use index to get corresponding image, fallback to first
+          screen: "standardScreen",
+        }));
+
+        setRideOptions(formattedRides);
+        const ride_request_id = apiData.ride_request_id;
+        setRideId(ride_request_id);
+        await AsyncStorage.setItem("ride_request_id", ride_request_id);
+      } else {
+        setError("Failed to fetch ride estimates");
+      }
+    } catch (err: any) {
+      console.error(err);
+      if (err.message.includes("token found") || err.response?.status === 401) {
+        setError("Session expired or missing. Please log in.");
+        setAuthExpired(true);
+      } else {
+        setError(err.message || "Error fetching rides");
+      }
+    } finally {
+      setLoading(false);
     }
-  } catch (err: any) {
-    console.error(err);
-    // If the error is due to a missing token (from our explicit check) or a 401, handle it.
-    // The API interceptor *should* catch 401s and handle logout automatically, 
-    // but we keep the explicit check for missing token here.
-    if (err.message.includes("token found") || err.response?.status === 401) {
-      // Since the API interceptor is supposed to handle the hard logout on 401,
-      // this block primarily handles the case where the token is genuinely missing 
-      // before the request is even sent.
-      setError("Session expired or missing. Please log in.");
-      setAuthExpired(true);
-    } else {
-      setError(err.message || "Error fetching rides");
-    }
-  } finally {
-    setLoading(false);
-  }
-}, [pickupLat, pickupLong, dropoffLat, dropoffLong, getValidToken]); // <--- ADD getValidToken to dependency array
+  }, [pickupLat, pickupLong, dropoffLat, dropoffLong, pickupAddress, dropoffAddress, getValidToken]);
 
   useEffect(() => {
     fetchRideEstimates();
@@ -260,27 +253,23 @@ const fetchRideEstimates = useCallback(async () => {
     fetchRideEstimates();
   }
 
- 
+  const handleConfirmRide = async () => {
+    const selectedOption = rideOptions.find((option) => option.name === selectedRide);
 
-  // Handle confirm ride navigation
-const handleConfirmRide = async () => {
-  const selectedOption = rideOptions.find((option) => option.name === selectedRide);
-  
-  if (!selectedOption) {
-    Alert.alert("Error", "Please select a ride option");
-    return;
-  }
+    if (!selectedOption) {
+      Alert.alert("Error", "Please select a ride option");
+      return;
+    }
 
-  if (!selectedPaymentMethod) {
-    Alert.alert("Error", "Please select a payment method");
-    return;
-  }
+    if (!selectedPaymentMethod) {
+      Alert.alert("Error", "Please select a payment method");
+      return;
+    }
 
-  console.log("Selected ride option:", selectedOption);
-  console.log("Selected payment method:", selectedPaymentMethod);
+    console.log("Selected ride option:", selectedOption);
+    console.log("Selected payment method:", selectedPaymentMethod);
 
-  // Construct the data object carefully using selectedOption
-  const finalRideData = {
+    const finalRideData = {
       ...selectedOption,
       rideDetails: {
         pickup: {
@@ -291,56 +280,43 @@ const handleConfirmRide = async () => {
           dropoffLat: dropoffLat,
           dropoffLong: dropoffLong,
         },
-        // Use values from state (set in fetch) or fallback to option details
-        estimated_distance: rideDetails.estimated_distance, 
+        estimated_distance: rideDetails.estimated_distance,
         estimated_duration: rideDetails.estimated_duration,
         car_type: selectedOption.carType,
-        estimated_fare: selectedOption.rawPrice, 
+        estimated_fare: selectedOption.rawPrice,
       },
       ride_request_id: rideId,
-      paymentMethod: selectedPaymentMethod, // <--- ADD payment method to ride data
-  };
-  
-  if (selectedRide?.includes("Standard")) {
-    // Update the socket call to use the specific price too
-    sendSubscription(socket, rideId, finalRideData); 
-    setScreen("standardScreen", finalRideData);
-  } else {
-    // ... handle other types
-     Alert.alert("Unavailable", "This ride option is not available.");
-  }
-};
-
-
-function sendSubscription(socket: WebSocket | null, rideId: string, data: any, attempt = 0) {
-  console.log(`🔍 [RIDER] sendSubscription called - attempt ${attempt + 1}`);
-  
-  if (socket && socket.readyState === WebSocket.OPEN) {
-    const message = {
-      type: "subscribe_driver_offer_view", 
-      data: {
-        ride_id: rideId,
-        pickup: { 
-          lat: data.rideDetails.pickup.pickupLat, 
-          long: data.rideDetails.pickup.pickupLong 
-        },
-        destination: { 
-          lat: data.rideDetails.destination.dropoffLat, 
-          long: data.rideDetails.destination.dropoffLong 
-        },
-        estimated_distance: data.rideDetails.estimated_distance,
-        estimated_duration: data.rideDetails.estimated_duration,
-        car_type: data.rideDetails.car_type,
-        estimated_fare: data.rideDetails.estimated_fare, // This will now be correct
-        payment_method: data.paymentMethod, // <--- ADD payment method to socket message
-        timestamp: Date.now(),
-      },
+      paymentMethod: selectedPaymentMethod,
     };
-    
-    // ... send logic
-    socket.send(JSON.stringify(message));
+
+    if (selectedRide?.includes("Standard")) {
+      sendSubscription(socket, rideId, finalRideData);
+      setScreen("standardScreen", finalRideData);
+    } else if (selectedRide?.includes("Premium")) {
+      sendSubscription(socket, rideId, finalRideData);
+      setScreen("premiumScreen", finalRideData);
+    } else if (selectedRide?.includes("Luxury")) {
+      sendSubscription(socket, rideId, finalRideData);
+      setScreen("standardScreen", finalRideData);
+    } else {
+      Alert.alert("Unavailable", "This ride option is not available.");
+    }
+  };
+
+  function sendSubscription(socket: WebSocket | null, rideId: string, data: any, attempt = 0) {
+    console.log(`🔍 [RIDER] sendSubscription called - attempt ${attempt + 1}`);
+
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      const message = {
+        type: "subscribe_driver_offer_view",
+        data: {
+          ride_request_id: rideId,
+        },
+      };
+
+      socket.send(JSON.stringify(message));
+    }
   }
-}
 
   return (
     <View style={styles.container}>
@@ -361,7 +337,6 @@ function sendSubscription(socket: WebSocket | null, rideId: string, data: any, a
           showsCompass={false}
           customMapStyle={darkMapStyle}
         >
-          {/* Pickup Location Marker */}
           <Marker
             coordinate={{
               latitude: pickupLat,
@@ -372,14 +347,13 @@ function sendSubscription(socket: WebSocket | null, rideId: string, data: any, a
           >
             <View style={styles.pickupMarkerContainer}>
               <Image
-                source={require('../../assets/images/target.png')}
+                source={require("../../assets/images/target.png")}
                 style={{ width: 30, height: 30 }}
                 resizeMode="contain"
               />
             </View>
           </Marker>
 
-          {/* Dropoff Location Marker */}
           <Marker
             coordinate={{
               latitude: dropoffLat,
@@ -389,7 +363,6 @@ function sendSubscription(socket: WebSocket | null, rideId: string, data: any, a
             pinColor="#f6a623"
           />
 
-          {/* Route Line */}
           <MapViewDirections
             origin={{
               latitude: pickupLat,
@@ -418,14 +391,8 @@ function sendSubscription(socket: WebSocket | null, rideId: string, data: any, a
       )}
 
       {/* Sliding Bottom Overlay */}
-      <Animated.View
-        style={[styles.bottomPanel, { transform: [{ translateY: slideAnim }] }]}
-        {...panResponder.panHandlers}
-      >
-        <ScrollView 
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
+      <Animated.View style={[styles.bottomPanel, { transform: [{ translateY: slideAnim }] }]} {...panResponder.panHandlers}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           <View style={styles.panelHeader}>
             <TouchableOpacity style={styles.headerIconContainer} onPress={goBack}>
               <Feather name="arrow-left" size={24} color="white" />
@@ -433,7 +400,6 @@ function sendSubscription(socket: WebSocket | null, rideId: string, data: any, a
             <Text style={styles.headerTitle}>Choose a Ride</Text>
           </View>
 
-          {/* Loading State */}
           {loading ? (
             <View style={styles.centerContent}>
               <ActivityIndicator size="large" color="#f6a623" />
@@ -442,34 +408,27 @@ function sendSubscription(socket: WebSocket | null, rideId: string, data: any, a
           ) : error && authExpired ? (
             <View style={styles.centerContent}>
               <Text style={styles.errorText}>{error}</Text>
-              <TouchableOpacity 
-                style={styles.retryButton}
-                onPress={handleLogout}
-              >
+              <TouchableOpacity style={styles.retryButton} onPress={handleLogout}>
                 <Text style={styles.retryButtonText}>Log In</Text>
               </TouchableOpacity>
             </View>
-          ) : error? (
+          ) : error ? (
             <View style={styles.centerContent}>
               <Text style={styles.errorText}>{error}</Text>
-              <TouchableOpacity 
-                style={styles.retryButton}
-                onPress={handleRetry}
-              >
+              <TouchableOpacity style={styles.retryButton} onPress={handleRetry}>
                 <Text style={styles.retryButtonText}>Try Again</Text>
               </TouchableOpacity>
-            </View>            
-          ): rideOptions.length > 0 ? (
+            </View>
+          ) : rideOptions.length > 0 ? (
             <>
-              {/* Ride Options */}
               {rideOptions.map((option, index) => (
                 <TouchableOpacity
                   key={index}
                   style={[
                     styles.rideOptionItem,
-                    selectedRide === option.name && { 
-                      borderColor: "#f6a623", 
-                      borderWidth: 2 
+                    selectedRide === option.name && {
+                      borderColor: "#f6a623",
+                      borderWidth: 2,
                     },
                   ]}
                   onPress={() => setSelectedRide(option.name)}
@@ -478,99 +437,78 @@ function sendSubscription(socket: WebSocket | null, rideId: string, data: any, a
                   <View style={styles.rideDetails}>
                     <Text style={styles.rideName}>{option.name}</Text>
                     <Text style={styles.rideTiming}>{option.details}</Text>
-                  <Text style={styles.rideInfo}>
-                    {`${option.carType} `}
-                    <Feather name="user" size={12} color="#aaa" />
-                    {` ${option.passengers}`}
-                  </Text>
+                    <Text style={styles.rideInfo}>
+                      {`${option.carType} `}
+                      <Feather name="user" size={12} color="#aaa" />
+                      {` ${option.passengers}`}
+                    </Text>
                   </View>
 
                   <View style={styles.ridePriceContainer}>
                     <Text style={styles.ridePrice}>{option.price}</Text>
-                    {option.originalPrice && (
-                      <Text style={styles.rideOriginalPrice}>
-                        {option.originalPrice}
-                      </Text>
-                    )}
+                    {option.originalPrice && <Text style={styles.rideOriginalPrice}>{option.originalPrice}</Text>}
                   </View>
                 </TouchableOpacity>
               ))}
 
-              <Modal
-  visible={authExpired}
-  transparent={true}
-  animationType="fade"
->
-  <View
-    style={{
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: "rgba(0,0,0,0.6)",
-    }}
-  >
-    <View
-      style={{
-        backgroundColor: "#fff",
-        borderRadius: 12,
-        padding: 25,
-        width: "80%",
-        alignItems: "center",
-      }}
-    >
-      <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>
-        Session Expired
-      </Text>
-      <Text style={{ textAlign: "center", marginBottom: 20 }}>
-        Your session has expired. Please log in again to continue.
-      </Text>
-      <TouchableOpacity
-        style={{
-          backgroundColor: "#f6a623",
-          paddingVertical: 10,
-          paddingHorizontal: 25,
-          borderRadius: 8,
-        }}
-        onPress={async() => {
-          await clearTokens(); // <--- FIX: Use clearTokens
-          setAuthExpired(false);
-          setScreen("login"); 
-        }}
-      >
-        <Text style={{ color: "white", fontWeight: "bold" }}>Log In</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-</Modal>
-
+              <Modal visible={authExpired} transparent={true} animationType="fade">
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    backgroundColor: "rgba(0,0,0,0.6)",
+                  }}
+                >
+                  <View
+                    style={{
+                      backgroundColor: "#fff",
+                      borderRadius: 12,
+                      padding: 25,
+                      width: "80%",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>Session Expired</Text>
+                    <Text style={{ textAlign: "center", marginBottom: 20 }}>
+                      Your session has expired. Please log in again to continue.
+                    </Text>
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: "#f6a623",
+                        paddingVertical: 10,
+                        paddingHorizontal: 25,
+                        borderRadius: 8,
+                      }}
+                      onPress={async () => {
+                        await clearTokens();
+                        setAuthExpired(false);
+                        setScreen("login");
+                      }}
+                    >
+                      <Text style={{ color: "white", fontWeight: "bold" }}>Log In</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </Modal>
 
               {/* Payment Section */}
-              <TouchableOpacity
-                style={styles.paymentSection}
-                onPress={() => setPaymentModalVisible(true)}
-              >
+              <TouchableOpacity style={styles.paymentSection} onPress={() => setPaymentModalVisible(true)}>
                 <Feather name="credit-card" size={20} color="#388e3c" />
                 <Text style={styles.paymentText}>
-                  {selectedPaymentMethod 
+                  {selectedPaymentMethod
                     ? `Pay with ${selectedPaymentMethod.charAt(0).toUpperCase() + selectedPaymentMethod.slice(1)}`
                     : "Select payment method"}
                 </Text>
-                <Feather
-                  name="chevron-right"
-                  size={20}
-                  color="#aaa"
-                  style={{ marginLeft: "auto" }}
-                />
+                <Feather name="chevron-right" size={20} color="#aaa" style={{ marginLeft: "auto" }} />
               </TouchableOpacity>
 
               {/* Confirm Button */}
               <TouchableOpacity
                 style={[
                   styles.confirmButton,
-                  { 
-                    backgroundColor: (selectedRide && selectedPaymentMethod) 
-                      ? "#f6a623" 
-                      : "#555" 
+                  {
+                    backgroundColor: selectedRide && selectedPaymentMethod ? "#f6a623" : "#555",
                   },
                 ]}
                 disabled={!(selectedRide && selectedPaymentMethod)}
@@ -581,7 +519,6 @@ function sendSubscription(socket: WebSocket | null, rideId: string, data: any, a
                 </Text>
               </TouchableOpacity>
 
-              {/* Extra padding for scrolling */}
               <View style={{ height: 40 }} />
             </>
           ) : (
@@ -603,7 +540,7 @@ function sendSubscription(socket: WebSocket | null, rideId: string, data: any, a
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Select Payment Method</Text>
 
-            {["Cash", "Card"].map((method, i) => (
+            {["Cash", "Card", "Wallet"].map((method, i) => (
               <TouchableOpacity
                 key={i}
                 style={styles.modalOption}
@@ -616,10 +553,7 @@ function sendSubscription(socket: WebSocket | null, rideId: string, data: any, a
               </TouchableOpacity>
             ))}
 
-            <TouchableOpacity
-              style={styles.modalCloseButton}
-              onPress={() => setPaymentModalVisible(false)}
-            >
+            <TouchableOpacity style={styles.modalCloseButton} onPress={() => setPaymentModalVisible(false)}>
               <Text style={styles.modalCloseText}>Close</Text>
             </TouchableOpacity>
           </View>
@@ -746,8 +680,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
-
-  // Modal styles
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.6)",

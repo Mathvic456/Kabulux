@@ -1,7 +1,8 @@
+import { RideContext } from "@/context/RideContext";
 import { SocketContext } from "@/context/WebSocketProvider";
 import { Ionicons } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -17,12 +18,12 @@ import {
 
 type OfferItem = {
   id: string;
-  ride_request_id: string; 
+  ride_request_id: string;
   driver_id: string;
   driver_name?: string;
   driver_rating?: string | number;
   counter_offer: number;
-  negotiated_price: number; 
+  negotiated_price: number;
   status?: string;
   expires_at?: string;
   timestamp: number;
@@ -34,189 +35,175 @@ interface RiderOfferProps {
 }
 
 export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
-  const { 
-    driverOffers, 
-    rideAccepted, 
-    sendMessage, 
+  const {
+    driverOffers,
+    rideAccepted,
+    sendMessage,
     isConnected,
     subscribeToRideOffers,
-    clearRideAccepted 
+    clearRideAccepted
   } = useContext(SocketContext);
-  
+
+  const { rideState, rideId } = useContext(RideContext);
+ 
   const route = useRoute();
   const { ride_request_id } = (route.params as any) || {};
 
   const [localOffers, setLocalOffers] = useState<Record<string, OfferItem>>({});
   const [acceptedModalVisible, setAcceptedModalVisible] = useState(false);
   const [busyMap, setBusyMap] = useState<Record<string, boolean>>({});
+  
+  // Track if we've already shown the modal to prevent duplicate shows
+  const hasShownModal = useRef(false);
+  const isInitialMount = useRef(true);
 
-  // Subscribe to ride offers when component mounts
+  // 1. Subscribe to WS
   useEffect(() => {
     if (!ride_request_id) {
       console.warn("❌ [RIDER] Missing ride_request_id");
       return;
     }
-
-    if (!isConnected) {
-      console.warn("⚠️ [RIDER] Socket not connected yet");
-      return;
+    if (isConnected) {
+      console.log("📡 [RIDER] Subscribing to offers for:", ride_request_id);
+      subscribeToRideOffers(ride_request_id);
     }
+  }, [ride_request_id, isConnected]);
 
-    console.log("📡 [RIDER] Subscribing to ride offers for:", ride_request_id);
-    subscribeToRideOffers(ride_request_id);
-  }, [ride_request_id, isConnected, subscribeToRideOffers]);
-
-  // Sync driver offers from context to local state
+  // 2. Sync Context -> Local State
   useEffect(() => {
     setLocalOffers(driverOffers);
   }, [driverOffers]);
 
-  // Handle ride accepted
+  // 3. Handle Initial Mount - Clear stale rideAccepted
   useEffect(() => {
-    if (rideAccepted) {
-      console.log("🎉 [RIDER] Showing accepted modal");
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      // Clear any stale rideAccepted state on mount to prevent phantom modal
+      if (rideAccepted) {
+        console.log("🧹 [RIDER] Clearing stale rideAccepted on mount");
+        clearRideAccepted();
+      }
+    }
+  }, []);
+
+  // 4. Handle Acceptance - Show Modal ONLY on new acceptances
+  useEffect(() => {
+    // Only show modal if:
+    // 1. We have rideAccepted data
+    // 2. We haven't shown the modal yet
+    // 3. It's not the initial mount
+    if (rideAccepted && !hasShownModal.current && !isInitialMount.current) {
+      console.log("🎉 [RIDER] Ride accepted, showing modal:", rideAccepted);
       setAcceptedModalVisible(true);
+      hasShownModal.current = true;
     }
   }, [rideAccepted]);
 
-  const updateLocalNegotiated = useCallback((offerId: string, newPrice: number) => {
+  // 5. Auto-navigate when ride state changes to active states
+  useEffect(() => {
+    if ((rideState === "in_ride" || rideState === "driver_on_way") && rideId) {
+      console.log("🚗 [RIDER] Ride is active, preparing to navigate...", rideState);
+      // Small delay to ensure modal shows first if it needs to
+      setTimeout(() => {
+        if (!acceptedModalVisible) {
+          // If modal isn't showing, just navigate
+          next();
+        }
+      }, 500);
+    }
+  }, [rideState, rideId]);
+
+  // 6. Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      hasShownModal.current = false;
+      clearRideAccepted();
+    };
+  }, []);
+
+  const closeModalAndContinue = () => {
+    setAcceptedModalVisible(false);
+    clearRideAccepted();
+    hasShownModal.current = false; // Reset for potential future use
+    next();
+  };
+
+  const adjustBy = useCallback((offerId: string, delta: number) => {
     setLocalOffers(prev => {
       const target = prev[offerId];
       if (!target) return prev;
-      console.log("📝 [RIDER] Local price update:", { offerId, newPrice });
+      const newPrice = Math.max(0, target.negotiated_price + delta);
       return {
         ...prev,
-        [offerId]: { ...target, negotiated_price: newPrice, timestamp: Date.now() },
+        [offerId]: { ...target, negotiated_price: newPrice },
       };
     });
   }, []);
 
-  const sendNegotiation = useCallback(async (offerId: string, rideId: string, negotiated_price: number) => {
-    if (!isConnected) {
-      Alert.alert("Connection error", "Not connected. Please try again.");
-      return;
-    }
-
-    const offer = localOffers[offerId];
-    if (!offer) {
-      console.error("❌ [RIDER] Offer not found:", offerId);
-      return;
-    }
-
-    const isIncrement = negotiated_price > offer.counter_offer;
-
-    setBusyMap(b => ({ ...b, [offerId]: true }));
+  const sendNegotiation = async (offerId: string, rideId: string, price: number) => {
+    if (!isConnected) return Alert.alert("Error", "No connection");
+   
+    setBusyMap(prev => ({ ...prev, [offerId]: true }));
+   
+    const original = localOffers[offerId]?.counter_offer || 0;
+    const type = price > original ? "negotiate_increment" : "negotiate_decrement";
 
     try {
-      const payload = {
-        type: isIncrement ? "negotiate_increment" : "negotiate_decrement",
+      await sendMessage({
+        type: type,
         data: {
           ride_id: rideId,
-          negotiated_price: negotiated_price,
+          negotiated_price: price,
           ride_request_view_id: offerId,
         },
-      };
-
-      console.log("📡 [RIDER] Sending negotiation:", payload);
-      await sendMessage(payload);
-
-      // Remove offer after negotiation sent
+      });
+     
       setLocalOffers(prev => {
-        const updated = { ...prev };
-        delete updated[offerId];
-        return updated;
+        const copy = { ...prev };
+        delete copy[offerId];
+        return copy;
       });
 
-      setBusyMap(b => ({ ...b, [offerId]: false }));
-
     } catch (err) {
-      console.error("❌ [RIDER] Failed to send negotiation:", err);
-      setBusyMap(b => ({ ...b, [offerId]: false }));
-      Alert.alert("Error", "Failed to send negotiation. Try again.");
+      Alert.alert("Error", "Failed to send negotiation");
+    } finally {
+      setBusyMap(prev => ({ ...prev, [offerId]: false }));
     }
-  }, [localOffers, isConnected, sendMessage]);
+  };
 
-  const adjustBy = useCallback((offerId: string, delta: number) => {
-    const item = localOffers[offerId];
-    if (!item) return;
-    const current = item.negotiated_price;
-    const next = Math.max(0, current + delta);
-    updateLocalNegotiated(offerId, next);
-  }, [localOffers, updateLocalNegotiated]);
-
-  const handleAcceptOffer = useCallback(async (offerId: string) => {
-    if (!isConnected) {
-      Alert.alert("Connection error", "Not connected. Please try again.");
-      return;
+  const handleAcceptOffer = async (offerId: string) => {
+    if (!isConnected) return Alert.alert("Error", "No connection");
+    setBusyMap(prev => ({ ...prev, [offerId]: true }));
+    const message = {
+      type: "accept_ride",
+      data: { ride_request_view_id: offerId }
     }
-
-    const offer = localOffers[offerId];
-    if (!offer) {
-      console.warn("❌ [RIDER] Offer not found:", offerId);
-      return;
-    }
-
-    console.log("📡 [RIDER] Accepting offer:", offerId);
-
     try {
-      const payload = {
-        type: "accept_ride",
-        data: {
-          ride_request_view_id: offerId,
-        }
-      };
-
-      console.log("📡 [RIDER] Sending accept:", payload);
-      await sendMessage(payload);
-
-      // Remove this offer from the list
-      setLocalOffers(prev => {
-        const updated = { ...prev };
-        delete updated[offerId];
-        return updated;
-      });
-
-      Alert.alert("Success", "Offer accepted!");
+      console.log("📤 [RIDER] Accepting ride:", message);
+      await sendMessage(message);
+      // Note: Modal will show when DRIVER_ON_WAY event comes through WebSocket
     } catch (err) {
-      console.error("❌ [RIDER] Failed to accept offer:", err);
-      Alert.alert("Error", "Failed to accept offer. Try again.");
+      Alert.alert("Error", "Failed to accept");
+      setBusyMap(prev => ({ ...prev, [offerId]: false }));
     }
-  }, [localOffers, isConnected, sendMessage]);
+  };
 
-  const handleDeclineOffer = useCallback((offerId: string) => {
-    Alert.alert(
-      "Decline Offer",
-      "Are you sure you want to decline this offer?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        {
-          text: "Decline",
-          style: "destructive",
-          onPress: () => {
-            setLocalOffers(prev => {
-              const updated = { ...prev };
-              delete updated[offerId];
-              return updated;
-            });
-          }
-        }
-      ]
-    );
-  }, []);
+  const handleDeclineOffer = (offerId: string) => {
+    setLocalOffers(prev => {
+      const copy = { ...prev };
+      delete copy[offerId];
+      return copy;
+    });
+  };
 
-  const offersArray = Object.values(localOffers).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+  const offersArray = Object.values(localOffers).sort((a, b) => b.timestamp - a.timestamp);
 
   const renderOffer = ({ item }: { item: OfferItem }) => {
     const busy = !!busyMap[item.id];
-    const currentPrice = item.negotiated_price;
-    const difference = currentPrice - item.counter_offer;
+    const diff = item.negotiated_price - item.counter_offer;
 
     return (
       <View style={styles.card}>
-        {/* Header Section */}
         <View style={styles.headerSection}>
           <View style={styles.driverInfo}>
             <View style={styles.avatarContainer}>
@@ -239,45 +226,42 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
 
         <View style={styles.divider} />
 
-        {/* Offer Details */}
         <View style={styles.offerSection}>
           <Text style={styles.offerLabel}>Driver's Offer</Text>
-          <Text style={styles.originalOffer}>₦{Number(item.counter_offer).toLocaleString()}</Text>
+          <Text style={styles.originalOffer}>₦{item.counter_offer.toLocaleString()}</Text>
         </View>
 
-        {/* Counter Offer Section */}
         <View style={styles.counterSection}>
           <Text style={styles.counterLabel}>Your Counter Offer</Text>
-          <Text style={styles.counterPrice}>₦{Number(currentPrice).toLocaleString()}</Text>
-          
-          {difference !== 0 && (
+          <Text style={styles.counterPrice}>₦{item.negotiated_price.toLocaleString()}</Text>
+         
+          {diff !== 0 && (
             <View style={[
               styles.differenceBadge,
-              difference > 0 ? styles.higherBadge : styles.lowerBadge
+              diff > 0 ? styles.higherBadge : styles.lowerBadge
             ]}>
-              <Ionicons 
-                name={difference > 0 ? "trending-up" : "trending-down"} 
-                size={14} 
-                color={difference > 0 ? "#4CAF50" : "#f44336"} 
+              <Ionicons
+                name={diff > 0 ? "trending-up" : "trending-down"}
+                size={14}
+                color={diff > 0 ? "#4CAF50" : "#f44336"}
               />
               <Text style={[
                 styles.differenceText,
-                difference > 0 ? styles.higherText : styles.lowerText
+                diff > 0 ? styles.higherText : styles.lowerText
               ]}>
-                {difference > 0 ? '+' : ''}₦{Math.abs(difference).toLocaleString()}
+                {diff > 0 ? '+' : ''}₦{Math.abs(diff).toLocaleString()}
               </Text>
             </View>
           )}
         </View>
 
-        {/* Price Adjustment Controls */}
         <View style={styles.controlsSection}>
           <Text style={styles.controlsLabel}>Adjust your offer:</Text>
           <View style={styles.controlsRow}>
             <TouchableOpacity
               style={[styles.controlButton, styles.decreaseButton]}
               onPress={() => adjustBy(item.id, -100)}
-              disabled={busy || currentPrice <= 0}
+              disabled={busy || item.negotiated_price <= 0}
             >
               <Ionicons name="remove" size={20} color="white" />
               <Text style={styles.controlButtonText}>-₦100</Text>
@@ -285,7 +269,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
 
             <TouchableOpacity
               style={[styles.controlButton, styles.increaseButton]}
-              onPress={() => adjustBy(item.id, +100)}
+              onPress={() => adjustBy(item.id, 100)}
               disabled={busy}
             >
               <Ionicons name="add" size={20} color="black" />
@@ -294,11 +278,10 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
           </View>
         </View>
 
-        {/* Action Buttons */}
         <View style={styles.actionsSection}>
           <TouchableOpacity
             style={[styles.primaryButton, busy && styles.disabledButton]}
-            onPress={() => sendNegotiation(item.id, item.ride_request_id, currentPrice)}
+            onPress={() => sendNegotiation(item.id, item.ride_request_id, item.negotiated_price)}
             disabled={busy}
           >
             {busy ? (
@@ -336,11 +319,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      {/* Header */}
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <View style={styles.header}>
         <TouchableOpacity onPress={goBack} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="white" />
@@ -354,7 +333,6 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
         <View style={styles.headerSpacer} />
       </View>
 
-      {/* Connection Status */}
       {!isConnected && (
         <View style={styles.connectionBanner}>
           <Ionicons name="cloud-offline" size={16} color="#f44336" />
@@ -362,41 +340,29 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
         </View>
       )}
 
-      {/* Content */}
       <View style={styles.content}>
-        {offersArray.length === 0 ? (
-          <View style={styles.emptyState}>
-            <View style={styles.emptyIconContainer}>
-              <Ionicons name="car-outline" size={64} color="#444" />
+        <FlatList
+          data={offersArray}
+          keyExtractor={(item) => item.id}
+          renderItem={renderOffer}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <View style={styles.emptyIconContainer}>
+                <Ionicons name="car-outline" size={64} color="#444" />
+              </View>
+              <Text style={styles.emptyTitle}>Waiting for offers</Text>
+              <Text style={styles.emptyDescription}>
+                Drivers will see your request and send offers shortly...
+              </Text>
+              <ActivityIndicator style={styles.loadingIndicator} size="large" color="#facc15" />
             </View>
-            <Text style={styles.emptyTitle}>Waiting for offers</Text>
-            <Text style={styles.emptyDescription}>
-              Drivers will see your request and send offers shortly...
-            </Text>
-            <ActivityIndicator style={styles.loadingIndicator} size="large" color="#facc15" />
-          </View>
-        ) : (
-          <FlatList
-            data={offersArray}
-            keyExtractor={(i) => i.id}
-            renderItem={renderOffer}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-          />
-        )}
+          }
+        />
       </View>
 
-      {/* Success Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={acceptedModalVisible}
-        onRequestClose={() => {
-          setAcceptedModalVisible(false);
-          clearRideAccepted();
-          next();
-        }}
-      >
+      <Modal visible={acceptedModalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.successIconContainer}>
@@ -404,17 +370,18 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
             </View>
             <Text style={styles.modalTitle}>Ride Accepted!</Text>
             <Text style={styles.modalMessage}>
-              Your ride has been confirmed. Driver is on the way!
+              {rideAccepted?.driver_name || "Your driver"} is on the way!
             </Text>
+            {rideAccepted?.message && (
+              <Text style={styles.modalSubMessage}>
+                {rideAccepted.message}
+              </Text>
+            )}
             <TouchableOpacity
               style={styles.modalButton}
-              onPress={() => {
-                setAcceptedModalVisible(false);
-                clearRideAccepted();
-                next();
-              }}
+              onPress={closeModalAndContinue}
             >
-              <Text style={styles.modalButtonText}>Continue</Text>
+              <Text style={styles.modalButtonText}>Track Driver</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -424,12 +391,11 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#000" 
+  container: {
+    flex: 1,
+    backgroundColor: "#000"
   },
-  
-  // Header Styles
+ 
   header: {
     paddingTop: 48,
     paddingBottom: 16,
@@ -449,9 +415,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
-    color: "white", 
-    fontSize: 18, 
-    fontWeight: "700" 
+    color: "white",
+    fontSize: 18,
+    fontWeight: "700"
   },
   headerSubtitle: {
     color: "#888",
@@ -459,10 +425,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   headerSpacer: {
-    width: 40 
+    width: 40
   },
 
-  // Connection Banner
   connectionBanner: {
     flexDirection: "row",
     alignItems: "center",
@@ -476,19 +441,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
   },
-  
-  // Content Styles
-  content: { 
-    flex: 1, 
-    padding: 16 
+ 
+  content: {
+    flex: 1,
+    padding: 16
   },
   listContent: {
     paddingBottom: 20
   },
-  
-  // Empty State
+ 
   emptyState: {
-    alignItems: "center", 
+    alignItems: "center",
     justifyContent: "center",
     marginTop: 80,
     paddingHorizontal: 40,
@@ -500,23 +463,22 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   emptyTitle: {
-    color: "white", 
-    fontSize: 20, 
+    color: "white",
+    fontSize: 20,
     fontWeight: "700",
     marginBottom: 8,
   },
   emptyDescription: {
-    color: "#888", 
-    fontSize: 14, 
+    color: "#888",
+    fontSize: 14,
     textAlign: "center",
     lineHeight: 20,
     marginBottom: 24,
   },
   loadingIndicator: {
-    marginTop: 16 
+    marginTop: 16
   },
-  
-  // Card Styles
+ 
   card: {
     backgroundColor: "#1a1a1a",
     padding: 20,
@@ -530,8 +492,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  
-  // Header Section
+ 
   headerSection: {
     flexDirection: "row",
     alignItems: "center",
@@ -550,20 +511,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   driverName: {
-    color: "white", 
-    fontSize: 16, 
-    fontWeight: "600", 
-    marginBottom: 4 
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4
   },
   ratingContainer: {
-    flexDirection: "row", 
-    alignItems: "center" 
+    flexDirection: "row",
+    alignItems: "center"
   },
   ratingText: {
-    color: "#facc15", 
-    fontSize: 13, 
-    marginLeft: 4, 
-    fontWeight: "600" 
+    color: "#facc15",
+    fontSize: 13,
+    marginLeft: 4,
+    fontWeight: "600"
   },
   statusBadge: {
     backgroundColor: "#facc15",
@@ -572,36 +533,33 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   statusText: {
-    color: "black", 
-    fontSize: 10, 
-    fontWeight: "bold" 
+    color: "black",
+    fontSize: 10,
+    fontWeight: "bold"
   },
-  
-  // Divider
+ 
   divider: {
-    height: 1, 
-    backgroundColor: "#2a2a2a", 
-    marginBottom: 16 
+    height: 1,
+    backgroundColor: "#2a2a2a",
+    marginBottom: 16
   },
-  
-  // Offer Section
+ 
   offerSection: {
     marginBottom: 16,
   },
   offerLabel: {
-    color: "#888", 
-    fontSize: 12, 
+    color: "#888",
+    fontSize: 12,
     marginBottom: 4,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   originalOffer: {
-    color: "#facc15", 
-    fontSize: 18, 
-    fontWeight: "700" 
+    color: "#facc15",
+    fontSize: 18,
+    fontWeight: "700"
   },
-  
-  // Counter Section
+ 
   counterSection: {
     alignItems: "center",
     marginBottom: 20,
@@ -610,15 +568,15 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   counterLabel: {
-    color: "#888", 
-    fontSize: 12, 
+    color: "#888",
+    fontSize: 12,
     marginBottom: 8,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   counterPrice: {
-    color: "white", 
-    fontSize: 28, 
+    color: "white",
+    fontSize: 28,
     fontWeight: "bold",
     marginBottom: 8,
   },
@@ -637,7 +595,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(244, 67, 54, 0.15)",
   },
   differenceText: {
-    fontSize: 13, 
+    fontSize: 13,
     fontWeight: "600",
     marginLeft: 4,
   },
@@ -647,14 +605,13 @@ const styles = StyleSheet.create({
   lowerText: {
     color: "#f44336"
   },
-  
-  // Controls Section
+ 
   controlsSection: {
     marginBottom: 20,
   },
   controlsLabel: {
-    color: "#888", 
-    fontSize: 12, 
+    color: "#888",
+    fontSize: 12,
     marginBottom: 12,
     textAlign: "center",
   },
@@ -678,16 +635,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#facc15",
   },
   controlButtonText: {
-    color: "white", 
-    marginLeft: 6, 
-    fontWeight: "700", 
-    fontSize: 14 
+    color: "white",
+    marginLeft: 6,
+    fontWeight: "700",
+    fontSize: 14
   },
   increaseButtonText: {
     color: "black"
   },
-  
-  // Actions Section
+ 
   actionsSection: {
     gap: 12,
   },
@@ -701,9 +657,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   primaryButtonText: {
-    color: "black", 
-    fontWeight: "700", 
-    fontSize: 16 
+    color: "black",
+    fontWeight: "700",
+    fontSize: 16
   },
   secondaryActions: {
     flexDirection: "row",
@@ -727,20 +683,19 @@ const styles = StyleSheet.create({
     borderColor: "#444",
   },
   acceptButtonText: {
-    color: "white", 
-    fontWeight: "600", 
-    fontSize: 14 
+    color: "white",
+    fontWeight: "600",
+    fontSize: 14
   },
   declineButtonText: {
-    color: "#888", 
-    fontWeight: "600", 
-    fontSize: 14 
+    color: "#888",
+    fontWeight: "600",
+    fontSize: 14
   },
-  disabledButton: { 
-    opacity: 0.5 
+  disabledButton: {
+    opacity: 0.5
   },
-  
-  // Modal Styles
+ 
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.7)",
@@ -762,18 +717,25 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   modalTitle: {
-    color: "#fff", 
-    fontSize: 22, 
-    fontWeight: "700", 
+    color: "#fff",
+    fontSize: 22,
+    fontWeight: "700",
     marginBottom: 8,
     textAlign: "center",
   },
   modalMessage: {
-    color: "#ccc", 
-    fontSize: 16, 
-    marginBottom: 24, 
+    color: "#ccc",
+    fontSize: 16,
+    marginBottom: 12,
     textAlign: "center",
     lineHeight: 22,
+  },
+  modalSubMessage: {
+    color: "#888",
+    fontSize: 14,
+    marginBottom: 24,
+    textAlign: "center",
+    fontStyle: "italic",
   },
   modalButton: {
     backgroundColor: "#4CAF50",
@@ -784,8 +746,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalButtonText: {
-    color: "#fff", 
-    fontSize: 16, 
-    fontWeight: "600" 
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600"
   },
 });

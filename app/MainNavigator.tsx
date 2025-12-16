@@ -159,8 +159,7 @@ export default function MainNavigator() {
       console.log("🚗 Setting ride data:", params);
       setRideData(params);
     }
-    
-    // Actually set the screen
+
     console.log(`🔄 Updating screen state to: ${newScreen}`);
     setScreen(newScreen);
   };

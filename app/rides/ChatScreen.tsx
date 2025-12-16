@@ -11,7 +11,6 @@ import {
     View,
 } from 'react-native';
 
-// Initial messages
 const initialMessages = [
     {
         text: 'Hello I\'m here',

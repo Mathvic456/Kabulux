@@ -11,7 +11,7 @@ import {
   View,
 } from "react-native";
 
-// --- Interfaces remain the same ---
+// --- Interfaces ---
 interface RideData {
   name: string;
   details: string;
@@ -36,6 +36,7 @@ interface RideData {
     estimated_fare: number;
   };
   ride_request_id: string;
+  paymentMethod: string; // Added this field
 }
 
 interface StandardScreenProps {
@@ -43,24 +44,27 @@ interface StandardScreenProps {
   next: () => void;
   rideData?: RideData;
 }
-// ------------------------------------
 
 export default function StandardScreen({ goBack, next, rideData }: StandardScreenProps) {
   
-  // --- Price Logic (Kept the functional changes from before) ---
-const getBasePrice = () => {
+  useEffect(() => {
+    console.log("📦 Received rideData:", rideData);
+  }, [rideData]);
+  
+  const getBasePrice = () => {
     if (!rideData) return 0;
     
-    // Force Number() here
+    // Priority 1: Use rawPrice if available
     if (rideData.rawPrice) {
       return Number(rideData.rawPrice); 
     }
     
-    // Force Number() here too
+    // Priority 2: Use estimated_fare from rideDetails
     if (rideData.rideDetails?.estimated_fare) {
       return Number(rideData.rideDetails.estimated_fare);
     }
 
+    // Priority 3: Extract from price string as fallback
     const extractPrice = (priceString: string) => parseFloat(priceString.replace(/[₦,]/g, '')) || 0;
     return extractPrice(rideData.price);
   };
@@ -74,8 +78,8 @@ const getBasePrice = () => {
   }, [basePrice]);
 
   useEffect(() => {
-    console.log(riderOffer)
-  }, [riderOffer])
+    console.log("💰 Current rider offer:", riderOffer);
+  }, [riderOffer]);
 
   const handleIncreasePrice = () => {
     setRiderOffer(prev => prev + 50);
@@ -98,19 +102,35 @@ const getBasePrice = () => {
       );
       return;
     }
-    const offerToSend = riderOffer;
+
+    if (!rideData?.paymentMethod) {
+      Alert.alert(
+        "Error",
+        "Payment method not found. Please go back and select a payment method."
+      );
+      return;
+    }
+
+    // Convert payment method to uppercase for backend
+    const paymentMethodUpper = rideData.paymentMethod.toUpperCase();
+
+    console.log("📤 Submitting offer:", {
+      rider_offer: riderOffer,
+      payment_method: paymentMethodUpper,
+    });
 
     bookStandard(
-      { rider_offer: offerToSend }, 
+      { 
+        rider_offer: riderOffer, 
+        payment_method: paymentMethodUpper 
+      }, 
       {
         onSuccess: () => {
-          Alert.alert(
-            "Success",
-            "Your offer has been sent to the driver!",
-            [{ text: "OK", onPress: next }]
-          );
+          console.log("✅ Offer sent successfully");
+          next();
         },
         onError: (error: any) => {
+          console.error("❌ Offer submission failed:", error);
           Alert.alert(
             "Error",
             error.message || "Failed to submit offer. Please try again."
@@ -127,20 +147,60 @@ const getBasePrice = () => {
   const canDecrease = riderOffer > basePrice;
   const isValidOffer = riderOffer >= basePrice;
   
-  // Helper to format duration minutes into a cleaner format
+  // Helper to format duration
   const formatDuration = (durationString: string) => {
-    const minutes = parseFloat(durationString.split(' ')[0]);
-    if (isNaN(minutes)) return durationString;
+    // Handle if it's already in seconds (number)
+    let durationInSeconds: number;
     
-    if (minutes < 60) return `${Math.round(minutes)} min`;
+    if (typeof durationString === 'number') {
+      durationInSeconds = durationString;
+    } else {
+      // Try to parse as number first
+      const parsed = parseFloat(durationString);
+      if (!isNaN(parsed)) {
+        durationInSeconds = parsed;
+      } else {
+        // Fallback: try to extract minutes from string like "45 min"
+        const match = durationString.match(/(\d+)/);
+        if (match) {
+          return `${match[1]} min`;
+        }
+        return durationString;
+      }
+    }
+    
+    // Convert seconds to minutes
+    const minutes = Math.round(durationInSeconds / 60);
+    
+    if (minutes < 60) return `${minutes} min`;
     
     const hours = Math.floor(minutes / 60);
-    const remainingMinutes = Math.round(minutes % 60);
+    const remainingMinutes = minutes % 60;
     
+    if (remainingMinutes === 0) return `${hours} hr`;
     return `${hours} hr ${remainingMinutes} min`;
-  }
-  // ------------------------------------
+  };
 
+  // Helper to format distance
+  const formatDistance = (distanceString: string) => {
+    if (typeof distanceString === 'number') {
+      return `${distanceString.toFixed(2)} km`;
+    }
+    
+    // Try to parse as number first
+    const parsed = parseFloat(distanceString);
+    if (!isNaN(parsed)) {
+      return `${parsed.toFixed(2)} km`;
+    }
+    
+    // Fallback: extract number from string
+    const match = distanceString.match(/(\d+\.?\d*)/);
+    if (match) {
+      return `${parseFloat(match[1]).toFixed(2)} km`;
+    }
+    
+    return distanceString;
+  };
 
   return (
     <View style={styles.container}>
@@ -160,14 +220,14 @@ const getBasePrice = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* Ride Details Card */}
-        {rideData && (
+        {rideData ? (
           <View style={styles.rideCard}>
             <View style={styles.rideCardHeader}>
               <MaterialCommunityIcons name="car-multiple" size={32} color="#f6a623" />
               <View style={styles.rideCardHeaderText}>
                 <Text style={styles.rideCardTitle}>{rideData.name}</Text>
                 <Text style={styles.rideCardSubtitle}>
-                    {rideData.carType} | Max {rideData.passengers} Passengers
+                  {rideData.carType} | Max {rideData.passengers} Passengers
                 </Text>
               </View>
             </View>
@@ -185,7 +245,7 @@ const getBasePrice = () => {
                 <View style={styles.detailTextContainer}>
                   <Text style={styles.detailLabel}>Distance</Text>
                   <Text style={styles.detailValue}>
-                    {Math.round(parseFloat(rideData.rideDetails.estimated_distance.split(' ')[0]))} km
+                    {formatDistance(rideData.rideDetails.estimated_distance)}
                   </Text>
                 </View>
               </View>
@@ -205,12 +265,25 @@ const getBasePrice = () => {
             </View>
              
             <View style={{ marginTop: 20 }}>
-                <Text style={styles.infoTextTitle}>Ride Details</Text>
-                <Text style={styles.infoTextDescription}>
-                    The price shown is the estimated fare for a **{rideData.carType}** covering approximately **{Math.round(parseFloat(rideData.rideDetails.estimated_distance.split(' ')[0]))} km**. 
-                    Increasing your offer improves your chances of a faster acceptance.
-                </Text>
+              <Text style={styles.infoTextTitle}>Ride Details</Text>
+              <Text style={styles.infoTextDescription}>
+                The price shown is the estimated fare for a {rideData.carType} covering approximately{' '}
+                {formatDistance(rideData.rideDetails.estimated_distance)}. 
+                Increasing your offer improves your chances of a faster acceptance.
+              </Text>
             </View>
+
+            {/* Payment Method Display */}
+            <View style={styles.paymentInfoContainer}>
+              <Feather name="credit-card" size={18} color="#4CAF50" />
+              <Text style={styles.paymentInfoText}>
+                Payment: {rideData.paymentMethod.charAt(0).toUpperCase() + rideData.paymentMethod.slice(1)}
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.rideCard}>
+            <Text style={styles.errorText}>No ride data available</Text>
           </View>
         )}
 
@@ -249,7 +322,7 @@ const getBasePrice = () => {
                 </Text>
               ) : (
                 <Text style={styles.priceIncreasePlaceholder}>
-                    Base Offer
+                  Base Offer
                 </Text>
               )}
             </View>
@@ -280,7 +353,7 @@ const getBasePrice = () => {
           <View style={styles.infoRow}>
             <Feather name="zap" size={18} color="#4CAF50" />
             <Text style={styles.infoText}>
-              **Higher offers** are prioritized by nearby drivers.
+              Higher offers are prioritized by nearby drivers.
             </Text>
           </View>
           <View style={styles.infoRow}>
@@ -376,7 +449,7 @@ const styles = StyleSheet.create({
   rideCardTitle: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#f6a623", // Highlight the title
+    color: "#f6a623",
     marginBottom: 2,
   },
   rideCardSubtitle: {
@@ -435,6 +508,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#aaa',
     lineHeight: 18,
+  },
+  paymentInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(76, 175, 80, 0.15)',
+    padding: 12,
+    borderRadius: 10,
+    marginTop: 15,
+  },
+  paymentInfoText: {
+    fontSize: 14,
+    color: '#4CAF50',
+    marginLeft: 10,
+    fontWeight: '600',
   },
   priceSection: {
     backgroundColor: "#1c1c1c",
@@ -565,5 +652,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+  },
+  errorText: {
+    color: "#ff6b6b",
+    fontSize: 16,
+    textAlign: "center",
   },
 });

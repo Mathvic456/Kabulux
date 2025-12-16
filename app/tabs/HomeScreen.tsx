@@ -497,9 +497,9 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
   const { 
     data: profile, 
     isLoading: profileLoading, 
-    error: profileError // Rename it to avoid naming conflicts
+    error: profileError
   } = useProfile();
-  const { rideState, driverLocation, rideId } = useRide();
+  const { rideState, driverLocation, rideId, resetRide } = useRide();
 
   useEffect(() => {
     if (profileError) {
@@ -677,7 +677,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {rideState === "in_ride" && driverLocation && (
+      {rideState === "driver_on_way" && driverLocation && (
         <View style={styles.driverLocationBanner}>
           <View style={styles.bannerHeader}>
             <View style={styles.bannerIconContainer}>
@@ -829,6 +829,15 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
         </TouchableOpacity>
       </View>
 
+            <TouchableOpacity 
+        style={styles.resetButton} 
+        onPress={resetRide}
+      >
+        <Text style={styles.resetButtonText}>
+          Debug: Reset, current state: {rideState}
+        </Text>
+      </TouchableOpacity>
+
       <Text style={styles.sectionTitle}>Special Service</Text>
       <View style={styles.specialServiceRow}>
         <TouchableOpacity style={styles.specialCard}>
@@ -858,6 +867,8 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
           <Text style={styles.specialSub}>See how to share ride</Text>
         </TouchableOpacity>
       </View>
+
+
 
       <UploadPhotoOverlay
         isVisible={showUploadOverlay}
@@ -960,6 +971,22 @@ const styles = StyleSheet.create({
   bannerSubtitle: {
     color: '#aaa',
     fontSize: 14,
+  },
+  resetButton: {
+    backgroundColor: "#242424ff", 
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 30, 
+    borderWidth: 1,
+    borderColor: "#fff",
+  },
+  resetButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+    textTransform: "uppercase",
   },
   trackButton: {
     flexDirection: 'row',
