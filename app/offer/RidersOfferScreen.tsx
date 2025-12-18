@@ -38,10 +38,12 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
   const {
     driverOffers,
     rideAccepted,
+    rideAcceptError,
     sendMessage,
     isConnected,
     subscribeToRideOffers,
-    clearRideAccepted
+    clearRideAccepted,
+    clearRideAcceptError
   } = useContext(SocketContext);
 
   const { rideState, rideId } = useContext(RideContext);
@@ -51,7 +53,9 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
 
   const [localOffers, setLocalOffers] = useState<Record<string, OfferItem>>({});
   const [acceptedModalVisible, setAcceptedModalVisible] = useState(false);
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [busyMap, setBusyMap] = useState<Record<string, boolean>>({});
+  const [errorOfferId, setErrorOfferId] = useState<string | null>(null);
   
   // Track if we've already shown the modal to prevent duplicate shows
   const hasShownModal = useRef(false);
@@ -83,6 +87,10 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
         console.log("🧹 [RIDER] Clearing stale rideAccepted on mount");
         clearRideAccepted();
       }
+      if (rideAcceptError) {
+        console.log("🧹 [RIDER] Clearing stale rideAcceptError on mount");
+        clearRideAcceptError();
+      }
     }
   }, []);
 
@@ -99,9 +107,32 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     }
   }, [rideAccepted]);
 
-  // 5. Auto-navigate when ride state changes to active states
+  // 5. Handle Accept Ride Error
   useEffect(() => {
-    if ((rideState === "in_ride" || rideState === "driver_on_way") && rideId) {
+    if (rideAcceptError && !isInitialMount.current) {
+      console.log("❌ [RIDER] Ride accept error:", rideAcceptError);
+      setErrorOfferId(rideAcceptError.offerId || null);
+      setErrorModalVisible(true);
+      
+      // Remove the offer from local state
+      if (rideAcceptError.offerId) {
+        setLocalOffers(prev => {
+          const copy = { ...prev };
+          delete copy[rideAcceptError.offerId];
+          return copy;
+        });
+      }
+      
+      // Clear busy state for the offer
+      if (rideAcceptError.offerId) {
+        setBusyMap(prev => ({ ...prev, [rideAcceptError.offerId]: false }));
+      }
+    }
+  }, [rideAcceptError]);
+
+  // 6. Auto-navigate when ride state changes to active states
+  useEffect(() => {
+    if ((rideState === "driver_on_way") && rideId) {
       console.log("🚗 [RIDER] Ride is active, preparing to navigate...", rideState);
       // Small delay to ensure modal shows first if it needs to
       setTimeout(() => {
@@ -113,11 +144,12 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     }
   }, [rideState, rideId]);
 
-  // 6. Cleanup on unmount
+  // 7. Cleanup on unmount
   useEffect(() => {
     return () => {
       hasShownModal.current = false;
       clearRideAccepted();
+      clearRideAcceptError();
     };
   }, []);
 
@@ -126,6 +158,12 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     clearRideAccepted();
     hasShownModal.current = false; // Reset for potential future use
     next();
+  };
+
+  const closeErrorModal = () => {
+    setErrorModalVisible(false);
+    setErrorOfferId(null);
+    clearRideAcceptError();
   };
 
   const adjustBy = useCallback((offerId: string, delta: number) => {
@@ -182,6 +220,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
       console.log("📤 [RIDER] Accepting ride:", message);
       await sendMessage(message);
       // Note: Modal will show when DRIVER_ON_WAY event comes through WebSocket
+      // Error handling is done via WebSocket error message
     } catch (err) {
       Alert.alert("Error", "Failed to accept");
       setBusyMap(prev => ({ ...prev, [offerId]: false }));
@@ -362,6 +401,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
         />
       </View>
 
+      {/* Success Modal */}
       <Modal visible={acceptedModalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -382,6 +422,30 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
               onPress={closeModalAndContinue}
             >
               <Text style={styles.modalButtonText}>Track Driver</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Error Modal */}
+      <Modal visible={errorModalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.errorIconContainer}>
+              <Ionicons name="close-circle" size={60} color="#f44336" />
+            </View>
+            <Text style={styles.modalTitle}>Driver Unavailable</Text>
+            <Text style={styles.modalMessage}>
+              {rideAcceptError?.message || "The selected driver is no longer available"}
+            </Text>
+            <Text style={styles.modalSubMessage}>
+              Please select another driver from the available offers.
+            </Text>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.errorModalButton]}
+              onPress={closeErrorModal}
+            >
+              <Text style={styles.modalButtonText}>Got it</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -716,6 +780,9 @@ const styles = StyleSheet.create({
   successIconContainer: {
     marginBottom: 16,
   },
+  errorIconContainer: {
+    marginBottom: 16,
+  },
   modalTitle: {
     color: "#fff",
     fontSize: 22,
@@ -744,6 +811,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     width: "100%",
     alignItems: "center",
+  },
+  errorModalButton: {
+    backgroundColor: "#f44336",
   },
   modalButtonText: {
     color: "#fff",

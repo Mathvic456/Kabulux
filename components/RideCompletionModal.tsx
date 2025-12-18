@@ -1,17 +1,18 @@
 import { useRateRideEndPoint } from '@/services/ratings.services';
+import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Modal,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { useRide } from '../context/RideContext';
-type ViewMode = 'summary' | 'rating';
+type ViewMode = 'summary' | 'rating' | 'success';
 export const RideCompletionModal = () => {
   const { rideState, resetRide, rideId } = useRide();
   const { mutate: rateRide, isPending } = useRateRideEndPoint();
@@ -44,7 +45,7 @@ export const RideCompletionModal = () => {
       },
       {
         onSuccess: async () => {
-          await handleEndWithoutRating();
+          setViewMode('success');
         },
       }
     );
@@ -121,6 +122,24 @@ export const RideCompletionModal = () => {
                 disabled={isPending}
               >
                 <Text style={styles.linkText}>Skip Rating</Text>
+              </TouchableOpacity>
+            </>
+          )}
+          {viewMode === 'success' && (
+            <>
+              <View style={{ marginBottom: 20 }}>
+                <Ionicons name="checkmark-circle" size={80} color="#4CAF50" />
+              </View>
+              <Text style={styles.alertTitle}>Rating Submitted!</Text>
+              <Text style={styles.alertMessage}>
+                Thanks for your feedback.
+              </Text>
+              
+              <TouchableOpacity
+                style={styles.primaryButton}
+                onPress={handleEndWithoutRating}
+              >
+                <Text style={styles.primaryButtonText}>Done</Text>
               </TouchableOpacity>
             </>
           )}

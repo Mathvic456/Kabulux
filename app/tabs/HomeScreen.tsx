@@ -1,7 +1,7 @@
 import { useProfile } from "@/services/profile.service";
 import { useUpdateRiderProfile } from "@/services/updateProfile.service";
 import { useUploadProfilePhoto } from "@/services/upload.service";
-import { Entypo, Feather, FontAwesome, FontAwesome5, Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Entypo, Feather, FontAwesome, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from "expo-image-picker";
 import { useEffect, useState } from "react";
@@ -226,6 +226,8 @@ const AdditionalInfoOverlay = ({
 
   const rideOptions = ["Economy", "Comfort", "Premium"];
   const securityOptions = ["Standard", "Verified Driver", "Premium Protection"];
+
+  
 
   const handleSubmit = () => {
     console.log("\n🔍 [AdditionalInfoOverlay] Submit button pressed");
@@ -501,6 +503,37 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
   } = useProfile();
   const { rideState, driverLocation, rideId, resetRide } = useRide();
 
+  const activeRideStatus = (() => {
+    switch (rideState) {
+      case "driver_on_way":
+        return { 
+          title: "Driver on the Way", 
+          subtitle: "Your ride is approaching", 
+          icon: "car", 
+          color: "#FEB914", // Gold
+          bgColor: "rgba(254, 185, 20, 0.1)"
+        };
+      case "driver_arrived":
+        return { 
+          title: "Driver Arrived", 
+          subtitle: "Driver is waiting at pickup", 
+          icon: "map-marker-alt", 
+          color: "#4CAF50", // Green
+          bgColor: "rgba(76, 175, 80, 0.1)"
+        };
+      case "in_progress":
+        return { 
+          title: "Ride in Progress", 
+          subtitle: "Heading to your destination", 
+          icon: "route", 
+          color: "#2196F3", // Blue
+          bgColor: "rgba(33, 150, 243, 0.1)"
+        };
+      default:
+        return null;
+    }
+  })();
+
   useEffect(() => {
     if (profileError) {
       const status = profileError?.response?.status || (profileError as any)?.status;
@@ -677,7 +710,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {rideState === "driver_on_way" && driverLocation && (
+      {/* {rideState === "driver_on_way" && driverLocation && (
         <View style={styles.driverLocationBanner}>
           <View style={styles.bannerHeader}>
             <View style={styles.bannerIconContainer}>
@@ -701,7 +734,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
             <Text style={styles.trackButtonText}>Track Driver</Text>
           </TouchableOpacity>
         </View>
-      )}
+      )} */}
 
       <View style={styles.logoContainer}>
         <Image
@@ -740,6 +773,40 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
           <Text style={styles.laterText}>Later</Text>
         </TouchableOpacity>
       </TouchableOpacity>
+
+      {activeRideStatus && (
+        <View style={[styles.statusCard, { borderColor: activeRideStatus.color }]}>
+          <View style={styles.statusContentRow}>
+            
+            {/* Icon Circle */}
+            <View style={[styles.statusIconCircle, { backgroundColor: activeRideStatus.bgColor }]}>
+              <FontAwesome5 
+                name={activeRideStatus.icon} 
+                size={24} 
+                color={activeRideStatus.color} 
+              />
+            </View>
+
+            {/* Text Info */}
+            <View style={styles.statusTextCol}>
+              <Text style={styles.statusTitle}>{activeRideStatus.title}</Text>
+              <View style={styles.liveIndicatorRow}>
+                <View style={[styles.pulsingDot, { backgroundColor: activeRideStatus.color }]} />
+                <Text style={styles.statusSubtitle}>{activeRideStatus.subtitle}</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Action Button */}
+          <TouchableOpacity 
+            style={[styles.trackBtn, { backgroundColor: activeRideStatus.color }]}
+            onPress={() => setScreen('trackRide')}
+          >
+            <Text style={styles.trackBtnText}>Track Ride</Text>
+            <Entypo name="chevron-right" size={18} color="black" />
+          </TouchableOpacity>
+        </View>
+      )}
 
       <Text style={styles.sectionTitle}>Suggestion</Text>
       <View style={styles.suggestionRow}>
@@ -916,6 +983,67 @@ const styles = StyleSheet.create({
     backgroundColor: "#000",
     paddingHorizontal: 16,
     paddingTop: 50,
+  },
+  statusCard: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20, // Spacing from the next element
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+  },
+  statusContentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  statusIconCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 15,
+  },
+  statusTextCol: {
+    flex: 1,
+  },
+  statusTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  liveIndicatorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  pulsingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  statusSubtitle: {
+    color: '#ccc',
+    fontSize: 14,
+  },
+  trackBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 10,
+    gap: 5,
+  },
+  trackBtnText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   logoContainer: {
     height: 50,

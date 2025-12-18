@@ -2,8 +2,6 @@ import Constants from "expo-constants";
 import React, { createContext, useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "./AuthContext";
 
-// ... [Keep your interfaces DriverOffer, QueuedMessage etc. exactly as they were] ...
-// Re-declaring specific interfaces for clarity in the snippet
 interface DriverOffer {
   id: string;
   ride_request_id: string;
@@ -24,6 +22,11 @@ interface RideAcceptedData {
   [key: string]: any;
 }
 
+interface RideAcceptErrorData {
+  message: string;
+  offerId?: string;
+}
+
 if (!Constants.expoConfig?.extra?.wssUrl) {
   throw new Error("WSS URL missing in expoConfig.extra");
 }
@@ -35,9 +38,11 @@ interface SocketContextValue {
   isConnected: boolean;
   driverOffers: Record<string, DriverOffer>;
   rideAccepted: RideAcceptedData | null;
+  rideAcceptError: RideAcceptErrorData | null;
   sendMessage: (payload: any) => Promise<void>;
   clearDriverOffers: () => void;
   clearRideAccepted: () => void;
+  clearRideAcceptError: () => void;
   reconnect: () => void;
   queuedMessageCount: number;
   subscribeToRideOffers: (rideRequestId: string) => void;
@@ -47,13 +52,13 @@ export const SocketContext = createContext<SocketContextValue>({} as any);
 
 const RECONNECT_DELAY = 3000;
 const MAX_RECONNECT_DELAY = 30000;
-// const HEARTBEAT_INTERVAL = 30000; // Commented out - backend doesn't support ping yet
 
 export const WebSocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [driverOffers, setDriverOffers] = useState<Record<string, DriverOffer>>({});
   const [rideAccepted, setRideAccepted] = useState<RideAcceptedData | null>(null);
+  const [rideAcceptError, setRideAcceptError] = useState<RideAcceptErrorData | null>(null);
   const [messageQueue, setMessageQueue] = useState<any[]>([]);
   const { token, getValidToken, isTokenExpired } = useAuth();
   
@@ -61,11 +66,16 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
   const shouldReconnect = useRef(true);
   const reconnectTimeout = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttempts = useRef(0);
-  // const heartbeatInterval = useRef<NodeJS.Timeout | null>(null); // Commented out - no ping yet
   const isReconnecting = useRef(false);
+  const lastAcceptedOfferId = useRef<string | null>(null);
 
   // Send Message Logic
   const sendMessage = useCallback(async (payload: any) => {
+    // Track the offer ID when accepting a ride
+    if (payload.type === "accept_ride" && payload.data?.ride_request_view_id) {
+      lastAcceptedOfferId.current = payload.data.ride_request_view_id;
+    }
+
     if (socket && socket.readyState === WebSocket.OPEN) {
       try {
         socket.send(JSON.stringify(payload));
@@ -92,11 +102,20 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
       
       // Log parsed message
       console.log(`📩 [WSP] PARSED:`, JSON.stringify(msg));
-      
-      // Skip pong responses (for future when backend implements ping/pong)
-      // if (msg.type === "pong") return;
 
-      // 1. Notify Wrapper
+      // 1. Handle accept_ride_error
+      if (msg.type === "accept_ride_error") {
+        console.log("❌ [WSP] Accept Ride Error:", msg.message);
+        setRideAcceptError({
+          message: msg.message || "Driver is no longer available",
+          offerId: lastAcceptedOfferId.current || undefined
+        });
+        // Clear the tracked offer ID
+        lastAcceptedOfferId.current = null;
+        return;
+      }
+
+      // 2. Notify Wrapper
       if (msg.type === "notify" && msg.data) {
         const payload = msg.data;
         const innerType = payload.type || payload.event;
@@ -113,6 +132,8 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
           });
           // Also clear offers as they are no longer needed
           setDriverOffers({});
+          // Clear the tracked offer ID
+          lastAcceptedOfferId.current = null;
         }
 
         // DRIVER OFFER
@@ -135,7 +156,7 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
         }
       }
 
-      // 2. Direct Offer Message
+      // 3. Direct Offer Message
       if (msg.type === "driver_offer" && msg.data) {
         const payload = msg.data;
         setDriverOffers(prev => ({
@@ -154,10 +175,11 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
         }));
       }
 
-      // 3. Direct Ride Success (Legacy/Fallback)
+      // 4. Direct Ride Success (Legacy/Fallback)
       if (msg.type === "accept_ride_success") {
         setRideAccepted({ ride_id: msg.ride_id });
         setDriverOffers({});
+        lastAcceptedOfferId.current = null;
       }
 
     } catch (e) {
@@ -188,15 +210,6 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
         // Process Queue
         messageQueue.forEach(msg => newSocket.send(JSON.stringify(msg)));
         setMessageQueue([]);
-
-        // Heartbeat/Ping - Commented out until backend implements it
-        // if (heartbeatInterval.current) clearInterval(heartbeatInterval.current);
-        // heartbeatInterval.current = setInterval(() => {
-        //   if (newSocket.readyState === WebSocket.OPEN) {
-        //     newSocket.send(JSON.stringify({ type: "ping" }));
-        //     console.log("💓 [WSP] Ping sent");
-        //   }
-        // }, HEARTBEAT_INTERVAL);
       };
 
       newSocket.onmessage = handleWsMessage;
@@ -204,12 +217,6 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
       newSocket.onclose = () => {
         console.log("🔌 [WSP] Closed");
         setIsConnected(false);
-        
-        // Clear heartbeat
-        // if (heartbeatInterval.current) {
-        //   clearInterval(heartbeatInterval.current);
-        //   heartbeatInterval.current = null;
-        // }
         
         // Reconnect logic
         if (shouldReconnect.current) {
@@ -225,8 +232,6 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
 
       newSocket.onerror = (e) => {
         console.error("❌ [WSP] Error:", e);
-        // Network check could go here
-        // Example: NetInfo.fetch().then(state => console.log("Network:", state.isConnected));
       };
       
       setSocket(newSocket);
@@ -234,7 +239,6 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
     } catch (e) {
       console.error("❌ [WSP] Connection failed", e);
       isReconnecting.current = false;
-      // Could add network check here too
     }
   }, [getValidToken, handleWsMessage, messageQueue]);
 
@@ -242,7 +246,6 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
     if (token) connectWebSocket();
     return () => {
       shouldReconnect.current = false;
-      // if (heartbeatInterval.current) clearInterval(heartbeatInterval.current);
       if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
       socket?.close();
     };
@@ -258,9 +261,11 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
       isConnected, 
       driverOffers, 
       rideAccepted,
+      rideAcceptError,
       sendMessage, 
       clearDriverOffers: () => setDriverOffers({}),
       clearRideAccepted: () => setRideAccepted(null),
+      clearRideAcceptError: () => setRideAcceptError(null),
       reconnect: () => { 
         socket?.close(); 
         connectWebSocket(); 
