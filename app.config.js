@@ -24,7 +24,7 @@ export default {
         backgroundColor: "#ffffff",
       },
       edgeToEdgeEnabled: true,
-      package: "com.crashingout.kablux", 
+      package: "com.crashouttwo.kablux", 
       googleServicesFile: "./google-services.json",
       config: {
         googleMaps: {
@@ -64,15 +64,12 @@ export default {
 
     extra: {
       router: {},
-      eas: {
-        projectId: "4781a8b8-1544-4b29-8400-9e0565a2e78f",
-      },
       googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
       googleAuthClientId: process.env.EXPO_PUBLIC_GOOGLE_AUTH_CLIENT_ID,
       apiUrl: process.env.EXPO_PUBLIC_API_URL,
       wssUrl: process.env.EXPO_PUBLIC_WSS_URL,
     },
 
-    owner: "crashingout",
+    owner: "crashouttwo",
   },
 };
