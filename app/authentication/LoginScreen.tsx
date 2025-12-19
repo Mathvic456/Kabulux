@@ -3,14 +3,13 @@ import { useAuth } from "@/context/AuthContext";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useLoginEndPoint } from "@/services/authentication.service";
 import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
+// import {
+//   GoogleSignin,
+//   isErrorWithCode,
+//   statusCodes
+// } from '@react-native-google-signin/google-signin';
+import React, { useState } from "react";
 import {
-  GoogleSignin,
-  isErrorWithCode,
-  statusCodes
-} from '@react-native-google-signin/google-signin';
-import React, { useEffect, useState } from "react";
-import {
-  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -19,7 +18,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 
 import Logo from "../../assets/images/logo.png";
@@ -48,67 +47,67 @@ export default function LoginScreen({
   const { getFCMToken } = usePushNotifications();
   const { mutate: login, isPending: isLoginPending } = useLoginEndPoint(setTokens, remember);
 
-  useEffect(() => {
-    GoogleSignin.configure({
-      webClientId: 'YOUR_WEB_CLIENT_ID_FROM_CONSOLE.apps.googleusercontent.com', 
-      offlineAccess: true, 
-    });
-  }, []);
+  // useEffect(() => {
+  //   GoogleSignin.configure({
+  //     webClientId: 'YOUR_WEB_CLIENT_ID_FROM_CONSOLE.apps.googleusercontent.com', 
+  //     offlineAccess: true, 
+  //   });
+  // }, []);
 
 
-  const handleGoogleSignIn = async () => {
-    setIsSubmitting(true);
-    try {
-      await GoogleSignin.hasPlayServices();
+  // const handleGoogleSignIn = async () => {
+  //   setIsSubmitting(true);
+  //   try {
+  //     await GoogleSignin.hasPlayServices();
 
-      // B. Get User Info from Google
-      const userInfo = await GoogleSignin.signIn();
-      const idToken = userInfo.data?.idToken;
+  //     // B. Get User Info from Google
+  //     const userInfo = await GoogleSignin.signIn();
+  //     const idToken = userInfo.data?.idToken;
 
-      if (!idToken) {
-        throw new Error("No ID Token found");
-      }
+  //     if (!idToken) {
+  //       throw new Error("No ID Token found");
+  //     }
 
-      console.log("🎉 [Google] Success. User:", userInfo.data.user.email);
+  //     console.log("🎉 [Google] Success. User:", userInfo.data.user.email);
       
-      // C. Get FCM Token
-      let fcmToken = "";
-      try {
-        const token = await getFCMToken();
-        if (token) fcmToken = token;
-      } catch (err) {
-        console.log("⚠️ [FCM] Failed to get token during Google Auth");
-      }
+  //     // C. Get FCM Token
+  //     let fcmToken = "";
+  //     try {
+  //       const token = await getFCMToken();
+  //       if (token) fcmToken = token;
+  //     } catch (err) {
+  //       console.log("⚠️ [FCM] Failed to get token during Google Auth");
+  //     }
 
 
-      console.log("🚀 Sending to backend:", { idToken, fcmToken });
+  //     console.log("🚀 Sending to backend:", { idToken, fcmToken });
       
-      next();
+  //     next();
 
-    } catch (error) {
-      if (isErrorWithCode(error)) {
-        switch (error.code) {
-          case statusCodes.SIGN_IN_CANCELLED:
-            console.log("🚫 User cancelled the login flow");
-            break;
-          case statusCodes.IN_PROGRESS:
-            console.log("⏳ Sign in is in progress");
-            break;
-          case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
-            Alert.alert("Error", "Google Play Services not available or outdated.");
-            break;
-          default:
-            console.error("❌ Google Sign-In Error:", error);
-            Alert.alert("Error", "Google Sign-In failed.");
-        }
-      } else {
-        console.error("❌ valid error", error);
-        Alert.alert("Error", "An unexpected error occurred");
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  //   } catch (error) {
+  //     if (isErrorWithCode(error)) {
+  //       switch (error.code) {
+  //         case statusCodes.SIGN_IN_CANCELLED:
+  //           console.log("🚫 User cancelled the login flow");
+  //           break;
+  //         case statusCodes.IN_PROGRESS:
+  //           console.log("⏳ Sign in is in progress");
+  //           break;
+  //         case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+  //           Alert.alert("Error", "Google Play Services not available or outdated.");
+  //           break;
+  //         default:
+  //           console.error("❌ Google Sign-In Error:", error);
+  //           Alert.alert("Error", "Google Sign-In failed.");
+  //       }
+  //     } else {
+  //       console.error("❌ valid error", error);
+  //       Alert.alert("Error", "An unexpected error occurred");
+  //     }
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
 
 
 
@@ -267,7 +266,7 @@ export default function LoginScreen({
           {/* Google Sign In Button */}
           <TouchableOpacity 
             style={[styles.googleBtn, isLoading && styles.googleBtnDisabled]}
-            onPress={handleGoogleSignIn}
+            onPress={() => {}}
             disabled={isLoading}
           >
             <FontAwesome name="google" size={20} color="#fff" style={styles.googleIcon} />

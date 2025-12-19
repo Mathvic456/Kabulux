@@ -24,8 +24,7 @@ export default {
         backgroundColor: "#ffffff",
       },
       edgeToEdgeEnabled: true,
-      package: "com.crashouttwo.kablux", 
-      googleServicesFile: "./google-services.json",
+      package: "com.hunchoexpo.kablux", 
       config: {
         googleMaps: {
           apiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
@@ -39,7 +38,7 @@ export default {
       favicon: "./assets/images/favicon.png",
     },
 
-    plugins: [
+  plugins: [
       "expo-router",
       [
         "expo-splash-screen",
@@ -51,25 +50,18 @@ export default {
         },
       ],
       "expo-web-browser",
-      "@react-native-google-signin/google-signin",
-        "expo-notifications",
-    
+      "expo-notifications",
       "@react-native-firebase/app",
       "@react-native-firebase/messaging"
     ],
 
-    experiments: {
-      typedRoutes: true,
-    },
-
     extra: {
       router: {},
       googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
-      googleAuthClientId: process.env.EXPO_PUBLIC_GOOGLE_AUTH_CLIENT_ID,
       apiUrl: process.env.EXPO_PUBLIC_API_URL,
       wssUrl: process.env.EXPO_PUBLIC_WSS_URL,
     },
 
-    owner: "crashouttwo",
+    owner: "hunchoexpo",
   },
 };
