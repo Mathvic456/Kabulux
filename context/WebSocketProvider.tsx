@@ -1,3 +1,4 @@
+import NetInfo from "@react-native-community/netinfo";
 import Constants from "expo-constants";
 import React, { createContext, useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "./AuthContext";
@@ -36,6 +37,7 @@ export const WSS_URL = Constants.expoConfig.extra.wssUrl;
 interface SocketContextValue {
   socket: WebSocket | null;
   isConnected: boolean;
+  isOnline: boolean;
   driverOffers: Record<string, DriverOffer>;
   rideAccepted: RideAcceptedData | null;
   rideAcceptError: RideAcceptErrorData | null;
@@ -50,26 +52,48 @@ interface SocketContextValue {
 
 export const SocketContext = createContext<SocketContextValue>({} as any);
 
-const RECONNECT_DELAY = 3000;
+const RECONNECT_DELAY = 2000;
 const MAX_RECONNECT_DELAY = 30000;
+const MAX_RECONNECT_ATTEMPTS = 10;
 
 export const WebSocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
   const [driverOffers, setDriverOffers] = useState<Record<string, DriverOffer>>({});
   const [rideAccepted, setRideAccepted] = useState<RideAcceptedData | null>(null);
   const [rideAcceptError, setRideAcceptError] = useState<RideAcceptErrorData | null>(null);
   const [messageQueue, setMessageQueue] = useState<any[]>([]);
-  const { token, getValidToken, isTokenExpired } = useAuth();
+  const { token, getValidToken } = useAuth();
   
-  // Refs for management
+  // Refs for connection management
   const shouldReconnect = useRef(true);
   const reconnectTimeout = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttempts = useRef(0);
   const isReconnecting = useRef(false);
   const lastAcceptedOfferId = useRef<string | null>(null);
+  const socketRef = useRef<WebSocket | null>(null);
+  const manualDisconnect = useRef(false);
 
-  // Send Message Logic
+  // Monitor network connectivity
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      const online = state.isConnected && state.isInternetReachable !== false;
+      console.log(`🌐 [WSP] Network status: ${online ? 'Online' : 'Offline'}`);
+      setIsOnline(online);
+
+      // If we came back online and should reconnect, attempt connection
+      if (online && !isConnected && shouldReconnect.current && token) {
+        console.log("🌐 [WSP] Network restored, attempting reconnection...");
+        reconnectAttempts.current = 0; // Reset attempts on network restore
+        connectWebSocket();
+      }
+    });
+
+    return () => unsubscribe();
+  }, [isConnected, token]);
+
+  // Send Message Logic with Queue
   const sendMessage = useCallback(async (payload: any) => {
     // Track the offer ID when accepting a ride
     if (payload.type === "accept_ride" && payload.data?.ride_request_view_id) {
@@ -78,14 +102,17 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
 
     if (socket && socket.readyState === WebSocket.OPEN) {
       try {
-        socket.send(JSON.stringify(payload));
-        console.log("📡 [WSP] Sent:", JSON.stringify(payload));
+        const message = JSON.stringify(payload);
+        socket.send(message);
+        console.log("📡 [WSP] Sent:", message);
       } catch (e) {
-        console.error("❌ [WSP] Send error", e);
+        console.error("❌ [WSP] Send error:", e);
+        // Queue message if send fails
+        setMessageQueue(prev => [...prev, payload]);
         throw e;
       }
     } else {
-      console.warn("⚠️ [WSP] Socket not ready. Queueing...");
+      console.warn("⚠️ [WSP] Socket not ready. Queueing message...");
       setMessageQueue(prev => [...prev, payload]);
     }
   }, [socket]);
@@ -94,13 +121,10 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
   const handleWsMessage = useCallback((event: MessageEvent) => {
     if (!event?.data) return;
     
-    // LOG RAW MESSAGE FIRST - before any processing
     console.log(`📩 [WSP] RAW MESSAGE:`, event.data);
     
     try {
       const msg = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
-      
-      // Log parsed message
       console.log(`📩 [WSP] PARSED:`, JSON.stringify(msg));
 
       // 1. Handle accept_ride_error
@@ -110,7 +134,6 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
           message: msg.message || "Driver is no longer available",
           offerId: lastAcceptedOfferId.current || undefined
         });
-        // Clear the tracked offer ID
         lastAcceptedOfferId.current = null;
         return;
       }
@@ -130,9 +153,7 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
             message: payload.message,
             notification_id: payload.notification_id,
           });
-          // Also clear offers as they are no longer needed
           setDriverOffers({});
-          // Clear the tracked offer ID
           lastAcceptedOfferId.current = null;
         }
 
@@ -187,78 +208,184 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
     }
   }, []);
 
+  // Process Queued Messages
+  const processMessageQueue = useCallback(() => {
+    if (messageQueue.length === 0 || !socket || socket.readyState !== WebSocket.OPEN) {
+      return;
+    }
+
+    console.log(`📤 [WSP] Processing ${messageQueue.length} queued messages...`);
+    const queue = [...messageQueue];
+    setMessageQueue([]);
+
+    queue.forEach(msg => {
+      try {
+        socket.send(JSON.stringify(msg));
+        console.log("📤 [WSP] Sent queued:", JSON.stringify(msg));
+      } catch (e) {
+        console.error("❌ [WSP] Failed to send queued message:", e);
+        // Re-queue failed messages
+        setMessageQueue(prev => [...prev, msg]);
+      }
+    });
+  }, [messageQueue, socket]);
+
   // Connection Logic
   const connectWebSocket = useCallback(async () => {
-    if (isReconnecting.current) return;
+    if (isReconnecting.current || manualDisconnect.current) {
+      console.log("⏸️ [WSP] Connection already in progress or manually disconnected");
+      return;
+    }
+
+    if (!isOnline) {
+      console.log("⏸️ [WSP] Offline, skipping connection attempt");
+      return;
+    }
+
+    if (reconnectAttempts.current >= MAX_RECONNECT_ATTEMPTS) {
+      console.log("🛑 [WSP] Max reconnection attempts reached. Stopping.");
+      shouldReconnect.current = false;
+      return;
+    }
+
     isReconnecting.current = true;
 
     try {
       const accessToken = await getValidToken();
-      if (!accessToken) throw new Error("No token");
+      if (!accessToken) {
+        throw new Error("No valid token available");
+      }
+
+      // Close existing socket if any
+      if (socketRef.current) {
+        socketRef.current.close();
+        socketRef.current = null;
+      }
 
       const wsUrl = `${WSS_URL}?token=${accessToken}`;
-      console.log("🔌 [WSP] Connecting to", WSS_URL);
+      console.log(`🔌 [WSP] Connecting... (Attempt ${reconnectAttempts.current + 1}/${MAX_RECONNECT_ATTEMPTS})`);
       
       const newSocket = new WebSocket(wsUrl);
+      socketRef.current = newSocket;
 
       newSocket.onopen = () => {
-        console.log("✅ [WSP] Connected");
+        console.log("✅ [WSP] Connected successfully!");
         setIsConnected(true);
         isReconnecting.current = false;
         reconnectAttempts.current = 0;
         
-        // Process Queue
-        messageQueue.forEach(msg => newSocket.send(JSON.stringify(msg)));
-        setMessageQueue([]);
+        // Process queued messages
+        setTimeout(() => processMessageQueue(), 100);
       };
 
       newSocket.onmessage = handleWsMessage;
       
-      newSocket.onclose = () => {
-        console.log("🔌 [WSP] Closed");
+      newSocket.onclose = (event) => {
+        console.log(`🔌 [WSP] Connection closed (Code: ${event.code}, Reason: ${event.reason || 'Unknown'})`);
         setIsConnected(false);
+        socketRef.current = null;
         
-        // Reconnect logic
-        if (shouldReconnect.current) {
-           const delay = Math.min(RECONNECT_DELAY * Math.pow(2, reconnectAttempts.current), MAX_RECONNECT_DELAY);
-           console.log(`🔄 [WSP] Reconnecting in ${delay}ms (attempt ${reconnectAttempts.current + 1})`);
-           reconnectAttempts.current++;
-           reconnectTimeout.current = setTimeout(() => {
-             isReconnecting.current = false;
-             connectWebSocket();
-           }, delay);
+        // Only reconnect if not manually disconnected and should reconnect
+        if (shouldReconnect.current && !manualDisconnect.current && isOnline) {
+          const delay = Math.min(
+            RECONNECT_DELAY * Math.pow(2, reconnectAttempts.current),
+            MAX_RECONNECT_DELAY
+          );
+          console.log(`🔄 [WSP] Scheduling reconnection in ${delay}ms...`);
+          
+          reconnectTimeout.current = setTimeout(() => {
+            isReconnecting.current = false;
+            reconnectAttempts.current++;
+            connectWebSocket();
+          }, delay);
+        } else {
+          console.log("⏸️ [WSP] Reconnection not scheduled");
         }
       };
 
-      newSocket.onerror = (e) => {
-        console.error("❌ [WSP] Error:", e);
+      newSocket.onerror = (error) => {
+        console.error("❌ [WSP] WebSocket error:", error);
+        // Error will trigger onclose, which handles reconnection
       };
       
       setSocket(newSocket);
 
     } catch (e) {
-      console.error("❌ [WSP] Connection failed", e);
+      console.error("❌ [WSP] Connection failed:", e);
       isReconnecting.current = false;
+      
+      // Retry connection if online and should reconnect
+      if (shouldReconnect.current && isOnline && reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
+        const delay = Math.min(
+          RECONNECT_DELAY * Math.pow(2, reconnectAttempts.current),
+          MAX_RECONNECT_DELAY
+        );
+        console.log(`🔄 [WSP] Retrying connection in ${delay}ms...`);
+        
+        reconnectTimeout.current = setTimeout(() => {
+          reconnectAttempts.current++;
+          connectWebSocket();
+        }, delay);
+      }
     }
-  }, [getValidToken, handleWsMessage, messageQueue]);
+  }, [getValidToken, handleWsMessage, processMessageQueue, isOnline]);
 
+  // Initial connection when token is available
   useEffect(() => {
-    if (token) connectWebSocket();
+    if (token && isOnline) {
+      manualDisconnect.current = false;
+      shouldReconnect.current = true;
+      connectWebSocket();
+    }
+
     return () => {
+      console.log("🧹 [WSP] Cleaning up WebSocket...");
       shouldReconnect.current = false;
-      if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
-      socket?.close();
+      manualDisconnect.current = true;
+      if (reconnectTimeout.current) {
+        clearTimeout(reconnectTimeout.current);
+        reconnectTimeout.current = null;
+      }
+      if (socketRef.current) {
+        socketRef.current.close();
+        socketRef.current = null;
+      }
     };
-  }, [token]);
+  }, [token, isOnline]);
+
+  // Manual reconnect function
+  const reconnect = useCallback(() => {
+    console.log("🔄 [WSP] Manual reconnection triggered");
+    shouldReconnect.current = true;
+    manualDisconnect.current = false;
+    reconnectAttempts.current = 0;
+    
+    if (reconnectTimeout.current) {
+      clearTimeout(reconnectTimeout.current);
+      reconnectTimeout.current = null;
+    }
+    
+    if (socketRef.current) {
+      socketRef.current.close();
+      socketRef.current = null;
+    }
+    
+    isReconnecting.current = false;
+    connectWebSocket();
+  }, [connectWebSocket]);
 
   const subscribeToRideOffers = useCallback((id: string) => {
-    sendMessage({ type: "subscribe_driver_offer_view", data: { ride_request_id: id } });
+    sendMessage({ 
+      type: "subscribe_driver_offer_view", 
+      data: { ride_request_id: id } 
+    });
   }, [sendMessage]);
 
   return (
     <SocketContext.Provider value={{
       socket, 
-      isConnected, 
+      isConnected,
+      isOnline,
       driverOffers, 
       rideAccepted,
       rideAcceptError,
@@ -266,10 +393,7 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
       clearDriverOffers: () => setDriverOffers({}),
       clearRideAccepted: () => setRideAccepted(null),
       clearRideAcceptError: () => setRideAcceptError(null),
-      reconnect: () => { 
-        socket?.close(); 
-        connectWebSocket(); 
-      },
+      reconnect,
       queuedMessageCount: messageQueue.length,
       subscribeToRideOffers
     }}>

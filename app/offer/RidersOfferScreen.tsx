@@ -41,9 +41,12 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     rideAcceptError,
     sendMessage,
     isConnected,
+    isOnline,
     subscribeToRideOffers,
     clearRideAccepted,
-    clearRideAcceptError
+    clearRideAcceptError,
+    queuedMessageCount,
+    reconnect
   } = useContext(SocketContext);
 
   const { rideState, rideId } = useContext(RideContext);
@@ -60,15 +63,24 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
   // Track if we've already shown the modal to prevent duplicate shows
   const hasShownModal = useRef(false);
   const isInitialMount = useRef(true);
+  const subscriptionAttempted = useRef(false);
 
-  // 1. Subscribe to WS
+  // 1. Subscribe to WS when connected and have ride_request_id
   useEffect(() => {
     if (!ride_request_id) {
       console.warn("❌ [RIDER] Missing ride_request_id");
       return;
     }
-    if (isConnected) {
+
+    if (isConnected && !subscriptionAttempted.current) {
       console.log("📡 [RIDER] Subscribing to offers for:", ride_request_id);
+      subscribeToRideOffers(ride_request_id);
+      subscriptionAttempted.current = true;
+    }
+
+    // Re-subscribe on reconnection
+    if (isConnected && subscriptionAttempted.current) {
+      console.log("📡 [RIDER] Re-subscribing after reconnection");
       subscribeToRideOffers(ride_request_id);
     }
   }, [ride_request_id, isConnected]);
@@ -78,11 +90,11 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     setLocalOffers(driverOffers);
   }, [driverOffers]);
 
-  // 3. Handle Initial Mount - Clear stale rideAccepted
+  // 3. Handle Initial Mount - Clear stale data
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
-      // Clear any stale rideAccepted state on mount to prevent phantom modal
+      // Clear any stale state on mount to prevent phantom modals
       if (rideAccepted) {
         console.log("🧹 [RIDER] Clearing stale rideAccepted on mount");
         clearRideAccepted();
@@ -96,10 +108,6 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
 
   // 4. Handle Acceptance - Show Modal ONLY on new acceptances
   useEffect(() => {
-    // Only show modal if:
-    // 1. We have rideAccepted data
-    // 2. We haven't shown the modal yet
-    // 3. It's not the initial mount
     if (rideAccepted && !hasShownModal.current && !isInitialMount.current) {
       console.log("🎉 [RIDER] Ride accepted, showing modal:", rideAccepted);
       setAcceptedModalVisible(true);
@@ -132,22 +140,21 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
 
   // 6. Auto-navigate when ride state changes to active states
   useEffect(() => {
-    if ((rideState === "driver_on_way") && rideId) {
+    if (rideState === "driver_on_way" && rideId) {
       console.log("🚗 [RIDER] Ride is active, preparing to navigate...", rideState);
-      // Small delay to ensure modal shows first if it needs to
       setTimeout(() => {
         if (!acceptedModalVisible) {
-          // If modal isn't showing, just navigate
           next();
         }
       }, 500);
     }
   }, [rideState, rideId]);
 
-  // 7. Cleanup on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       hasShownModal.current = false;
+      subscriptionAttempted.current = false;
       clearRideAccepted();
       clearRideAcceptError();
     };
@@ -156,7 +163,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
   const closeModalAndContinue = () => {
     setAcceptedModalVisible(false);
     clearRideAccepted();
-    hasShownModal.current = false; // Reset for potential future use
+    hasShownModal.current = false;
     next();
   };
 
@@ -179,7 +186,19 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
   }, []);
 
   const sendNegotiation = async (offerId: string, rideId: string, price: number) => {
-    if (!isConnected) return Alert.alert("Error", "No connection");
+    if (!isConnected && !isOnline) {
+      return Alert.alert(
+        "No Connection", 
+        "You're offline. Please check your internet connection."
+      );
+    }
+
+    if (!isConnected && isOnline) {
+      return Alert.alert(
+        "Reconnecting", 
+        "Trying to reconnect to the server. Please wait..."
+      );
+    }
    
     setBusyMap(prev => ({ ...prev, [offerId]: true }));
    
@@ -196,6 +215,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
         },
       });
      
+      // Only remove offer after successful send
       setLocalOffers(prev => {
         const copy = { ...prev };
         delete copy[offerId];
@@ -203,26 +223,41 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
       });
 
     } catch (err) {
-      Alert.alert("Error", "Failed to send negotiation");
+      console.error("❌ [RIDER] Negotiation failed:", err);
+      Alert.alert("Error", "Failed to send negotiation. It will be retried when connection is restored.");
     } finally {
       setBusyMap(prev => ({ ...prev, [offerId]: false }));
     }
   };
 
   const handleAcceptOffer = async (offerId: string) => {
-    if (!isConnected) return Alert.alert("Error", "No connection");
+    if (!isConnected && !isOnline) {
+      return Alert.alert(
+        "No Connection", 
+        "You're offline. Please check your internet connection."
+      );
+    }
+
+    if (!isConnected && isOnline) {
+      return Alert.alert(
+        "Reconnecting", 
+        "Trying to reconnect to the server. Please wait..."
+      );
+    }
+
     setBusyMap(prev => ({ ...prev, [offerId]: true }));
     const message = {
       type: "accept_ride",
       data: { ride_request_view_id: offerId }
-    }
+    };
+
     try {
       console.log("📤 [RIDER] Accepting ride:", message);
       await sendMessage(message);
       // Note: Modal will show when DRIVER_ON_WAY event comes through WebSocket
-      // Error handling is done via WebSocket error message
     } catch (err) {
-      Alert.alert("Error", "Failed to accept");
+      console.error("❌ [RIDER] Accept failed:", err);
+      Alert.alert("Error", "Failed to accept offer. It will be retried when connection is restored.");
       setBusyMap(prev => ({ ...prev, [offerId]: false }));
     }
   };
@@ -252,7 +287,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
               <Text style={styles.driverName}>{item.driver_name}</Text>
               <View style={styles.ratingContainer}>
                 <Ionicons name="star" size={14} color="#facc15" />
-                <Text style={styles.ratingText}>{item.driver_rating}</Text>
+                <Text style={styles.ratingText}>{item.driver_rating || "N/A"}</Text>
               </View>
             </View>
           </View>
@@ -372,10 +407,30 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
         <View style={styles.headerSpacer} />
       </View>
 
-      {!isConnected && (
-        <View style={styles.connectionBanner}>
+      {/* Connection Status Banner */}
+      {!isOnline && (
+        <View style={[styles.connectionBanner, styles.offlineBanner]}>
           <Ionicons name="cloud-offline" size={16} color="#f44336" />
-          <Text style={styles.connectionText}>Reconnecting...</Text>
+          <Text style={styles.offlineText}>You're offline. Messages will be sent when back online.</Text>
+        </View>
+      )}
+
+      {isOnline && !isConnected && (
+        <View style={[styles.connectionBanner, styles.reconnectingBanner]}>
+          <ActivityIndicator size="small" color="#facc15" />
+          <Text style={styles.reconnectingText}>Reconnecting to server...</Text>
+          <TouchableOpacity onPress={reconnect} style={styles.retryButton}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {queuedMessageCount > 0 && (
+        <View style={[styles.connectionBanner, styles.queueBanner]}>
+          <Ionicons name="time-outline" size={16} color="#facc15" />
+          <Text style={styles.queueText}>
+            {queuedMessageCount} {queuedMessageCount === 1 ? 'message' : 'messages'} queued
+          </Text>
         </View>
       )}
 
@@ -395,7 +450,15 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
               <Text style={styles.emptyDescription}>
                 Drivers will see your request and send offers shortly...
               </Text>
-              <ActivityIndicator style={styles.loadingIndicator} size="large" color="#facc15" />
+              {isConnected && (
+                <ActivityIndicator style={styles.loadingIndicator} size="large" color="#facc15" />
+              )}
+              {!isConnected && isOnline && (
+                <TouchableOpacity onPress={reconnect} style={styles.reconnectButton}>
+                  <Ionicons name="refresh" size={20} color="#facc15" />
+                  <Text style={styles.reconnectButtonText}>Reconnect</Text>
+                </TouchableOpacity>
+              )}
             </View>
           }
         />
@@ -496,14 +559,44 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#2a1a1a",
-    paddingVertical: 8,
+    paddingVertical: 10,
     gap: 8,
   },
-  connectionText: {
+  offlineBanner: {
+    backgroundColor: "#2a1a1a",
+  },
+  reconnectingBanner: {
+    backgroundColor: "#1a1a0f",
+  },
+  queueBanner: {
+    backgroundColor: "#1a1a0f",
+  },
+  offlineText: {
     color: "#f44336",
     fontSize: 12,
     fontWeight: "600",
+  },
+  reconnectingText: {
+    color: "#facc15",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  queueText: {
+    color: "#facc15",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  retryButton: {
+    marginLeft: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    backgroundColor: "#facc15",
+    borderRadius: 6,
+  },
+  retryButtonText: {
+    color: "black",
+    fontSize: 11,
+    fontWeight: "700",
   },
  
   content: {
@@ -541,6 +634,23 @@ const styles = StyleSheet.create({
   },
   loadingIndicator: {
     marginTop: 16
+  },
+  reconnectButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: "#1a1a1a",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#facc15",
+  },
+  reconnectButtonText: {
+    color: "#facc15",
+    fontSize: 14,
+    fontWeight: "600",
   },
  
   card: {
