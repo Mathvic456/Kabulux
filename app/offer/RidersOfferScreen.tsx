@@ -1,5 +1,6 @@
 import { RideContext } from "@/context/RideContext";
 import { SocketContext } from "@/context/WebSocketProvider";
+import { useCancelRideRequest } from "@/services/cancelRideRequest.service";
 import { Ionicons } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
 import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
@@ -46,7 +47,8 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     clearRideAccepted,
     clearRideAcceptError,
     queuedMessageCount,
-    reconnect
+    reconnect,
+    removeOffer,
   } = useContext(SocketContext);
 
   const { rideState, rideId } = useContext(RideContext);
@@ -59,11 +61,14 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [busyMap, setBusyMap] = useState<Record<string, boolean>>({});
   const [errorOfferId, setErrorOfferId] = useState<string | null>(null);
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
+  const lastDeclinedTimestamps = useRef<Record<string, number>>({});
   
   // Track if we've already shown the modal to prevent duplicate shows
   const hasShownModal = useRef(false);
   const isInitialMount = useRef(true);
   const subscriptionAttempted = useRef(false);
+  const { mutate: cancelRide, isPending: isCancelling } = useCancelRideRequest();
 
   // 1. Subscribe to WS when connected and have ride_request_id
   useEffect(() => {
@@ -106,7 +111,24 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     }
   }, []);
 
-  // 4. Handle Acceptance - Show Modal ONLY on new acceptances
+  useEffect(() => {
+  const filteredOffers: Record<string, OfferItem> = {};
+  
+  Object.keys(driverOffers).forEach((id) => {
+    const incomingOffer = driverOffers[id];
+    const lastDeclinedAt = lastDeclinedTimestamps.current[id] || 0;
+
+    // ONLY show the offer if:
+    // It hasn't been declined OR its timestamp is newer than our decline action
+    if (incomingOffer.timestamp > lastDeclinedAt) {
+      filteredOffers[id] = incomingOffer;
+    }
+  });
+
+  setLocalOffers(filteredOffers);
+}, [driverOffers]);
+
+
   useEffect(() => {
     if (rideAccepted && !hasShownModal.current && !isInitialMount.current) {
       console.log("🎉 [RIDER] Ride accepted, showing modal:", rideAccepted);
@@ -115,7 +137,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     }
   }, [rideAccepted]);
 
-  // 5. Handle Accept Ride Error
+ 
   useEffect(() => {
     if (rideAcceptError && !isInitialMount.current) {
       console.log("❌ [RIDER] Ride accept error:", rideAcceptError);
@@ -173,6 +195,35 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     clearRideAcceptError();
   };
 
+  const handleCancelRide = () => {
+    Alert.alert(
+      "Cancel Request",
+      "Are you sure you want to cancel this ride request? All offers will be lost.",
+      [
+        { text: "No", style: "cancel" },
+        { 
+          text: "Yes, Cancel", 
+          style: "destructive", 
+          onPress: () => {
+            cancelRide(undefined, {
+              onSuccess: () => {
+                setCancelModalVisible(true);
+              },
+              onError: (err) => {
+                Alert.alert("Error", "Could not cancel ride. Please try again.");
+              }
+            });
+          }
+        }
+      ]
+    );
+  };
+
+  const handleCancelSuccessClose = () => {
+    setCancelModalVisible(false);
+    next();
+  };
+
   const adjustBy = useCallback((offerId: string, delta: number) => {
     setLocalOffers(prev => {
       const target = prev[offerId];
@@ -209,18 +260,20 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
       await sendMessage({
         type: type,
         data: {
-          ride_id: rideId,
+          ride_request_id: rideId,
           negotiated_price: price,
           ride_request_view_id: offerId,
         },
       });
      
-      // Only remove offer after successful send
+    
       setLocalOffers(prev => {
         const copy = { ...prev };
         delete copy[offerId];
         return copy;
       });
+
+      removeOffer(offerId);
 
     } catch (err) {
       console.error("❌ [RIDER] Negotiation failed:", err);
@@ -262,13 +315,36 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     }
   };
 
-  const handleDeclineOffer = (offerId: string) => {
-    setLocalOffers(prev => {
-      const copy = { ...prev };
-      delete copy[offerId];
-      return copy;
-    });
+const handleDeclineOffer = (offerId: string) => {
+  const offerToDecline = localOffers[offerId];
+  if (!offerToDecline) return;
+
+  lastDeclinedTimestamps.current[offerId] = offerToDecline.timestamp;
+
+  setLocalOffers(prev => {
+    const copy = { ...prev };
+    delete copy[offerId];
+    return copy;
+  });
+
+  const message = {
+    type: "decline_ride_driver_offer",
+    data: { ride_request_view_id: offerId }
   };
+  
+  console.log(JSON.stringify(message));
+
+  try {
+    sendMessage(message);
+    console.log(`✅ [RIDER] Declined offer ${offerId} at timestamp ${offerToDecline.timestamp}`);
+    removeOffer(offerId);
+    
+  } catch (err) {
+    console.error("❌ [RIDER] Decline failed:", err);
+  }
+};
+   
+    
 
   const offersArray = Object.values(localOffers).sort((a, b) => b.timestamp - a.timestamp);
 
@@ -439,7 +515,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
           data={offersArray}
           keyExtractor={(item) => item.id}
           renderItem={renderOffer}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: 100 }]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.emptyState}>
@@ -463,6 +539,21 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
           }
         />
       </View>
+
+            <TouchableOpacity 
+        style={[styles.floatingCancelButton, isCancelling && styles.disabledButton]}
+        onPress={handleCancelRide}
+        disabled={isCancelling}
+      >
+        {isCancelling ? (
+            <ActivityIndicator color="white" size="small" />
+        ) : (
+            <>
+                <Ionicons name="close-circle" size={20} color="white" />
+                <Text style={styles.floatingCancelText}>Cancel Ride Request</Text>
+            </>
+        )}
+      </TouchableOpacity>
 
       {/* Success Modal */}
       <Modal visible={acceptedModalVisible} transparent animationType="fade">
@@ -511,9 +602,36 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
               <Text style={styles.modalButtonText}>Got it</Text>
             </TouchableOpacity>
           </View>
+
         </View>
       </Modal>
+
+
+
+      {/* --- CANCEL SUCCESS MODAL --- */}
+      <Modal visible={cancelModalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.errorIconContainer}>
+              <Ionicons name="trash-bin" size={60} color="#f44336" />
+            </View>
+            <Text style={styles.modalTitle}>Request Cancelled</Text>
+            <Text style={styles.modalMessage}>
+              Your ride request has been deleted.
+            </Text>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.errorModalButton]}
+              onPress={handleCancelSuccessClose}
+            >
+              <Text style={styles.modalButtonText}>Return Home</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </KeyboardAvoidingView>
+
+
   );
 }
 
@@ -567,6 +685,31 @@ const styles = StyleSheet.create({
   },
   reconnectingBanner: {
     backgroundColor: "#1a1a0f",
+  },
+  floatingCancelButton: {
+    position: 'absolute',
+    bottom: 40,
+    left: 20,
+    right: 20,
+    backgroundColor: '#d32f2f', // Red
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderRadius: 50,
+    elevation: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    zIndex: 999,
+    gap: 8
+  },
+  floatingCancelText: {
+    color: 'white',
+    fontWeight: '700',
+    fontSize: 16,
+    textTransform: 'uppercase'
   },
   queueBanner: {
     backgroundColor: "#1a1a0f",

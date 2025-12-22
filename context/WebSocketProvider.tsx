@@ -48,6 +48,9 @@ interface SocketContextValue {
   reconnect: () => void;
   queuedMessageCount: number;
   subscribeToRideOffers: (rideRequestId: string) => void;
+  removeOffer: (id: string) => void;
+  chatMessages: Record<string, any[]>;
+  sendChatMessage: (rideId: string, text: string) => Promise<void>;
 }
 
 export const SocketContext = createContext<SocketContextValue>({} as any);
@@ -65,6 +68,7 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
   const [rideAcceptError, setRideAcceptError] = useState<RideAcceptErrorData | null>(null);
   const [messageQueue, setMessageQueue] = useState<any[]>([]);
   const { token, getValidToken } = useAuth();
+  const [chatMessages, setChatMessages] = useState<Record<string, any[]>>({});
   
   // Refs for connection management
   const shouldReconnect = useRef(true);
@@ -116,6 +120,14 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
       setMessageQueue(prev => [...prev, payload]);
     }
   }, [socket]);
+
+  const removeOffer = useCallback((id: string) => {
+  setDriverOffers(prev => {
+    const newOffers = { ...prev };
+    delete newOffers[id];
+    return newOffers;
+  });
+}, []);
 
   // Handle Incoming Messages
   const handleWsMessage = useCallback((event: MessageEvent) => {
@@ -203,10 +215,44 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
         lastAcceptedOfferId.current = null;
       }
 
+      if (msg.type === "ride_chat_message") {
+        const { ride_id, message, sender_type } = msg.data;
+        
+        const newMessage = {
+          text: message,
+          sender: sender_type === 'driver' ? 'driver' : 'user', // Map backend types to UI
+          timestamp: new Date(),
+        };
+
+        setChatMessages(prev => ({
+          ...prev,
+          [ride_id]: [...(prev[ride_id] || []), newMessage]
+        }));
+      }
+
     } catch (e) {
       console.error("❌ [WSP] Parse Error:", e);
     }
   }, []);
+
+  const sendChatMessage = useCallback(async (rideId: string, text: string) => {
+    const payload = {
+      type: "send_message",
+      data: {
+        ride_id: rideId,
+        message: text,
+      }
+    };
+
+    // Optimistically update UI
+    const newMessage = { text, sender: 'user', timestamp: new Date() };
+    setChatMessages(prev => ({
+      ...prev,
+      [rideId]: [...(prev[rideId] || []), newMessage]
+    }));
+
+    await sendMessage(payload);
+  }, [sendMessage]);
 
   // Process Queued Messages
   const processMessageQueue = useCallback(() => {
@@ -395,7 +441,10 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
       clearRideAcceptError: () => setRideAcceptError(null),
       reconnect,
       queuedMessageCount: messageQueue.length,
-      subscribeToRideOffers
+      subscribeToRideOffers,
+      removeOffer,
+      chatMessages,
+      sendChatMessage,
     }}>
       {children}
     </SocketContext.Provider>

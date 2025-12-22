@@ -84,6 +84,22 @@ export const RideProvider = ({ children }: { children: React.ReactNode }) => {
 
     try {
       const msg = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+      
+      // Handle broadcast_location messages (FIXED!)
+      if (msg.type === "broadcast_location" && msg.data) {
+        const newLocation = { lat: msg.data.lat, lng: msg.data.lng };
+        console.log("📍 [RIDE] Driver location updated:", newLocation);
+        setDriverLocation(newLocation);
+        AsyncStorage.setItem(STORAGE_KEYS.DRIVER_LOC, JSON.stringify(newLocation));
+        
+        // If we get location updates but state is idle, transition to driver_on_way
+        if (rideState === 'idle') {
+          console.log("🚗 [RIDE] Transitioning from idle to driver_on_way due to location update");
+          updateRideState('driver_on_way');
+        }
+        return;
+      }
+
       if (msg.type === "notify" && msg.data) {
         const eventType = msg.data.type || msg.data.event; 
         const payload = msg.data;
@@ -109,25 +125,15 @@ export const RideProvider = ({ children }: { children: React.ReactNode }) => {
             }
             break;
             
-        case "ride_completed":
-          console.log("🏁 [RIDE] Ride completed - waiting for user acknowledgement");
-          if (rideState !== "completed") {
-            updateRideState("completed");
-          }
-          break;
+          case "ride_completed":
+            console.log("🏁 [RIDE] Ride completed - waiting for user acknowledgement");
+            if (rideState !== "completed") {
+              updateRideState("completed");
+            }
+            break;
           default:
             break;
         }
-      }
-
-      // Handle Location Updates
-      if (msg.type === "broadcast_location" && msg.lat && msg.lng) {
-        const newLocation = { lat: msg.lat, lng: msg.lng };
-        setDriverLocation(newLocation);
-        if (rideState === 'idle') {
-           updateRideState('driver_on_way');
-        }
-        AsyncStorage.setItem(STORAGE_KEYS.DRIVER_LOC, JSON.stringify(newLocation));
       }
 
     } catch (error) {

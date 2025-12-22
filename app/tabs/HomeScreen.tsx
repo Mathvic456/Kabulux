@@ -1,7 +1,9 @@
+import { useCancelRideEndPoint } from "@/services/cancelRide.service";
 import { useProfile } from "@/services/profile.service";
+import { useRideDetails } from "@/services/rideDetails.service";
 import { useUpdateRiderProfile } from "@/services/updateProfile.service";
 import { useUploadProfilePhoto } from "@/services/upload.service";
-import { Entypo, Feather, FontAwesome, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
+import { Entypo, Feather, FontAwesome, FontAwesome5, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from "expo-image-picker";
 import { useEffect, useState } from "react";
@@ -493,6 +495,18 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
   const [showDriverOnWayModal, setShowDriverOnWayModal] = useState<boolean>(false);
   const [showUploadOverlay, setShowUploadOverlay] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
+const [selectedCancelReason, setSelectedCancelReason] = useState(null);
+
+const CANCELLATION_REASONS = [
+  "Rider isn't here",
+  "Wrong pickup location",
+  "Vehicle issue",
+  "Personal emergency",
+  "Other"
+];
+
+const { mutate: cancelRide, isPending: isCanceling } = useCancelRideEndPoint();
   
   const uploadMutation = useUploadProfilePhoto();
   const updateProfileMutation = useUpdateRiderProfile(userId || undefined);
@@ -501,7 +515,35 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
     isLoading: profileLoading, 
     error: profileError
   } = useProfile();
-  const { rideState, driverLocation, rideId, resetRide } = useRide();
+  const { rideState, driverLocation, rideId, resetRide, } = useRide();
+  const { data: rideDetails } = useRideDetails(rideId);
+  const driver = rideDetails?.driver;
+
+  const handleCancelPress = () => {
+  setCancelModalVisible(true);
+  setSelectedCancelReason(null);
+};
+
+const submitCancellation = () => {
+  if (!selectedCancelReason) {
+    Alert.alert("Select a Reason", "Please tell us why you are cancelling.");
+    return;
+  }
+
+  if (rideId) {
+    cancelRide(
+      { rideId, reason: selectedCancelReason },
+      {
+        onSuccess: () => {
+          setCancelModalVisible(false);
+          //TODO: Add a Ride cancelled.
+          resetRide();
+          
+        }
+      }
+    );
+  }
+};
 
   const activeRideStatus = (() => {
     switch (rideState) {
@@ -518,7 +560,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
           title: "Driver Arrived", 
           subtitle: "Driver is waiting at pickup", 
           icon: "map-marker-alt", 
-          color: "#4CAF50", // Green
+          color: "#4CAF50",
           bgColor: "rgba(76, 175, 80, 0.1)"
         };
       case "in_progress":
@@ -526,7 +568,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
           title: "Ride in Progress", 
           subtitle: "Heading to your destination", 
           icon: "route", 
-          color: "#2196F3", // Blue
+          color: "#2196F3",
           bgColor: "rgba(33, 150, 243, 0.1)"
         };
       default:
@@ -710,32 +752,6 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* {rideState === "driver_on_way" && driverLocation && (
-        <View style={styles.driverLocationBanner}>
-          <View style={styles.bannerHeader}>
-            <View style={styles.bannerIconContainer}>
-              <FontAwesome5 name="car" size={24} color="#FEB914" />
-            </View>
-            <View style={styles.bannerTextContainer}>
-              <Text style={styles.bannerTitle}>Your Ride is Active</Text>
-              <View style={styles.statusRow}>
-                <View style={styles.liveDot} />
-                <Text style={styles.bannerSubtitle}>Driver is on the way</Text>
-              </View>
-            </View>
-          </View>
-
-          <TouchableOpacity 
-            style={styles.trackButton}
-            onPress={() => setScreen('trackRide')}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="navigate" size={20} color="#000" />
-            <Text style={styles.trackButtonText}>Track Driver</Text>
-          </TouchableOpacity>
-        </View>
-      )} */}
-
       <View style={styles.logoContainer}>
         <Image
           source={require("../../assets/images/logo.png")}
@@ -774,39 +790,81 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
         </TouchableOpacity>
       </TouchableOpacity>
 
+
       {activeRideStatus && (
         <View style={[styles.statusCard, { borderColor: activeRideStatus.color }]}>
           <View style={styles.statusContentRow}>
             
-            {/* Icon Circle */}
-            <View style={[styles.statusIconCircle, { backgroundColor: activeRideStatus.bgColor }]}>
-              <FontAwesome5 
-                name={activeRideStatus.icon} 
-                size={24} 
-                color={activeRideStatus.color} 
-              />
+            {/* 2. Driver Profile Image (Replaces the Icon Circle) */}
+            <View style={[styles.statusIconCircle, { overflow: 'hidden', padding: 0, backgroundColor: 'transparent' }]}>
+               <Image 
+                 source={
+                   driver?.profile_image 
+                   ? { uri: driver.profile_image } 
+                   : require("../../assets/images/Ava.png")
+                 }
+                 style={styles.driverAvatar}
+                 resizeMode="cover"
+               />
             </View>
 
-            {/* Text Info */}
+            {/* 3. Driver Info Text */}
             <View style={styles.statusTextCol}>
-              <Text style={styles.statusTitle}>{activeRideStatus.title}</Text>
+              {/* Dynamic Title: "John is on the way" */}
+              <Text style={styles.statusTitle}>
+                {driver?.name ? `${driver.name} is on the way` : activeRideStatus.title}
+              </Text>
+
               <View style={styles.liveIndicatorRow}>
+                {/* Status Dot */}
                 <View style={[styles.pulsingDot, { backgroundColor: activeRideStatus.color }]} />
-                <Text style={styles.statusSubtitle}>{activeRideStatus.subtitle}</Text>
+                
+                <Text style={styles.statusSubtitle}>
+                  {driver?.vehicle 
+                    ? driver.vehicle
+                    : activeRideStatus.subtitle
+                  }
+                </Text>
               </View>
             </View>
           </View>
 
-          {/* Action Button */}
-          <TouchableOpacity 
-            style={[styles.trackBtn, { backgroundColor: activeRideStatus.color }]}
-            onPress={() => setScreen('trackRide')}
-          >
-            <Text style={styles.trackBtnText}>Track Ride</Text>
-            <Entypo name="chevron-right" size={18} color="black" />
-          </TouchableOpacity>
+          {/* Action Button (Unchanged) */}
+        <View style={styles.statusActionRow}>
+        <TouchableOpacity 
+          style={[styles.trackBtn, { backgroundColor: activeRideStatus.color, flex: 1 }]} // Added flex: 1
+          onPress={() => setScreen('trackRide')}
+        >
+          <Text style={styles.trackBtnText}>Track Ride</Text>
+          <Entypo name="chevron-right" size={18} color="black" />
+        </TouchableOpacity>
+
+        {/* 2. New Chat Button */}
+        <TouchableOpacity 
+          style={styles.chatBtn}
+          onPress={() => setScreen('chatScreen')}
+        >
+          <Ionicons name="chatbubble-ellipses" size={24} color="#000" />
+        </TouchableOpacity>
+      </View>
+
+          {rideState === 'driver_on_way' && (
+        <TouchableOpacity 
+          style={[styles.cancelRideButton, isCanceling && { backgroundColor: "#444444ff"}]} 
+          onPress={handleCancelPress}
+          disabled={isCanceling}
+        >
+          {isCanceling ? (
+            <ActivityIndicator size="small" color="#ff4444" />
+          ) : (
+            <Text style={styles.cancelRideButtonText}>Cancel Ride</Text>
+          )}
+        </TouchableOpacity>
+      )}
         </View>
       )}
+
+      
 
       <Text style={styles.sectionTitle}>Suggestion</Text>
       <View style={styles.suggestionRow}>
@@ -973,6 +1031,68 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
         isVisible={showProfileUpdateSuccessModal}
         onClose={handleProfileUpdateSuccessClose}
       />
+
+      {/* Cancel Ride Modal */}
+<Modal
+  animationType="slide"
+  transparent={true}
+  visible={cancelModalVisible}
+  onRequestClose={() => setCancelModalVisible(false)}
+>
+  <View style={styles.modalOverlay}>
+    <View style={styles.cancelModalContent}>
+      
+      {/* Modal Header */}
+      <View style={styles.modalHeader}>
+        <Text style={styles.modalTitle}>Why are you cancelling?</Text>
+        <TouchableOpacity onPress={() => setCancelModalVisible(false)}>
+          <Ionicons name="close" size={24} color="#999" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Reasons List */}
+      <View style={styles.reasonsContainer}>
+        {CANCELLATION_REASONS.map((reason) => (
+          <TouchableOpacity
+            key={reason}
+            style={[
+              styles.reasonButton,
+              selectedCancelReason === reason && styles.reasonButtonSelected
+            ]}
+            onPress={() => setSelectedCancelReason(reason)}
+          >
+            <Text style={[
+              styles.reasonText,
+              selectedCancelReason === reason && styles.reasonTextSelected
+            ]}>
+              {reason}
+            </Text>
+            {selectedCancelReason === reason && (
+              <Ionicons name="checkmark-circle" size={20} color="#000" />
+            )}
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Confirm Button */}
+      <TouchableOpacity 
+        style={[
+          styles.confirmCancelButton, 
+          (!selectedCancelReason || isCanceling) && { backgroundColor: "#202020ff"}
+        ]}
+        onPress={submitCancellation}
+        disabled={!selectedCancelReason || isCanceling}
+      >
+        {isCanceling ? (
+          <ActivityIndicator color="white" />
+        ) : (
+          <Text style={styles.confirmCancelText}>Cancel Ride</Text>
+        )}
+      </TouchableOpacity>
+
+    </View>
+  </View>
+</Modal>
     </ScrollView>
   );
 }
@@ -1001,14 +1121,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 15,
   },
-  statusIconCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 15,
-  },
   statusTextCol: {
     flex: 1,
   },
@@ -1032,14 +1144,7 @@ const styles = StyleSheet.create({
     color: '#ccc',
     fontSize: 14,
   },
-  trackBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 10,
-    gap: 5,
-  },
+
   trackBtnText: {
     color: '#000',
     fontSize: 16,
@@ -1052,6 +1157,17 @@ const styles = StyleSheet.create({
     flexDirection:'row',  
     justifyContent:'space-between',
   },
+    modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "white",
+  },
   driverLocationBanner: {
     backgroundColor: '#1a1a1a',
     borderRadius: 16,
@@ -1060,6 +1176,70 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#FEB914',
   },
+  cancelRideButton: {
+  backgroundColor: '#252525',
+  borderWidth: 1,
+  marginTop: 15,
+  borderColor: '#333',
+  borderRadius: 12,
+  padding: 14,
+  alignItems: 'center',
+  marginBottom: 20,
+},
+cancelRideButtonText: {
+  color: '#ff4444',
+  fontSize: 14,
+  fontWeight: '600',
+},
+cancelModalContent: {
+  backgroundColor: '#1a1a1a',
+  borderTopLeftRadius: 20,
+  borderTopRightRadius: 20,
+  padding: 20,
+  borderTopWidth: 1,
+  borderColor: '#333',
+  minHeight: '50%',
+},
+reasonsContainer: {
+  marginBottom: 20,
+  gap: 10,
+},
+reasonButton: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  backgroundColor: '#2a2a2a',
+  padding: 16,
+  borderRadius: 12,
+  borderWidth: 1,
+  borderColor: '#333',
+},
+reasonButtonSelected: {
+  backgroundColor: '#facc15', 
+  borderColor: '#facc15',
+},
+reasonText: {
+  color: '#ccc',
+  fontSize: 16,
+  fontWeight: '500',
+},
+reasonTextSelected: {
+  color: '#000',
+  fontWeight: 'bold',
+},
+confirmCancelButton: {
+  backgroundColor: '#ff4444',
+  padding: 18,
+  borderRadius: 12,
+  alignItems: 'center',
+  marginTop: 10,
+},
+confirmCancelText: {
+  color: 'white',
+  fontSize: 16,
+  fontWeight: 'bold',
+  textTransform: 'uppercase',
+},
   bannerHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1129,6 +1309,19 @@ const styles = StyleSheet.create({
     color: '#000',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  statusIconCircle: {
+    width: 50, 
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  driverAvatar: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 999,
   },
   searchContainer: {
     flexDirection: "row",
@@ -1711,5 +1904,27 @@ const styles = StyleSheet.create({
   dropdownMenuTextSelected: {
     color: "#000",
     fontWeight: "600",
+  },
+  statusActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10, 
+    marginTop: 5,
+  },
+  chatBtn: {
+    backgroundColor: '#FEB914',
+    width: 48, 
+    height: 48,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  trackBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 10,
+    gap: 5,
   },
 });

@@ -8,7 +8,7 @@ export default function PaystackWebView({ setScreen }: any) {
   const onNavChange = (nav) => {
     const currentUrl = nav.url;
 
-    // When Paystack finishes, it redirects to your callback URL
+  
     if (currentUrl.includes("https://t-app.com/paystack-redirect")) {
       const reference = currentUrl.split("reference=")[1];
 

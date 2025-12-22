@@ -1,5 +1,7 @@
-import { Feather } from '@expo/vector-icons';
-import React, { useEffect, useRef, useState } from 'react';
+import { useRide } from '@/context/RideContext';
+import { SocketContext } from "@/context/WebSocketProvider";
+import { Feather, Ionicons } from '@expo/vector-icons';
+import React, { useContext, useRef, useState } from 'react';
 import {
     KeyboardAvoidingView,
     Platform,
@@ -8,245 +10,259 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const initialMessages = [
-    {
-        text: 'Hello I\'m here',
-        sender: 'driver',
-        timestamp: new Date(Date.now() - 300000), // 5 minutes ago
-    },
-    {
-        text: 'Okay am coming',
-        sender: 'user',
-        timestamp: new Date(Date.now() - 180000), // 3 minutes ago
-    },
-];
+interface Message {
+    text: string;
+    sender: 'user' | 'driver';
+    timestamp: Date;
+}
 
-export default function ChatScreen({goBack}: {goBack: () => void}) {
-    const [messages, setMessages] = useState(initialMessages);
+interface ChatScreenProps {
+    goBack: () => void;
+    driverName?: string;
+    vehicleInfo?: string;
+}
+
+export default function ChatScreen({ 
+    goBack, 
+    driverName = "Driver", 
+    vehicleInfo = "Vehicle Info" 
+}: ChatScreenProps) {
+    const [messages, setMessages] = useState<Message[]>([]);
     const [messageText, setMessageText] = useState('');
     const scrollViewRef = useRef<ScrollView>(null);
+    const { rideId } = useRide();
+    const { chatMessages, sendChatMessage } = useContext(SocketContext);
 
-    // Auto-scroll to bottom when messages change
-    useEffect(() => {
-        if (scrollViewRef.current) {
-            scrollViewRef.current.scrollToEnd({ animated: true });
-        }
-    }, [messages]);
+    // Auto-scroll to bottom
+    const scrollToBottom = () => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+    };
 
-    const handleSendMessage = () => {
-        if (messageText.trim() === '') return;
+    const currentMessages = rideId ? chatMessages[rideId] || [] : [];
+
+    const handleSendMessage = async () => {
+        if (!messageText.trim() || !rideId) return;
         
-        const newMessage = {
-            text: messageText,
-            sender: 'user',
-            timestamp: new Date(),
-        };
-        
-        setMessages([...messages, newMessage]);
+        const textToSend = messageText.trim();
         setMessageText('');
         
-        // Simulate driver response after a delay
-        setTimeout(() => {
-            const driverResponse = {
-                text: 'Got it. See you soon!',
-                sender: 'driver',
-                timestamp: new Date(),
-            };
-            setMessages(prev => [...prev, driverResponse]);
-        }, 2000);
+        try {
+            await sendChatMessage(rideId, textToSend);
+        } catch (err) {
+            console.error("Failed to send chat:", err);
+
+        }
     };
 
-    const formatTime = (date: Date) => {
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+
+    const formatTime = (date: any) => {
+        const d = date instanceof Date ? date : new Date(date);
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     };
 
-    const formatDateHeader = (date: Date) => {
-        const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-        const day = days[date.getDay()];
-        const dayNum = date.getDate();
-        const hours = date.getHours();
-        const period = hours >= 12 ? 'PM' : 'AM';
-        
-        return `${day} ${dayNum} ${hours % 12 || 12} ${period}`;
-    };
-
-    // Check if we need to show a date header for a message
-    const shouldShowDateHeader = (index: number) => {
-        if (index === 0) return true;
-        
-        const currentDate = messages[index].timestamp.getDate();
-        const previousDate = messages[index - 1].timestamp.getDate();
-        
-        return currentDate !== previousDate;
-    };
-
-    return (
-        <KeyboardAvoidingView 
-            style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-        >
-            {/* Header with back button and driver info */}
-            <View style={styles.header}>
-                <TouchableOpacity style={styles.backButton} onPress={goBack}>
-                    <Feather name="arrow-left" size={24} color="white" />
-                </TouchableOpacity>
-                <View style={styles.headerTextContainer}>
-                    <Text style={styles.driverName}>Azzezz omolalomi</Text>
-                    <Text style={styles.carInfo}>MUSTIBUSHI DJ345JJ</Text>
-                </View>
-            </View>
-
-            {/* Chat messages area */}
-            <ScrollView 
-                ref={scrollViewRef}
-                style={styles.messagesContainer}
-                onContentSizeChange={() => {
-                    if (scrollViewRef.current) {
-                        scrollViewRef.current.scrollToEnd({ animated: true });
-                    }
-                }}
+return (
+        <SafeAreaView style={styles.safeArea}>
+            <KeyboardAvoidingView 
+                style={styles.container}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
-                {messages.map((message, index) => (
-                    <View key={index}>
-                        {/* Date header when date changes */}
-                        {shouldShowDateHeader(index) && (
-                            <Text style={styles.timestamp}>
-                                {formatDateHeader(message.timestamp)}
-                            </Text>
-                        )}
-                        
-                        {/* Message bubble */}
-                        <View
-                            style={[
-                                styles.messageBubble,
-                                message.sender === 'user'
-                                    ? styles.userMessage
-                                    : styles.driverMessage,
-                            ]}
-                        >
-                            <Text style={styles.messageText}>{message.text}</Text>
-                            <Text style={styles.timeText}>
-                                {formatTime(message.timestamp)}
-                            </Text>
-                        </View>
-                    </View>
-                ))}
-            </ScrollView>
+                {/* Header stays the same */}
+                <View style={styles.header}>
+                   <TouchableOpacity onPress={goBack}><Feather name="chevron-left" size={28} color="white" /></TouchableOpacity>
+                   <View style={styles.headerInfo}>
+                        <Text style={styles.driverNameText}>{driverName || "Your Driver"}</Text>
+                        <Text style={styles.vehicleText}>{vehicleInfo || "Active Ride"}</Text>
+                   </View>
+                </View>
 
-            {/* Message input area */}
-            <View style={styles.inputContainer}>
-                <TextInput
-                    style={styles.textInput}
-                    placeholder="Type a message"
-                    placeholderTextColor="#999"
-                    value={messageText}
-                    onChangeText={setMessageText}
-                    onSubmitEditing={handleSendMessage}
-                />
-                <TouchableOpacity 
-                    style={[styles.sendButton, !messageText && styles.sendButtonDisabled]}
-                    onPress={handleSendMessage}
-                    disabled={!messageText}
+                <ScrollView 
+                    ref={scrollViewRef}
+                    style={styles.messagesList}
+                    contentContainerStyle={styles.messagesContent}
+                    onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
                 >
-                    <Feather name="send" size={24} color={messageText ? "#000" : "#555"} />
-                </TouchableOpacity>
-            </View>
-        </KeyboardAvoidingView>
+                    {currentMessages.map((msg, index) => (
+                        <View key={index} style={[
+                            styles.bubbleContainer,
+                            msg.sender === 'user' ? styles.userContainer : styles.driverContainer
+                        ]}>
+                            <View style={[
+                                styles.bubble,
+                                msg.sender === 'user' ? styles.userBubble : styles.driverBubble
+                            ]}>
+                                <Text style={[
+                                    styles.messageText,
+                                    msg.sender === 'user' ? styles.userText : styles.driverText
+                                ]}>{msg.text}</Text>
+                                <Text style={styles.timeText}>{formatTime(msg.timestamp)}</Text>
+                            </View>
+                        </View>
+                    ))}
+                </ScrollView>
+
+                <View style={styles.inputWrapper}>
+                    <View style={styles.inputRow}>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Message your driver..."
+                            placeholderTextColor="#666"
+                            value={messageText}
+                            onChangeText={setMessageText}
+                            multiline
+                        />
+                        <TouchableOpacity 
+                            style={[styles.sendCircle, !messageText.trim() && styles.sendDisabled]} 
+                            onPress={handleSendMessage}
+                        >
+                            <Ionicons name="send" size={20} color={messageText.trim() ? "#000" : "#444"} />
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
+    safeArea: {
         flex: 1,
         backgroundColor: '#000',
+    },
+    container: {
+        flex: 1,
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingVertical: 15,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#1c1c1c',
+        borderBottomColor: '#1a1a1a',
+        backgroundColor: '#000',
     },
     backButton: {
-        padding: 5,
-        marginRight: 10,
+        padding: 4,
+        marginRight: 8,
     },
-    headerTextContainer: {
+    headerInfo: {
         flex: 1,
     },
-    driverName: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: 'white',
+    driverNameText: {
+        color: '#fff',
+        fontSize: 17,
+        fontWeight: '700',
     },
-    carInfo: {
+    vehicleText: {
+        color: '#FEB914',
         fontSize: 12,
-        color: '#999',
+        fontWeight: '500',
+        marginTop: 2,
     },
-    messagesContainer: {
+    callButton: {
+        backgroundColor: '#FEB914',
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    messagesList: {
         flex: 1,
-        paddingHorizontal: 20,
     },
-    timestamp: {
-        textAlign: 'center',
-        color: '#777',
-        fontSize: 12,
-        marginVertical: 15,
+    messagesContent: {
+        padding: 16,
+        paddingBottom: 30,
     },
-    messageBubble: {
-        padding: 12,
-        borderRadius: 15,
-        maxWidth: '75%',
-        marginVertical: 5,
+    bubbleContainer: {
+        width: '100%',
+        marginVertical: 4,
+        flexDirection: 'row',
     },
-    userMessage: {
-        backgroundColor: '#f6a623',
-        alignSelf: 'flex-end',
-        borderBottomRightRadius: 5,
+    userContainer: {
+        justifyContent: 'flex-end',
     },
-    driverMessage: {
-        backgroundColor: '#1c1c1c',
-        alignSelf: 'flex-start',
-        borderBottomLeftRadius: 5,
+    driverContainer: {
+        justifyContent: 'flex-start',
+    },
+    bubble: {
+        maxWidth: '80%',
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        borderRadius: 18,
+    },
+    userBubble: {
+        backgroundColor: '#FEB914',
+        borderBottomRightRadius: 4,
+    },
+    driverBubble: {
+        backgroundColor: '#1a1a1a',
+        borderBottomLeftRadius: 4,
     },
     messageText: {
+        fontSize: 15,
+        lineHeight: 20,
+    },
+    userText: {
+        color: '#000',
+    },
+    driverText: {
         color: '#fff',
-        marginBottom: 4,
     },
     timeText: {
-        color: 'rgba(255, 255, 255, 0.6)',
         fontSize: 10,
+        color: 'rgba(0,0,0,0.5)',
         alignSelf: 'flex-end',
+        marginTop: 4,
     },
-    inputContainer: {
-        flexDirection: 'row',
+    emptyState: {
+        marginTop: 50,
         alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingVertical: 10,
-        backgroundColor: '#1c1c1c',
-        borderTopLeftRadius: 30,
-        borderTopRightRadius: 30,
     },
-    textInput: {
+    emptyText: {
+        color: '#444',
+        fontSize: 14,
+    },
+    inputWrapper: {
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: '#000',
+        borderTopWidth: 1,
+        borderTopColor: '#1a1a1a',
+    },
+    inputRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        backgroundColor: '#111',
+        borderRadius: 24,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderWidth: 1,
+        borderColor: '#222',
+    },
+    input: {
         flex: 1,
-        backgroundColor: '#2b2b2b',
-        borderRadius: 25,
-        paddingHorizontal: 15,
-        paddingVertical: 10,
-        color: 'white',
+        color: '#fff',
+        fontSize: 15,
+        maxHeight: 100,
+        paddingTop: 8,
+        paddingBottom: 8,
+        paddingHorizontal: 8,
     },
-    sendButton: {
-        marginLeft: 10,
-        backgroundColor: '#f6a623',
-        borderRadius: 25,
-        padding: 10,
+    sendCircle: {
+        backgroundColor: '#FEB914',
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginLeft: 8,
     },
-    sendButtonDisabled: {
-        backgroundColor: '#555',
+    sendDisabled: {
+        backgroundColor: '#222',
     },
 });
