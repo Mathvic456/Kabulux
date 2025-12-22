@@ -839,13 +839,13 @@ const submitCancellation = () => {
           <Entypo name="chevron-right" size={18} color="black" />
         </TouchableOpacity>
 
-        {/* 2. New Chat Button */}
+        {/* 2. New Chat Button
         <TouchableOpacity 
           style={styles.chatBtn}
           onPress={() => setScreen('chatScreen')}
         >
           <Ionicons name="chatbubble-ellipses" size={24} color="#000" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
           {rideState === 'driver_on_way' && (
