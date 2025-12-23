@@ -527,7 +527,7 @@ case "standardScreen":
     case "chatScreen":
       return (
         <ChatScreen
-          goBack={() => setScreen("originalDriverDetails")}
+          goBack={() => setScreen("dashboard")}
         />
       );
 

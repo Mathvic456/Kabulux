@@ -42,7 +42,7 @@ const DynamicPayStackWebViewScreen = ({ goBack }: Props) => {
       },
       {
         onSuccess: (res) => {
-          const url = res.data?.data?.authorization_url;
+          const url = res.data?.authorization_url;
           if (url) {
             console.log("Opening Paystack:", url);
             setPaystackUrl(url);

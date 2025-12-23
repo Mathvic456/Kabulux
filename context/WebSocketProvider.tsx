@@ -1,3 +1,4 @@
+import { useRide } from '@/context/RideContext';
 import NetInfo from "@react-native-community/netinfo";
 import Constants from "expo-constants";
 import React, { createContext, useCallback, useEffect, useRef, useState } from "react";
@@ -69,6 +70,7 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
   const [messageQueue, setMessageQueue] = useState<any[]>([]);
   const { token, getValidToken } = useAuth();
   const [chatMessages, setChatMessages] = useState<Record<string, any[]>>({});
+    const { rideId } = useRide();
   
   // Refs for connection management
   const shouldReconnect = useRef(true);
@@ -215,44 +217,54 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
         lastAcceptedOfferId.current = null;
       }
 
-      if (msg.type === "ride_chat_message") {
-        const { ride_id, message, sender_type } = msg.data;
-        
-        const newMessage = {
-          text: message,
-          sender: sender_type === 'driver' ? 'driver' : 'user', // Map backend types to UI
-          timestamp: new Date(),
-        };
+    // Handle incoming chat from driver
+if (msg.type === "chat_message" && msg.message) {
+  const { id, content, sender_role, created_at } = msg.message;
+  
+  if (rideId) {
+    const newMessage = {
+      id: String(id),
+      text: content,
+      sender: sender_role === 'driver' ? 'driver' : 'user',
+      timestamp: new Date(created_at),
+    };
 
-        setChatMessages(prev => ({
-          ...prev,
-          [ride_id]: [...(prev[ride_id] || []), newMessage]
-        }));
-      }
+    setChatMessages(prev => ({
+      ...prev,
+      [rideId]: [...(prev[rideId] || []), newMessage]
+    }));
+  }
+}
+
+      
 
     } catch (e) {
       console.error("❌ [WSP] Parse Error:", e);
     }
   }, []);
 
-  const sendChatMessage = useCallback(async (rideId: string, text: string) => {
-    const payload = {
-      type: "send_message",
-      data: {
-        ride_id: rideId,
-        message: text,
-      }
-    };
+const sendChatMessage = useCallback(async (rideId: string, text: string) => {
+  const payload = {
+    type: "send_message",
+    data: { ride_id: rideId, message: text }
+  };
 
-    // Optimistically update UI
-    const newMessage = { text, sender: 'user', timestamp: new Date() };
-    setChatMessages(prev => ({
-      ...prev,
-      [rideId]: [...(prev[rideId] || []), newMessage]
-    }));
+  // Optimistic update with temp ID
+  const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const newMessage = { 
+    id: tempId, // Add this
+    text, 
+    sender: 'user', 
+    timestamp: new Date() 
+  };
+  
+  setChatMessages(prev => ({
+    ...prev,
+    [rideId]: [...(prev[rideId] || []), newMessage]
+  }));
 
-    await sendMessage(payload);
-  }, [sendMessage]);
+  await sendMessage(payload);
+}, [sendMessage]);
 
   // Process Queued Messages
   const processMessageQueue = useCallback(() => {

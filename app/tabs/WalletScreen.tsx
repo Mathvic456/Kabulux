@@ -9,6 +9,7 @@ import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -31,11 +32,12 @@ const WalletScreen = ({ setScreen } :
 ) => {
   const [showPaymentMethodsModal, setShowPaymentMethodsModal] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("card");
-  const [filter, setFilter] = useState<string>("all"); // "all", "today", "week", "month"
+  const [filter, setFilter] = useState<string>("all");
+  const [refreshing, setRefreshing] = useState(false);
   
   const fundWallet = useFundWalletEndPoint();
-  const { data: balanceData, isLoading: balanceLoading } = useGetMyBalance();
-  const { data: transactionsResponse, isLoading: transactionsLoading } = useGetMyTransactions();
+  const { data: balanceData, isLoading: balanceLoading, refetch: refetchBalance } = useGetMyBalance();
+  const { data: transactionsResponse, isLoading: transactionsLoading, refetch: refetchTransactions } = useGetMyTransactions();
 
   const cleanedTransactions = useMemo(() => {
     const rawData = transactionsResponse?.data; 
@@ -65,15 +67,30 @@ const WalletScreen = ({ setScreen } :
     });
   }, [transactionsResponse]);
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      // Refetch both balance and transactions in parallel
+      await Promise.all([
+        refetchBalance(),
+        refetchTransactions()
+      ]);
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleFundWallet = () => {
     fundWallet.mutate(
       { amount: 20000, channel: selectedPaymentMethod },
       {
         onSuccess: (res) => {
-          const checkoutUrl = res.data?.data?.authorization_url || res.data?.data.authorization_url;
+          const checkoutUrl = res.data.authorization_url;
+
           if (checkoutUrl) {
-            setScreen("paystack", checkoutUrl)
+            setScreen("paystack", checkoutUrl);
           }
         },
       }
@@ -94,7 +111,6 @@ const WalletScreen = ({ setScreen } :
     monthAgo.setMonth(today.getMonth() - 1);
 
     return cleanedTransactions.filter(transaction => {
-      // transaction.date is already a Date object from our transformer
       const txDate = transaction.date;
       const txDay = new Date(txDate.getFullYear(), txDate.getMonth(), txDate.getDate());
 
@@ -106,12 +122,11 @@ const WalletScreen = ({ setScreen } :
         case "month":
           return txDate >= monthAgo;
         default:
-          return true; // "all"
+          return true;
       }
     });
   };
 
-  // === 3. Grouping Logic ===
   const groupTransactionsByMonth = (transactions: CleanTransaction[]) => {
     const grouped: {[key: string]: CleanTransaction[]} = {};
     
@@ -139,7 +154,18 @@ const WalletScreen = ({ setScreen } :
 
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView 
+        contentContainerStyle={{ paddingBottom: 100 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#FEB914"
+            colors={["#FEB914"]}
+            progressBackgroundColor="#111"
+          />
+        }
+      >
         {/* Header */}
         <View style={{ marginTop: 40, marginLeft: 20 }}>
           <Text style={{ color: "#FEB914", fontSize: 20, fontWeight: "700" }}>
@@ -307,7 +333,6 @@ const WalletScreen = ({ setScreen } :
               borderColor: "#FEB914",
             }}
             onPress={() => {
-              // Cycle through filters
               const filters = ["all", "today", "week", "month"];
               const currentIndex = filters.indexOf(filter);
               const nextIndex = (currentIndex + 1) % filters.length;
@@ -328,9 +353,7 @@ const WalletScreen = ({ setScreen } :
 
         {/* Transaction History List */}
         {transactionsLoading ? (
-          <View
-            style={styles.loadingContainer}
-          >
+          <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#FEB914" />
             <Text style={{ color: "#fff", fontSize: 14, marginTop: 10, textAlign: "center" }}>
               Loading transactions...
@@ -338,10 +361,7 @@ const WalletScreen = ({ setScreen } :
           </View>
         ) : Object.entries(groupedTransactions).length > 0 ? (
           Object.entries(groupedTransactions).map(([monthYear, transactions]) => (
-            <View
-              key={monthYear}
-              style={styles.monthGroupContainer}
-            >
+            <View key={monthYear} style={styles.monthGroupContainer}>
               {/* Month Label */}
               <View
                 style={{
@@ -368,7 +388,6 @@ const WalletScreen = ({ setScreen } :
                     <Text style={{ color: "#fff", fontSize: 16, fontWeight: "500", textTransform: 'capitalize' }}>
                       {tx.description}
                     </Text>
-                    {/* Status Badge */}
                     <Text style={{ 
                       fontSize: 10, 
                       color: tx.status === 'success' ? '#4CAF50' : '#FEB914',
@@ -406,7 +425,6 @@ const WalletScreen = ({ setScreen } :
                       }}
                     >
                       {tx.type === "credit" ? "+" : (tx.type === "debit" ? "-" : "")}
-                      {/* Handle null amounts gracefully */}
                       ₦{tx.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                     </Text>
                   </View>
@@ -415,9 +433,7 @@ const WalletScreen = ({ setScreen } :
             </View>
           ))
         ) : (
-          <View
-            style={styles.emptyContainer}
-          >
+          <View style={styles.emptyContainer}>
             <Ionicons name="receipt-outline" size={48} color="#FEB914" />
             <Text style={{ color: "#fff", fontSize: 16, marginTop: 10, textAlign: "center" }}>
               No transactions found for {filter} filter
@@ -621,7 +637,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FEB914",
     paddingVertical: 16,
     borderRadius: 30,
-    alignItems: "center",
+    alignItems: "center", 
   },
   confirmButtonText: {
     color: "#000",

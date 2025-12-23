@@ -808,7 +808,7 @@ const submitCancellation = () => {
                />
             </View>
 
-            {/* 3. Driver Info Text */}
+{/* 3. Driver Info Text */}
             <View style={styles.statusTextCol}>
               {/* Dynamic Title: "John is on the way" */}
               <Text style={styles.statusTitle}>
@@ -829,24 +829,23 @@ const submitCancellation = () => {
             </View>
           </View>
 
-          {/* Action Button (Unchanged) */}
-        <View style={styles.statusActionRow}>
-        <TouchableOpacity 
-          style={[styles.trackBtn, { backgroundColor: activeRideStatus.color, flex: 1 }]} // Added flex: 1
-          onPress={() => setScreen('trackRide')}
-        >
-          <Text style={styles.trackBtnText}>Track Ride</Text>
-          <Entypo name="chevron-right" size={18} color="black" />
-        </TouchableOpacity>
+          {/* Action Button */}
+          <View style={styles.statusActionRow}>
+            <TouchableOpacity 
+              style={[styles.trackBtn, { backgroundColor: activeRideStatus.color, flex: 1 }]}
+              onPress={() => setScreen('trackRide')}
+            >
+              <Text style={styles.trackBtnText}>Track Ride</Text>
+              <Entypo name="chevron-right" size={18} color="black" />
+            </TouchableOpacity>
 
-        {/* 2. New Chat Button
-        <TouchableOpacity 
-          style={styles.chatBtn}
-          onPress={() => setScreen('chatScreen')}
-        >
-          <Ionicons name="chatbubble-ellipses" size={24} color="#000" />
-        </TouchableOpacity> */}
-      </View>
+            <TouchableOpacity 
+              style={styles.chatBtn}
+              onPress={() => setScreen('chatScreen')}
+            >
+              <Ionicons name="chatbubble-ellipses" size={24} color="#000" />
+            </TouchableOpacity>  {/* ✅ Added closing tag */}
+          </View>
 
           {rideState === 'driver_on_way' && (
         <TouchableOpacity 

@@ -540,7 +540,7 @@ export default function BookingScreen({
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Select Payment Method</Text>
 
-            {["Cash", "Card", "Wallet"].map((method, i) => (
+            {["Cash", "Wallet"].map((method, i) => (
               <TouchableOpacity
                 key={i}
                 style={styles.modalOption}

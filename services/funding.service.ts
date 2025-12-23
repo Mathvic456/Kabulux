@@ -7,28 +7,22 @@ export type FundWalletPayload = {
   channel: string;
 };
 
-export type PaystackInitResponse = {
-  status: number;
-  message: string;
-  data: {
-    authorization_url: string;
-    access_code: string;
-    reference: string;
-  };
-  errors: any;
-};
-
+export interface PaystackInitResponse {
+  authorization_url: string;
+  access_code: string;
+  reference: string;
+}
 export type WalletBalanceResponse = {
   balance: number;
   currency?: string;
 };
 
-// CORRECTED: Matches the JSON log {"amount": "500.00", "id": "uuid", ...}
+
 export type Transaction = {
   id: string; // Changed from number to string
-  amount: string | null; // API returns string "500.00" or null
+  amount: string | null; 
   channel: string;
-  direction: "credit" | "debit" | ""; // API returns "" sometimes
+  direction: "credit" | "debit" | ""; 
   reference: string;
   status: "success" | "pending" | "failed";
   type: string; // API returns ""
@@ -76,7 +70,8 @@ const useFundWalletEndPoint = () => {
       return api.post<PaystackInitResponse>("/wallets/fund_initiate/", data);
     },
     onSuccess: (res) => {
-      const paystackUrl = res.data?.data?.authorization_url;
+      console.log(res);
+      const paystackUrl = res.data?.authorization_url;
       console.log("Paystack checkout URL:", paystackUrl);
     },
     onError: (error: any) => {
@@ -154,3 +149,4 @@ export {
   useGetMyTransactions,
   useWithdrawFunds
 };
+

@@ -2,6 +2,7 @@ import { useRide } from '@/context/RideContext';
 import { SocketContext } from "@/context/WebSocketProvider";
 import { Feather, Ionicons } from '@expo/vector-icons';
 import React, { useContext, useRef, useState } from 'react';
+
 import {
     KeyboardAvoidingView,
     Platform,
@@ -15,6 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface Message {
+    id: string; // Add this
     text: string;
     sender: 'user' | 'driver';
     timestamp: Date;
@@ -87,7 +89,7 @@ return (
                     onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
                 >
                     {currentMessages.map((msg, index) => (
-                        <View key={index} style={[
+                        <View key={msg.id} style={[
                             styles.bubbleContainer,
                             msg.sender === 'user' ? styles.userContainer : styles.driverContainer
                         ]}>
