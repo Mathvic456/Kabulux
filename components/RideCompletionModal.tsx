@@ -1,9 +1,9 @@
+import { useRideId } from '@/context/RideIdContext';
 import { useRateRideEndPoint } from '@/services/ratings.services';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Modal,
   StyleSheet,
   Text,
@@ -14,12 +14,12 @@ import {
 import { useRide } from '../context/RideContext';
 type ViewMode = 'summary' | 'rating' | 'success';
 export const RideCompletionModal = () => {
-  const { rideState, resetRide, rideId } = useRide();
+  const { rideState, resetRide } = useRide();
+const { rideId } = useRideId();
   const { mutate: rateRide, isPending } = useRateRideEndPoint();
   const [viewMode, setViewMode] = useState<ViewMode>('summary');
   const [rating, setRating] = useState<number>(0);
-  const [comment, setComment] = useState<string>('');
-  const isVisible = rideState === "completed";
+  const [comment, setComment] = useState<string>('');  const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({ visible: false, title: '', message: '' });  const isVisible = rideState === "completed";
   const handleEndWithoutRating = async () => {
     await resetRide();
     setViewMode('summary');

@@ -1,15 +1,15 @@
+import CentralModal from "@/components/CentralModal";
 import { useFundWalletEndPoint } from "@/services/funding.service";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { WebView } from "react-native-webview";
 
@@ -20,13 +20,23 @@ type Props = {
 const DynamicPayStackWebViewScreen = ({ goBack }: Props) => {
   const [amount, setAmount] = useState("");
   const [paystackUrl, setPaystackUrl] = useState<string | null>(null);
+  const [modalState, setModalState] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+  }>({ visible: false, title: "", message: "" });
 
   const { mutate: initiateFunding, isPending } = useFundWalletEndPoint();
 
   const handleAddFunds = () => {
     const num = Number(amount);
     if (!amount || isNaN(num) || num < 100) {
-      Alert.alert("Invalid Amount", "Minimum amount is ₦100");
+      setModalState({
+        visible: true,
+        title: "Invalid Amount",
+        message: "Minimum amount is ₦100",
+      });
       return;
     }
 
@@ -47,7 +57,11 @@ const DynamicPayStackWebViewScreen = ({ goBack }: Props) => {
             console.log("Opening Paystack:", url);
             setPaystackUrl(url);
           } else {
-            Alert.alert("Error", "No payment link received");
+            setModalState({
+              visible: true,
+              title: "Error",
+              message: "No payment link received",
+            });
           }
         },
         onError: (err: any) => {
@@ -55,7 +69,11 @@ const DynamicPayStackWebViewScreen = ({ goBack }: Props) => {
             err.response?.data?.message ||
             err.response?.data?.channel?.[0] ||
             "Failed to start payment";
-          Alert.alert("Payment Error", msg);
+          setModalState({
+            visible: true,
+            title: "Payment Error",
+            message: msg,
+          });
         },
       }
     );
@@ -66,20 +84,17 @@ const DynamicPayStackWebViewScreen = ({ goBack }: Props) => {
     if (url.includes("checkout.paystack.com") && url.includes("close")) {
       const reference = new URL(url).searchParams.get("reference");
       if (reference) {
-        Alert.alert(
-          "Payment Successful!",
-          `Reference: ${reference}\n\nYour wallet has been credited.`,
-          [
-            {
-              text: "Done",
-              onPress: () => {
-                setPaystackUrl(null);
-                setAmount("");
-                goBack?.();
-              },
-            },
-          ]
-        );
+        setModalState({
+          visible: true,
+          title: "Payment Successful!",
+          message: `Reference: ${reference}\n\nYour wallet has been credited.`,
+          onConfirm: () => {
+            setModalState({ visible: false, title: "", message: "" });
+            setPaystackUrl(null);
+            setAmount("");
+            goBack?.();
+          },
+        });
       }
     }
   };
@@ -167,6 +182,15 @@ const DynamicPayStackWebViewScreen = ({ goBack }: Props) => {
           )}
         </View>
       </Modal>
+
+      <CentralModal
+        visible={modalState.visible}
+        title={modalState.title}
+        subText={modalState.message}
+        onClose={() => setModalState({ visible: false, title: "", message: "" })}
+        onConfirm={modalState.onConfirm}
+        confirmText={modalState.onConfirm ? "Done" : "Close"}
+      />
     </>
   );
 };

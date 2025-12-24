@@ -1,10 +1,10 @@
+import CentralModal from "@/components/CentralModal";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert, // Added Alert
   Keyboard,
   Modal,
   SafeAreaView,
@@ -38,6 +38,12 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
   const [expiry, setExpiry] = useState("");
   const [cvv, setCvv] = useState("");
   const [cardName, setCardName] = useState("");
+
+  const [modalState, setModalState] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+  }>({ visible: false, title: "", message: "" });
 
   /* ---------------------------------- */
   /* Load saved cards */
@@ -106,19 +112,31 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
 
     // 1. Basic Validation
     if (!cardNumber || !expiry || !cvv || !cardName) {
-        Alert.alert("Missing Details", "Please fill in all card information.");
+        setModalState({
+          visible: true,
+          title: "Missing Details",
+          message: "Please fill in all card information."
+        });
         return;
     }
 
     // 2. Format Validation (Simple MM/YY check)
     const expiryRegex = /^(0[1-9]|1[0-2])\/?([0-9]{2})$/;
     if (!expiryRegex.test(expiry)) {
-        Alert.alert("Invalid Expiry", "Use MM/YY format (e.g., 12/25)");
+        setModalState({
+          visible: true,
+          title: "Invalid Expiry",
+          message: "Use MM/YY format (e.g., 12/25)"
+        });
         return;
     }
 
     if (cardNumber.length < 12) {
-        Alert.alert("Invalid Card", "Card number is too short.");
+        setModalState({
+          visible: true,
+          title: "Invalid Card",
+          message: "Card number is too short."
+        });
         return;
     }
 
@@ -157,11 +175,19 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
         setCvv("");
         setCardName("");
         
-        Alert.alert("Success", "Payment method verified and added.");
+        setModalState({
+          visible: true,
+          title: "Success",
+          message: "Payment method verified and added."
+        });
 
     } catch (error: any) {
         // 6. On Failure
-        Alert.alert("Verification Failed", error.message || "Could not add card.");
+        setModalState({
+          visible: true,
+          title: "Verification Failed",
+          message: error.message || "Could not add card."
+        });
     } finally {
         setIsLoading(false);
     }
@@ -289,6 +315,13 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
           </TouchableWithoutFeedback>
         </Modal>
       </SafeAreaView>
+
+      <CentralModal
+        visible={modalState.visible}
+        title={modalState.title}
+        subText={modalState.message}
+        onClose={() => setModalState({ visible: false, title: "", message: "" })}
+      />
     </TouchableWithoutFeedback>
   );
 }

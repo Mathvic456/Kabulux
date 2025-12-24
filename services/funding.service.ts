@@ -84,12 +84,20 @@ const useGetMyBalance = () => {
   return useQuery({
     queryKey: ["balance"],
     queryFn: async () => {
-      // Using your original endpoint
-      const res = await api.get<{ data: WalletBalanceResponse }>(
-        "/wallets/my_balance/"
-      );
-      // Ensure we safely access the nested data
-      return res.data?.data || { balance: 0 };
+      const res = await api.get<any>("/wallets/my_balance/"); 
+      
+      console.log("DEBUG BALANCE RAW:", res);
+
+      const responseData = res.data ? res.data : res;
+
+      // Check if balance is nested inside another 'data' key or at the root
+      if (responseData.data && responseData.data.balance !== undefined) {
+        return responseData.data;
+      } else if (responseData.balance !== undefined) {
+        return responseData;
+      }
+      
+      return { balance: 0 };
     },
   });
 };

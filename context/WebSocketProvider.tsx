@@ -1,8 +1,8 @@
-import { useRide } from '@/context/RideContext';
 import NetInfo from "@react-native-community/netinfo";
 import Constants from "expo-constants";
 import React, { createContext, useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "./AuthContext";
+import { useRideId } from './RideIdContext';
 
 interface DriverOffer {
   id: string;
@@ -70,7 +70,9 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
   const [messageQueue, setMessageQueue] = useState<any[]>([]);
   const { token, getValidToken } = useAuth();
   const [chatMessages, setChatMessages] = useState<Record<string, any[]>>({});
-    const { rideId } = useRide();
+
+  const { rideId } = useRideId();
+  const currentRideIdRef = useRef<string | null>(null);
   
   // Refs for connection management
   const shouldReconnect = useRef(true);
@@ -80,6 +82,12 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
   const lastAcceptedOfferId = useRef<string | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const manualDisconnect = useRef(false);
+
+
+useEffect(() => {
+  console.log("🔄 [WSP RIDER] rideId changed:", rideId);
+  currentRideIdRef.current = rideId;
+}, [rideId]);
 
   // Monitor network connectivity
   useEffect(() => {
@@ -217,11 +225,14 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
         lastAcceptedOfferId.current = null;
       }
 
-    // Handle incoming chat from driver
+
+
 if (msg.type === "chat_message" && msg.message) {
   const { id, content, sender_role, created_at } = msg.message;
   
-  if (rideId) {
+  const activeRideId = currentRideIdRef.current; 
+  
+  if (activeRideId) {
     const newMessage = {
       id: String(id),
       text: content,
@@ -229,13 +240,31 @@ if (msg.type === "chat_message" && msg.message) {
       timestamp: new Date(created_at),
     };
 
-    setChatMessages(prev => ({
-      ...prev,
-      [rideId]: [...(prev[rideId] || []), newMessage]
-    }));
+    setChatMessages(prev => {
+      const existing = prev[activeRideId] || [];
+      
+      // 1. STRICT DUPLICATE CHECK
+      if (existing.some(m => m.id === String(id))) {
+        return prev;
+      }
+      
+      // 2. OPTIMISTIC CLEANUP (The Fix)
+      // Remove any temp message that has the exact same text
+      const cleanExisting = existing.filter(m => {
+        const isTemp = m.id.startsWith('temp_');
+        const isSameContent = m.text === content;
+        return !(isTemp && isSameContent);
+      });
+      
+      return {
+        ...prev,
+        [activeRideId]: [...cleanExisting, newMessage]
+      };
+    });
+  } else {
+    console.warn("⚠️ [CHAT] No activeRideId available");
   }
 }
-
       
 
     } catch (e) {
@@ -249,19 +278,27 @@ const sendChatMessage = useCallback(async (rideId: string, text: string) => {
     data: { ride_id: rideId, message: text }
   };
 
-  // Optimistic update with temp ID
   const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const newMessage = { 
-    id: tempId, // Add this
+    id: tempId,
     text, 
     sender: 'user', 
     timestamp: new Date() 
   };
   
-  setChatMessages(prev => ({
-    ...prev,
-    [rideId]: [...(prev[rideId] || []), newMessage]
-  }));
+  setChatMessages(prev => {
+    const existing = prev[rideId] || [];
+    
+    if (existing.some(m => m.id === tempId)) {
+      console.log("⚠️ [CHAT] Duplicate temp message, skipping");
+      return prev;
+    }
+    
+    return {
+      ...prev,
+      [rideId]: [...existing, newMessage]
+    };
+  });
 
   await sendMessage(payload);
 }, [sendMessage]);

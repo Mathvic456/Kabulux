@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { useRideId } from './RideIdContext';
 import { SocketContext } from "./WebSocketProvider";
 
 // 1. Granular States
@@ -19,7 +20,6 @@ interface DriverLocation {
 interface RideContextValue {
   rideState: RideState;
   driverLocation: DriverLocation | null;
-  rideId: string | null;
   resetRide: () => Promise<void>;
 }
 
@@ -32,7 +32,6 @@ const STORAGE_KEYS = {
 export const RideContext = createContext<RideContextValue>({
   rideState: "idle",
   driverLocation: null,
-  rideId: null,
   resetRide: async() => {}
 });
 
@@ -41,7 +40,7 @@ export const useRide = () => useContext(RideContext);
 export const RideProvider = ({ children }: { children: React.ReactNode }) => {
   const [rideState, setRideState] = useState<RideState>("idle");
   const [driverLocation, setDriverLocation] = useState<DriverLocation | null>(null);
-  const [rideId, setRideId] = useState<string | null>(null);
+  const { rideId, setRideId } = useRideId();
   const { socket } = useContext(SocketContext);
 
   // Helper to persist state updates
@@ -50,10 +49,9 @@ export const RideProvider = ({ children }: { children: React.ReactNode }) => {
     setRideState(newState);
     await AsyncStorage.setItem(STORAGE_KEYS.RIDE_STATE, newState);
     
-    if (newRideId) {
-      setRideId(newRideId);
-      await AsyncStorage.setItem(STORAGE_KEYS.RIDE_ID, newRideId);
-    }
+if (newRideId) {
+  setRideId(newRideId); // ✅ This now uses the shared context
+}
   };
 
   // Hydrate on mount
@@ -162,7 +160,7 @@ export const RideProvider = ({ children }: { children: React.ReactNode }) => {
   }, [socket, handleWsMessage]);
 
   return (
-    <RideContext.Provider value={{ rideState, driverLocation, rideId, resetRide }}>
+    <RideContext.Provider value={{ rideState, driverLocation, resetRide }}>
       {children}
     </RideContext.Provider>
   );

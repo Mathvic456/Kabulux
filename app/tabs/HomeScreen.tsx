@@ -1,3 +1,4 @@
+import { useRideId } from "@/context/RideIdContext";
 import { useCancelRideEndPoint } from "@/services/cancelRide.service";
 import { useProfile } from "@/services/profile.service";
 import { useRideDetails } from "@/services/rideDetails.service";
@@ -515,7 +516,8 @@ const { mutate: cancelRide, isPending: isCanceling } = useCancelRideEndPoint();
     isLoading: profileLoading, 
     error: profileError
   } = useProfile();
-  const { rideState, driverLocation, rideId, resetRide, } = useRide();
+  const { rideState, driverLocation, resetRide, } = useRide();
+  const { rideId } = useRideId();
   const { data: rideDetails } = useRideDetails(rideId);
   const driver = rideDetails?.driver;
 

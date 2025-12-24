@@ -1,6 +1,7 @@
 import { RideCompletionModal } from '@/components/RideCompletionModal';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { RideProvider } from '@/context/RideContext';
+import { RideIdProvider } from '@/context/RideIdContext';
 import { WebSocketProvider } from "@/context/WebSocketProvider";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { globalLogout } from '@/scripts/auth';
@@ -48,15 +49,17 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <ApiAuthConnector /> 
-      <WebSocketProvider>
-        <RideProvider>
-        <QueryClientProvider client={queryClient}>
-          <MainNavigator />
-          <RideCompletionModal />
-        </QueryClientProvider>
-        </RideProvider>
-      </WebSocketProvider>
+      <ApiAuthConnector />
+      <RideIdProvider> {/* ✅ NEW: Wrap everything */}
+        <WebSocketProvider>
+          <RideProvider>
+            <QueryClientProvider client={queryClient}>
+              <MainNavigator />
+              <RideCompletionModal />
+            </QueryClientProvider>
+          </RideProvider>
+        </WebSocketProvider>
+      </RideIdProvider>
     </AuthProvider>
   );
 }

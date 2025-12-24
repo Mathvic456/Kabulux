@@ -4,16 +4,16 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Modal,
-  RefreshControl,
+  Alert, // <--- Added Alert Import
+  Modal, Platform, RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View
-} from "react-native";
+} from 'react-native';
 
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system'; // Standard import (SDK 54+)
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 
@@ -28,6 +28,7 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<Ride | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [filter, setFilter] = useState<"all" | "today" | "week" | "month">("all");
 
   const { data: rideHistoryData, isLoading, refetch, isRefetching } = useRideHistory(true);
 
@@ -48,10 +49,43 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
     }));
   };
 
+  const filterRidesByDate = (rides: Ride[], filterType: typeof filter) => {
+  if (filterType === "all") return rides;
+  
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  return rides.filter(ride => {
+    const rideDate = new Date(ride.date);
+    
+    switch (filterType) {
+      case "today":
+        const rideDay = new Date(rideDate.getFullYear(), rideDate.getMonth(), rideDate.getDate());
+        return rideDay.getTime() === today.getTime();
+      
+      case "week":
+        const weekAgo = new Date(today);
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        return rideDate >= weekAgo;
+      
+      case "month":
+        const monthAgo = new Date(today);
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+        return rideDate >= monthAgo;
+      
+      default:
+        return true;
+    }
+  });
+};
+
   const onRefresh = () => refetch();
 
   const rides = rideHistoryData?.results ? transformRides(rideHistoryData.results) : [];
-  const filteredRides = rides.filter((ride) => ride.type === activeTab);
+  const filteredRides = filterRidesByDate(
+  rides.filter((ride) => ride.type === activeTab),
+  filter
+);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "Date not available";
@@ -159,36 +193,69 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
     `;
   };
 
-  const downloadReceipt = async (ride: Ride) => {
+const downloadReceipt = async (ride: Ride) => {
     if (!ride) return;
-    
+
     try {
       setIsDownloading(true);
 
       const html = generateReceiptHTML(ride);
-
-      const { uri } = await Print.printToFileAsync({
-        html,
-        base64: false,
-      });
-
       const safeId = String(ride.id).replace(/[^a-zA-Z0-9]/g, "_");
       const fileName = `Kablux_Receipt_${safeId}.pdf`;
-      const destination = `${FileSystem.documentDirectory}${fileName}`;
 
-      await FileSystem.moveAsync({
-        from: uri,
-        to: destination,
+      const { uri: tempUri } = await Print.printToFileAsync({
+        html,
+        base64: true,
       });
 
+      if (Platform.OS === 'android' && FileSystem.StorageAccessFramework) {
+        try {
+          // Ask user for permission to save in a specific folder
+          const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+
+          if (permissions.granted) {
+            // Create the file in the chosen folder
+            const newFileUri = await FileSystem.StorageAccessFramework.createFileAsync(
+              permissions.directoryUri,
+              fileName,
+              'application/pdf'
+            );
+
+            // Read the temp file and write to the new location
+            // Note: We already have base64 data available if we wanted, 
+            // but reading from the tempUri is reliable.
+            const fileString = await FileSystem.readAsStringAsync(tempUri, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+
+            await FileSystem.writeAsStringAsync(newFileUri, fileString, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+
+            Alert.alert('Success', 'Receipt saved to your Downloads folder');
+            return; // Exit function on success
+          } else {
+            // If user cancels permission, just stop.
+            return; 
+          }
+        } catch (androidError) {
+          console.log("Android SAF failed, falling back to Share:", androidError);
+          // If SAF fails for any reason, fall through to the Sharing code below
+        }
+      }
+
+      // ============================================================
+      // iOS / FALLBACK STRATEGY (Share Sheet)
+      // ============================================================
+      // This runs for iOS OR if Android SAF failed/was unavailable
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(destination, {
+        await Sharing.shareAsync(tempUri, {
           mimeType: 'application/pdf',
           dialogTitle: 'Save Receipt',
-          UTI: 'com.adobe.pdf'
+          UTI: 'com.adobe.pdf',
         });
       } else {
-        Alert.alert('Success', `Receipt saved to Documents`);
+        Alert.alert('Error', 'Sharing is not available on this device');
       }
 
     } catch (error) {
@@ -263,7 +330,38 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
           <Text style={[styles.tabText, activeTab === "delivery" && styles.activeTabText]}> Delivery</Text>
         </TouchableOpacity>
       </View>
-
+      {/* Filter Button */}
+<View style={{ paddingHorizontal: 20, marginBottom: 15 }}>
+  <TouchableOpacity
+    style={{
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: "#111",
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: "#FEB914",
+      alignSelf: "flex-start",
+    }}
+    onPress={() => {
+      const filters = ["all", "today", "week", "month"];
+      const currentIndex = filters.indexOf(filter);
+      const nextIndex = (currentIndex + 1) % filters.length;
+      setFilter(filters[nextIndex] as typeof filter);
+    }}
+  >
+    <Ionicons name="filter" size={16} color="#FEB914" />
+    <Text style={{
+      color: "#FEB914",
+      marginLeft: 6,
+      fontSize: 14,
+      fontWeight: "600",
+    }}>
+      {filter.charAt(0).toUpperCase() + filter.slice(1)}
+    </Text>
+  </TouchableOpacity>
+</View>
       <ScrollView 
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
         refreshControl={

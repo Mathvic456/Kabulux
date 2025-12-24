@@ -1,3 +1,4 @@
+import { useRideId } from "@/context/RideIdContext";
 import { useRideDetails } from "@/services/rideDetails.service";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import Constants from "expo-constants";
@@ -21,7 +22,9 @@ interface PickupLocation {
 }
 
 export default function RideTrackingScreen({ goBack }: { goBack: () => void }) {
-  const { driverLocation, rideId, rideState } = useRide();
+  const { driverLocation, rideState } = useRide();
+  const { rideId } = useRideId();
+  
   const { data: rideDetails, isLoading: loadingRideDetails } = useRideDetails(rideId);
   
   const mapRef = useRef<MapView>(null);

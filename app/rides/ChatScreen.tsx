@@ -1,4 +1,4 @@
-import { useRide } from '@/context/RideContext';
+import { useRideId } from '@/context/RideIdContext';
 import { SocketContext } from "@/context/WebSocketProvider";
 import { Feather, Ionicons } from '@expo/vector-icons';
 import React, { useContext, useRef, useState } from 'react';
@@ -16,7 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface Message {
-    id: string; // Add this
+    id: string;
     text: string;
     sender: 'user' | 'driver';
     timestamp: Date;
@@ -36,13 +36,8 @@ export default function ChatScreen({
     const [messages, setMessages] = useState<Message[]>([]);
     const [messageText, setMessageText] = useState('');
     const scrollViewRef = useRef<ScrollView>(null);
-    const { rideId } = useRide();
+    const { rideId } = useRideId();
     const { chatMessages, sendChatMessage } = useContext(SocketContext);
-
-    // Auto-scroll to bottom
-    const scrollToBottom = () => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-    };
 
     const currentMessages = rideId ? chatMessages[rideId] || [] : [];
 
@@ -56,39 +51,45 @@ export default function ChatScreen({
             await sendChatMessage(rideId, textToSend);
         } catch (err) {
             console.error("Failed to send chat:", err);
-
         }
     };
-
-
 
     const formatTime = (date: any) => {
         const d = date instanceof Date ? date : new Date(date);
         return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     };
 
-return (
-        <SafeAreaView style={styles.safeArea}>
+    return (
+        <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+            {/* FIX: Added keyboardVerticalOffset. 
+               This pushes the view up by X pixels when keyboard opens.
+               Adjust '10' or '45' if it's still slightly covered.
+            */}
             <KeyboardAvoidingView 
                 style={styles.container}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
             >
-                {/* Header stays the same */}
+                {/* Header */}
                 <View style={styles.header}>
-                   <TouchableOpacity onPress={goBack}><Feather name="chevron-left" size={28} color="white" /></TouchableOpacity>
+                   <TouchableOpacity onPress={goBack} style={styles.backButton}>
+                       <Feather name="chevron-left" size={28} color="white" />
+                   </TouchableOpacity>
                    <View style={styles.headerInfo}>
                         <Text style={styles.driverNameText}>{driverName || "Your Driver"}</Text>
                         <Text style={styles.vehicleText}>{vehicleInfo || "Active Ride"}</Text>
                    </View>
                 </View>
 
+                {/* Messages List */}
                 <ScrollView 
                     ref={scrollViewRef}
                     style={styles.messagesList}
                     contentContainerStyle={styles.messagesContent}
                     onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+                    keyboardDismissMode="on-drag" // Nice UX touch
                 >
-                    {currentMessages.map((msg, index) => (
+                    {currentMessages.map((msg) => (
                         <View key={msg.id} style={[
                             styles.bubbleContainer,
                             msg.sender === 'user' ? styles.userContainer : styles.driverContainer
@@ -107,6 +108,7 @@ return (
                     ))}
                 </ScrollView>
 
+                {/* Input Area */}
                 <View style={styles.inputWrapper}>
                     <View style={styles.inputRow}>
                         <TextInput
@@ -116,16 +118,22 @@ return (
                             value={messageText}
                             onChangeText={setMessageText}
                             multiline
+                            // FIX: Prevents input from growing too large and pushing off screen
+                            maxLength={500} 
                         />
                         <TouchableOpacity 
                             style={[styles.sendCircle, !messageText.trim() && styles.sendDisabled]} 
                             onPress={handleSendMessage}
+                            disabled={!messageText.trim()}
                         >
                             <Ionicons name="send" size={20} color={messageText.trim() ? "#000" : "#444"} />
                         </TouchableOpacity>
                     </View>
                 </View>
             </KeyboardAvoidingView>
+            
+            {/* Handle bottom safe area manually for input background */}
+            <SafeAreaView edges={['bottom']} style={{ backgroundColor: '#000' }} />
         </SafeAreaView>
     );
 }
@@ -165,20 +173,12 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         marginTop: 2,
     },
-    callButton: {
-        backgroundColor: '#FEB914',
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
     messagesList: {
         flex: 1,
     },
     messagesContent: {
         padding: 16,
-        paddingBottom: 30,
+        paddingBottom: 20,
     },
     bubbleContainer: {
         width: '100%',
@@ -221,14 +221,6 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-end',
         marginTop: 4,
     },
-    emptyState: {
-        marginTop: 50,
-        alignItems: 'center',
-    },
-    emptyText: {
-        color: '#444',
-        fontSize: 14,
-    },
     inputWrapper: {
         paddingHorizontal: 16,
         paddingVertical: 12,
@@ -250,7 +242,7 @@ const styles = StyleSheet.create({
         flex: 1,
         color: '#fff',
         fontSize: 15,
-        maxHeight: 100,
+        maxHeight: 100, // Important for multiline
         paddingTop: 8,
         paddingBottom: 8,
         paddingHorizontal: 8,
@@ -263,6 +255,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginLeft: 8,
+        marginBottom: 2, // Align with bottom of multiline input
     },
     sendDisabled: {
         backgroundColor: '#222',

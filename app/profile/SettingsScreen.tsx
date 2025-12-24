@@ -26,7 +26,7 @@ export default function SettingsScreen({ setScreen }) {
   const { clearTokens } = useAuth();
   const { resetRide } = useRide();
   const { socket } = useContext(SocketContext);
-  const { mutate: logout, isPending: isLoggingOut } = useLogoutEndPoint(clearTokens, resetRide);
+  const { mutate: logout, isPending: isLoggingOut } = useLogoutEndPoint(clearTokkens, resetRide);
 
   const handleLogout = () => {
     console.log("🚪 [Settings] Starting logout process...");
