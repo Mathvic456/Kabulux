@@ -1,3 +1,4 @@
+import CentralModal from "@/components/CentralModal";
 import { useBookStandard } from "@/services/bookStandard";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
@@ -46,6 +47,9 @@ interface StandardScreenProps {
 }
 
 export default function StandardScreen({ goBack, next, rideData }: StandardScreenProps) {
+
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   
   useEffect(() => {
     console.log("📦 Received rideData:", rideData);
@@ -119,7 +123,7 @@ export default function StandardScreen({ goBack, next, rideData }: StandardScree
       payment_method: paymentMethodUpper,
     });
 
-    bookStandard(
+ bookStandard(
       { 
         rider_offer: riderOffer, 
         payment_method: paymentMethodUpper 
@@ -131,10 +135,24 @@ export default function StandardScreen({ goBack, next, rideData }: StandardScree
         },
         onError: (error: any) => {
           console.error("❌ Offer submission failed:", error);
-          Alert.alert(
-            "Error",
-            error.message || "Failed to submit offer. Please try again."
-          );
+          
+          let msg = "Failed to submit offer. Please try again.";
+
+          // 1. Check for the specific "Insufficient wallet" error from your logs
+          if (error.response?.data?.rider_offer && Array.isArray(error.response.data.rider_offer)) {
+             msg = error.response.data.rider_offer[0];
+          } 
+          // 2. Fallback for other backend errors
+          else if (error.response?.data?.message) {
+             msg = error.response.data.message;
+          }
+          // 3. Fallback for network/generic errors
+          else if (error.message) {
+             msg = error.message;
+          }
+
+          setErrorMessage(msg);
+          setErrorModalVisible(true);
         },
       }
     );
@@ -388,6 +406,17 @@ export default function StandardScreen({ goBack, next, rideData }: StandardScree
             </>
           )}
         </TouchableOpacity>
+        <CentralModal
+        visible={errorModalVisible}
+        onClose={() => setErrorModalVisible(false)}
+        title="Booking Failed"
+        subText={errorMessage}
+        icon="wallet-outline" // Or "alert-circle-outline"
+        iconColor="#ff6b6b"
+        themeColor="#ff6b6b"
+        confirmText="Understood"
+        onConfirm={() => setErrorModalVisible(false)}
+      />
 
         <View style={{ height: 40 }} />
       </ScrollView>

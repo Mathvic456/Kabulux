@@ -500,12 +500,13 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
 const [selectedCancelReason, setSelectedCancelReason] = useState(null);
 
 const CANCELLATION_REASONS = [
-  "Rider isn't here",
+  "Can't find driver",
   "Wrong pickup location",
   "Vehicle issue",
   "Personal emergency",
   "Other"
 ];
+
 
 const { mutate: cancelRide, isPending: isCanceling } = useCancelRideEndPoint();
   

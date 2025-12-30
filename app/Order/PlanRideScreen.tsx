@@ -203,6 +203,7 @@ const destinationMarker = useMemo(() => {
   return (
     <Marker
       key={`destination-${destinationLocation.latitude}-${destinationLocation.longitude}`}
+      tracksViewChanges
       coordinate={{
         latitude: destinationLocation.latitude,
         longitude: destinationLocation.longitude,

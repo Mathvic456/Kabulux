@@ -4,7 +4,6 @@ import {
   Keyboard,
   Linking,
   Modal,
-  Platform,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -12,7 +11,7 @@ import {
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View,
+  View
 } from "react-native";
 
 export default function HelpAndSupportScreen({
@@ -199,8 +198,17 @@ export default function HelpAndSupportScreen({
       {/* EMAIL MODAL */}
       <Modal transparent visible={activeModal === "email"}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          
           <View style={styles.modalOverlay}>
+            
             <View style={styles.modalView}>
+                <View style={styles.modalHeader}>
+        <Text style={styles.modalTitle}>Frequently Asked Questions</Text>
+        <TouchableOpacity onPress={closeModal}>
+          <Ionicons name="close" size={24} color="#FEB914" />
+        </TouchableOpacity>
+      </View>
+
               <Text style={styles.modalTitle}>Email Support</Text>
 
               <TextInput
@@ -239,21 +247,29 @@ export default function HelpAndSupportScreen({
         </TouchableWithoutFeedback>
       </Modal>
 
-      {/* FAQ MODAL */}
-      <Modal transparent visible={activeModal === "faq"}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalView}>
-            <ScrollView>
-              {faqData.map((faq, index) => (
-                <View key={index} style={styles.faqItem}>
-                  <Text style={styles.faqQuestion}>{faq.question}</Text>
-                  <Text style={styles.faqAnswer}>{faq.answer}</Text>
-                </View>
-              ))}
-            </ScrollView>
+{/* FAQ MODAL */}
+<Modal transparent visible={activeModal === "faq"}>
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalView}>
+      {/* Add this header section */}
+      <View style={styles.modalHeader}>
+        <Text style={styles.modalTitle}>Frequently Asked Questions</Text>
+        <TouchableOpacity onPress={closeModal}>
+          <Ionicons name="close" size={24} color="#FEB914" />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView>
+        {faqData.map((faq, index) => (
+          <View key={index} style={styles.faqItem}>
+            <Text style={styles.faqQuestion}>{faq.question}</Text>
+            <Text style={styles.faqAnswer}>{faq.answer}</Text>
           </View>
-        </View>
-      </Modal>
+        ))}
+      </ScrollView>
+    </View>
+  </View>
+</Modal>
 
       {/* SUCCESS MODAL */}
       <Modal transparent visible={successModalVisible}>
@@ -339,7 +355,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#FEB914",
   },
-  modalTitle: { color: "white", fontSize: 18, marginBottom: 16 },
   input: {
     backgroundColor: "#1E1E1E",
     borderRadius: 10,
@@ -347,6 +362,17 @@ const styles = StyleSheet.create({
     color: "white",
     marginBottom: 12,
   },
+  modalHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 16,
+},
+modalTitle: { 
+  color: "white", 
+  fontSize: 18, 
+  // Remove marginBottom: 16 since it's now in the header
+},
   chatInput: { minHeight: 100 },
   emailInput: { minHeight: 140 },
   modalActionButton: {

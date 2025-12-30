@@ -21,9 +21,10 @@ import * as Sharing from 'expo-sharing';
 interface BookingsScreenProps {
   setScreen: (screen: string) => void;
   setSelectedRide: (ride: any) => void;
+  next: () => void;
 }
 
-const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedRide }) => {
+const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedRide, next }) => {
   const [activeTab, setActiveTab] = useState<"ride" | "delivery">("ride");
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<Ride | null>(null);
@@ -235,7 +236,6 @@ const downloadReceipt = async (ride: Ride) => {
             Alert.alert('Success', 'Receipt saved to your Downloads folder');
             return; // Exit function on success
           } else {
-            // If user cancels permission, just stop.
             return; 
           }
         } catch (androidError) {
@@ -293,18 +293,11 @@ const downloadReceipt = async (ride: Ride) => {
         <Text style={styles.emptyTitle}>
           {isRide ? "No rides found" : "No deliveries found"}
         </Text>
-        <Text style={styles.emptySubtitle}>
+        <Text style={[styles.emptySubtitle]}>
           {isRide ? "Take a trip with Kablux today" : "Send your packages with Kablux"}
         </Text>
 
-        <TouchableOpacity 
-          onPress={() => setScreen("dashboard")}
-          style={styles.ctaButton}
-        >
-          <Text style={styles.ctaText}>
-            {isRide ? "Book a Ride" : "Make a Request"}
-          </Text>
-        </TouchableOpacity>
+    
       </View>
     );
   };

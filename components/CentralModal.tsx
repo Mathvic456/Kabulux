@@ -1,15 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import {
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
-    ViewStyle
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+  ViewStyle
 } from "react-native";
 
 type IoniconsName = keyof typeof Ionicons.glyphMap;
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   confirmButton: {
     width: "100%",
     paddingVertical: 16,
-    borderRadius: 30,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 12,

@@ -451,7 +451,7 @@ const handleDeclineOffer = (offerId: string) => {
               disabled={busy}
             >
               <Ionicons name="checkmark-circle" size={18} color="white" />
-              <Text style={styles.acceptButtonText}>Accept Original</Text>
+              <Text style={styles.acceptButtonText}>Accept</Text>
             </TouchableOpacity>
 
             <TouchableOpacity

@@ -543,6 +543,7 @@ case "standardScreen":
       return (
         <BookingsScreen 
           setScreen={setScreen}
+          next={() => {setScreen("orderScreen")}}
           setSelectedRide={setSelectedRide} 
         />
       )

@@ -1,3 +1,4 @@
+import CentralModal from "@/components/CentralModal";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from 'expo-location';
 import React, { useEffect, useRef, useState } from "react";
@@ -48,6 +49,7 @@ export default function PickUpScreen({ setScreen, goBack }: {
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const slideAnim = useRef(new Animated.Value(0)).current;
+  const [showErrorModal, setShowErrorModal] = useState(false);
   const mapRef = useRef<MapView>(null);
   const autocompleteRef = useRef<any>(null);
 
@@ -114,10 +116,10 @@ export default function PickUpScreen({ setScreen, goBack }: {
         }
       }
       
-    } catch (error) {
-      console.error('Error getting location:', error);
-      Alert.alert('Error', 'Failed to get your current location. Please try again.');
-    } finally {
+     } catch (error) {
+     console.error('Error getting location:', error);
+     setShowErrorModal(true);
+   } finally {
       setIsGettingLocation(false);
     }
   };
@@ -232,8 +234,7 @@ export default function PickUpScreen({ setScreen, goBack }: {
 
           {/* Bottom Sheet */}
           <View style={styles.bottomSheet}>
-            <Text style={styles.title}>Set your Pick-up Location</Text>
-
+            <Text style={styles.title}>Set your Pick-up Location</Text> 
             {/* Search Bar */}
             <View style={styles.searchContainer}>
               <GooglePlacesAutocomplete
@@ -403,7 +404,18 @@ export default function PickUpScreen({ setScreen, goBack }: {
           </TouchableOpacity>
             )}
           </View>
+          <CentralModal
+            visible={showErrorModal}
+            onClose={() => setShowErrorModal(false)}
+            title="Location Error"
+            subText="Failed to get your current location. Please try again."
+            icon="alert-circle"
+            iconColor="#ff4444"
+            confirmText="OK"
+            confirmButtonColor="#f6a623"
+          />
         </View>
+
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
