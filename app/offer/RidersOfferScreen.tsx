@@ -1,4 +1,5 @@
 import { RideContext } from "@/context/RideContext";
+import { RideIdContext } from "@/context/RideIdContext";
 import { SocketContext } from "@/context/WebSocketProvider";
 import { useCancelRideRequest } from "@/services/cancelRideRequest.service";
 import { Ionicons } from "@expo/vector-icons";
@@ -51,7 +52,8 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     removeOffer,
   } = useContext(SocketContext);
 
-  const { rideState, rideId } = useContext(RideContext);
+  const { rideState } = useContext(RideContext);
+  const { rideId } = useContext(RideIdContext);
  
   const route = useRoute();
   const { ride_request_id } = (route.params as any) || {};
@@ -307,7 +309,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     try {
       console.log("📤 [RIDER] Accepting ride:", message);
       await sendMessage(message);
-      // Note: Modal will show when DRIVER_ON_WAY event comes through WebSocket
+      
     } catch (err) {
       console.error("❌ [RIDER] Accept failed:", err);
       Alert.alert("Error", "Failed to accept offer. It will be retried when connection is restored.");
