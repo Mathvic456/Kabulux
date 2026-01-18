@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   addressPreview: {
-    color: '#fff',
+    color: '#a10505',
     fontSize: 14,
     textAlign: 'center',
     marginTop: 10,

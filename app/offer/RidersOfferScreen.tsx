@@ -4,7 +4,13 @@ import { SocketContext } from "@/context/WebSocketProvider";
 import { useCancelRideRequest } from "@/services/cancelRideRequest.service";
 import { Ionicons } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
-import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -15,7 +21,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 
 type OfferItem = {
@@ -54,7 +60,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
 
   const { rideState } = useContext(RideContext);
   const { rideId } = useContext(RideIdContext);
- 
+
   const route = useRoute();
   const { ride_request_id } = (route.params as any) || {};
 
@@ -65,12 +71,13 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
   const [errorOfferId, setErrorOfferId] = useState<string | null>(null);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const lastDeclinedTimestamps = useRef<Record<string, number>>({});
-  
+
   // Track if we've already shown the modal to prevent duplicate shows
   const hasShownModal = useRef(false);
   const isInitialMount = useRef(true);
   const subscriptionAttempted = useRef(false);
-  const { mutate: cancelRide, isPending: isCancelling } = useCancelRideRequest();
+  const { mutate: cancelRide, isPending: isCancelling } =
+    useCancelRideRequest();
 
   // 1. Subscribe to WS when connected and have ride_request_id
   useEffect(() => {
@@ -114,22 +121,21 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
   }, []);
 
   useEffect(() => {
-  const filteredOffers: Record<string, OfferItem> = {};
-  
-  Object.keys(driverOffers).forEach((id) => {
-    const incomingOffer = driverOffers[id];
-    const lastDeclinedAt = lastDeclinedTimestamps.current[id] || 0;
+    const filteredOffers: Record<string, OfferItem> = {};
 
-    // ONLY show the offer if:
-    // It hasn't been declined OR its timestamp is newer than our decline action
-    if (incomingOffer.timestamp > lastDeclinedAt) {
-      filteredOffers[id] = incomingOffer;
-    }
-  });
+    Object.keys(driverOffers).forEach((id) => {
+      const incomingOffer = driverOffers[id];
+      const lastDeclinedAt = lastDeclinedTimestamps.current[id] || 0;
 
-  setLocalOffers(filteredOffers);
-}, [driverOffers]);
+      // ONLY show the offer if:
+      // It hasn't been declined OR its timestamp is newer than our decline action
+      if (incomingOffer.timestamp > lastDeclinedAt) {
+        filteredOffers[id] = incomingOffer;
+      }
+    });
 
+    setLocalOffers(filteredOffers);
+  }, [driverOffers]);
 
   useEffect(() => {
     if (rideAccepted && !hasShownModal.current && !isInitialMount.current) {
@@ -139,25 +145,24 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     }
   }, [rideAccepted]);
 
- 
   useEffect(() => {
     if (rideAcceptError && !isInitialMount.current) {
       console.log("❌ [RIDER] Ride accept error:", rideAcceptError);
       setErrorOfferId(rideAcceptError.offerId || null);
       setErrorModalVisible(true);
-      
+
       // Remove the offer from local state
       if (rideAcceptError.offerId) {
-        setLocalOffers(prev => {
+        setLocalOffers((prev) => {
           const copy = { ...prev };
           delete copy[rideAcceptError.offerId];
           return copy;
         });
       }
-      
+
       // Clear busy state for the offer
       if (rideAcceptError.offerId) {
-        setBusyMap(prev => ({ ...prev, [rideAcceptError.offerId]: false }));
+        setBusyMap((prev) => ({ ...prev, [rideAcceptError.offerId]: false }));
       }
     }
   }, [rideAcceptError]);
@@ -165,7 +170,10 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
   // 6. Auto-navigate when ride state changes to active states
   useEffect(() => {
     if (rideState === "driver_on_way" && rideId) {
-      console.log("🚗 [RIDER] Ride is active, preparing to navigate...", rideState);
+      console.log(
+        "🚗 [RIDER] Ride is active, preparing to navigate...",
+        rideState,
+      );
       setTimeout(() => {
         if (!acceptedModalVisible) {
           next();
@@ -173,6 +181,14 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
       }, 500);
     }
   }, [rideState, rideId]);
+
+  // 7. Clear all offer cards when ride is accepted (driver_on_way)
+  useEffect(() => {
+    if (rideState === "driver_on_way") {
+      console.log("🧹 [RIDER] Clearing all offer cards on driver_on_way");
+      setLocalOffers({});
+    }
+  }, [rideState]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -203,21 +219,24 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
       "Are you sure you want to cancel this ride request? All offers will be lost.",
       [
         { text: "No", style: "cancel" },
-        { 
-          text: "Yes, Cancel", 
-          style: "destructive", 
+        {
+          text: "Yes, Cancel",
+          style: "destructive",
           onPress: () => {
             cancelRide(undefined, {
               onSuccess: () => {
                 setCancelModalVisible(true);
               },
               onError: (err) => {
-                Alert.alert("Error", "Could not cancel ride. Please try again.");
-              }
+                Alert.alert(
+                  "Error",
+                  "Could not cancel ride. Please try again.",
+                );
+              },
             });
-          }
-        }
-      ]
+          },
+        },
+      ],
     );
   };
 
@@ -227,7 +246,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
   };
 
   const adjustBy = useCallback((offerId: string, delta: number) => {
-    setLocalOffers(prev => {
+    setLocalOffers((prev) => {
       const target = prev[offerId];
       if (!target) return prev;
       const newPrice = Math.max(0, target.negotiated_price + delta);
@@ -238,25 +257,30 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     });
   }, []);
 
-  const sendNegotiation = async (offerId: string, rideId: string, price: number) => {
+  const sendNegotiation = async (
+    offerId: string,
+    rideId: string,
+    price: number,
+  ) => {
     if (!isConnected && !isOnline) {
       return Alert.alert(
-        "No Connection", 
-        "You're offline. Please check your internet connection."
+        "No Connection",
+        "You're offline. Please check your internet connection.",
       );
     }
 
     if (!isConnected && isOnline) {
       return Alert.alert(
-        "Reconnecting", 
-        "Trying to reconnect to the server. Please wait..."
+        "Reconnecting",
+        "Trying to reconnect to the server. Please wait...",
       );
     }
-   
-    setBusyMap(prev => ({ ...prev, [offerId]: true }));
-   
+
+    setBusyMap((prev) => ({ ...prev, [offerId]: true }));
+
     const original = localOffers[offerId]?.counter_offer || 0;
-    const type = price > original ? "negotiate_increment" : "negotiate_decrement";
+    const type =
+      price > original ? "negotiate_increment" : "negotiate_decrement";
 
     try {
       await sendMessage({
@@ -267,88 +291,92 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
           ride_request_view_id: offerId,
         },
       });
-     
-    
-      setLocalOffers(prev => {
+
+      setLocalOffers((prev) => {
         const copy = { ...prev };
         delete copy[offerId];
         return copy;
       });
 
       removeOffer(offerId);
-
     } catch (err) {
       console.error("❌ [RIDER] Negotiation failed:", err);
-      Alert.alert("Error", "Failed to send negotiation. It will be retried when connection is restored.");
+      Alert.alert(
+        "Error",
+        "Failed to send negotiation. It will be retried when connection is restored.",
+      );
     } finally {
-      setBusyMap(prev => ({ ...prev, [offerId]: false }));
+      setBusyMap((prev) => ({ ...prev, [offerId]: false }));
     }
   };
 
   const handleAcceptOffer = async (offerId: string) => {
     if (!isConnected && !isOnline) {
       return Alert.alert(
-        "No Connection", 
-        "You're offline. Please check your internet connection."
+        "No Connection",
+        "You're offline. Please check your internet connection.",
       );
     }
 
     if (!isConnected && isOnline) {
       return Alert.alert(
-        "Reconnecting", 
-        "Trying to reconnect to the server. Please wait..."
+        "Reconnecting",
+        "Trying to reconnect to the server. Please wait...",
       );
     }
 
-    setBusyMap(prev => ({ ...prev, [offerId]: true }));
+    setBusyMap((prev) => ({ ...prev, [offerId]: true }));
     const message = {
       type: "accept_ride",
-      data: { ride_request_view_id: offerId }
+      data: { ride_request_view_id: offerId },
     };
 
     try {
       console.log("📤 [RIDER] Accepting ride:", message);
       await sendMessage(message);
-      
     } catch (err) {
       console.error("❌ [RIDER] Accept failed:", err);
-      Alert.alert("Error", "Failed to accept offer. It will be retried when connection is restored.");
-      setBusyMap(prev => ({ ...prev, [offerId]: false }));
+      Alert.alert(
+        "Error",
+        "Failed to accept offer. It will be retried when connection is restored.",
+      );
+      setBusyMap((prev) => ({ ...prev, [offerId]: false }));
     }
   };
 
-const handleDeclineOffer = (offerId: string) => {
-  const offerToDecline = localOffers[offerId];
-  if (!offerToDecline) return;
+  const handleDeclineOffer = (offerId: string) => {
+    const offerToDecline = localOffers[offerId];
+    if (!offerToDecline) return;
 
-  lastDeclinedTimestamps.current[offerId] = offerToDecline.timestamp;
+    lastDeclinedTimestamps.current[offerId] = offerToDecline.timestamp;
 
-  setLocalOffers(prev => {
-    const copy = { ...prev };
-    delete copy[offerId];
-    return copy;
-  });
+    setLocalOffers((prev) => {
+      const copy = { ...prev };
+      delete copy[offerId];
+      return copy;
+    });
 
-  const message = {
-    type: "decline_ride_driver_offer",
-    data: { ride_request_view_id: offerId }
+    const message = {
+      type: "decline_ride_driver_offer",
+      data: { ride_request_view_id: offerId },
+    };
+
+    console.log(JSON.stringify(message));
+
+    try {
+      sendMessage(message);
+      console.log(
+        `✅ [RIDER] Declined offer ${offerId} at timestamp ${offerToDecline.timestamp}`,
+      );
+      removeOffer(offerId);
+    } catch (err) {
+      console.error("❌ [RIDER] Decline failed:", err);
+    }
   };
-  
-  console.log(JSON.stringify(message));
 
-  try {
-    sendMessage(message);
-    console.log(`✅ [RIDER] Declined offer ${offerId} at timestamp ${offerToDecline.timestamp}`);
-    removeOffer(offerId);
-    
-  } catch (err) {
-    console.error("❌ [RIDER] Decline failed:", err);
-  }
-};
-   
-    
-
-  const offersArray = Object.values(localOffers).sort((a, b) => b.timestamp - a.timestamp);
+  const offersArray = Object.values(localOffers).sort(
+    (a, b) => b.timestamp - a.timestamp,
+  );
 
   const renderOffer = ({ item }: { item: OfferItem }) => {
     const busy = !!busyMap[item.id];
@@ -365,7 +393,9 @@ const handleDeclineOffer = (offerId: string) => {
               <Text style={styles.driverName}>{item.driver_name}</Text>
               <View style={styles.ratingContainer}>
                 <Ionicons name="star" size={14} color="#facc15" />
-                <Text style={styles.ratingText}>{item.driver_rating || "N/A"}</Text>
+                <Text style={styles.ratingText}>
+                  {item.driver_rating || "N/A"}
+                </Text>
               </View>
             </View>
           </View>
@@ -380,28 +410,36 @@ const handleDeclineOffer = (offerId: string) => {
 
         <View style={styles.offerSection}>
           <Text style={styles.offerLabel}>Driver's Offer</Text>
-          <Text style={styles.originalOffer}>₦{item.counter_offer.toLocaleString()}</Text>
+          <Text style={styles.originalOffer}>
+            ₦{item.counter_offer.toLocaleString()}
+          </Text>
         </View>
 
         <View style={styles.counterSection}>
           <Text style={styles.counterLabel}>Your Counter Offer</Text>
-          <Text style={styles.counterPrice}>₦{item.negotiated_price.toLocaleString()}</Text>
-         
+          <Text style={styles.counterPrice}>
+            ₦{item.negotiated_price.toLocaleString()}
+          </Text>
+
           {diff !== 0 && (
-            <View style={[
-              styles.differenceBadge,
-              diff > 0 ? styles.higherBadge : styles.lowerBadge
-            ]}>
+            <View
+              style={[
+                styles.differenceBadge,
+                diff > 0 ? styles.higherBadge : styles.lowerBadge,
+              ]}
+            >
               <Ionicons
                 name={diff > 0 ? "trending-up" : "trending-down"}
                 size={14}
                 color={diff > 0 ? "#4CAF50" : "#f44336"}
               />
-              <Text style={[
-                styles.differenceText,
-                diff > 0 ? styles.higherText : styles.lowerText
-              ]}>
-                {diff > 0 ? '+' : ''}₦{Math.abs(diff).toLocaleString()}
+              <Text
+                style={[
+                  styles.differenceText,
+                  diff > 0 ? styles.higherText : styles.lowerText,
+                ]}
+              >
+                {diff > 0 ? "+" : ""}₦{Math.abs(diff).toLocaleString()}
               </Text>
             </View>
           )}
@@ -425,7 +463,11 @@ const handleDeclineOffer = (offerId: string) => {
               disabled={busy}
             >
               <Ionicons name="add" size={20} color="black" />
-              <Text style={[styles.controlButtonText, styles.increaseButtonText]}>+₦100</Text>
+              <Text
+                style={[styles.controlButtonText, styles.increaseButtonText]}
+              >
+                +₦100
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -433,7 +475,13 @@ const handleDeclineOffer = (offerId: string) => {
         <View style={styles.actionsSection}>
           <TouchableOpacity
             style={[styles.primaryButton, busy && styles.disabledButton]}
-            onPress={() => sendNegotiation(item.id, item.ride_request_id, item.negotiated_price)}
+            onPress={() =>
+              sendNegotiation(
+                item.id,
+                item.ride_request_id,
+                item.negotiated_price,
+              )
+            }
             disabled={busy}
           >
             {busy ? (
@@ -471,7 +519,10 @@ const handleDeclineOffer = (offerId: string) => {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
       <View style={styles.header}>
         <TouchableOpacity onPress={goBack} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="white" />
@@ -479,7 +530,8 @@ const handleDeclineOffer = (offerId: string) => {
         <View style={styles.headerTitleContainer}>
           <Text style={styles.headerTitle}>Driver Offers</Text>
           <Text style={styles.headerSubtitle}>
-            {offersArray.length} active {offersArray.length === 1 ? 'offer' : 'offers'}
+            {offersArray.length} active{" "}
+            {offersArray.length === 1 ? "offer" : "offers"}
           </Text>
         </View>
         <View style={styles.headerSpacer} />
@@ -489,7 +541,9 @@ const handleDeclineOffer = (offerId: string) => {
       {!isOnline && (
         <View style={[styles.connectionBanner, styles.offlineBanner]}>
           <Ionicons name="cloud-offline" size={16} color="#f44336" />
-          <Text style={styles.offlineText}>You're offline. Messages will be sent when back online.</Text>
+          <Text style={styles.offlineText}>
+            You're offline. Messages will be sent when back online.
+          </Text>
         </View>
       )}
 
@@ -507,7 +561,8 @@ const handleDeclineOffer = (offerId: string) => {
         <View style={[styles.connectionBanner, styles.queueBanner]}>
           <Ionicons name="time-outline" size={16} color="#facc15" />
           <Text style={styles.queueText}>
-            {queuedMessageCount} {queuedMessageCount === 1 ? 'message' : 'messages'} queued
+            {queuedMessageCount}{" "}
+            {queuedMessageCount === 1 ? "message" : "messages"} queued
           </Text>
         </View>
       )}
@@ -529,10 +584,17 @@ const handleDeclineOffer = (offerId: string) => {
                 Drivers will see your request and send offers shortly...
               </Text>
               {isConnected && (
-                <ActivityIndicator style={styles.loadingIndicator} size="large" color="#facc15" />
+                <ActivityIndicator
+                  style={styles.loadingIndicator}
+                  size="large"
+                  color="#facc15"
+                />
               )}
               {!isConnected && isOnline && (
-                <TouchableOpacity onPress={reconnect} style={styles.reconnectButton}>
+                <TouchableOpacity
+                  onPress={reconnect}
+                  style={styles.reconnectButton}
+                >
                   <Ionicons name="refresh" size={20} color="#facc15" />
                   <Text style={styles.reconnectButtonText}>Reconnect</Text>
                 </TouchableOpacity>
@@ -542,18 +604,21 @@ const handleDeclineOffer = (offerId: string) => {
         />
       </View>
 
-            <TouchableOpacity 
-        style={[styles.floatingCancelButton, isCancelling && styles.disabledButton]}
+      <TouchableOpacity
+        style={[
+          styles.floatingCancelButton,
+          isCancelling && styles.disabledButton,
+        ]}
         onPress={handleCancelRide}
         disabled={isCancelling}
       >
         {isCancelling ? (
-            <ActivityIndicator color="white" size="small" />
+          <ActivityIndicator color="white" size="small" />
         ) : (
-            <>
-                <Ionicons name="close-circle" size={20} color="white" />
-                <Text style={styles.floatingCancelText}>Cancel Ride Request</Text>
-            </>
+          <>
+            <Ionicons name="close-circle" size={20} color="white" />
+            <Text style={styles.floatingCancelText}>Cancel Ride Request</Text>
+          </>
         )}
       </TouchableOpacity>
 
@@ -569,9 +634,7 @@ const handleDeclineOffer = (offerId: string) => {
               {rideAccepted?.driver_name || "Your driver"} is on the way!
             </Text>
             {rideAccepted?.message && (
-              <Text style={styles.modalSubMessage}>
-                {rideAccepted.message}
-              </Text>
+              <Text style={styles.modalSubMessage}>{rideAccepted.message}</Text>
             )}
             <TouchableOpacity
               style={styles.modalButton}
@@ -592,7 +655,8 @@ const handleDeclineOffer = (offerId: string) => {
             </View>
             <Text style={styles.modalTitle}>Driver Unavailable</Text>
             <Text style={styles.modalMessage}>
-              {rideAcceptError?.message || "The selected driver is no longer available"}
+              {rideAcceptError?.message ||
+                "The selected driver is no longer available"}
             </Text>
             <Text style={styles.modalSubMessage}>
               Please select another driver from the available offers.
@@ -604,11 +668,8 @@ const handleDeclineOffer = (offerId: string) => {
               <Text style={styles.modalButtonText}>Got it</Text>
             </TouchableOpacity>
           </View>
-
         </View>
       </Modal>
-
-
 
       {/* --- CANCEL SUCCESS MODAL --- */}
       <Modal visible={cancelModalVisible} transparent animationType="fade">
@@ -630,19 +691,16 @@ const handleDeclineOffer = (offerId: string) => {
           </View>
         </View>
       </Modal>
-
     </KeyboardAvoidingView>
-
-
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000"
+    backgroundColor: "#000",
   },
- 
+
   header: {
     paddingTop: 48,
     paddingBottom: 16,
@@ -664,7 +722,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: "white",
     fontSize: 18,
-    fontWeight: "700"
+    fontWeight: "700",
   },
   headerSubtitle: {
     color: "#888",
@@ -672,7 +730,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   headerSpacer: {
-    width: 40
+    width: 40,
   },
 
   connectionBanner: {
@@ -689,14 +747,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#1a1a0f",
   },
   floatingCancelButton: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 40,
     left: 20,
     right: 20,
-    backgroundColor: '#d32f2f', // Red
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#d32f2f", // Red
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 16,
     borderRadius: 50,
     elevation: 10,
@@ -705,13 +763,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 6,
     zIndex: 999,
-    gap: 8
+    gap: 8,
   },
   floatingCancelText: {
-    color: 'white',
-    fontWeight: '700',
+    color: "white",
+    fontWeight: "700",
     fontSize: 16,
-    textTransform: 'uppercase'
+    textTransform: "uppercase",
   },
   queueBanner: {
     backgroundColor: "#1a1a0f",
@@ -743,15 +801,15 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
   },
- 
+
   content: {
     flex: 1,
-    padding: 16
+    padding: 16,
   },
   listContent: {
-    paddingBottom: 20
+    paddingBottom: 20,
   },
- 
+
   emptyState: {
     alignItems: "center",
     justifyContent: "center",
@@ -778,7 +836,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   loadingIndicator: {
-    marginTop: 16
+    marginTop: 16,
   },
   reconnectButton: {
     flexDirection: "row",
@@ -797,7 +855,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
- 
+
   card: {
     backgroundColor: "#1a1a1a",
     padding: 20,
@@ -811,7 +869,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
- 
+
   headerSection: {
     flexDirection: "row",
     alignItems: "center",
@@ -833,17 +891,17 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "600",
-    marginBottom: 4
+    marginBottom: 4,
   },
   ratingContainer: {
     flexDirection: "row",
-    alignItems: "center"
+    alignItems: "center",
   },
   ratingText: {
     color: "#facc15",
     fontSize: 13,
     marginLeft: 4,
-    fontWeight: "600"
+    fontWeight: "600",
   },
   statusBadge: {
     backgroundColor: "#facc15",
@@ -854,15 +912,15 @@ const styles = StyleSheet.create({
   statusText: {
     color: "black",
     fontSize: 10,
-    fontWeight: "bold"
+    fontWeight: "bold",
   },
- 
+
   divider: {
     height: 1,
     backgroundColor: "#2a2a2a",
-    marginBottom: 16
+    marginBottom: 16,
   },
- 
+
   offerSection: {
     marginBottom: 16,
   },
@@ -876,9 +934,9 @@ const styles = StyleSheet.create({
   originalOffer: {
     color: "#facc15",
     fontSize: 18,
-    fontWeight: "700"
+    fontWeight: "700",
   },
- 
+
   counterSection: {
     alignItems: "center",
     marginBottom: 20,
@@ -919,12 +977,12 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   higherText: {
-    color: "#4CAF50"
+    color: "#4CAF50",
   },
   lowerText: {
-    color: "#f44336"
+    color: "#f44336",
   },
- 
+
   controlsSection: {
     marginBottom: 20,
   },
@@ -957,12 +1015,12 @@ const styles = StyleSheet.create({
     color: "white",
     marginLeft: 6,
     fontWeight: "700",
-    fontSize: 14
+    fontSize: 14,
   },
   increaseButtonText: {
-    color: "black"
+    color: "black",
   },
- 
+
   actionsSection: {
     gap: 12,
   },
@@ -978,7 +1036,7 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: "black",
     fontWeight: "700",
-    fontSize: 16
+    fontSize: 16,
   },
   secondaryActions: {
     flexDirection: "row",
@@ -1004,17 +1062,17 @@ const styles = StyleSheet.create({
   acceptButtonText: {
     color: "white",
     fontWeight: "600",
-    fontSize: 14
+    fontSize: 14,
   },
   declineButtonText: {
     color: "#888",
     fontWeight: "600",
-    fontSize: 14
+    fontSize: 14,
   },
   disabledButton: {
-    opacity: 0.5
+    opacity: 0.5,
   },
- 
+
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.7)",
@@ -1073,6 +1131,6 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: "#fff",
     fontSize: 16,
-    fontWeight: "600"
+    fontWeight: "600",
   },
 });
