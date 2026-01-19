@@ -71,6 +71,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
   const [errorOfferId, setErrorOfferId] = useState<string | null>(null);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const lastDeclinedTimestamps = useRef<Record<string, number>>({});
+  const rideAcceptedRef = useRef(false);
 
   // Track if we've already shown the modal to prevent duplicate shows
   const hasShownModal = useRef(false);
@@ -99,9 +100,11 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     }
   }, [ride_request_id, isConnected]);
 
-  // 2. Sync Context -> Local State
+  // 2. Sync Context -> Local State (but NOT after ride is accepted)
   useEffect(() => {
-    setLocalOffers(driverOffers);
+    if (!rideAcceptedRef.current) {
+      setLocalOffers(driverOffers);
+    }
   }, [driverOffers]);
 
   // 3. Handle Initial Mount - Clear stale data
@@ -121,6 +124,11 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
   }, []);
 
   useEffect(() => {
+    // Don't filter/process offers if ride already accepted
+    if (rideAcceptedRef.current) {
+      return;
+    }
+
     const filteredOffers: Record<string, OfferItem> = {};
 
     Object.keys(driverOffers).forEach((id) => {
@@ -167,7 +175,6 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     }
   }, [rideAcceptError]);
 
-  // 6. Auto-navigate when ride state changes to active states
   useEffect(() => {
     if (rideState === "driver_on_way" && rideId) {
       console.log(
@@ -186,7 +193,12 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
   useEffect(() => {
     if (rideState === "driver_on_way") {
       console.log("🧹 [RIDER] Clearing all offer cards on driver_on_way");
+      // Set flag to prevent any new offers from syncing
+      rideAcceptedRef.current = true;
+      // Clear all local offers immediately
       setLocalOffers({});
+      // Reset the declined timestamps since we're done with this ride
+      lastDeclinedTimestamps.current = {};
     }
   }, [rideState]);
 
@@ -195,6 +207,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     return () => {
       hasShownModal.current = false;
       subscriptionAttempted.current = false;
+      rideAcceptedRef.current = false;
       clearRideAccepted();
       clearRideAcceptError();
     };
