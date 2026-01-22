@@ -16,7 +16,7 @@ import {
 
 export default function ReferAndEarnScreen({ goBack, next }) {
   const [referralCode] = useState("B219XN23LA22");
-  const [referralLink] = useState("https://www.kbl.com/refer/BD1");
+  const [referralLink] = useState("https://kabluxe.com/");
   const [showCopiedModal, setShowCopiedModal] = useState(false);
   const [copiedText, setCopiedText] = useState("");
   const [showRewardsModal, setShowRewardsModal] = useState(false);
@@ -52,28 +52,55 @@ export default function ReferAndEarnScreen({ goBack, next }) {
 
   // Sample rewards data
   const rewardsData = [
-    { id: 1, type: "Sign-up Bonus", amount: "₦500", date: "Oct 15, 2023", status: "Completed" },
-    { id: 2, type: "First Ride", amount: "₦1000", date: "Oct 20, 2023", status: "Completed" },
-    { id: 3, type: "Referral Bonus", amount: "₦1500", date: "Oct 25, 2023", status: "Pending" },
-    { id: 4, type: "Referral Bonus", amount: "₦1500", date: "Nov 1, 2023", status: "Pending" },
-    { id: 5, type: "Loyalty Bonus", amount: "₦2000", date: "Nov 5, 2023", status: "Earned" },
+    {
+      id: 1,
+      type: "Sign-up Bonus",
+      amount: "₦500",
+      date: "Oct 15, 2023",
+      status: "Completed",
+    },
+    {
+      id: 2,
+      type: "First Ride",
+      amount: "₦1000",
+      date: "Oct 20, 2023",
+      status: "Completed",
+    },
+    {
+      id: 3,
+      type: "Referral Bonus",
+      amount: "₦1500",
+      date: "Oct 25, 2023",
+      status: "Pending",
+    },
+    {
+      id: 4,
+      type: "Referral Bonus",
+      amount: "₦1500",
+      date: "Nov 1, 2023",
+      status: "Pending",
+    },
+    {
+      id: 5,
+      type: "Loyalty Bonus",
+      amount: "₦2000",
+      date: "Nov 5, 2023",
+      status: "Earned",
+    },
   ];
 
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={handleBack}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Refer & Earn</Text>
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -148,12 +175,17 @@ export default function ReferAndEarnScreen({ goBack, next }) {
         </View>
 
         {/* Invite Friends Button */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.inviteButton}
           onPress={shareReferral}
           activeOpacity={0.8}
         >
-          <Ionicons name="person-add-outline" size={20} color="black" style={styles.buttonIcon} />
+          <Ionicons
+            name="person-add-outline"
+            size={20}
+            color="black"
+            style={styles.buttonIcon}
+          />
           <Text style={styles.inviteButtonText}>Invite Friends</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -170,7 +202,9 @@ export default function ReferAndEarnScreen({ goBack, next }) {
             <View style={styles.copiedModal}>
               <Ionicons name="checkmark-circle" size={48} color="#FEB914" />
               <Text style={styles.copiedText}>Copied!</Text>
-              <Text style={styles.copiedSubText}>{copiedText} copied to clipboard</Text>
+              <Text style={styles.copiedSubText}>
+                {copiedText} copied to clipboard
+              </Text>
             </View>
           </View>
         </TouchableWithoutFeedback>
@@ -187,14 +221,14 @@ export default function ReferAndEarnScreen({ goBack, next }) {
           <View style={styles.fullModal}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Your Rewards</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setShowRewardsModal(false)}
                 style={styles.closeButton}
               >
                 <Ionicons name="close" size={24} color="#000" />
               </TouchableOpacity>
             </View>
-            
+
             <ScrollView style={styles.modalScrollView}>
               <View style={styles.rewardsSummary}>
                 <View style={styles.rewardStat}>
@@ -207,12 +241,14 @@ export default function ReferAndEarnScreen({ goBack, next }) {
                 </View>
                 <View style={styles.rewardStat}>
                   <Text style={styles.rewardStatValue}>3</Text>
-                  <Text style={styles.rewardStatLabel}>Successful Referrals</Text>
+                  <Text style={styles.rewardStatLabel}>
+                    Successful Referrals
+                  </Text>
                 </View>
               </View>
-              
+
               <Text style={styles.sectionTitle}>Reward History</Text>
-              
+
               {rewardsData.map((reward) => (
                 <View key={reward.id} style={styles.rewardItem}>
                   <View style={styles.rewardInfo}>
@@ -221,12 +257,14 @@ export default function ReferAndEarnScreen({ goBack, next }) {
                   </View>
                   <View style={styles.rewardAmountContainer}>
                     <Text style={styles.rewardAmount}>{reward.amount}</Text>
-                    <Text style={[
-                      styles.rewardStatus,
-                      reward.status === 'Completed' && styles.statusCompleted,
-                      reward.status === 'Pending' && styles.statusPending,
-                      reward.status === 'Earned' && styles.statusEarned,
-                    ]}>
+                    <Text
+                      style={[
+                        styles.rewardStatus,
+                        reward.status === "Completed" && styles.statusCompleted,
+                        reward.status === "Pending" && styles.statusPending,
+                        reward.status === "Earned" && styles.statusEarned,
+                      ]}
+                    >
                       {reward.status}
                     </Text>
                   </View>
@@ -248,14 +286,14 @@ export default function ReferAndEarnScreen({ goBack, next }) {
           <View style={styles.fullModal}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>How It Works</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setShowHowItWorksModal(false)}
                 style={styles.closeButton}
               >
                 <Ionicons name="close" size={24} color="#000" />
               </TouchableOpacity>
             </View>
-            
+
             <ScrollView style={styles.modalScrollView}>
               <View style={styles.stepContainer}>
                 <View style={styles.step}>
@@ -263,13 +301,16 @@ export default function ReferAndEarnScreen({ goBack, next }) {
                     <Text style={styles.stepNumberText}>1</Text>
                   </View>
                   <View style={styles.stepContent}>
-                    <Text style={styles.stepTitle}>Share Your Referral Code</Text>
+                    <Text style={styles.stepTitle}>
+                      Share Your Referral Code
+                    </Text>
                     <Text style={styles.stepDescription}>
-                      Share your unique referral code or link with friends and family.
+                      Share your unique referral code or link with friends and
+                      family.
                     </Text>
                   </View>
                 </View>
-                
+
                 <View style={styles.step}>
                   <View style={styles.stepNumber}>
                     <Text style={styles.stepNumberText}>2</Text>
@@ -281,19 +322,21 @@ export default function ReferAndEarnScreen({ goBack, next }) {
                     </Text>
                   </View>
                 </View>
-                
+
                 <View style={styles.step}>
                   <View style={styles.stepNumber}>
                     <Text style={styles.stepNumberText}>3</Text>
                   </View>
                   <View style={styles.stepContent}>
-                    <Text style={styles.stepTitle}>They Complete Their First Ride</Text>
+                    <Text style={styles.stepTitle}>
+                      They Complete Their First Ride
+                    </Text>
                     <Text style={styles.stepDescription}>
                       Your friends complete their first ride on KabLux.
                     </Text>
                   </View>
                 </View>
-                
+
                 <View style={styles.step}>
                   <View style={styles.stepNumber}>
                     <Text style={styles.stepNumberText}>4</Text>
@@ -301,19 +344,21 @@ export default function ReferAndEarnScreen({ goBack, next }) {
                   <View style={styles.stepContent}>
                     <Text style={styles.stepTitle}>You Get Rewarded</Text>
                     <Text style={styles.stepDescription}>
-                      You receive your reward once the referral is verified and completed.
+                      You receive your reward once the referral is verified and
+                      completed.
                     </Text>
                   </View>
                 </View>
               </View>
-              
+
               <View style={styles.termsSection}>
                 <Text style={styles.termsTitle}>Terms & Conditions</Text>
                 <Text style={styles.termsText}>
-                  • Rewards are issued after the referred user completes their first ride{'\n'}
-                  • Each user can refer up to 10 friends per month{'\n'}
-                  • Rewards expire 30 days after issuance if not used{'\n'}
-                  • KabLux reserves the right to modify or terminate this program at any time
+                  • Rewards are issued after the referred user completes their
+                  first ride{"\n"}• Each user can refer up to 10 friends per
+                  month{"\n"}• Rewards expire 30 days after issuance if not used
+                  {"\n"}• KabLux reserves the right to modify or terminate this
+                  program at any time
                 </Text>
               </View>
             </ScrollView>
@@ -341,7 +386,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: 16,
-    paddingTop: Platform.OS === 'android' ? 16 : 40,
+    paddingTop: Platform.OS === "android" ? 16 : 40,
     backgroundColor: "black",
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
@@ -477,49 +522,49 @@ const styles = StyleSheet.create({
   // Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   copiedModal: {
-    backgroundColor: '#2C2C2C',
+    backgroundColor: "#2C2C2C",
     borderRadius: 16,
     padding: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '80%',
+    alignItems: "center",
+    justifyContent: "center",
+    width: "80%",
   },
   copiedText: {
-    color: 'white',
+    color: "white",
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginTop: 16,
     marginBottom: 4,
   },
   copiedSubText: {
-    color: '#9CA3AF',
+    color: "#9CA3AF",
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
   },
   fullModal: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 20,
-    width: '90%',
-    maxHeight: '80%',
-    overflow: 'hidden',
+    width: "90%",
+    maxHeight: "80%",
+    overflow: "hidden",
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
+    borderBottomColor: "#E5E5E5",
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#000',
+    fontWeight: "bold",
+    color: "#000",
   },
   closeButton: {
     padding: 4,
@@ -529,94 +574,94 @@ const styles = StyleSheet.create({
   },
   // Rewards Modal Styles
   rewardsSummary: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 24,
   },
   rewardStat: {
-    alignItems: 'center',
+    alignItems: "center",
     flex: 1,
   },
   rewardStatValue: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000',
+    fontWeight: "bold",
+    color: "#000",
     marginBottom: 4,
   },
   rewardStatLabel: {
     fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000',
+    fontWeight: "bold",
+    color: "#000",
     marginBottom: 16,
   },
   rewardItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: "#F0F0F0",
   },
   rewardInfo: {
     flex: 1,
   },
   rewardType: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#000',
+    fontWeight: "600",
+    color: "#000",
     marginBottom: 4,
   },
   rewardDate: {
     fontSize: 12,
-    color: '#666',
+    color: "#666",
   },
   rewardAmountContainer: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   rewardAmount: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
+    fontWeight: "bold",
+    color: "#000",
     marginBottom: 4,
   },
   rewardStatus: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   statusCompleted: {
-    color: 'green',
+    color: "green",
   },
   statusPending: {
-    color: 'orange',
+    color: "orange",
   },
   statusEarned: {
-    color: 'blue',
+    color: "blue",
   },
   // How It Works Modal Styles
   stepContainer: {
     marginBottom: 24,
   },
   step: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 20,
   },
   stepNumber: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#FEB914',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#FEB914",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 16,
   },
   stepNumberText: {
-    color: '#000',
-    fontWeight: 'bold',
+    color: "#000",
+    fontWeight: "bold",
     fontSize: 16,
   },
   stepContent: {
@@ -624,30 +669,30 @@ const styles = StyleSheet.create({
   },
   stepTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
+    fontWeight: "bold",
+    color: "#000",
     marginBottom: 4,
   },
   stepDescription: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     lineHeight: 20,
   },
   termsSection: {
-    backgroundColor: '#F8F8F8',
+    backgroundColor: "#F8F8F8",
     borderRadius: 12,
     padding: 16,
     marginTop: 16,
   },
   termsTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
+    fontWeight: "bold",
+    color: "#000",
     marginBottom: 12,
   },
   termsText: {
     fontSize: 12,
-    color: '#666',
+    color: "#666",
     lineHeight: 18,
   },
 });

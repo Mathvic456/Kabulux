@@ -1,17 +1,16 @@
+import CentralModal from "@/components/CentralModal";
+import { useRedeemRewards, useRiderAnalytics } from "@/services/riderAnalytics.service";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
-  Modal,
   Platform,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type RedeemPointsScreenProps = {
   goBack: () => void;
@@ -20,68 +19,44 @@ type RedeemPointsScreenProps = {
 const RedeemPointsScreen: React.FC<RedeemPointsScreenProps> = ({ goBack }) => {
   const [isConvertModalVisible, setIsConvertModalVisible] = useState(false);
   const [pointsToConvert, setPointsToConvert] = useState("");
-  const [totalPoints, setTotalPoints] = useState(4250); // Starting points
-  const [conversionResult, setConversionResult] = useState({ show: false, amount: 0 });
-  const [isLoading, setIsLoading] = useState(false);
+  const [conversionResult, setConversionResult] = useState({
+    show: false,
+    amount: 0,
+  });
   const [errorModal, setErrorModal] = useState({ show: false, message: "" });
 
-  // Sample points history data
-  const pointsHistory = [
-    {
-      id: 1,
-      location: "Selldragon Hotel lekki",
-      date: "Oct 30 - 14:50 Completed",
-      points: "50ypts",
-    },
-    {
-      id: 2,
-      location: "Victoria Island Mall",
-      date: "Oct 28 - 10:30 Completed",
-      points: "75ypts",
-    },
-    {
-      id: 3,
-      location: "Lekki Conservation Centre",
-      date: "Oct 25 - 16:20 Completed",
-      points: "60ypts",
-    },
-  ];
+  const {
+    data: riderAnalyticsData,
+    isLoading: analyticsIsLoading,
+    isError,
+  } = useRiderAnalytics();
+  const { mutate: redeem, isPending: redeemIsLoading } = useRedeemRewards();
+
+  const totalPoints = riderAnalyticsData?.total_points || 0;
 
   const handleConvertPoints = () => {
     setIsConvertModalVisible(true);
   };
 
   const handleConversion = () => {
-    const points = parseInt(pointsToConvert);
-    
-    if (isNaN(points) || points <= 0) {
-      setErrorModal({ show: true, message: "Please enter a valid number of points to convert." });
-      return;
-    }
-    
-    if (points > totalPoints) {
-      setErrorModal({ show: true, message: "You don't have enough points to convert." });
-      return;
-    }
-    
-    // Show loading state
-    setIsLoading(true);
-    
-    // Simulate API call with timeout
-    setTimeout(() => {
-      const convertedAmount = points * 10; // Each point is worth 10 naira
-      
-      // Update total points
-      setTotalPoints(totalPoints - points);
-      
-      // Show conversion result
-      setConversionResult({ show: true, amount: convertedAmount });
-      
-      // Reset input and close modal
-      setPointsToConvert("");
-      setIsConvertModalVisible(false);
-      setIsLoading(false);
-    }, 1500);
+    // 1. Trigger the mutation
+    redeem(undefined, {
+      onSuccess: (response) => {
+        setIsConvertModalVisible(false);
+
+        setConversionResult({
+          show: true,
+          amount: response?.converted_amount || totalPoints * 10,
+        });
+      },
+      onError: (error: any) => {
+        setIsConvertModalVisible(false);
+        const serverMessage =
+          error.response?.data?.message ||
+          "Failed to convert points. Please try again.";
+        setErrorModal({ show: true, message: serverMessage });
+      },
+    });
   };
 
   const closeResultModal = () => {
@@ -96,10 +71,7 @@ const RedeemPointsScreen: React.FC<RedeemPointsScreenProps> = ({ goBack }) => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={goBack}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={goBack}>
           <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Loyalty & Rewards</Text>
@@ -111,36 +83,9 @@ const RedeemPointsScreen: React.FC<RedeemPointsScreenProps> = ({ goBack }) => {
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Your Points Balance</Text>
           <View style={styles.sectionDivider} />
-          <Text style={styles.pointsBalance}>{totalPoints.toLocaleString()}ypts</Text>
-          <Text style={styles.sectionTitle}>Points earning History</Text>
-          <View style={styles.sectionDivider} />
-        </View>
-
-        {/* Points History Card */}
-        <View style={styles.infoCard}>
-          {pointsHistory.map((item, index) => (
-            <View 
-              key={item.id} 
-              style={[
-                styles.infoItem,
-                index !== pointsHistory.length - 1 && styles.infoItemBorder
-              ]}
-            >
-              <View style={styles.infoLeft}>
-                <Ionicons 
-                  name="calendar" 
-                  size={24} 
-                  color="#FEB914" 
-                  style={styles.infoIcon} 
-                />
-                <View style={styles.infoTextContainer}>
-                  <Text style={styles.infoMain}>{item.location}</Text>
-                  <Text style={styles.infoSub}>{item.date}</Text>
-                </View>
-              </View>
-              <Text style={styles.infoRightText}>{item.points}</Text>
-            </View>
-          ))}
+          <Text style={styles.pointsBalance}>
+            {analyticsIsLoading ? 0 : totalPoints.toLocaleString()} points
+          </Text>
         </View>
 
         {/* How It Works Section */}
@@ -161,7 +106,7 @@ const RedeemPointsScreen: React.FC<RedeemPointsScreenProps> = ({ goBack }) => {
         </View>
 
         {/* Convert Points Button */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.confirmButton}
           onPress={handleConvertPoints}
         >
@@ -169,131 +114,56 @@ const RedeemPointsScreen: React.FC<RedeemPointsScreenProps> = ({ goBack }) => {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Convert Points Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
+      <CentralModal
         visible={isConvertModalVisible}
-        onRequestClose={() => setIsConvertModalVisible(false)}
+        onClose={() => setIsConvertModalVisible(false)}
+        title="Convert Points"
+        subText={`Available Points: ${totalPoints.toLocaleString()} points`}
+        icon="swap-horizontal"
+        contentMode="custom"
+        onConfirm={handleConversion}
+        confirmText={redeemIsLoading ? "Converting..." : "Convert"}
+        closeText="Cancel"
+        themeColor="#FEB914"
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Convert Points</Text>
-            
-            <Text style={styles.modalText}>
-              Available Points: {totalPoints.toLocaleString()}ypts
-            </Text>
-            
-            <Text style={styles.modalInfo}>
-              Each point is valued at 10 Naira
-            </Text>
-            
-            <TextInput
-              style={styles.input}
-              placeholder="Enter points to convert"
-              placeholderTextColor="#9CA3AF"
-              keyboardType="numeric"
-              value={pointsToConvert}
-              onChangeText={setPointsToConvert}
-            />
-            
-            {pointsToConvert && !isNaN(parseInt(pointsToConvert)) && (
-              <Text style={styles.conversionPreview}>
-                {pointsToConvert} points = {parseInt(pointsToConvert) * 10} Naira
-              </Text>
-            )}
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setIsConvertModalVisible(false)}
-                disabled={isLoading}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.convertButton, isLoading && styles.disabledButton]}
-                onPress={handleConversion}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color="black" />
-                ) : (
-                  <Text style={styles.convertButtonText}>Convert</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        <Text
+          style={{
+            fontSize: 14,
+            color: "#aaa",
+            textAlign: "center",
+            marginTop: 10,
+          }}
+        >
+          You are about to convert all your loyalty points into wallet credit.
+        </Text>
+      </CentralModal>
 
-      {/* Conversion Result Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
+      {/* 2. Success Modal */}
+      <CentralModal
         visible={conversionResult.show}
-        onRequestClose={closeResultModal}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Ionicons name="checkmark-circle" size={64} color="#4CAF50" style={styles.successIcon} />
-            
-            <Text style={styles.modalTitle}>Conversion Successful!</Text>
-            
-            <Text style={styles.successText}>
-              Your wallet has been credited with {conversionResult.amount} Naira
-            </Text>
-            
-            <TouchableOpacity 
-              style={styles.successButton}
-              onPress={closeResultModal}
-            >
-              <Text style={styles.successButtonText}>Done</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        onClose={closeResultModal}
+        title="Conversion Successful!"
+        subText={`You have successfully converted your points into ₦${conversionResult.amount.toLocaleString()}.`}
+        icon="checkmark-circle"
+        themeColor="#4BB543" // Success Green
+        confirmText="Great!"
+        onConfirm={closeResultModal}
+      />
 
-      {/* Error Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
+      {/* 3. Error Modal */}
+      <CentralModal
         visible={errorModal.show}
-        onRequestClose={closeErrorModal}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Ionicons name="alert-circle" size={64} color="#FF6B6B" style={styles.errorIcon} />
-            
-            <Text style={styles.modalTitle}>Error</Text>
-            
-            <Text style={styles.errorText}>
-              {errorModal.message}
-            </Text>
-            
-            <TouchableOpacity 
-              style={styles.errorButton}
-              onPress={closeErrorModal}
-            >
-              <Text style={styles.errorButtonText}>OK</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Loading Overlay */}
-      {isLoading && (
-        <View style={styles.loadingOverlay}>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#FEB914" />
-            <Text style={styles.loadingText}>Processing conversion...</Text>
-          </View>
-        </View>
-      )}
+        onClose={closeErrorModal}
+        title="Conversion Failed"
+        subText={errorModal.message}
+        icon="alert-circle"
+        themeColor="#FF6B6B" // Error Red
+        confirmText="Try Again"
+        onConfirm={closeErrorModal}
+      />
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -310,7 +180,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: 16,
-    paddingTop: Platform.OS === 'android' ? 16 : 40,
+    paddingTop: Platform.OS === "android" ? 16 : 40,
     backgroundColor: "black",
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,

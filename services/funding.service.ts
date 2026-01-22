@@ -1,7 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "./api";
 
-
 export type FundWalletPayload = {
   amount: number;
   channel: string;
@@ -17,17 +16,16 @@ export type WalletBalanceResponse = {
   currency?: string;
 };
 
-
 export type Transaction = {
   id: string; // Changed from number to string
-  amount: string | null; 
+  amount: string | null;
   channel: string;
-  direction: "credit" | "debit" | ""; 
+  direction: "credit" | "debit" | "";
   reference: string;
   status: "success" | "pending" | "failed";
-  type: string; // API returns ""
-  created_at?: string; // Optional, as it wasn't in the provided log
-  date?: string; // Keeping for compatibility if backend adds it
+  type: string;
+  created_at?: string;
+  date?: string;
 };
 
 // CORRECTED: Matches the JSON log structure {"data": [...], "status": "success"}
@@ -84,8 +82,8 @@ const useGetMyBalance = () => {
   return useQuery({
     queryKey: ["balance"],
     queryFn: async () => {
-      const res = await api.get<any>("/wallets/my_balance/"); 
-      
+      const res = await api.get<any>("/wallets/my_balance/");
+
       console.log("DEBUG BALANCE RAW:", res);
 
       const responseData = res.data ? res.data : res;
@@ -96,23 +94,24 @@ const useGetMyBalance = () => {
       } else if (responseData.balance !== undefined) {
         return responseData;
       }
-      
+
       return { balance: 0 };
     },
   });
 };
 
-const useGetMyTransactions = (
-  options?: { enabled?: boolean; refetchInterval?: number }
-) => {
+const useGetMyTransactions = (options?: {
+  enabled?: boolean;
+  refetchInterval?: number;
+}) => {
   return useQuery({
     queryKey: ["myTransactions"],
     queryFn: async () => {
       // Using your original endpoint
       const res = await api.get<TransactionsResponse>(
-        "/wallets/my_transactions/"
+        "/wallets/my_transactions/",
       );
-      // Return the full response object so we can access .data array in the component
+      console.log("Transaction Data:", res.data);
       return res.data;
     },
     ...options,
@@ -138,7 +137,7 @@ const useCreateTransferRecipient = () => {
     mutationFn: async (data: CreateRecipientPayload) => {
       return api.post<CreateRecipientResponse>(
         "/wallets/create_transfer_recipient/",
-        data
+        data,
       );
     },
     onSuccess: (res) => {

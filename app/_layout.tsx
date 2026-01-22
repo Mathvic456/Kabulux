@@ -1,23 +1,23 @@
-import { RideCompletionModal } from '@/components/RideCompletionModal';
-import { AuthProvider, useAuth } from '@/context/AuthContext';
-import { RideProvider } from '@/context/RideContext';
-import { RideIdProvider } from '@/context/RideIdContext';
+import { RideCompletionModal } from "@/components/RideCompletionModal";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { RideProvider } from "@/context/RideContext";
+import { RideIdProvider } from "@/context/RideIdContext";
 import { WebSocketProvider } from "@/context/WebSocketProvider";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { globalLogout } from '@/scripts/auth';
-import { setAuthTokenGetter, setGlobalLogout } from '@/services/api';
+import { useForegroundNotifications } from "@/hooks/useForegroundNotifications";
+import { globalLogout } from "@/scripts/auth";
+import { setAuthTokenGetter, setGlobalLogout } from "@/services/api";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
 import "react-native-reanimated";
 import MainNavigator from "./MainNavigator";
 
-
 const queryClient = new QueryClient();
 
-// This component acts as the bridge between React Context and the Non-React API file
 function ApiAuthConnector() {
   const { getValidToken, clearTokens } = useAuth();
+  useForegroundNotifications();
 
   useEffect(() => {
     setAuthTokenGetter(getValidToken);
@@ -26,11 +26,11 @@ function ApiAuthConnector() {
     setGlobalLogout(async () => {
       console.log("🚪 [App] Global logout triggered via API Interceptor");
       if (clearTokens) {
-          await clearTokens(); 
+        await clearTokens();
       }
       await globalLogout();
     });
-    
+
     console.log("✅ [App] Global logout registered");
   }, [getValidToken, clearTokens]);
 
@@ -50,7 +50,9 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <ApiAuthConnector />
-      <RideIdProvider> {/* ✅ NEW: Wrap everything */}
+      <RideIdProvider>
+        {" "}
+        {/* ✅ NEW: Wrap everything */}
         <WebSocketProvider>
           <RideProvider>
             <QueryClientProvider client={queryClient}>

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 
 export const useRiderAnalytics = () => {
@@ -7,23 +7,41 @@ export const useRiderAnalytics = () => {
     queryFn: async () => {
       try {
         console.log("📊 [RiderAnalytics] Fetching rider analytics...");
-        const response = await api.get(
-          "users/rider_analytics/"
-        );
-        console.log(
-          "✅ [RiderAnalytics] Data fetched:",
-          response.data.data
-        );
+        const response = await api.get("users/rider_analytics/");
+        console.log("✅ [RiderAnalytics] Data fetched:", response.data.data);
         return response.data.data;
       } catch (error: any) {
         console.error(
           "❌ [RiderAnalytics] Error fetching analytics:",
-          error.response?.data || error.message
+          error.response?.data || error.message,
         );
         throw error;
       }
     },
     retry: 1,
     retryDelay: 1000,
+  });
+};
+
+export const useRedeemRewards = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      console.log(" [RedeemRewards] Starting redemption...");
+      const response = await api.post("rewards/redeem/");
+
+      console.log("[RedeemRewards] Response:", response.data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rider_analytics"] });
+    },
+    onError: (error: any) => {
+      console.error(
+        "❌ [RedeemRewards] Error redeeming points:",
+        error.response?.data || error.message,
+      );
+    },
   });
 };

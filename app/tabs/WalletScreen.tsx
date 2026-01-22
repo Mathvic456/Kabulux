@@ -2,7 +2,7 @@ import {
   Transaction,
   useFundWalletEndPoint,
   useGetMyBalance,
-  useGetMyTransactions
+  useGetMyTransactions,
 } from "@/services/funding.service";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useMemo, useState } from "react";
@@ -14,7 +14,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 
 // Define the clean shape the UI wants to work with
@@ -27,26 +27,38 @@ interface CleanTransaction {
   status: string;
 }
 
-const WalletScreen = ({ setScreen } :
-  {setScreen: (screen: string, checkoutUrl?: string) => void}
-) => {
+const WalletScreen = ({
+  setScreen,
+}: {
+  setScreen: (screen: string, checkoutUrl?: string) => void;
+}) => {
   const [showPaymentMethodsModal, setShowPaymentMethodsModal] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("card");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<string>("card");
   const [filter, setFilter] = useState<string>("all");
   const [refreshing, setRefreshing] = useState(false);
-  
+
   const fundWallet = useFundWalletEndPoint();
-  const { data: balanceData, isLoading: balanceLoading, refetch: refetchBalance } = useGetMyBalance();
-  const { data: transactionsResponse, isLoading: transactionsLoading, refetch: refetchTransactions } = useGetMyTransactions();
+  const {
+    data: balanceData,
+    isLoading: balanceLoading,
+    refetch: refetchBalance,
+  } = useGetMyBalance();
+  const {
+    data: transactionsResponse,
+    isLoading: transactionsLoading,
+    refetch: refetchTransactions,
+  } = useGetMyTransactions();
 
   const cleanedTransactions = useMemo(() => {
-    const rawData = transactionsResponse?.data; 
-    
+    const rawData = transactionsResponse?.data;
+
     if (!rawData || !Array.isArray(rawData)) return [];
 
     return rawData.map((item: Transaction, index) => {
       const dateObj = item.created_at ? new Date(item.created_at) : new Date();
-      if (!item.created_at) dateObj.setMinutes(dateObj.getMinutes() - index * 30);
+      if (!item.created_at)
+        dateObj.setMinutes(dateObj.getMinutes() - index * 30);
       const cleanAmount = item.amount ? parseFloat(item.amount) : 0;
       let description = "Transaction";
       if (item.channel) description = `Wallet ${item.channel}`;
@@ -62,7 +74,7 @@ const WalletScreen = ({ setScreen } :
         date: dateObj,
         type,
         description,
-        status: item.status
+        status: item.status,
       } as CleanTransaction;
     });
   }, [transactionsResponse]);
@@ -71,10 +83,7 @@ const WalletScreen = ({ setScreen } :
     setRefreshing(true);
     try {
       // Refetch both balance and transactions in parallel
-      await Promise.all([
-        refetchBalance(),
-        refetchTransactions()
-      ]);
+      await Promise.all([refetchBalance(), refetchTransactions()]);
     } catch (error) {
       console.error("Error refreshing data:", error);
     } finally {
@@ -93,7 +102,7 @@ const WalletScreen = ({ setScreen } :
             setScreen("paystack", checkoutUrl);
           }
         },
-      }
+      },
     );
   };
 
@@ -110,11 +119,15 @@ const WalletScreen = ({ setScreen } :
     const monthAgo = new Date(today);
     monthAgo.setMonth(today.getMonth() - 1);
 
-    return cleanedTransactions.filter(transaction => {
+    return cleanedTransactions.filter((transaction) => {
       const txDate = transaction.date;
-      const txDay = new Date(txDate.getFullYear(), txDate.getMonth(), txDate.getDate());
+      const txDay = new Date(
+        txDate.getFullYear(),
+        txDate.getMonth(),
+        txDate.getDate(),
+      );
 
-      switch(filter) {
+      switch (filter) {
         case "today":
           return txDay.getTime() === today.getTime();
         case "week":
@@ -128,24 +141,30 @@ const WalletScreen = ({ setScreen } :
   };
 
   const groupTransactionsByMonth = (transactions: CleanTransaction[]) => {
-    const grouped: {[key: string]: CleanTransaction[]} = {};
-    
-    transactions.forEach(transaction => {
-      const monthYear = transaction.date.toLocaleString('default', { month: 'long', year: 'numeric' });
-      
+    const grouped: { [key: string]: CleanTransaction[] } = {};
+
+    transactions.forEach((transaction) => {
+      const monthYear = transaction.date.toLocaleString("default", {
+        month: "long",
+        year: "numeric",
+      });
+
       if (!grouped[monthYear]) {
         grouped[monthYear] = [];
       }
       grouped[monthYear].push(transaction);
     });
-    
+
     return grouped;
   };
 
   const formatDisplayDate = (date: Date) => {
-    const month = date.toLocaleString('default', { month: 'short' });
+    const month = date.toLocaleString("default", { month: "short" });
     const day = date.getDate();
-    const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    const time = date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
     return `${month} ${day} - ${time}`;
   };
 
@@ -154,7 +173,7 @@ const WalletScreen = ({ setScreen } :
 
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={{ paddingBottom: 100 }}
         refreshControl={
           <RefreshControl
@@ -222,7 +241,7 @@ const WalletScreen = ({ setScreen } :
                 alignItems: "center",
                 backgroundColor: "#FEB914",
                 paddingVertical: 10,
-                paddingHorizontal: 25,
+                paddingHorizontal: 20,
                 borderRadius: 30,
               }}
               onPress={handleFundWallet}
@@ -245,7 +264,7 @@ const WalletScreen = ({ setScreen } :
                 alignItems: "center",
                 backgroundColor: "#fff",
                 paddingVertical: 10,
-                paddingHorizontal: 25,
+                paddingHorizontal: 15,
                 borderRadius: 30,
               }}
               onPress={() => setScreen("redeemPoints")}
@@ -253,7 +272,6 @@ const WalletScreen = ({ setScreen } :
               <Ionicons name="gift-outline" size={18} color="#FEB914" />
               <Text
                 style={{
-                  marginLeft: 8,
                   color: "#000",
                   fontWeight: "600",
                 }}
@@ -297,6 +315,7 @@ const WalletScreen = ({ setScreen } :
               alignItems: "center",
               padding: 18,
             }}
+            onPress={() => setScreen("loyalty")}
           >
             <Text style={{ color: "#fff", flex: 1 }}>Loyalty & Rewards</Text>
             <Ionicons name="chevron-forward" size={20} color="#FEB914" />
@@ -304,13 +323,15 @@ const WalletScreen = ({ setScreen } :
         </View>
 
         {/* Transaction History Header with Filter */}
-        <View style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginHorizontal: 20,
-          marginBottom: 10,
-        }}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginHorizontal: 20,
+            marginBottom: 10,
+          }}
+        >
           <Text
             style={{
               color: "#fff",
@@ -320,7 +341,7 @@ const WalletScreen = ({ setScreen } :
           >
             Transaction History
           </Text>
-          
+
           <TouchableOpacity
             style={{
               flexDirection: "row",
@@ -340,12 +361,14 @@ const WalletScreen = ({ setScreen } :
             }}
           >
             <Ionicons name="filter" size={16} color="#FEB914" />
-            <Text style={{
-              color: "#FEB914",
-              marginLeft: 6,
-              fontSize: 14,
-              fontWeight: "600",
-            }}>
+            <Text
+              style={{
+                color: "#FEB914",
+                marginLeft: 6,
+                fontSize: 14,
+                fontWeight: "600",
+              }}
+            >
               {filter.charAt(0).toUpperCase() + filter.slice(1)}
             </Text>
           </TouchableOpacity>
@@ -355,87 +378,143 @@ const WalletScreen = ({ setScreen } :
         {transactionsLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#FEB914" />
-            <Text style={{ color: "#fff", fontSize: 14, marginTop: 10, textAlign: "center" }}>
+            <Text
+              style={{
+                color: "#fff",
+                fontSize: 14,
+                marginTop: 10,
+                textAlign: "center",
+              }}
+            >
               Loading transactions...
             </Text>
           </View>
         ) : Object.entries(groupedTransactions).length > 0 ? (
-          Object.entries(groupedTransactions).map(([monthYear, transactions]) => (
-            <View key={monthYear} style={styles.monthGroupContainer}>
-              {/* Month Label */}
-              <View
-                style={{
-                  alignSelf: "flex-end",
-                  backgroundColor: "#000",
-                  paddingHorizontal: 10,
-                  borderRadius: 8,
-                  marginBottom: 10,
-                }}
-              >
-                <Text style={{ color: "#FEB914", fontWeight: "600" }}>{monthYear}</Text>
-              </View>
-
-              {transactions.map((tx, index) => (
+          Object.entries(groupedTransactions).map(
+            ([monthYear, transactions]) => (
+              <View key={monthYear} style={styles.monthGroupContainer}>
+                {/* Month Label */}
                 <View
-                  key={tx.id}
                   style={{
-                    borderBottomWidth: index !== transactions.length - 1 ? 1 : 0,
-                    borderBottomColor: "#FEB91433",
-                    paddingVertical: 12,
+                    alignSelf: "flex-end",
+                    backgroundColor: "#000",
+                    paddingHorizontal: 10,
+                    borderRadius: 8,
+                    marginBottom: 10,
                   }}
                 >
-                  <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-                    <Text style={{ color: "#fff", fontSize: 16, fontWeight: "500", textTransform: 'capitalize' }}>
-                      {tx.description}
-                    </Text>
-                    <Text style={{ 
-                      fontSize: 10, 
-                      color: tx.status === 'success' ? '#4CAF50' : '#FEB914',
-                      borderWidth: 1,
-                      borderColor: tx.status === 'success' ? '#4CAF50' : '#FEB914',
-                      paddingHorizontal: 6,
-                      borderRadius: 4,
-                      alignSelf: 'center'
-                    }}>
-                      {tx.status}
-                    </Text>
-                  </View>
+                  <Text style={{ color: "#FEB914", fontWeight: "600" }}>
+                    {monthYear}
+                  </Text>
+                </View>
 
+                {transactions.map((tx, index) => (
                   <View
+                    key={tx.id}
                     style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      marginTop: 5,
-                      justifyContent: "space-between"
+                      borderBottomWidth:
+                        index !== transactions.length - 1 ? 1 : 0,
+                      borderBottomColor: "#FEB91433",
+                      paddingVertical: 12,
                     }}
                   >
-                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                      <Ionicons name="calendar-outline" size={14} color="#FEB914" />
-                      <Text style={{ color: "#aaa", marginLeft: 6, fontSize: 12 }}>
-                        {formatDisplayDate(tx.date)}
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: "#fff",
+                          fontSize: 16,
+                          fontWeight: "500",
+                          textTransform: "capitalize",
+                        }}
+                      >
+                        {tx.description}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 10,
+                          color:
+                            tx.status === "success" ? "#4CAF50" : "#FEB914",
+                          borderWidth: 1,
+                          borderColor:
+                            tx.status === "success" ? "#4CAF50" : "#FEB914",
+                          paddingHorizontal: 6,
+                          borderRadius: 4,
+                          alignSelf: "center",
+                        }}
+                      >
+                        {tx.status}
                       </Text>
                     </View>
 
-                    <Text
+                    <View
                       style={{
-                        color: tx.type === "credit" ? "#4CAF50" : (tx.type === "debit" ? "#F44336" : "#aaa"),
-                        fontSize: 16,
-                        fontWeight: "bold",
-                        textAlign: "right",
+                        flexDirection: "row",
+                        alignItems: "center",
+                        marginTop: 5,
+                        justifyContent: "space-between",
                       }}
                     >
-                      {tx.type === "credit" ? "+" : (tx.type === "debit" ? "-" : "")}
-                      ₦{tx.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                    </Text>
+                      <View
+                        style={{ flexDirection: "row", alignItems: "center" }}
+                      >
+                        <Ionicons
+                          name="calendar-outline"
+                          size={14}
+                          color="#FEB914"
+                        />
+                        <Text
+                          style={{ color: "#aaa", marginLeft: 6, fontSize: 12 }}
+                        >
+                          {formatDisplayDate(tx.date)}
+                        </Text>
+                      </View>
+
+                      <Text
+                        style={{
+                          color:
+                            tx.type === "credit"
+                              ? "#4CAF50"
+                              : tx.type === "debit"
+                                ? "#F44336"
+                                : "#aaa",
+                          fontSize: 16,
+                          fontWeight: "bold",
+                          textAlign: "right",
+                        }}
+                      >
+                        {tx.type === "credit"
+                          ? "+"
+                          : tx.type === "debit"
+                            ? "-"
+                            : ""}
+                        ₦
+                        {tx.amount.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </Text>
+                    </View>
                   </View>
-                </View>
-              ))}
-            </View>
-          ))
+                ))}
+              </View>
+            ),
+          )
         ) : (
           <View style={styles.emptyContainer}>
             <Ionicons name="receipt-outline" size={48} color="#FEB914" />
-            <Text style={{ color: "#fff", fontSize: 16, marginTop: 10, textAlign: "center" }}>
+            <Text
+              style={{
+                color: "#fff",
+                fontSize: 16,
+                marginTop: 10,
+                textAlign: "center",
+              }}
+            >
               No transactions found for {filter} filter
             </Text>
           </View>
@@ -453,29 +532,37 @@ const WalletScreen = ({ setScreen } :
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Payment Method</Text>
-              <TouchableOpacity onPress={() => setShowPaymentMethodsModal(false)}>
+              <TouchableOpacity
+                onPress={() => setShowPaymentMethodsModal(false)}
+              >
                 <Ionicons name="close" size={24} color="#fff" />
               </TouchableOpacity>
             </View>
-            
+
             <View style={styles.paymentMethodsContainer}>
               <TouchableOpacity
                 style={[
                   styles.paymentMethodItem,
-                  selectedPaymentMethod === "card" && styles.selectedPaymentMethod
+                  selectedPaymentMethod === "card" &&
+                    styles.selectedPaymentMethod,
                 ]}
                 onPress={() => handlePaymentMethodSelect("card")}
               >
                 <View style={styles.paymentMethodLeft}>
-                  <Ionicons 
-                    name="card-outline" 
-                    size={24} 
-                    color={selectedPaymentMethod === "card" ? "#000" : "#FEB914"} 
+                  <Ionicons
+                    name="card-outline"
+                    size={24}
+                    color={
+                      selectedPaymentMethod === "card" ? "#000" : "#FEB914"
+                    }
                   />
-                  <Text style={[
-                    styles.paymentMethodText,
-                    selectedPaymentMethod === "card" && styles.selectedPaymentMethodText
-                  ]}>
+                  <Text
+                    style={[
+                      styles.paymentMethodText,
+                      selectedPaymentMethod === "card" &&
+                        styles.selectedPaymentMethodText,
+                    ]}
+                  >
                     Card
                   </Text>
                 </View>
@@ -483,24 +570,30 @@ const WalletScreen = ({ setScreen } :
                   <Ionicons name="checkmark-circle" size={24} color="#FEB914" />
                 )}
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={[
                   styles.paymentMethodItem,
-                  selectedPaymentMethod === "cash" && styles.selectedPaymentMethod
+                  selectedPaymentMethod === "cash" &&
+                    styles.selectedPaymentMethod,
                 ]}
                 onPress={() => handlePaymentMethodSelect("cash")}
               >
                 <View style={styles.paymentMethodLeft}>
-                  <Ionicons 
-                    name="cash-outline" 
-                    size={24} 
-                    color={selectedPaymentMethod === "cash" ? "#000" : "#FEB914"} 
+                  <Ionicons
+                    name="cash-outline"
+                    size={24}
+                    color={
+                      selectedPaymentMethod === "cash" ? "#000" : "#FEB914"
+                    }
                   />
-                  <Text style={[
-                    styles.paymentMethodText,
-                    selectedPaymentMethod === "cash" && styles.selectedPaymentMethodText
-                  ]}>
+                  <Text
+                    style={[
+                      styles.paymentMethodText,
+                      selectedPaymentMethod === "cash" &&
+                        styles.selectedPaymentMethodText,
+                    ]}
+                  >
                     Cash
                   </Text>
                 </View>
@@ -509,7 +602,7 @@ const WalletScreen = ({ setScreen } :
                 )}
               </TouchableOpacity>
             </View>
-            
+
             <TouchableOpacity
               style={styles.confirmButton}
               onPress={() => setShowPaymentMethodsModal(false)}
@@ -637,7 +730,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FEB914",
     paddingVertical: 16,
     borderRadius: 30,
-    alignItems: "center", 
+    alignItems: "center",
   },
   confirmButtonText: {
     color: "#000",

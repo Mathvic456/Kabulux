@@ -5,18 +5,19 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert, // <--- Added Alert Import
-  Modal, Platform, RefreshControl,
+  Modal,
+  Platform,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
-} from 'react-native';
+  View,
+} from "react-native";
 
-import * as FileSystem from 'expo-file-system'; // Standard import (SDK 54+)
-import * as Print from 'expo-print';
-import * as Sharing from 'expo-sharing';
-
+import * as FileSystem from "expo-file-system"; // Standard import (SDK 54+)
+import * as Print from "expo-print";
+import * as Sharing from "expo-sharing";
 
 interface BookingsScreenProps {
   setScreen: (screen: string) => void;
@@ -24,21 +25,32 @@ interface BookingsScreenProps {
   next: () => void;
 }
 
-const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedRide, next }) => {
+const BookingsScreen: React.FC<BookingsScreenProps> = ({
+  setScreen,
+  setSelectedRide,
+  next,
+}) => {
   const [activeTab, setActiveTab] = useState<"ride" | "delivery">("ride");
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<Ride | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [filter, setFilter] = useState<"all" | "today" | "week" | "month">("all");
+  const [filter, setFilter] = useState<"all" | "today" | "week" | "month">(
+    "all",
+  );
 
-  const { data: rideHistoryData, isLoading, refetch, isRefetching } = useRideHistory(true);
+  const {
+    data: rideHistoryData,
+    isLoading,
+    refetch,
+    isRefetching,
+  } = useRideHistory(true);
 
   const transformRides = (results: RideHistoryAPIItem[]): Ride[] => {
     if (!results || !Array.isArray(results)) return [];
 
     return results.map((item, index) => ({
       id: String(index),
-      car: "Kablux Ride", 
+      car: "Kablux Ride",
       date: item.start_time,
       driver: item.driver || "Unknown Driver",
       rating: 5,
@@ -51,55 +63,61 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
   };
 
   const filterRidesByDate = (rides: Ride[], filterType: typeof filter) => {
-  if (filterType === "all") return rides;
-  
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  
-  return rides.filter(ride => {
-    const rideDate = new Date(ride.date);
-    
-    switch (filterType) {
-      case "today":
-        const rideDay = new Date(rideDate.getFullYear(), rideDate.getMonth(), rideDate.getDate());
-        return rideDay.getTime() === today.getTime();
-      
-      case "week":
-        const weekAgo = new Date(today);
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        return rideDate >= weekAgo;
-      
-      case "month":
-        const monthAgo = new Date(today);
-        monthAgo.setMonth(monthAgo.getMonth() - 1);
-        return rideDate >= monthAgo;
-      
-      default:
-        return true;
-    }
-  });
-};
+    if (filterType === "all") return rides;
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    return rides.filter((ride) => {
+      const rideDate = new Date(ride.date);
+
+      switch (filterType) {
+        case "today":
+          const rideDay = new Date(
+            rideDate.getFullYear(),
+            rideDate.getMonth(),
+            rideDate.getDate(),
+          );
+          return rideDay.getTime() === today.getTime();
+
+        case "week":
+          const weekAgo = new Date(today);
+          weekAgo.setDate(weekAgo.getDate() - 7);
+          return rideDate >= weekAgo;
+
+        case "month":
+          const monthAgo = new Date(today);
+          monthAgo.setMonth(monthAgo.getMonth() - 1);
+          return rideDate >= monthAgo;
+
+        default:
+          return true;
+      }
+    });
+  };
 
   const onRefresh = () => refetch();
 
-  const rides = rideHistoryData?.results ? transformRides(rideHistoryData.results) : [];
+  const rides = rideHistoryData?.results
+    ? transformRides(rideHistoryData.results)
+    : [];
   const filteredRides = filterRidesByDate(
-  rides.filter((ride) => ride.type === activeTab),
-  filter
-);
+    rides.filter((ride) => ride.type === activeTab),
+    filter,
+  );
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "Date not available";
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return "Invalid Date";
-      
-      return date.toLocaleDateString('en-US', { 
-        month: 'long', 
-        day: 'numeric',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+
+      return date.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       });
     } catch (error) {
       return dateString;
@@ -108,8 +126,8 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
 
   const formatCurrency = (amount: number) => {
     if (amount === undefined || amount === null) return "₦0";
-    const value = amount / 100; 
-    return '₦' + value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    const value = amount / 100;
+    return "₦" + value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
   const generateReceiptHTML = (ride: Ride) => {
@@ -141,7 +159,7 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
           .total-amount { color: #f7b731; }
           .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #f0f0f0; color: #666; font-size: 14px; }
           .thank-you { color: #000; font-weight: bold; margin-bottom: 10px; }
-          .status-badge { display: inline-block; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 20px; background-color: ${ride.status === 'completed' ? '#4CAF50' : '#f7b731'}; color: white; }
+          .status-badge { display: inline-block; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 20px; background-color: ${ride.status === "completed" ? "#4CAF50" : "#f7b731"}; color: white; }
         </style>
       </head>
       <body>
@@ -160,11 +178,11 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
             </div>
             <div class="info-row">
               <span class="info-label">Pickup Location</span>
-              <span class="info-value">${ride.pickupAddress || 'N/A'}</span>
+              <span class="info-value">${ride.pickupAddress || "N/A"}</span>
             </div>
             <div class="info-row">
               <span class="info-label">Drop-off Location</span>
-              <span class="info-value">${ride.dropoffAddress || 'N/A'}</span>
+              <span class="info-value">${ride.dropoffAddress || "N/A"}</span>
             </div>
             <div class="info-row">
               <span class="info-label">Driver</span>
@@ -194,7 +212,7 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({ setScreen, setSelectedR
     `;
   };
 
-const downloadReceipt = async (ride: Ride) => {
+  const downloadReceipt = async (ride: Ride) => {
     if (!ride) return;
 
     try {
@@ -209,21 +227,23 @@ const downloadReceipt = async (ride: Ride) => {
         base64: true,
       });
 
-      if (Platform.OS === 'android' && FileSystem.StorageAccessFramework) {
+      if (Platform.OS === "android" && FileSystem.StorageAccessFramework) {
         try {
           // Ask user for permission to save in a specific folder
-          const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+          const permissions =
+            await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
 
           if (permissions.granted) {
             // Create the file in the chosen folder
-            const newFileUri = await FileSystem.StorageAccessFramework.createFileAsync(
-              permissions.directoryUri,
-              fileName,
-              'application/pdf'
-            );
+            const newFileUri =
+              await FileSystem.StorageAccessFramework.createFileAsync(
+                permissions.directoryUri,
+                fileName,
+                "application/pdf",
+              );
 
             // Read the temp file and write to the new location
-            // Note: We already have base64 data available if we wanted, 
+            // Note: We already have base64 data available if we wanted,
             // but reading from the tempUri is reliable.
             const fileString = await FileSystem.readAsStringAsync(tempUri, {
               encoding: FileSystem.EncodingType.Base64,
@@ -233,13 +253,16 @@ const downloadReceipt = async (ride: Ride) => {
               encoding: FileSystem.EncodingType.Base64,
             });
 
-            Alert.alert('Success', 'Receipt saved to your Downloads folder');
+            Alert.alert("Success", "Receipt saved to your Downloads folder");
             return; // Exit function on success
           } else {
-            return; 
+            return;
           }
         } catch (androidError) {
-          console.log("Android SAF failed, falling back to Share:", androidError);
+          console.log(
+            "Android SAF failed, falling back to Share:",
+            androidError,
+          );
           // If SAF fails for any reason, fall through to the Sharing code below
         }
       }
@@ -250,23 +273,23 @@ const downloadReceipt = async (ride: Ride) => {
       // This runs for iOS OR if Android SAF failed/was unavailable
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(tempUri, {
-          mimeType: 'application/pdf',
-          dialogTitle: 'Save Receipt',
-          UTI: 'com.adobe.pdf',
+          mimeType: "application/pdf",
+          dialogTitle: "Save Receipt",
+          UTI: "com.adobe.pdf",
         });
       } else {
-        Alert.alert('Error', 'Sharing is not available on this device');
+        Alert.alert("Error", "Sharing is not available on this device");
       }
-
     } catch (error) {
       console.error("Receipt Download Error:", error);
-      Alert.alert('Error', 'Could not download receipt. Please try again.');
+      Alert.alert("Error", "Could not download receipt. Please try again.");
     } finally {
       setIsDownloading(false);
     }
   };
 
   const openReceiptModal = (ride: Ride) => {
+    console.log("Opening modal with ride:", ride);
     setSelectedReceipt(ride);
     setShowReceiptModal(true);
   };
@@ -289,15 +312,15 @@ const downloadReceipt = async (ride: Ride) => {
         ) : (
           <MaterialIcons name="local-shipping" size={80} color="#333" />
         )}
-        
+
         <Text style={styles.emptyTitle}>
           {isRide ? "No rides found" : "No deliveries found"}
         </Text>
         <Text style={[styles.emptySubtitle]}>
-          {isRide ? "Take a trip with Kablux today" : "Send your packages with Kablux"}
+          {isRide
+            ? "Take a trip with Kablux today"
+            : "Send your packages with Kablux"}
         </Text>
-
-    
       </View>
     );
   };
@@ -311,51 +334,77 @@ const downloadReceipt = async (ride: Ride) => {
           onPress={() => setActiveTab("ride")}
           style={[styles.tab, activeTab === "ride" && styles.activeTab]}
         >
-          <Ionicons name="car" size={16} color={activeTab === "ride" ? "#000" : "#fff"} />
-          <Text style={[styles.tabText, activeTab === "ride" && styles.activeTabText]}> Rides</Text>
+          <Ionicons
+            name="car"
+            size={16}
+            color={activeTab === "ride" ? "#000" : "#fff"}
+          />
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === "ride" && styles.activeTabText,
+            ]}
+          >
+            {" "}
+            Rides
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           onPress={() => setActiveTab("delivery")}
           style={[styles.tab, activeTab === "delivery" && styles.activeTab]}
         >
-          <MaterialIcons name="local-shipping" size={16} color={activeTab === "delivery" ? "#000" : "#fff"} />
-          <Text style={[styles.tabText, activeTab === "delivery" && styles.activeTabText]}> Delivery</Text>
+          <MaterialIcons
+            name="local-shipping"
+            size={16}
+            color={activeTab === "delivery" ? "#000" : "#fff"}
+          />
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === "delivery" && styles.activeTabText,
+            ]}
+          >
+            {" "}
+            Delivery
+          </Text>
         </TouchableOpacity>
       </View>
       {/* Filter Button */}
-<View style={{ paddingHorizontal: 20, marginBottom: 15 }}>
-  <TouchableOpacity
-    style={{
-      flexDirection: "row",
-      alignItems: "center",
-      backgroundColor: "#111",
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 20,
-      borderWidth: 1,
-      borderColor: "#FEB914",
-      alignSelf: "flex-start",
-    }}
-    onPress={() => {
-      const filters = ["all", "today", "week", "month"];
-      const currentIndex = filters.indexOf(filter);
-      const nextIndex = (currentIndex + 1) % filters.length;
-      setFilter(filters[nextIndex] as typeof filter);
-    }}
-  >
-    <Ionicons name="filter" size={16} color="#FEB914" />
-    <Text style={{
-      color: "#FEB914",
-      marginLeft: 6,
-      fontSize: 14,
-      fontWeight: "600",
-    }}>
-      {filter.charAt(0).toUpperCase() + filter.slice(1)}
-    </Text>
-  </TouchableOpacity>
-</View>
-      <ScrollView 
+      <View style={{ paddingHorizontal: 20, marginBottom: 15 }}>
+        <TouchableOpacity
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: "#111",
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 20,
+            borderWidth: 1,
+            borderColor: "#FEB914",
+            alignSelf: "flex-start",
+          }}
+          onPress={() => {
+            const filters = ["all", "today", "week", "month"];
+            const currentIndex = filters.indexOf(filter);
+            const nextIndex = (currentIndex + 1) % filters.length;
+            setFilter(filters[nextIndex] as typeof filter);
+          }}
+        >
+          <Ionicons name="filter" size={16} color="#FEB914" />
+          <Text
+            style={{
+              color: "#FEB914",
+              marginLeft: 6,
+              fontSize: 14,
+              fontWeight: "600",
+            }}
+          >
+            {filter.charAt(0).toUpperCase() + filter.slice(1)}
+          </Text>
+        </TouchableOpacity>
+      </View>
+      <ScrollView
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
         refreshControl={
           <RefreshControl
@@ -366,17 +415,15 @@ const downloadReceipt = async (ride: Ride) => {
           />
         }
       >
-        {filteredRides.length > 0 ? (
-          filteredRides.map((ride, index) => (
-            <RideCard
-              key={`${ride.id}-${index}`}
-              ride={ride}
-              onPress={() => openReceiptModal(ride)}
-            />
-          ))
-        ) : (
-          renderEmptyState()
-        )}
+        {filteredRides.length > 0
+          ? filteredRides.map((ride, index) => (
+              <RideCard
+                key={`${ride.id}-${index}`}
+                ride={ride}
+                onPress={() => openReceiptModal(ride)}
+              />
+            ))
+          : renderEmptyState()}
       </ScrollView>
 
       <Modal
@@ -399,38 +446,59 @@ const downloadReceipt = async (ride: Ride) => {
                 <ScrollView style={styles.receiptScroll}>
                   <View style={styles.receiptDetail}>
                     <View style={styles.receiptHeader}>
-                      <Text style={styles.receiptId}>Receipt #{selectedReceipt.id}</Text>
-                      <View style={[
-                        styles.statusBadge,
-                        { backgroundColor: selectedReceipt.status === 'completed' ? '#4CAF50' : '#f7b731' }
-                      ]}>
-                        <Text style={styles.statusText}>{(selectedReceipt.status || "unknown").toUpperCase()}</Text>
+                      <Text style={styles.receiptId}>
+                        Receipt #{selectedReceipt.id}
+                      </Text>
+                      <View
+                        style={[
+                          styles.statusBadge,
+                          {
+                            backgroundColor:
+                              selectedReceipt.status === "completed"
+                                ? "#4CAF50"
+                                : "#f7b731",
+                          },
+                        ]}
+                      >
+                        <Text style={styles.statusText}>
+                          {(selectedReceipt.status || "unknown").toUpperCase()}
+                        </Text>
                       </View>
                     </View>
 
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Date & Time</Text>
-                      <Text style={styles.detailValue}>{formatDate(selectedReceipt.date)}</Text>
+                      <Text style={styles.detailValue}>
+                        {formatDate(selectedReceipt.date)}
+                      </Text>
                     </View>
 
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Pickup Location</Text>
-                      <Text style={styles.detailValue}>{selectedReceipt.pickupAddress || 'N/A'}</Text>
+                      <Text style={styles.detailValue}>
+                        {selectedReceipt.pickupAddress || "N/A"}
+                      </Text>
                     </View>
 
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Drop-off Location</Text>
-                      <Text style={styles.detailValue}>{selectedReceipt.dropoffAddress || 'N/A'}</Text>
+                      <Text style={styles.detailValue}>
+                        {selectedReceipt.dropoffAddress || "N/A"}
+                      </Text>
                     </View>
 
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Driver</Text>
-                      <Text style={styles.detailValue}>{selectedReceipt.driver}</Text>
+                      <Text style={styles.detailValue}>
+                        {selectedReceipt.driver}
+                      </Text>
                     </View>
 
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Service Type</Text>
-                      <Text style={styles.detailValue}>{selectedReceipt.car}</Text>
+                      <Text style={styles.detailValue}>
+                        {selectedReceipt.car}
+                      </Text>
                     </View>
 
                     <View style={styles.totalSection}>
@@ -441,13 +509,17 @@ const downloadReceipt = async (ride: Ride) => {
                     </View>
 
                     <View style={styles.receiptFooter}>
-                      <Text style={styles.thankYou}>Thank you for riding with Kablux!</Text>
-                      <Text style={styles.supportText}>Need help? Contact Hello@kabluxe.com</Text>
+                      <Text style={styles.thankYou}>
+                        Thank you for riding with Kablux!
+                      </Text>
+                      <Text style={styles.supportText}>
+                        Need help? Contact Hello@kabluxe.com
+                      </Text>
                     </View>
                   </View>
                 </ScrollView>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.downloadButton}
                   onPress={() => downloadReceipt(selectedReceipt)}
                   disabled={isDownloading}
@@ -457,7 +529,9 @@ const downloadReceipt = async (ride: Ride) => {
                   ) : (
                     <>
                       <Ionicons name="download" size={20} color="#000" />
-                      <Text style={styles.downloadButtonText}>Download Receipt</Text>
+                      <Text style={styles.downloadButtonText}>
+                        Download Receipt
+                      </Text>
                     </>
                   )}
                 </TouchableOpacity>
@@ -553,33 +627,33 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   modalContent: {
-    width: '95%',
-    maxHeight: '85%',
-    backgroundColor: '#1a1a1a',
+    width: "95%",
+    maxHeight: "85%",
+    backgroundColor: "#1a1a1a",
     borderRadius: 20,
-    overflow: 'hidden',
+    overflow: "hidden",
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: "#333",
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
-    backgroundColor: '#111',
+    backgroundColor: "#111",
     borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    borderBottomColor: "#333",
   },
   modalTitle: {
     fontSize: 22,
-    fontWeight: '700',
-    color: '#fff',
+    fontWeight: "700",
+    color: "#fff",
   },
   receiptScroll: {
     flex: 1,
@@ -588,18 +662,18 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   receiptHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 24,
     paddingBottom: 16,
     borderBottomWidth: 2,
-    borderBottomColor: '#333',
+    borderBottomColor: "#333",
   },
   receiptId: {
-    color: '#888',
+    color: "#888",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   statusBadge: {
     paddingHorizontal: 12,
@@ -607,71 +681,71 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   statusText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#222',
+    borderBottomColor: "#222",
   },
   detailLabel: {
-    color: '#888',
+    color: "#888",
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   detailValue: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 15,
-    fontWeight: '600',
-    textAlign: 'right',
+    fontWeight: "600",
+    textAlign: "right",
     flex: 1,
-    flexWrap: 'wrap',
+    flexWrap: "wrap",
     marginLeft: 10,
   },
   totalSection: {
-    backgroundColor: '#f7b731',
+    backgroundColor: "#f7b731",
     borderRadius: 16,
     padding: 20,
     marginTop: 20,
     marginBottom: 20,
   },
   totalLabel: {
-    color: '#000',
+    color: "#000",
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 8,
   },
   totalValue: {
-    color: '#000',
+    color: "#000",
     fontSize: 28,
-    fontWeight: '800',
+    fontWeight: "800",
   },
   receiptFooter: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingTop: 20,
     borderTopWidth: 2,
-    borderTopColor: '#333',
+    borderTopColor: "#333",
   },
   thankYou: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 8,
   },
   supportText: {
-    color: '#888',
+    color: "#888",
     fontSize: 13,
   },
   downloadButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f7b731',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#f7b731",
     padding: 18,
     margin: 20,
     marginTop: 0,
@@ -679,8 +753,8 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   downloadButtonText: {
-    color: '#000',
-    fontWeight: '700',
+    color: "#000",
+    fontWeight: "700",
     fontSize: 16,
   },
 });
