@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { ComingSoonModal } from "./HomeScreen";
 
 // Define the clean shape the UI wants to work with
 interface CleanTransaction {
@@ -35,6 +36,8 @@ const WalletScreen = ({
   const [showPaymentMethodsModal, setShowPaymentMethodsModal] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<string>("card");
+  const [showComingSoonModal, setShowComingSoonModal] =
+    useState<boolean>(false);
   const [filter, setFilter] = useState<string>("all");
   const [refreshing, setRefreshing] = useState(false);
 
@@ -636,6 +639,11 @@ const WalletScreen = ({
           <Ionicons name="person-outline" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
+
+      <ComingSoonModal
+        isVisible={showComingSoonModal}
+        onClose={() => setShowComingSoonModal(false)}
+      />
     </View>
   );
 };
@@ -651,6 +659,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 20,
   },
+
   monthGroupContainer: {
     backgroundColor: "#111",
     marginHorizontal: 20,

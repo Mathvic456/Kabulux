@@ -11,7 +11,7 @@ import {
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View
+  View,
 } from "react-native";
 
 export default function HelpAndSupportScreen({
@@ -31,7 +31,7 @@ export default function HelpAndSupportScreen({
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
 
-  const SUPPORT_EMAIL = "Hello@kabluxe.com"; // ✅ change if needed
+  const SUPPORT_EMAIL = "Hello@kabluxe.com"; // change if needed
 
   const closeModal = () => {
     setActiveModal(null);
@@ -138,27 +138,18 @@ export default function HelpAndSupportScreen({
               key={index}
               style={[
                 styles.infoItem,
-                index !== supportOptions.length - 1 &&
-                  styles.infoItemBorder,
+                index !== supportOptions.length - 1 && styles.infoItemBorder,
               ]}
               onPress={item.onPress}
             >
               <View style={styles.infoLeft}>
-                <Ionicons
-                  name={item.icon as any}
-                  size={24}
-                  color="#FEB914"
-                />
+                <Ionicons name={item.icon as any} size={24} color="#FEB914" />
                 <View style={styles.infoTextContainer}>
                   <Text style={styles.infoMain}>{item.title}</Text>
                   <Text style={styles.infoSub}>{item.description}</Text>
                 </View>
               </View>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color="#FEB914"
-              />
+              <Ionicons name="chevron-forward" size={20} color="#FEB914" />
             </TouchableOpacity>
           ))}
         </View>
@@ -186,9 +177,7 @@ export default function HelpAndSupportScreen({
                 onPress={sendChatMessage}
                 disabled={!chatMessage}
               >
-                <Text style={styles.modalActionButtonText}>
-                  Send Message
-                </Text>
+                <Text style={styles.modalActionButtonText}>Send Message</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -198,16 +187,16 @@ export default function HelpAndSupportScreen({
       {/* EMAIL MODAL */}
       <Modal transparent visible={activeModal === "email"}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          
           <View style={styles.modalOverlay}>
-            
             <View style={styles.modalView}>
-                <View style={styles.modalHeader}>
-        <Text style={styles.modalTitle}>Frequently Asked Questions</Text>
-        <TouchableOpacity onPress={closeModal}>
-          <Ionicons name="close" size={24} color="#FEB914" />
-        </TouchableOpacity>
-      </View>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>
+                  Frequently Asked Questions
+                </Text>
+                <TouchableOpacity onPress={closeModal}>
+                  <Ionicons name="close" size={24} color="#FEB914" />
+                </TouchableOpacity>
+              </View>
 
               <Text style={styles.modalTitle}>Email Support</Text>
 
@@ -238,48 +227,42 @@ export default function HelpAndSupportScreen({
                 onPress={sendEmail}
                 disabled={!emailSubject || !emailBody}
               >
-                <Text style={styles.modalActionButtonText}>
-                  Send Email
-                </Text>
+                <Text style={styles.modalActionButtonText}>Send Email</Text>
               </TouchableOpacity>
             </View>
           </View>
         </TouchableWithoutFeedback>
       </Modal>
 
-{/* FAQ MODAL */}
-<Modal transparent visible={activeModal === "faq"}>
-  <View style={styles.modalOverlay}>
-    <View style={styles.modalView}>
-      {/* Add this header section */}
-      <View style={styles.modalHeader}>
-        <Text style={styles.modalTitle}>Frequently Asked Questions</Text>
-        <TouchableOpacity onPress={closeModal}>
-          <Ionicons name="close" size={24} color="#FEB914" />
-        </TouchableOpacity>
-      </View>
+      {/* FAQ MODAL */}
+      <Modal transparent visible={activeModal === "faq"}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalView}>
+            {/* Add this header section */}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Frequently Asked Questions</Text>
+              <TouchableOpacity onPress={closeModal}>
+                <Ionicons name="close" size={24} color="#FEB914" />
+              </TouchableOpacity>
+            </View>
 
-      <ScrollView>
-        {faqData.map((faq, index) => (
-          <View key={index} style={styles.faqItem}>
-            <Text style={styles.faqQuestion}>{faq.question}</Text>
-            <Text style={styles.faqAnswer}>{faq.answer}</Text>
+            <ScrollView>
+              {faqData.map((faq, index) => (
+                <View key={index} style={styles.faqItem}>
+                  <Text style={styles.faqQuestion}>{faq.question}</Text>
+                  <Text style={styles.faqAnswer}>{faq.answer}</Text>
+                </View>
+              ))}
+            </ScrollView>
           </View>
-        ))}
-      </ScrollView>
-    </View>
-  </View>
-</Modal>
+        </View>
+      </Modal>
 
       {/* SUCCESS MODAL */}
       <Modal transparent visible={successModalVisible}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalView, { alignItems: "center" }]}>
-            <Ionicons
-              name="checkmark-circle"
-              size={64}
-              color="#FEB914"
-            />
+            <Ionicons name="checkmark-circle" size={64} color="#FEB914" />
             <Text style={styles.successTitle}>Email Sent</Text>
             <Text style={styles.successText}>
               Thank you for contacting us. Our support team will respond
@@ -363,16 +346,16 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   modalHeader: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  marginBottom: 16,
-},
-modalTitle: { 
-  color: "white", 
-  fontSize: 18, 
-  // Remove marginBottom: 16 since it's now in the header
-},
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  modalTitle: {
+    color: "white",
+    fontSize: 18,
+    // Remove marginBottom: 16 since it's now in the header
+  },
   chatInput: { minHeight: 100 },
   emailInput: { minHeight: 140 },
   modalActionButton: {

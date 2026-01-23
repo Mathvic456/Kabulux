@@ -46,30 +46,34 @@ interface StandardScreenProps {
   rideData?: RideData;
 }
 
-export default function StandardScreen({ goBack, next, rideData }: StandardScreenProps) {
-
+export default function StandardScreen({
+  goBack,
+  next,
+  rideData,
+}: StandardScreenProps) {
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  
+
   useEffect(() => {
     console.log("📦 Received rideData:", rideData);
   }, [rideData]);
-  
+
   const getBasePrice = () => {
     if (!rideData) return 0;
-    
+
     // Priority 1: Use rawPrice if available
     if (rideData.rawPrice) {
-      return Number(rideData.rawPrice); 
+      return Number(rideData.rawPrice);
     }
-    
+
     // Priority 2: Use estimated_fare from rideDetails
     if (rideData.rideDetails?.estimated_fare) {
       return Number(rideData.rideDetails.estimated_fare);
     }
 
     // Priority 3: Extract from price string as fallback
-    const extractPrice = (priceString: string) => parseFloat(priceString.replace(/[₦,]/g, '')) || 0;
+    const extractPrice = (priceString: string) =>
+      parseFloat(priceString.replace(/[₦,]/g, "")) || 0;
     return extractPrice(rideData.price);
   };
 
@@ -86,12 +90,12 @@ export default function StandardScreen({ goBack, next, rideData }: StandardScree
   }, [riderOffer]);
 
   const handleIncreasePrice = () => {
-    setRiderOffer(prev => prev + 50);
+    setRiderOffer((prev) => prev + 50);
   };
 
   const handleDecreasePrice = () => {
     if (riderOffer > basePrice) {
-      setRiderOffer(prev => {
+      setRiderOffer((prev) => {
         const newOffer = prev - 50;
         return newOffer < basePrice ? basePrice : newOffer;
       });
@@ -101,8 +105,8 @@ export default function StandardScreen({ goBack, next, rideData }: StandardScree
   const handleSubmitOffer = () => {
     if (riderOffer < basePrice) {
       Alert.alert(
-        "Invalid Offer", 
-        "Your offer cannot be lower than the estimated price."
+        "Invalid Offer",
+        "Your offer cannot be lower than the estimated price.",
       );
       return;
     }
@@ -110,7 +114,7 @@ export default function StandardScreen({ goBack, next, rideData }: StandardScree
     if (!rideData?.paymentMethod) {
       Alert.alert(
         "Error",
-        "Payment method not found. Please go back and select a payment method."
+        "Payment method not found. Please go back and select a payment method.",
       );
       return;
     }
@@ -123,38 +127,41 @@ export default function StandardScreen({ goBack, next, rideData }: StandardScree
       payment_method: paymentMethodUpper,
     });
 
- bookStandard(
-      { 
-        rider_offer: riderOffer, 
-        payment_method: paymentMethodUpper 
-      }, 
+    bookStandard(
+      {
+        rider_offer: riderOffer,
+        payment_method: paymentMethodUpper,
+      },
       {
         onSuccess: () => {
-          console.log("✅ Offer sent successfully");
+          console.log("Offer sent successfully");
           next();
         },
         onError: (error: any) => {
-          console.error("❌ Offer submission failed:", error);
-          
+          console.error("Offer submission failed:", error);
+
           let msg = "Failed to submit offer. Please try again.";
 
           // 1. Check for the specific "Insufficient wallet" error from your logs
-          if (error.response?.data?.rider_offer && Array.isArray(error.response.data.rider_offer)) {
-             msg = error.response.data.rider_offer[0];
-          } 
+          if (
+            error.response?.data?.rider_offer &&
+            Array.isArray(error.response.data.rider_offer)
+          ) {
+            msg = error.response.data.rider_offer[0];
+          }
           // 2. Fallback for other backend errors
           else if (error.response?.data?.message) {
-             msg = error.response.data.message;
+            msg = error.response.data.message;
           }
           // 3. Fallback for network/generic errors
           else if (error.message) {
-             msg = error.message;
+            msg = error.message;
           }
 
           setErrorMessage(msg);
           setErrorModalVisible(true);
         },
-      }
+      },
     );
   };
 
@@ -164,13 +171,13 @@ export default function StandardScreen({ goBack, next, rideData }: StandardScree
 
   const canDecrease = riderOffer > basePrice;
   const isValidOffer = riderOffer >= basePrice;
-  
+
   // Helper to format duration
   const formatDuration = (durationString: string) => {
     // Handle if it's already in seconds (number)
     let durationInSeconds: number;
-    
-    if (typeof durationString === 'number') {
+
+    if (typeof durationString === "number") {
       durationInSeconds = durationString;
     } else {
       // Try to parse as number first
@@ -186,37 +193,37 @@ export default function StandardScreen({ goBack, next, rideData }: StandardScree
         return durationString;
       }
     }
-    
+
     // Convert seconds to minutes
     const minutes = Math.round(durationInSeconds / 60);
-    
+
     if (minutes < 60) return `${minutes} min`;
-    
+
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
-    
+
     if (remainingMinutes === 0) return `${hours} hr`;
     return `${hours} hr ${remainingMinutes} min`;
   };
 
   // Helper to format distance
   const formatDistance = (distanceString: string) => {
-    if (typeof distanceString === 'number') {
+    if (typeof distanceString === "number") {
       return `${distanceString.toFixed(2)} km`;
     }
-    
+
     // Try to parse as number first
     const parsed = parseFloat(distanceString);
     if (!isNaN(parsed)) {
       return `${parsed.toFixed(2)} km`;
     }
-    
+
     // Fallback: extract number from string
     const match = distanceString.match(/(\d+\.?\d*)/);
     if (match) {
       return `${parseFloat(match[1]).toFixed(2)} km`;
     }
-    
+
     return distanceString;
   };
 
@@ -232,7 +239,7 @@ export default function StandardScreen({ goBack, next, rideData }: StandardScree
       </View>
 
       {/* Content */}
-      <ScrollView 
+      <ScrollView
         style={styles.content}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -241,7 +248,11 @@ export default function StandardScreen({ goBack, next, rideData }: StandardScree
         {rideData ? (
           <View style={styles.rideCard}>
             <View style={styles.rideCardHeader}>
-              <MaterialCommunityIcons name="car-multiple" size={32} color="#f6a623" />
+              <MaterialCommunityIcons
+                name="car-multiple"
+                size={32}
+                color="#f6a623"
+              />
               <View style={styles.rideCardHeaderText}>
                 <Text style={styles.rideCardTitle}>{rideData.name}</Text>
                 <Text style={styles.rideCardSubtitle}>
@@ -254,7 +265,6 @@ export default function StandardScreen({ goBack, next, rideData }: StandardScree
 
             {/* Trip Details Grid */}
             <View style={styles.detailsGrid}>
-              
               {/* Distance */}
               <View style={styles.detailItem}>
                 <View style={styles.detailIconContainer}>
@@ -281,13 +291,15 @@ export default function StandardScreen({ goBack, next, rideData }: StandardScree
                 </View>
               </View>
             </View>
-             
+
             <View style={{ marginTop: 20 }}>
               <Text style={styles.infoTextTitle}>Ride Details</Text>
               <Text style={styles.infoTextDescription}>
-                The price shown is the estimated fare for a {rideData.carType} covering approximately{' '}
-                {formatDistance(rideData.rideDetails.estimated_distance)}. 
-                Increasing your offer improves your chances of a faster acceptance.
+                The price shown is the estimated fare for a {rideData.carType}{" "}
+                covering approximately{" "}
+                {formatDistance(rideData.rideDetails.estimated_distance)}.
+                Increasing your offer improves your chances of a faster
+                acceptance.
               </Text>
             </View>
 
@@ -295,7 +307,9 @@ export default function StandardScreen({ goBack, next, rideData }: StandardScree
             <View style={styles.paymentInfoContainer}>
               <Feather name="credit-card" size={18} color="#4CAF50" />
               <Text style={styles.paymentInfoText}>
-                Payment: {rideData.paymentMethod.charAt(0).toUpperCase() + rideData.paymentMethod.slice(1)}
+                Payment:{" "}
+                {rideData.paymentMethod.charAt(0).toUpperCase() +
+                  rideData.paymentMethod.slice(1)}
               </Text>
             </View>
           </View>
@@ -311,24 +325,27 @@ export default function StandardScreen({ goBack, next, rideData }: StandardScree
             <Feather name="dollar-sign" size={24} color="#f6a623" />
             <Text style={styles.priceSectionTitle}>Set Your Offer</Text>
           </View>
-          
+
           <Text style={styles.priceSectionSubtitle}>
-            Base Price (Estimated): <Text style={{ color: '#fff', fontWeight: 'bold' }}>{formatPrice(basePrice)}</Text>
+            Base Price (Estimated):{" "}
+            <Text style={{ color: "#fff", fontWeight: "bold" }}>
+              {formatPrice(basePrice)}
+            </Text>
           </Text>
 
           <View style={styles.priceAdjustContainer}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[
-                styles.priceButton, 
-                !canDecrease && styles.priceButtonDisabled
+                styles.priceButton,
+                !canDecrease && styles.priceButtonDisabled,
               ]}
               onPress={handleDecreasePrice}
               disabled={!canDecrease || isPending}
             >
-              <Feather 
-                name="minus" 
-                size={30} 
-                color={canDecrease ? "white" : "#555"} 
+              <Feather
+                name="minus"
+                size={30}
+                color={canDecrease ? "white" : "#555"}
               />
             </TouchableOpacity>
 
@@ -339,13 +356,11 @@ export default function StandardScreen({ goBack, next, rideData }: StandardScree
                   +{formatPrice(riderOffer - basePrice)} Boost
                 </Text>
               ) : (
-                <Text style={styles.priceIncreasePlaceholder}>
-                  Base Offer
-                </Text>
+                <Text style={styles.priceIncreasePlaceholder}>Base Offer</Text>
               )}
             </View>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.priceButton}
               onPress={handleIncreasePrice}
               disabled={isPending}
@@ -354,7 +369,9 @@ export default function StandardScreen({ goBack, next, rideData }: StandardScree
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.incrementText}>Tap +/- to adjust offer by ₦50</Text>
+          <Text style={styles.incrementText}>
+            Tap +/- to adjust offer by ₦50
+          </Text>
 
           {!isValidOffer && (
             <View style={styles.warningBanner}>
@@ -386,9 +403,9 @@ export default function StandardScreen({ goBack, next, rideData }: StandardScree
         <TouchableOpacity
           style={[
             styles.submitButton,
-            { 
+            {
               backgroundColor: isValidOffer && !isPending ? "#f6a623" : "#555",
-              opacity: isValidOffer && !isPending ? 1 : 0.7
+              opacity: isValidOffer && !isPending ? 1 : 0.7,
             },
           ]}
           onPress={handleSubmitOffer}
@@ -402,21 +419,26 @@ export default function StandardScreen({ goBack, next, rideData }: StandardScree
           ) : (
             <>
               <Text style={styles.submitButtonText}>Find Drivers</Text>
-              <Feather name="send" size={20} color="white" style={{ marginLeft: 8 }} />
+              <Feather
+                name="send"
+                size={20}
+                color="white"
+                style={{ marginLeft: 8 }}
+              />
             </>
           )}
         </TouchableOpacity>
         <CentralModal
-        visible={errorModalVisible}
-        onClose={() => setErrorModalVisible(false)}
-        title="Booking Failed"
-        subText={errorMessage}
-        icon="wallet-outline" // Or "alert-circle-outline"
-        iconColor="#ff6b6b"
-        themeColor="#ff6b6b"
-        confirmText="Understood"
-        onConfirm={() => setErrorModalVisible(false)}
-      />
+          visible={errorModalVisible}
+          onClose={() => setErrorModalVisible(false)}
+          title="Booking Failed"
+          subText={errorMessage}
+          icon="wallet-outline" // Or "alert-circle-outline"
+          iconColor="#ff6b6b"
+          themeColor="#ff6b6b"
+          confirmText="Understood"
+          onConfirm={() => setErrorModalVisible(false)}
+        />
 
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -529,28 +551,28 @@ const styles = StyleSheet.create({
   },
   infoTextTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: 'white',
+    fontWeight: "bold",
+    color: "white",
     marginBottom: 8,
   },
   infoTextDescription: {
     fontSize: 13,
-    color: '#aaa',
+    color: "#aaa",
     lineHeight: 18,
   },
   paymentInfoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(76, 175, 80, 0.15)',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(76, 175, 80, 0.15)",
     padding: 12,
     borderRadius: 10,
     marginTop: 15,
   },
   paymentInfoText: {
     fontSize: 14,
-    color: '#4CAF50',
+    color: "#4CAF50",
     marginLeft: 10,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   priceSection: {
     backgroundColor: "#1c1c1c",

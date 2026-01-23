@@ -16,12 +16,12 @@ let globalLogoutFn: (() => Promise<void>) | null = null;
 
 export const setAuthTokenGetter = (fn: () => Promise<string | null>) => {
   getValidTokenFn = fn;
-  console.log("✅ [API] Auth token getter registered");
+  console.log("[API] Auth token getter registered");
 };
 
 export const setGlobalLogout = (fn: () => Promise<void>) => {
   globalLogoutFn = fn;
-  console.log("✅ [API] Global logout function registered");
+  console.log("[API] Global logout function registered");
 };
 
 export const api: AxiosInstance = axios.create({
@@ -50,7 +50,6 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-
 api.interceptors.request.use(
   async (config) => {
     if (config.url?.includes("auth/")) {
@@ -58,7 +57,7 @@ api.interceptors.request.use(
     }
 
     let token: string | null = null;
-    
+
     if (getValidTokenFn) {
       token = await getValidTokenFn();
       // console.log(`🔐 [API Request] Token attached: ${!!token}`);
@@ -74,7 +73,7 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // --- RESPONSE INTERCEPTOR ---
@@ -97,7 +96,7 @@ api.interceptors.response.use(
     // Prevent infinite loops
     if (originalRequest._retry) {
       console.error(`🔐 [API Error ${requestId}] Retry failed, logging out`);
-      
+
       if (globalLogoutFn) {
         await globalLogoutFn();
       }
@@ -123,30 +122,31 @@ api.interceptors.response.use(
 
       // Attempt refresh via AuthContext
       const newToken = await getValidTokenFn();
-      
+
       if (!newToken) throw new Error("Failed to get valid token");
 
       originalRequest.headers.Authorization = `Bearer ${newToken}`;
-      
+
       processQueue(null, newToken);
       isRefreshing = false;
-      
+
       return api(originalRequest);
-      
     } catch (refreshError) {
       processQueue(refreshError, null);
       isRefreshing = false;
-      
-      console.log("🚪 [API] Logging out user due to critical refresh failure...");
+
+      console.log(
+        "🚪 [API] Logging out user due to critical refresh failure...",
+      );
       if (globalLogoutFn) {
         setTimeout(async () => {
           await globalLogoutFn!();
         }, 100);
       }
-      
+
       return Promise.reject(refreshError);
     }
-  }
+  },
 );
 
 export const logoutApi: AxiosInstance = axios.create({

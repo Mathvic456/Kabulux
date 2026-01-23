@@ -13,7 +13,11 @@ interface AuthContextValue {
   token: string | null;
   refreshToken: string | null;
   rememberMe: boolean;
-  setTokens: (access: string, refresh: string, remember: boolean) => Promise<void>;
+  setTokens: (
+    access: string,
+    refresh: string,
+    remember: boolean,
+  ) => Promise<void>;
   clearTokens: () => Promise<void>;
   getValidToken: () => Promise<string | null>;
   isTokenExpired: (token: string) => boolean;
@@ -40,13 +44,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const initAuth = async () => {
       try {
         const storedRememberMe = await AsyncStorage.getItem("rememberMe");
-        
+
         if (storedRememberMe === "true") {
           const storedToken = await AsyncStorage.getItem("token");
           const storedRefresh = await AsyncStorage.getItem("refreshToken");
-          
+
           if (storedToken && storedRefresh) {
-            console.log("🔐 [Auth] Restoring session from AsyncStorage (Remember Me)");
+            console.log(
+              "🔐 [Auth] Restoring session from AsyncStorage (Remember Me)",
+            );
             setToken(storedToken);
             setRefreshToken(storedRefresh);
             setRememberMe(true);
@@ -55,7 +61,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.log("🔐 [Auth] No Remember Me - starting fresh session");
         }
       } catch (error) {
-        console.error("❌ [Auth] Error initializing auth:", error);
+        console.error("[Auth] Error initializing auth:", error);
       }
     };
 
@@ -71,9 +77,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const setTokens = async (access: string, refresh: string, remember: boolean) => {
+  const setTokens = async (
+    access: string,
+    refresh: string,
+    remember: boolean,
+  ) => {
     console.log(`🔑 [Auth] Setting tokens (Remember Me: ${remember})`);
-    
+
     // Always set in Context (in-memory)
     setToken(access);
     setRefreshToken(refresh);
@@ -89,13 +99,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await AsyncStorage.removeItem("token");
       await AsyncStorage.removeItem("refreshToken");
       await AsyncStorage.removeItem("rememberMe");
-      console.log("🗑️ [Auth] Tokens cleared from AsyncStorage (not persisting)");
+      console.log(
+        "🗑️ [Auth] Tokens cleared from AsyncStorage (not persisting)",
+      );
     }
   };
 
   const clearTokens = async () => {
     console.log("🚪 [Auth] Clearing all tokens");
-    
+
     // Clear Context
     setToken(null);
     setRefreshToken(null);
@@ -114,7 +126,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (!refresh) {
-        console.error("❌ [Auth] No refresh token available");
+        console.error("[Auth] No refresh token available");
         return null;
       }
 
@@ -140,15 +152,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Update Context
       setToken(newAccessToken);
 
-      // Update AsyncStorage only if "remember me" is enabled
       if (rememberMe) {
         await AsyncStorage.setItem("token", newAccessToken);
       }
 
-      console.log("✅ [Auth] Token refreshed successfully");
+      console.log("[Auth] Token refreshed successfully");
       return newAccessToken;
     } catch (error) {
-      console.error("❌ [Auth] Token refresh failed:", error);
+      console.error("[Auth] Token refresh failed:", error);
       await clearTokens();
       return null;
     }

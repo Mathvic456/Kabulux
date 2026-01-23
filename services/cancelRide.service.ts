@@ -13,7 +13,7 @@ export const useCancelRideEndPoint = () => {
       return api.post(`rides/${rideId}/cancel_ride/`, { reason });
     },
     onSuccess: (res) => {
-      console.log("✅ Ride cancelled successfully:", res.data);
+      console.log("Ride cancelled successfully:", res.data);
     },
     onError: (error: any) => {
       console.error("❌ Failed to cancel ride:", error.response?.data || error);

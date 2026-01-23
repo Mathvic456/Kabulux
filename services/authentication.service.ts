@@ -10,14 +10,14 @@ type LoginPayload = {
   password: string;
   role: string;
   fcm_token: string;
-  type: string; 
+  type: string;
 };
 
 export const useRegisterEndPoint = () => {
   const mutation = useMutation<AxiosResponse<any>, any, CREATEACCOUNT_TYPE>({
     mutationFn: (data) => api.post("auth/register/", data),
     onSuccess: (res) => {
-      console.log("✅ [Auth] Registration successful:", res.data);
+      console.log("[Auth] Registration successful:", res.data);
     },
     onError: (error: any) => {
       console.error("❌ [Auth] Registration error:", error);
@@ -28,13 +28,17 @@ export const useRegisterEndPoint = () => {
 };
 
 export const useLoginEndPoint = (
-  setTokens: (access: string, refresh: string, remember: boolean) => Promise<void>,
-  remember: boolean
+  setTokens: (
+    access: string,
+    refresh: string,
+    remember: boolean,
+  ) => Promise<void>,
+  remember: boolean,
 ) => {
   return useMutation({
     // Updated mutationFn to accept the full payload
     mutationFn: (data: LoginPayload) => api.post("auth/login/", data),
-    
+
     onSuccess: async (res) => {
       console.log(res);
       const token = res.data?.data?.access;
@@ -54,10 +58,10 @@ export const useLoginEndPoint = (
       // Store userId separately
       if (userId) {
         await AsyncStorage.setItem("user_id", userId);
-        console.log("✅ [Auth] User ID saved:", userId);
+        console.log("[Auth] User ID saved:", userId);
       }
     },
-    
+
     onError: (error: any) => {
       console.error("❌ [Auth] Login error:", error);
     },
@@ -66,7 +70,7 @@ export const useLoginEndPoint = (
 
 export const useLogoutEndPoint = (
   clearTokens: () => Promise<void>,
-  resetRide: () => Promise<void>
+  resetRide: () => Promise<void>,
 ) => {
   return useMutation({
     mutationFn: async () => {
@@ -77,7 +81,7 @@ export const useLogoutEndPoint = (
       return true;
     },
     onSuccess: () => {
-      console.log("✅ [Auth] User logged out successfully");
+      console.log("[Auth] User logged out successfully");
     },
     onError: (error: any) => {
       console.error("❌ [Auth] Logout error:", error);

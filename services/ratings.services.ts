@@ -15,7 +15,7 @@ export const useRateRideEndPoint = () => {
       return api.post(`rides/${rideId}/rate/`, body);
     },
     onSuccess: (res) => {
-      console.log("✅ Ride rated successfully:", res.data);
+      console.log("Ride rated successfully:", res.data);
     },
 
     onError: (error: any) => {

@@ -17,7 +17,10 @@ import {
 } from "react-native";
 import Email from "../../assets/images/email.png";
 import Logo from "../../assets/images/logo.png";
-import { useResendOtpEndPoint, useVerifyOtpEndPoint } from "../../services/otpVerification.service";
+import {
+  useResendOtpEndPoint,
+  useVerifyOtpEndPoint,
+} from "../../services/otpVerification.service";
 
 export default function VerifyEmailScreen({
   next,
@@ -32,12 +35,12 @@ export default function VerifyEmailScreen({
   const [isLoading, setIsLoading] = useState(false);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  
+
   const [resendTimer, setResendTimer] = useState(0);
 
   const inputsRef = useRef<TextInput[]>([]);
   const verifyOtpMutation = useVerifyOtpEndPoint();
-  
+
   const resendOtpMutation = useResendOtpEndPoint();
 
   useEffect(() => {
@@ -49,7 +52,7 @@ export default function VerifyEmailScreen({
           console.log("📬 Loaded email from storage:", savedEmail);
         }
       } catch (error) {
-        console.error("❌ Error loading email:", error);
+        console.error("Error loading email:", error);
       }
     };
     loadEmail();
@@ -137,10 +140,7 @@ export default function VerifyEmailScreen({
             <Image source={Email} style={styles.envelopeIcon} />
           </View>
 
-          <Pressable
-            style={styles.backBtn}
-            onPress={() => goBack()}
-          >
+          <Pressable style={styles.backBtn} onPress={() => goBack()}>
             <Ionicons name="arrow-back" size={22} color="#fff" />
           </Pressable>
 
@@ -178,7 +178,9 @@ export default function VerifyEmailScreen({
           </View>
 
           {errorMessage && (
-            <Text style={{ color: "red", marginBottom: 10, textAlign: "center" }}>
+            <Text
+              style={{ color: "red", marginBottom: 10, textAlign: "center" }}
+            >
               {errorMessage}
             </Text>
           )}
@@ -197,24 +199,25 @@ export default function VerifyEmailScreen({
 
           {/* 👇 RESEND BUTTON SECTION */}
           <View style={styles.resendContainer}>
-             <Text style={styles.resendLabel}>Didn't receive code? </Text>
-             <TouchableOpacity 
-                onPress={handleResendOtp} 
-                disabled={resendTimer > 0 || resendOtpMutation.isPending}
-             >
-                {resendOtpMutation.isPending ? (
-                   <ActivityIndicator size="small" color="#ffb300" />
-                ) : (
-                  <Text style={[
-                      styles.resendLink, 
-                      resendTimer > 0 && { color: '#666' } // Grey out if timer active
-                  ]}>
-                    {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend"}
-                  </Text>
-                )}
-             </TouchableOpacity>
+            <Text style={styles.resendLabel}>Didn't receive code? </Text>
+            <TouchableOpacity
+              onPress={handleResendOtp}
+              disabled={resendTimer > 0 || resendOtpMutation.isPending}
+            >
+              {resendOtpMutation.isPending ? (
+                <ActivityIndicator size="small" color="#ffb300" />
+              ) : (
+                <Text
+                  style={[
+                    styles.resendLink,
+                    resendTimer > 0 && { color: "#666" }, // Grey out if timer active
+                  ]}
+                >
+                  {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend"}
+                </Text>
+              )}
+            </TouchableOpacity>
           </View>
-
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -329,16 +332,16 @@ const styles = StyleSheet.create({
 
   resendContainer: {
     marginTop: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   resendLabel: {
-    color: '#aaa',
+    color: "#aaa",
     fontSize: 14,
   },
   resendLink: {
-    color: '#ffb300',
+    color: "#ffb300",
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });

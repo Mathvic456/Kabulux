@@ -1,10 +1,10 @@
 import CentralModal from "@/components/CentralModal";
 import { Ionicons } from "@expo/vector-icons";
-import * as Location from 'expo-location';
+import * as Location from "expo-location";
 import React, { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Image } from "react-native";
-import MapView, { Marker } from 'react-native-maps';
-import { darkMapStyle } from '../../styles/darkMapStyle';
+import MapView, { Marker } from "react-native-maps";
+import { darkMapStyle } from "../../styles/darkMapStyle";
 
 import Constants from "expo-constants";
 import {
@@ -17,9 +17,9 @@ import {
   Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View
+  View,
 } from "react-native";
-import 'react-native-get-random-values';
+import "react-native-get-random-values";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 
 if (!Constants.expoConfig?.extra?.googleMapsApiKey) {
@@ -38,15 +38,18 @@ interface UserLocation {
   };
 }
 
-export default function PickUpScreen({ setScreen, goBack }: { 
-  setScreen: (screen: string, locationData?: UserLocation) => void; 
-  goBack: () => void; 
+export default function PickUpScreen({
+  setScreen,
+  goBack,
+}: {
+  setScreen: (screen: string, locationData?: UserLocation) => void;
+  goBack: () => void;
 }) {
   const [pickup, setPickup] = useState("");
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [initialRegion, setInitialRegion] = useState({
-    latitude: 9.0820, // Center of Nigeria as fallback
+    latitude: 9.082, // Center of Nigeria as fallback
     longitude: 8.6753,
     latitudeDelta: 8,
     longitudeDelta: 8,
@@ -70,28 +73,31 @@ export default function PickUpScreen({ setScreen, goBack }: {
   // Animate map to user location when it's available
   useEffect(() => {
     if (userLocation && mapRef.current) {
-      mapRef.current.animateToRegion({
-        latitude: userLocation.latitude,
-        longitude: userLocation.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      }, 1000);
+      mapRef.current.animateToRegion(
+        {
+          latitude: userLocation.latitude,
+          longitude: userLocation.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        },
+        1000,
+      );
     }
   }, [userLocation]);
 
   const requestLocationAndCenter = async () => {
     try {
       setIsGettingLocation(true);
-      
+
       // Request location permission
       let { status } = await Location.requestForegroundPermissionsAsync();
-      
-      if (status !== 'granted') {
+
+      if (status !== "granted") {
         // Permission denied - keep default center (Nigeria)
         Alert.alert(
-          'Location Permission Required',
-          'Please enable location access to automatically center the map on your current location.',
-          [{ text: 'OK' }]
+          "Location Permission Required",
+          "Please enable location access to automatically center the map on your current location.",
+          [{ text: "OK" }],
         );
         setIsGettingLocation(false);
         return;
@@ -116,11 +122,11 @@ export default function PickUpScreen({ setScreen, goBack }: {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
       });
-      
+
       if (addresses && addresses.length > 0) {
         const address = addresses[0];
         const formattedAddress = formatAddress(address);
-        
+
         const locationData: UserLocation = {
           address: formattedAddress,
           latitude: location.coords.latitude,
@@ -128,12 +134,12 @@ export default function PickUpScreen({ setScreen, goBack }: {
           coordinates: {
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
-          }
+          },
         };
-        
+
         setUserLocation(locationData);
         setPickup(formattedAddress);
-        
+
         // Set the text in the autocomplete input
         if (autocompleteRef.current) {
           autocompleteRef.current.setAddressText(formattedAddress);
@@ -146,9 +152,8 @@ export default function PickUpScreen({ setScreen, goBack }: {
           }, 500);
         }
       }
-      
     } catch (error) {
-      console.error('Error getting location:', error);
+      console.error("Error getting location:", error);
       setShowErrorModal(true);
     } finally {
       setIsGettingLocation(false);
@@ -158,10 +163,13 @@ export default function PickUpScreen({ setScreen, goBack }: {
   const getUserLocation = async () => {
     try {
       setIsGettingLocation(true);
-      
+
       let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission denied', 'Location permission is required to find your current location.');
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission denied",
+          "Location permission is required to find your current location.",
+        );
         setIsGettingLocation(false);
         return;
       }
@@ -174,11 +182,11 @@ export default function PickUpScreen({ setScreen, goBack }: {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
       });
-      
+
       if (addresses && addresses.length > 0) {
         const address = addresses[0];
         const formattedAddress = formatAddress(address);
-        
+
         const locationData: UserLocation = {
           address: formattedAddress,
           latitude: location.coords.latitude,
@@ -186,20 +194,19 @@ export default function PickUpScreen({ setScreen, goBack }: {
           coordinates: {
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
-          }
+          },
         };
         setIsGettingLocation(false);
         setUserLocation(locationData);
         setPickup(formattedAddress);
-        
+
         // Set the text in the autocomplete input
         if (autocompleteRef.current) {
           autocompleteRef.current.setAddressText(formattedAddress);
         }
       }
-      
     } catch (error) {
-      console.error('Error getting location:', error);
+      console.error("Error getting location:", error);
       setShowErrorModal(true);
     } finally {
       setIsGettingLocation(false);
@@ -208,36 +215,40 @@ export default function PickUpScreen({ setScreen, goBack }: {
 
   const formatAddress = (address: Location.LocationGeocodedAddress): string => {
     if (!address) return "";
-    
+
     const parts = [];
-    
-    if (address.name && address.name !== address.street) parts.push(address.name);
+
+    if (address.name && address.name !== address.street)
+      parts.push(address.name);
     if (address.street) parts.push(address.street);
     if (address.district) parts.push(address.district);
     if (address.city) parts.push(address.city);
     if (address.region) parts.push(address.region);
     if (address.postalCode) parts.push(address.postalCode);
     if (address.country) parts.push(address.country);
-    
-    return parts.filter(part => part && part.trim() !== '').join(', ');
+
+    return parts.filter((part) => part && part.trim() !== "").join(", ");
   };
 
   const handleManualConfirm = () => {
     console.log("🔍 handleManualConfirm called");
     console.log("📍 userLocation:", userLocation);
     console.log("📝 pickup text:", pickup);
-    
+
     if (userLocation) {
       const finalLocation: UserLocation = {
         ...userLocation,
         address: pickup || userLocation.address || "Unnamed Location",
       };
-      console.log("✅ Final location prepared:", finalLocation);
+      console.log("Final location prepared:", finalLocation);
       console.log("🚀 Calling setScreen with 'planRide'");
       setScreen("planRide", finalLocation);
     } else {
-      console.log("❌ No userLocation set");
-      Alert.alert("No location", "Please pick a location or use your current one.");
+      console.log("No userLocation set");
+      Alert.alert(
+        "No location",
+        "Please pick a location or use your current one.",
+      );
     }
   };
 
@@ -250,7 +261,7 @@ export default function PickUpScreen({ setScreen, goBack }: {
   };
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
@@ -261,7 +272,10 @@ export default function PickUpScreen({ setScreen, goBack }: {
             <TouchableOpacity style={styles.iconContainer} onPress={goBack}>
               <Ionicons name="arrow-back" size={24} color="white" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconContainer} onPress={handleLocatePress}>
+            <TouchableOpacity
+              style={styles.iconContainer}
+              onPress={handleLocatePress}
+            >
               <Ionicons name="locate" size={24} color="white" />
             </TouchableOpacity>
           </View>
@@ -285,7 +299,7 @@ export default function PickUpScreen({ setScreen, goBack }: {
                 >
                   <View style={styles.markerContainer}>
                     <Image
-                      source={require('../../assets/images/target.png')}
+                      source={require("../../assets/images/target.png")}
                       style={{ width: 40, height: 40 }}
                       resizeMode="contain"
                     />
@@ -299,8 +313,14 @@ export default function PickUpScreen({ setScreen, goBack }: {
               <View style={styles.overlayContainer}>
                 <View style={styles.loadingContainer}>
                   <Ionicons name="locate" size={50} color="#f6a623" />
-                  <Text style={styles.loadingText}>Finding your location...</Text>
-                  <ActivityIndicator size="large" color="#f6a623" style={{ marginTop: 10 }} />
+                  <Text style={styles.loadingText}>
+                    Finding your location...
+                  </Text>
+                  <ActivityIndicator
+                    size="large"
+                    color="#f6a623"
+                    style={{ marginTop: 10 }}
+                  />
                 </View>
               </View>
             )}
@@ -308,7 +328,7 @@ export default function PickUpScreen({ setScreen, goBack }: {
 
           {/* Bottom Sheet */}
           <View style={styles.bottomSheet}>
-            <Text style={styles.title}>Set your Pick-up Location</Text> 
+            <Text style={styles.title}>Set your Pick-up Location</Text>
             {/* Search Bar */}
             <View style={styles.searchContainer}>
               <GooglePlacesAutocomplete
@@ -355,14 +375,14 @@ export default function PickUpScreen({ setScreen, goBack }: {
                       coordinates: {
                         latitude: details.geometry.location.lat,
                         longitude: details.geometry.location.lng,
-                      }
+                      },
                     };
                     setUserLocation(newLocation);
                     setPickup(data.description);
                   }
                 }}
                 onTimeout={() => {
-                  console.warn('Google Places Autocomplete: request timeout');
+                  console.warn("Google Places Autocomplete: request timeout");
                 }}
                 predefinedPlaces={[]}
                 predefinedPlacesAlwaysVisible={false}
@@ -376,7 +396,7 @@ export default function PickUpScreen({ setScreen, goBack }: {
                 }}
                 timeout={20000}
                 styles={{
-                  container: { 
+                  container: {
                     flex: 0,
                     zIndex: 1,
                   },
@@ -389,7 +409,7 @@ export default function PickUpScreen({ setScreen, goBack }: {
                     borderWidth: 1,
                     borderColor: "#444",
                     elevation: 2,
-                    shadowColor: '#000',
+                    shadowColor: "#000",
                     shadowOffset: { width: 0, height: 1 },
                     shadowOpacity: 0.2,
                     shadowRadius: 2,
@@ -407,12 +427,12 @@ export default function PickUpScreen({ setScreen, goBack }: {
                     borderRadius: 12,
                     maxHeight: 250,
                     elevation: 5,
-                    shadowColor: '#000',
+                    shadowColor: "#000",
                     shadowOffset: { width: 0, height: 2 },
                     shadowOpacity: 0.25,
                     shadowRadius: 3.84,
                     borderWidth: 1,
-                    borderColor: '#333',
+                    borderColor: "#333",
                   },
                   row: {
                     backgroundColor: "#2b2b2b",
@@ -514,49 +534,49 @@ const styles = StyleSheet.create({
   mapPlaceholder: {
     flex: 1,
     backgroundColor: "#333",
-    position: 'relative',
+    position: "relative",
   },
   map: {
     ...StyleSheet.absoluteFillObject,
   },
   overlayContainer: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     padding: 20,
   },
   loadingText: {
-    color: '#f6a623',
+    color: "#f6a623",
     fontSize: 16,
     marginTop: 10,
-    textAlign: 'center',
+    textAlign: "center",
   },
   locationFoundBadge: {
-    position: 'absolute',
+    position: "absolute",
     top: 100,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    alignSelf: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 25,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
   locationFoundBadgeText: {
-    color: '#4CAF50',
+    color: "#4CAF50",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   addressPreview: {
-    color: '#a10505',
+    color: "#a10505",
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 10,
   },
   mapText: {
@@ -569,11 +589,11 @@ const styles = StyleSheet.create({
     width: 50,
     borderRadius: 10,
     backgroundColor: "#1f1f1fff",
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     elevation: 6,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
@@ -603,12 +623,12 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   locationDetails: {
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    backgroundColor: "rgba(76, 175, 80, 0.1)",
     padding: 15,
     borderRadius: 10,
     marginBottom: 15,
     borderLeftWidth: 3,
-    borderLeftColor: '#4CAF50',
+    borderLeftColor: "#4CAF50",
   },
   confirmButton: {
     borderRadius: 10,

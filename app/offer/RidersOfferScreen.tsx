@@ -83,7 +83,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
   // 1. Subscribe to WS when connected and have ride_request_id
   useEffect(() => {
     if (!ride_request_id) {
-      console.warn("❌ [RIDER] Missing ride_request_id");
+      console.warn("[RIDER] Missing ride_request_id");
       return;
     }
 
@@ -155,7 +155,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
 
   useEffect(() => {
     if (rideAcceptError && !isInitialMount.current) {
-      console.log("❌ [RIDER] Ride accept error:", rideAcceptError);
+      console.log("[RIDER] Ride accept error:", rideAcceptError);
       setErrorOfferId(rideAcceptError.offerId || null);
       setErrorModalVisible(true);
 
@@ -313,7 +313,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
 
       removeOffer(offerId);
     } catch (err) {
-      console.error("❌ [RIDER] Negotiation failed:", err);
+      console.error("[RIDER] Negotiation failed:", err);
       Alert.alert(
         "Error",
         "Failed to send negotiation. It will be retried when connection is restored.",
@@ -348,7 +348,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
       console.log("📤 [RIDER] Accepting ride:", message);
       await sendMessage(message);
     } catch (err) {
-      console.error("❌ [RIDER] Accept failed:", err);
+      console.error("[RIDER] Accept failed:", err);
       Alert.alert(
         "Error",
         "Failed to accept offer. It will be retried when connection is restored.",
@@ -379,11 +379,11 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     try {
       sendMessage(message);
       console.log(
-        `✅ [RIDER] Declined offer ${offerId} at timestamp ${offerToDecline.timestamp}`,
+        `[RIDER] Declined offer ${offerId} at timestamp ${offerToDecline.timestamp}`,
       );
       removeOffer(offerId);
     } catch (err) {
-      console.error("❌ [RIDER] Decline failed:", err);
+      console.error("[RIDER] Decline failed:", err);
     }
   };
 

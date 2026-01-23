@@ -4,8 +4,15 @@ import { useProfile } from "@/services/profile.service";
 import { useRideDetails } from "@/services/rideDetails.service";
 import { useUpdateRiderProfile } from "@/services/updateProfile.service";
 import { useUploadProfilePhoto } from "@/services/upload.service";
-import { Entypo, Feather, FontAwesome, FontAwesome5, Ionicons, MaterialIcons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  Entypo,
+  Feather,
+  FontAwesome,
+  FontAwesome5,
+  Ionicons,
+  MaterialIcons,
+} from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { useEffect, useState } from "react";
 import {
@@ -60,7 +67,10 @@ type DriverOnWayModalProps = {
 };
 
 // ComingSoonModal component
-const ComingSoonModal = ({ isVisible, onClose }: ComingSoonModalProps) => {
+export const ComingSoonModal = ({
+  isVisible,
+  onClose,
+}: ComingSoonModalProps) => {
   return (
     <Modal
       animationType="fade"
@@ -73,18 +83,19 @@ const ComingSoonModal = ({ isVisible, onClose }: ComingSoonModalProps) => {
           <View style={styles.comingSoonIconContainer}>
             <FontAwesome5 name="crown" size={50} color="#FEB914" />
           </View>
-          
+
           <Text style={styles.comingSoonModalTitle}>Coming Soon! 🚀</Text>
-          
+
           <Text style={styles.comingSoonModalMessage}>
-            Our Premium Package is currently under development and will be available soon.
+            Our Premium Package is currently under development and will be
+            available soon.
           </Text>
-          
+
           <Text style={styles.comingSoonModalSubtext}>
             Stay tuned for exciting new features and exclusive benefits!
           </Text>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.comingSoonModalButton}
             onPress={onClose}
           >
@@ -97,7 +108,13 @@ const ComingSoonModal = ({ isVisible, onClose }: ComingSoonModalProps) => {
 };
 
 // AreaFada Overlay Component
-const AreaFadaOverlay = ({ visible, onClose }: { visible: boolean; onClose: () => void }) => {
+const AreaFadaOverlay = ({
+  visible,
+  onClose,
+}: {
+  visible: boolean;
+  onClose: () => void;
+}) => {
   if (!visible) return null;
 
   return (
@@ -120,18 +137,23 @@ const AreaFadaOverlay = ({ visible, onClose }: { visible: boolean; onClose: () =
             />
           </View>
 
-          <Text style={styles.areaFadaHighlightText}>You are ahead of your peeps</Text>
+          <Text style={styles.areaFadaHighlightText}>
+            You are ahead of your peeps
+          </Text>
 
           <View style={styles.areaFadaAvatarRow}>
             {["#D9D9D9", "#8B5E3C", "#FFB800", "#F86E6E", "#004AAD"].map(
               (color, index) => (
-                <View key={index} style={[styles.areaFadaAvatarCircle, { borderColor: color }]}>
+                <View
+                  key={index}
+                  style={[styles.areaFadaAvatarCircle, { borderColor: color }]}
+                >
                   <Image
                     source={require("../../assets/images/Ava.png")}
                     style={styles.areaFadaSmallAvatar}
                   />
                 </View>
-              )
+              ),
             )}
           </View>
 
@@ -171,12 +193,17 @@ const UploadPhotoOverlay = ({
   onTakePhoto,
   onSubmit,
   imageUri,
-  loading
+  loading,
 }: UploadPhotoOverlayProps) => {
   if (!isVisible) return null;
 
   return (
-    <Modal animationType="slide" transparent visible={isVisible} onRequestClose={onClose}>
+    <Modal
+      animationType="slide"
+      transparent
+      visible={isVisible}
+      onRequestClose={onClose}
+    >
       <View style={styles.overlayContainer}>
         <View style={styles.overlayContent}>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
@@ -184,7 +211,9 @@ const UploadPhotoOverlay = ({
           </TouchableOpacity>
 
           <Text style={styles.overlayTitle}>Take A Photo</Text>
-          <Text style={styles.overlaySubtitle}>Take a profile photo for verification</Text>
+          <Text style={styles.overlaySubtitle}>
+            Take a profile photo for verification
+          </Text>
 
           <View style={styles.uploadIconContainer}>
             {imageUri ? (
@@ -204,8 +233,14 @@ const UploadPhotoOverlay = ({
           </TouchableOpacity>
 
           {imageUri && (
-            <TouchableOpacity style={styles.submitButton} onPress={onSubmit} disabled={loading}>
-              <Text style={styles.submitText}>{loading ? "Uploading..." : "Submit"}</Text>
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={onSubmit}
+              disabled={loading}
+            >
+              <Text style={styles.submitText}>
+                {loading ? "Uploading..." : "Submit"}
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -223,22 +258,24 @@ const AdditionalInfoOverlay = ({
   loading,
 }: AdditionalInfoOverlayProps) => {
   const [ridePreference, setRidePreference] = useState<string>("Comfort");
-  const [securityPreference, setSecurityPreference] = useState<string>("Standard");
+  const [securityPreference, setSecurityPreference] =
+    useState<string>("Standard");
   const [showRideDropdown, setShowRideDropdown] = useState<boolean>(false);
-  const [showSecurityDropdown, setShowSecurityDropdown] = useState<boolean>(false);
+  const [showSecurityDropdown, setShowSecurityDropdown] =
+    useState<boolean>(false);
 
   const rideOptions = ["Economy", "Comfort", "Premium"];
   const securityOptions = ["Standard", "Verified Driver", "Premium Protection"];
-
-  
 
   const handleSubmit = () => {
     console.log("\n🔍 [AdditionalInfoOverlay] Submit button pressed");
     console.log("📝 Form Data:");
     console.log("  - Ride Preference:", ridePreference);
     console.log("  - Security Preference:", securityPreference);
-    
-    console.log("✅ [AdditionalInfoOverlay] Validation passed, calling onSubmit...");
+
+    console.log(
+      "[AdditionalInfoOverlay] Validation passed, calling onSubmit...",
+    );
     onSubmit(ridePreference, securityPreference);
   };
 
@@ -288,7 +325,8 @@ const AdditionalInfoOverlay = ({
                     key={option}
                     style={[
                       styles.dropdownMenuItem,
-                      ridePreference === option && styles.dropdownMenuItemSelected,
+                      ridePreference === option &&
+                        styles.dropdownMenuItemSelected,
                     ]}
                     onPress={() => {
                       setRidePreference(option);
@@ -298,7 +336,8 @@ const AdditionalInfoOverlay = ({
                     <Text
                       style={[
                         styles.dropdownMenuText,
-                        ridePreference === option && styles.dropdownMenuTextSelected,
+                        ridePreference === option &&
+                          styles.dropdownMenuTextSelected,
                       ]}
                     >
                       {option}
@@ -330,7 +369,8 @@ const AdditionalInfoOverlay = ({
                     key={option}
                     style={[
                       styles.dropdownMenuItem,
-                      securityPreference === option && styles.dropdownMenuItemSelected,
+                      securityPreference === option &&
+                        styles.dropdownMenuItemSelected,
                     ]}
                     onPress={() => {
                       setSecurityPreference(option);
@@ -340,7 +380,8 @@ const AdditionalInfoOverlay = ({
                     <Text
                       style={[
                         styles.dropdownMenuText,
-                        securityPreference === option && styles.dropdownMenuTextSelected,
+                        securityPreference === option &&
+                          styles.dropdownMenuTextSelected,
                       ]}
                     >
                       {option}
@@ -385,21 +426,18 @@ const LoginSuccessModal = ({ isVisible, onClose }: LoginSuccessModalProps) => {
           <View style={styles.successIconContainer}>
             <FontAwesome name="check-circle" size={60} color="#4CAF50" />
           </View>
-          
+
           <Text style={styles.successModalTitle}>Login Successful! 🎉</Text>
-          
+
           <Text style={styles.successModalMessage}>
             Welcome back! You have been logged in successfully.
           </Text>
-          
+
           <Text style={styles.successModalSubtext}>
             Ready to start your next ride?
           </Text>
 
-          <TouchableOpacity 
-            style={styles.successModalButton}
-            onPress={onClose}
-          >
+          <TouchableOpacity style={styles.successModalButton} onPress={onClose}>
             <Text style={styles.successModalButtonText}>Let's Go!</Text>
           </TouchableOpacity>
         </View>
@@ -409,10 +447,7 @@ const LoginSuccessModal = ({ isVisible, onClose }: LoginSuccessModalProps) => {
 };
 
 // Driver On Way Modal Component
-const DriverOnWayModal = ({ 
-  isVisible, 
-  onClose,
-}: DriverOnWayModalProps) => {
+const DriverOnWayModal = ({ isVisible, onClose }: DriverOnWayModalProps) => {
   return (
     <Modal
       animationType="fade"
@@ -425,18 +460,20 @@ const DriverOnWayModal = ({
           <View style={styles.driverOnWayIconContainer}>
             <FontAwesome5 name="car" size={50} color="#FEB914" />
           </View>
-          
-          <Text style={styles.driverOnWayModalTitle}>Driver On The Way! 🚗</Text>
-          
+
+          <Text style={styles.driverOnWayModalTitle}>
+            Driver On The Way! 🚗
+          </Text>
+
           <Text style={styles.driverOnWayModalMessage}>
             Your driver is heading to your location
           </Text>
-          
+
           <Text style={styles.driverOnWayModalSubtext}>
             Get ready for your ride!
           </Text>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.driverOnWayModalButton}
             onPress={onClose}
           >
@@ -449,7 +486,10 @@ const DriverOnWayModal = ({
 };
 
 // Profile Update Success Modal Component
-const ProfileUpdateSuccessModal = ({ isVisible, onClose }: LoginSuccessModalProps) => {
+const ProfileUpdateSuccessModal = ({
+  isVisible,
+  onClose,
+}: LoginSuccessModalProps) => {
   return (
     <Modal
       animationType="fade"
@@ -462,21 +502,18 @@ const ProfileUpdateSuccessModal = ({ isVisible, onClose }: LoginSuccessModalProp
           <View style={styles.successIconContainer}>
             <FontAwesome name="check-circle" size={60} color="#4CAF50" />
           </View>
-          
+
           <Text style={styles.successModalTitle}>Profile Updated! 🎉</Text>
-          
+
           <Text style={styles.successModalMessage}>
             Your preferences have been saved successfully.
           </Text>
-          
+
           <Text style={styles.successModalSubtext}>
             You're all set to start riding!
           </Text>
 
-          <TouchableOpacity 
-            style={styles.successModalButton}
-            onPress={onClose}
-          >
+          <TouchableOpacity style={styles.successModalButton} onPress={onClose}>
             <Text style={styles.successModalButtonText}>Let's Go!</Text>
           </TouchableOpacity>
         </View>
@@ -486,93 +523,100 @@ const ProfileUpdateSuccessModal = ({ isVisible, onClose }: LoginSuccessModalProp
 };
 
 export default function HomeScreen({ setScreen }: HomeScreenProps) {
-  const [showComingSoonModal, setShowComingSoonModal] = useState<boolean>(false);
-  const [showAdditionalInfoOverlay, setShowAdditionalInfoOverlay] = useState<boolean>(false);
-  const [showLoginSuccessModal, setShowLoginSuccessModal] = useState<boolean>(false);
-  const [showProfileUpdateSuccessModal, setShowProfileUpdateSuccessModal] = useState<boolean>(false);
-  const [showAreaFadaOverlay, setShowAreaFadaOverlay] = useState<boolean>(false);
-  const [uploadedProfileImageId, setUploadedProfileImageId] = useState<string | null>(null);
+  const [showComingSoonModal, setShowComingSoonModal] =
+    useState<boolean>(false);
+  const [showAdditionalInfoOverlay, setShowAdditionalInfoOverlay] =
+    useState<boolean>(false);
+  const [showLoginSuccessModal, setShowLoginSuccessModal] =
+    useState<boolean>(false);
+  const [showProfileUpdateSuccessModal, setShowProfileUpdateSuccessModal] =
+    useState<boolean>(false);
+  const [showAreaFadaOverlay, setShowAreaFadaOverlay] =
+    useState<boolean>(false);
+  const [uploadedProfileImageId, setUploadedProfileImageId] = useState<
+    string | null
+  >(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [showDriverOnWayModal, setShowDriverOnWayModal] = useState<boolean>(false);
+  const [showDriverOnWayModal, setShowDriverOnWayModal] =
+    useState<boolean>(false);
   const [showUploadOverlay, setShowUploadOverlay] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
-const [selectedCancelReason, setSelectedCancelReason] = useState(null);
+  const [selectedCancelReason, setSelectedCancelReason] = useState(null);
 
-const CANCELLATION_REASONS = [
-  "Can't find driver",
-  "Wrong pickup location",
-  "Vehicle issue",
-  "Personal emergency",
-  "Other"
-];
+  const CANCELLATION_REASONS = [
+    "Can't find driver",
+    "Wrong pickup location",
+    "Vehicle issue",
+    "Personal emergency",
+    "Other",
+  ];
 
+  const { mutate: cancelRide, isPending: isCanceling } =
+    useCancelRideEndPoint();
 
-const { mutate: cancelRide, isPending: isCanceling } = useCancelRideEndPoint();
-  
   const uploadMutation = useUploadProfilePhoto();
   const updateProfileMutation = useUpdateRiderProfile(userId || undefined);
-  const { 
-    data: profile, 
-    isLoading: profileLoading, 
-    error: profileError
+  const {
+    data: profile,
+    isLoading: profileLoading,
+    error: profileError,
   } = useProfile();
-  const { rideState, driverLocation, resetRide, } = useRide();
+  const { rideState, driverLocation, resetRide } = useRide();
   const { rideId } = useRideId();
   const { data: rideDetails } = useRideDetails(rideId);
   const driver = rideDetails?.driver;
 
   const handleCancelPress = () => {
-  setCancelModalVisible(true);
-  setSelectedCancelReason(null);
-};
+    setCancelModalVisible(true);
+    setSelectedCancelReason(null);
+  };
 
-const submitCancellation = () => {
-  if (!selectedCancelReason) {
-    Alert.alert("Select a Reason", "Please tell us why you are cancelling.");
-    return;
-  }
+  const submitCancellation = () => {
+    if (!selectedCancelReason) {
+      Alert.alert("Select a Reason", "Please tell us why you are cancelling.");
+      return;
+    }
 
-  if (rideId) {
-    cancelRide(
-      { rideId, reason: selectedCancelReason },
-      {
-        onSuccess: () => {
-          setCancelModalVisible(false);
-          //TODO: Add a Ride cancelled.
-          resetRide();
-          
-        }
-      }
-    );
-  }
-};
+    if (rideId) {
+      cancelRide(
+        { rideId, reason: selectedCancelReason },
+        {
+          onSuccess: () => {
+            setCancelModalVisible(false);
+            //TODO: Add a Ride cancelled.
+            resetRide();
+          },
+        },
+      );
+    }
+  };
 
   const activeRideStatus = (() => {
     switch (rideState) {
       case "driver_on_way":
-        return { 
-          title: "Driver on the Way", 
-          subtitle: "Your ride is approaching", 
-          icon: "car", 
+        return {
+          title: "Driver on the Way",
+          subtitle: "Your ride is approaching",
+          icon: "car",
           color: "#FEB914", // Gold
-          bgColor: "rgba(254, 185, 20, 0.1)"
+          bgColor: "rgba(254, 185, 20, 0.1)",
         };
       case "driver_arrived":
-        return { 
-          title: "Driver Arrived", 
-          subtitle: "Driver is waiting at pickup", 
-          icon: "map-marker-alt", 
+        return {
+          title: "Driver Arrived",
+          subtitle: "Driver is waiting at pickup",
+          icon: "map-marker-alt",
           color: "#4CAF50",
-          bgColor: "rgba(76, 175, 80, 0.1)"
+          bgColor: "rgba(76, 175, 80, 0.1)",
         };
       case "in_progress":
-        return { 
-          title: "Ride in Progress", 
-          subtitle: "Heading to your destination", 
-          icon: "route", 
+        return {
+          title: "Ride in Progress",
+          subtitle: "Heading to your destination",
+          icon: "route",
           color: "#2196F3",
-          bgColor: "rgba(33, 150, 243, 0.1)"
+          bgColor: "rgba(33, 150, 243, 0.1)",
         };
       default:
         return null;
@@ -581,27 +625,35 @@ const submitCancellation = () => {
 
   useEffect(() => {
     if (profileError) {
-      const status = profileError?.response?.status || (profileError as any)?.status;
+      const status =
+        profileError?.response?.status || (profileError as any)?.status;
 
-      console.log("❌ Profile Error Detected:", status);
+      console.log("Profile Error Detected:", status);
 
       if (status === 401) {
         Alert.alert("Session Expired", "Please login again.");
         const clearSession = async () => {
-          await AsyncStorage.multiRemove(["token", "refreshToken", "user_id", "hasShownLoginSuccess"]);
-          setScreen("login"); 
+          await AsyncStorage.multiRemove([
+            "token",
+            "refreshToken",
+            "user_id",
+            "hasShownLoginSuccess",
+          ]);
+          setScreen("login");
         };
-        
+
         clearSession();
       }
     }
   }, [profileError, setScreen]);
 
-
   const takePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert("Permission Required", "Camera permission is needed to take a photo");
+      Alert.alert(
+        "Permission Required",
+        "Camera permission is needed to take a photo",
+      );
       return;
     }
 
@@ -624,7 +676,7 @@ const submitCancellation = () => {
       const formData = new FormData();
       formData.append("name", "profile_photo");
 
-      const filename = imageUri.split('/').pop() || 'profile.jpg';
+      const filename = imageUri.split("/").pop() || "profile.jpg";
       formData.append("files", {
         uri: imageUri,
         type: "image/jpeg",
@@ -647,7 +699,10 @@ const submitCancellation = () => {
         },
         onError: (error: any) => {
           console.log("Full error:", error.response?.data);
-          Alert.alert("Error", error?.response?.data?.message || "Failed to upload image");
+          Alert.alert(
+            "Error",
+            error?.response?.data?.message || "Failed to upload image",
+          );
         },
       });
     } catch (err) {
@@ -661,14 +716,14 @@ const submitCancellation = () => {
       const token = await AsyncStorage.getItem("token");
       const Rtoken = await AsyncStorage.getItem("refreshToken");
       const storedUserId = await AsyncStorage.getItem("user_id");
-      
+
       console.log(`Access token: ${token} Refresh Token: ${Rtoken}`);
       console.log(`User ID: ${storedUserId}`);
-      
+
       if (storedUserId) {
         setUserId(storedUserId);
       }
-      
+
       checkLoginSuccessShown();
     };
     afterMount();
@@ -679,21 +734,23 @@ const submitCancellation = () => {
       console.log("📸 No profile picture found, showing upload modal");
       setShowUploadOverlay(true);
     } else {
-      console.log("✅ Profile picture exists, hiding upload modal");
+      console.log("Profile picture exists, hiding upload modal");
       setShowUploadOverlay(false);
     }
   }, [profile]);
 
   const checkLoginSuccessShown = async () => {
     try {
-      const hasShownLoginSuccess = await AsyncStorage.getItem('hasShownLoginSuccess');
-      
+      const hasShownLoginSuccess = await AsyncStorage.getItem(
+        "hasShownLoginSuccess",
+      );
+
       if (!hasShownLoginSuccess) {
         setShowLoginSuccessModal(true);
-        await AsyncStorage.setItem('hasShownLoginSuccess', 'true');
+        await AsyncStorage.setItem("hasShownLoginSuccess", "true");
       }
     } catch (error) {
-      console.error('Error checking login success modal:', error);
+      console.error("Error checking login success modal:", error);
       setShowLoginSuccessModal(true);
     }
   };
@@ -702,30 +759,33 @@ const submitCancellation = () => {
     setShowLoginSuccessModal(false);
   };
 
-  const handleAdditionalInfoSubmit = (ridePreference: string, securityPreference: string) => {
+  const handleAdditionalInfoSubmit = (
+    ridePreference: string,
+    securityPreference: string,
+  ) => {
     console.log("\n🎯 [AdditionalInfo] User submitted preferences");
     console.log("🚗 Ride Preference:", ridePreference);
     console.log("🔒 Security Preference:", securityPreference);
     console.log("🖼️ Profile Image ID:", uploadedProfileImageId);
-    
+
     const payload = {
       profile_picture: uploadedProfileImageId,
       ride_preference: ridePreference,
       security_preference: securityPreference,
     };
-    
+
     console.log("\n📦 [AdditionalInfo] Full payload being sent:");
     console.log(JSON.stringify(payload, null, 2));
-    
+
     updateProfileMutation.mutate(payload, {
       onSuccess: () => {
-        console.log("✅ [AdditionalInfo] Profile updated successfully");
+        console.log("[AdditionalInfo] Profile updated successfully");
         setShowAdditionalInfoOverlay(false);
         setUploadedProfileImageId(null);
         setShowProfileUpdateSuccessModal(true);
       },
       onError: (error: any) => {
-        console.error("❌ [AdditionalInfo] Profile update failed:", error);
+        console.error("[AdditionalInfo] Profile update failed:", error);
         Alert.alert("Error", "Failed to update profile preferences");
       },
     });
@@ -758,7 +818,7 @@ const submitCancellation = () => {
       <View style={styles.logoContainer}>
         <Image
           source={require("../../assets/images/logo.png")}
-          resizeMode='cover'
+          resizeMode="cover"
           style={{ width: 100, height: 40 }}
         />
 
@@ -766,20 +826,28 @@ const submitCancellation = () => {
           {profile?.profile_image ? (
             <Image
               source={{ uri: profile.profile_image }}
-              resizeMode='contain'
-              style={{ width: 40, height: 40, borderRadius: 20, marginLeft:'auto' }}
+              resizeMode="contain"
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                marginLeft: "auto",
+              }}
             />
           ) : (
             <Image
               source={require("../../assets/images/Ava.png")}
-              resizeMode='contain'
-              style={{ width: 100, height: 40, marginLeft:'auto' }}
+              resizeMode="contain"
+              style={{ width: 100, height: 40, marginLeft: "auto" }}
             />
           )}
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.searchContainer} onPress={() => setScreen('orderScreen')}>
+      <TouchableOpacity
+        style={styles.searchContainer}
+        onPress={() => setScreen("orderScreen")}
+      >
         <FontAwesome name="car" size={19} color="white" />
         <TextInput
           placeholder="Where to today?"
@@ -793,40 +861,53 @@ const submitCancellation = () => {
         </TouchableOpacity>
       </TouchableOpacity>
 
-
       {activeRideStatus && (
-        <View style={[styles.statusCard, { borderColor: activeRideStatus.color }]}>
+        <View
+          style={[styles.statusCard, { borderColor: activeRideStatus.color }]}
+        >
           <View style={styles.statusContentRow}>
-            
             {/* 2. Driver Profile Image (Replaces the Icon Circle) */}
-            <View style={[styles.statusIconCircle, { overflow: 'hidden', padding: 0, backgroundColor: 'transparent' }]}>
-               <Image 
-                 source={
-                   driver?.profile_image 
-                   ? { uri: driver.profile_image } 
-                   : require("../../assets/images/Ava.png")
-                 }
-                 style={styles.driverAvatar}
-                 resizeMode="cover"
-               />
+            <View
+              style={[
+                styles.statusIconCircle,
+                {
+                  overflow: "hidden",
+                  padding: 0,
+                  backgroundColor: "transparent",
+                },
+              ]}
+            >
+              <Image
+                source={
+                  driver?.profile_image
+                    ? { uri: driver.profile_image }
+                    : require("../../assets/images/Ava.png")
+                }
+                style={styles.driverAvatar}
+                resizeMode="cover"
+              />
             </View>
 
-{/* 3. Driver Info Text */}
+            {/* 3. Driver Info Text */}
             <View style={styles.statusTextCol}>
               {/* Dynamic Title: "John is on the way" */}
               <Text style={styles.statusTitle}>
-                {driver?.name ? `${driver.name} is on the way` : activeRideStatus.title}
+                {driver?.name
+                  ? `${driver.name} is on the way`
+                  : activeRideStatus.title}
               </Text>
 
               <View style={styles.liveIndicatorRow}>
                 {/* Status Dot */}
-                <View style={[styles.pulsingDot, { backgroundColor: activeRideStatus.color }]} />
-                
+                <View
+                  style={[
+                    styles.pulsingDot,
+                    { backgroundColor: activeRideStatus.color },
+                  ]}
+                />
+
                 <Text style={styles.statusSubtitle}>
-                  {driver?.vehicle 
-                    ? driver.vehicle
-                    : activeRideStatus.subtitle
-                  }
+                  {driver?.vehicle ? driver.vehicle : activeRideStatus.subtitle}
                 </Text>
               </View>
             </View>
@@ -834,43 +915,50 @@ const submitCancellation = () => {
 
           {/* Action Button */}
           <View style={styles.statusActionRow}>
-            <TouchableOpacity 
-              style={[styles.trackBtn, { backgroundColor: activeRideStatus.color, flex: 1 }]}
-              onPress={() => setScreen('trackRide')}
+            <TouchableOpacity
+              style={[
+                styles.trackBtn,
+                { backgroundColor: activeRideStatus.color, flex: 1 },
+              ]}
+              onPress={() => setScreen("trackRide")}
             >
               <Text style={styles.trackBtnText}>Track Ride</Text>
               <Entypo name="chevron-right" size={18} color="black" />
             </TouchableOpacity>
-
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.chatBtn}
-              onPress={() => setScreen('chatScreen')}
+              onPress={() => setScreen("chatScreen")}
             >
               <Ionicons name="chatbubble-ellipses" size={24} color="#000" />
-            </TouchableOpacity>  {/* ✅ Added closing tag */}
+            </TouchableOpacity>{" "}
+            {/* Added closing tag */}
           </View>
 
-          {rideState === 'driver_on_way' && (
-        <TouchableOpacity 
-          style={[styles.cancelRideButton, isCanceling && { backgroundColor: "#444444ff"}]} 
-          onPress={handleCancelPress}
-          disabled={isCanceling}
-        >
-          {isCanceling ? (
-            <ActivityIndicator size="small" color="#ff4444" />
-          ) : (
-            <Text style={styles.cancelRideButtonText}>Cancel Ride</Text>
+          {rideState === "driver_on_way" && (
+            <TouchableOpacity
+              style={[
+                styles.cancelRideButton,
+                isCanceling && { backgroundColor: "#444444ff" },
+              ]}
+              onPress={handleCancelPress}
+              disabled={isCanceling}
+            >
+              {isCanceling ? (
+                <ActivityIndicator size="small" color="#ff4444" />
+              ) : (
+                <Text style={styles.cancelRideButtonText}>Cancel Ride</Text>
+              )}
+            </TouchableOpacity>
           )}
-        </TouchableOpacity>
-      )}
         </View>
       )}
 
-      
-
       <Text style={styles.sectionTitle}>Suggestion</Text>
       <View style={styles.suggestionRow}>
-        <TouchableOpacity style={styles.suggestionCard} onPress={() => setScreen('orderScreen')}>
+        <TouchableOpacity
+          style={styles.suggestionCard}
+          onPress={() => setScreen("orderScreen")}
+        >
           <Image
             source={require("../../assets/images/car.png")}
             style={styles.suggestionIcon}
@@ -878,7 +966,10 @@ const submitCancellation = () => {
           <Text style={styles.suggestionText}>Ride</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.suggestionCard} onPress={() => setShowComingSoonModal(true)}>
+        <TouchableOpacity
+          style={styles.suggestionCard}
+          onPress={() => setShowComingSoonModal(true)}
+        >
           <Image
             source={require("../../assets/images/courier.png")}
             style={styles.suggestionIcon}
@@ -886,7 +977,10 @@ const submitCancellation = () => {
           <Text style={styles.suggestionText}>Courier</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.suggestionCard} onPress={() => setShowComingSoonModal(true)}>
+        <TouchableOpacity
+          style={styles.suggestionCard}
+          onPress={() => setShowComingSoonModal(true)}
+        >
           <Image
             source={require("../../assets/images/reserve.png")}
             style={styles.suggestionIcon}
@@ -901,18 +995,20 @@ const submitCancellation = () => {
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.banner}
             onPress={() => setShowComingSoonModal(true)}
             activeOpacity={0.8}
           >
             <View>
               <Text style={styles.bannerText}>{item.text}</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.bannerBtn}
                 onPress={() => setShowComingSoonModal(true)}
               >
-                <Text style={styles.bannerBtnText}>Try our Premium Package</Text>
+                <Text style={styles.bannerBtnText}>
+                  Try our Premium Package
+                </Text>
               </TouchableOpacity>
             </View>
             <Image source={item.image} style={styles.bannerImage} />
@@ -938,9 +1034,9 @@ const submitCancellation = () => {
         <Text style={styles.emptyRideMessage}>
           Take a ride to see your ride history here
         </Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.emptyRideButton}
-          onPress={() => setScreen('orderScreen')}
+          onPress={() => setScreen("orderScreen")}
         >
           <Text style={styles.emptyRideButtonText}>Book a Ride</Text>
         </TouchableOpacity>
@@ -948,26 +1044,26 @@ const submitCancellation = () => {
 
       <View style={styles.analyticsCard}>
         <Text style={styles.analyticsTitle}>Check your ride Analytics</Text>
-        <TouchableOpacity 
-          style={styles.analyticsButton} 
-          onPress={() => setScreen('analyticsScreen')}
+        <TouchableOpacity
+          style={styles.analyticsButton}
+          onPress={() => setScreen("analyticsScreen")}
         >
           <Text style={styles.analyticsButtonText}>View your Ride Summary</Text>
         </TouchableOpacity>
       </View>
 
-            <TouchableOpacity 
-        style={styles.resetButton} 
-        onPress={resetRide}
-      >
+      {/* <TouchableOpacity style={styles.resetButton} onPress={resetRide}>
         <Text style={styles.resetButtonText}>
           Debug: Reset, current state: {rideState}
         </Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       <Text style={styles.sectionTitle}>Special Service</Text>
       <View style={styles.specialServiceRow}>
-        <TouchableOpacity style={styles.specialCard}>
+        <TouchableOpacity
+          style={styles.specialCard}
+          onPress={() => setShowComingSoonModal(true)}
+        >
           <Image
             source={require("../../assets/images/car2.png")}
             style={styles.specialImage}
@@ -976,7 +1072,10 @@ const submitCancellation = () => {
           <Text style={styles.specialSub}>Checkout our Special AI</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.specialCard}>
+        <TouchableOpacity
+          style={styles.specialCard}
+          onPress={() => setShowComingSoonModal(true)}
+        >
           <Image
             source={require("../../assets/images/car2.png")}
             style={styles.specialImage}
@@ -985,7 +1084,10 @@ const submitCancellation = () => {
           <Text style={styles.specialSub}>See how to share ride</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.specialCard}>
+        <TouchableOpacity
+          style={styles.specialCard}
+          onPress={() => setShowComingSoonModal(true)}
+        >
           <Image
             source={require("../../assets/images/car2.png")}
             style={styles.specialImage}
@@ -994,8 +1096,6 @@ const submitCancellation = () => {
           <Text style={styles.specialSub}>See how to share ride</Text>
         </TouchableOpacity>
       </View>
-
-
 
       <UploadPhotoOverlay
         isVisible={showUploadOverlay}
@@ -1035,66 +1135,70 @@ const submitCancellation = () => {
       />
 
       {/* Cancel Ride Modal */}
-<Modal
-  animationType="slide"
-  transparent={true}
-  visible={cancelModalVisible}
-  onRequestClose={() => setCancelModalVisible(false)}
->
-  <View style={styles.modalOverlay}>
-    <View style={styles.cancelModalContent}>
-      
-      {/* Modal Header */}
-      <View style={styles.modalHeader}>
-        <Text style={styles.modalTitle}>Why are you cancelling?</Text>
-        <TouchableOpacity onPress={() => setCancelModalVisible(false)}>
-          <Ionicons name="close" size={24} color="#999" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Reasons List */}
-      <View style={styles.reasonsContainer}>
-        {CANCELLATION_REASONS.map((reason) => (
-          <TouchableOpacity
-            key={reason}
-            style={[
-              styles.reasonButton,
-              selectedCancelReason === reason && styles.reasonButtonSelected
-            ]}
-            onPress={() => setSelectedCancelReason(reason)}
-          >
-            <Text style={[
-              styles.reasonText,
-              selectedCancelReason === reason && styles.reasonTextSelected
-            ]}>
-              {reason}
-            </Text>
-            {selectedCancelReason === reason && (
-              <Ionicons name="checkmark-circle" size={20} color="#000" />
-            )}
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Confirm Button */}
-      <TouchableOpacity 
-        style={[
-          styles.confirmCancelButton, 
-          (!selectedCancelReason || isCanceling) && { backgroundColor: "#202020ff"}
-        ]}
-        onPress={submitCancellation}
-        disabled={!selectedCancelReason || isCanceling}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={cancelModalVisible}
+        onRequestClose={() => setCancelModalVisible(false)}
       >
-        {isCanceling ? (
-          <ActivityIndicator color="white" />
-        ) : (
-          <Text style={styles.confirmCancelText}>Cancel Ride</Text>
-        )}
-      </TouchableOpacity>
+        <View style={styles.modalOverlay}>
+          <View style={styles.cancelModalContent}>
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Why are you cancelling?</Text>
+              <TouchableOpacity onPress={() => setCancelModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#999" />
+              </TouchableOpacity>
+            </View>
 
-    </View>
-  </View>
-</Modal>
+            {/* Reasons List */}
+            <View style={styles.reasonsContainer}>
+              {CANCELLATION_REASONS.map((reason) => (
+                <TouchableOpacity
+                  key={reason}
+                  style={[
+                    styles.reasonButton,
+                    selectedCancelReason === reason &&
+                      styles.reasonButtonSelected,
+                  ]}
+                  onPress={() => setSelectedCancelReason(reason)}
+                >
+                  <Text
+                    style={[
+                      styles.reasonText,
+                      selectedCancelReason === reason &&
+                        styles.reasonTextSelected,
+                    ]}
+                  >
+                    {reason}
+                  </Text>
+                  {selectedCancelReason === reason && (
+                    <Ionicons name="checkmark-circle" size={20} color="#000" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Confirm Button */}
+            <TouchableOpacity
+              style={[
+                styles.confirmCancelButton,
+                (!selectedCancelReason || isCanceling) && {
+                  backgroundColor: "#202020ff",
+                },
+              ]}
+              onPress={submitCancellation}
+              disabled={!selectedCancelReason || isCanceling}
+            >
+              {isCanceling ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={styles.confirmCancelText}>Cancel Ride</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -1107,7 +1211,7 @@ const styles = StyleSheet.create({
     paddingTop: 50,
   },
   statusCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: "#1a1a1a",
     borderRadius: 16,
     padding: 16,
     marginBottom: 20, // Spacing from the next element
@@ -1119,22 +1223,22 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   statusContentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 15,
   },
   statusTextCol: {
     flex: 1,
   },
   statusTitle: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 4,
   },
   liveIndicatorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
   },
   pulsingDot: {
@@ -1143,23 +1247,23 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   statusSubtitle: {
-    color: '#ccc',
+    color: "#ccc",
     fontSize: 14,
   },
 
   trackBtnText: {
-    color: '#000',
+    color: "#000",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   logoContainer: {
     height: 50,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
-    flexDirection:'row',  
-    justifyContent:'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
-    modalHeader: {
+  modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -1171,80 +1275,80 @@ const styles = StyleSheet.create({
     color: "white",
   },
   driverLocationBanner: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: "#1a1a1a",
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: '#FEB914',
+    borderColor: "#FEB914",
   },
   cancelRideButton: {
-  backgroundColor: '#252525',
-  borderWidth: 1,
-  marginTop: 15,
-  borderColor: '#333',
-  borderRadius: 12,
-  padding: 14,
-  alignItems: 'center',
-  marginBottom: 20,
-},
-cancelRideButtonText: {
-  color: '#ff4444',
-  fontSize: 14,
-  fontWeight: '600',
-},
-cancelModalContent: {
-  backgroundColor: '#1a1a1a',
-  borderTopLeftRadius: 20,
-  borderTopRightRadius: 20,
-  padding: 20,
-  borderTopWidth: 1,
-  borderColor: '#333',
-  minHeight: '50%',
-},
-reasonsContainer: {
-  marginBottom: 20,
-  gap: 10,
-},
-reasonButton: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  backgroundColor: '#2a2a2a',
-  padding: 16,
-  borderRadius: 12,
-  borderWidth: 1,
-  borderColor: '#333',
-},
-reasonButtonSelected: {
-  backgroundColor: '#facc15', 
-  borderColor: '#facc15',
-},
-reasonText: {
-  color: '#ccc',
-  fontSize: 16,
-  fontWeight: '500',
-},
-reasonTextSelected: {
-  color: '#000',
-  fontWeight: 'bold',
-},
-confirmCancelButton: {
-  backgroundColor: '#ff4444',
-  padding: 18,
-  borderRadius: 12,
-  alignItems: 'center',
-  marginTop: 10,
-},
-confirmCancelText: {
-  color: 'white',
-  fontSize: 16,
-  fontWeight: 'bold',
-  textTransform: 'uppercase',
-},
+    backgroundColor: "#252525",
+    borderWidth: 1,
+    marginTop: 15,
+    borderColor: "#333",
+    borderRadius: 12,
+    padding: 14,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  cancelRideButtonText: {
+    color: "#ff4444",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  cancelModalContent: {
+    backgroundColor: "#1a1a1a",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    borderTopWidth: 1,
+    borderColor: "#333",
+    minHeight: "50%",
+  },
+  reasonsContainer: {
+    marginBottom: 20,
+    gap: 10,
+  },
+  reasonButton: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#2a2a2a",
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#333",
+  },
+  reasonButtonSelected: {
+    backgroundColor: "#facc15",
+    borderColor: "#facc15",
+  },
+  reasonText: {
+    color: "#ccc",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  reasonTextSelected: {
+    color: "#000",
+    fontWeight: "bold",
+  },
+  confirmCancelButton: {
+    backgroundColor: "#ff4444",
+    padding: 18,
+    borderRadius: 12,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  confirmCancelText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+    textTransform: "uppercase",
+  },
   bannerHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 16,
     gap: 12,
   },
@@ -1252,43 +1356,43 @@ confirmCancelText: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#000',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#000",
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 2,
-    borderColor: '#FEB914',
+    borderColor: "#FEB914",
   },
   bannerTextContainer: {
     flex: 1,
   },
   bannerTitle: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 6,
   },
   statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
   liveDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
   },
   bannerSubtitle: {
-    color: '#aaa',
+    color: "#aaa",
     fontSize: 14,
   },
   resetButton: {
-    backgroundColor: "#242424ff", 
+    backgroundColor: "#242424ff",
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 10,
     alignItems: "center",
-    marginBottom: 30, 
+    marginBottom: 30,
     borderWidth: 1,
     borderColor: "#fff",
   },
@@ -1299,30 +1403,30 @@ confirmCancelText: {
     textTransform: "uppercase",
   },
   trackButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FEB914',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FEB914",
     paddingVertical: 14,
     borderRadius: 12,
     gap: 8,
   },
   trackButtonText: {
-    color: '#000',
+    color: "#000",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   statusIconCircle: {
-    width: 50, 
+    width: 50,
     height: 50,
     borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 12,
   },
   driverAvatar: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
     borderRadius: 999,
   },
   searchContainer: {
@@ -1350,54 +1454,54 @@ confirmCancelText: {
     gap: 7,
   },
   comingSoonModalContent: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: "#1a1a1a",
     borderRadius: 20,
     padding: 30,
-    alignItems: 'center',
-    width: '100%',
+    alignItems: "center",
+    width: "100%",
     maxWidth: 350,
     borderWidth: 2,
-    borderColor: '#FEB914',
+    borderColor: "#FEB914",
   },
   comingSoonIconContainer: {
     marginBottom: 20,
   },
   comingSoonModalTitle: {
     fontSize: 24,
-    color: '#fff',
+    color: "#fff",
     marginBottom: 15,
-    textAlign: 'center',
-    fontWeight: 'bold',
+    textAlign: "center",
+    fontWeight: "bold",
   },
   emptyRideCard: {
     backgroundColor: "#1a1a1a",
     borderRadius: 20,
     padding: 30,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 16,
     borderWidth: 1,
     borderColor: "#333",
-    borderStyle: 'dashed',
+    borderStyle: "dashed",
   },
   emptyRideIconContainer: {
-    backgroundColor: '#000',
+    backgroundColor: "#000",
     borderRadius: 50,
     padding: 20,
     marginBottom: 20,
     borderWidth: 2,
-    borderColor: '#FEB914',
+    borderColor: "#FEB914",
   },
   emptyRideTitle: {
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 10,
-    textAlign: 'center',
+    textAlign: "center",
   },
   emptyRideMessage: {
     color: "#aaa",
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 20,
     lineHeight: 20,
   },
@@ -1414,30 +1518,30 @@ confirmCancelText: {
   },
   comingSoonModalMessage: {
     fontSize: 16,
-    color: '#ccc',
-    textAlign: 'center',
+    color: "#ccc",
+    textAlign: "center",
     marginBottom: 10,
     lineHeight: 22,
   },
   comingSoonModalSubtext: {
     fontSize: 14,
-    color: '#aaa',
-    textAlign: 'center',
+    color: "#aaa",
+    textAlign: "center",
     marginBottom: 25,
     lineHeight: 20,
   },
   comingSoonModalButton: {
-    backgroundColor: '#FEB914',
+    backgroundColor: "#FEB914",
     paddingVertical: 12,
     paddingHorizontal: 40,
     borderRadius: 10,
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
   },
   comingSoonModalButtonText: {
-    color: '#000',
+    color: "#000",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   laterText: {
     color: "#fff",
@@ -1563,76 +1667,76 @@ confirmCancelText: {
   },
   overlayContainer: {
     flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
   },
   overlayScrollView: {
     flex: 1,
   },
   overlayScrollContent: {
     flexGrow: 1,
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
   },
   overlayContent: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: "#1a1a1a",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
-    alignItems: 'center',
+    alignItems: "center",
     paddingBottom: 40,
   },
   closeButton: {
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
     padding: 5,
   },
   overlayTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: "bold",
+    color: "#fff",
     marginBottom: 5,
   },
   overlaySubtitle: {
     fontSize: 16,
-    color: '#aaa',
+    color: "#aaa",
     marginBottom: 20,
-    textAlign: 'center',
+    textAlign: "center",
   },
   uploadIconContainer: {
-    backgroundColor: 'black',
+    backgroundColor: "black",
     borderRadius: 20,
     padding: 20,
     marginBottom: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     width: 140,
     height: 140,
   },
   uploadButton: {
-    backgroundColor: '#FEB914',
+    backgroundColor: "#FEB914",
     paddingVertical: 15,
     paddingHorizontal: 80,
     borderRadius: 10,
     marginBottom: 10,
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
   },
   uploadButtonText: {
-    color: '#000',
-    fontWeight: 'bold',
+    color: "#000",
+    fontWeight: "bold",
     fontSize: 16,
   },
   submitButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
     paddingVertical: 15,
     paddingHorizontal: 80,
     borderRadius: 10,
     marginBottom: 10,
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
   },
   submitText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
     fontSize: 16,
   },
   skipButton: {
@@ -1641,66 +1745,66 @@ confirmCancelText: {
     borderRadius: 10,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: 'white',
+    borderColor: "white",
   },
   skipButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
     fontSize: 16,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   successModalContent: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: "#1a1a1a",
     borderRadius: 20,
     padding: 30,
-    alignItems: 'center',
-    width: '100%',
+    alignItems: "center",
+    width: "100%",
     maxWidth: 350,
     borderWidth: 2,
-    borderColor: '#4CAF50',
+    borderColor: "#4CAF50",
   },
   successIconContainer: {
     marginBottom: 20,
   },
   successModalTitle: {
     fontSize: 24,
-    color: '#fff',
+    color: "#fff",
     marginBottom: 15,
-    textAlign: 'center',
-    fontWeight: 'bold',
+    textAlign: "center",
+    fontWeight: "bold",
   },
   successModalMessage: {
     fontSize: 16,
-    color: '#ccc',
-    textAlign: 'center',
+    color: "#ccc",
+    textAlign: "center",
     marginBottom: 10,
     lineHeight: 22,
   },
   successModalSubtext: {
     fontSize: 14,
-    color: '#aaa',
-    textAlign: 'center',
+    color: "#aaa",
+    textAlign: "center",
     marginBottom: 25,
     lineHeight: 20,
   },
   successModalButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
     paddingVertical: 12,
     paddingHorizontal: 40,
     borderRadius: 10,
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
   },
   successModalButtonText: {
-    color: '#000',
+    color: "#000",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   inputField: {
     flexDirection: "row",
@@ -1713,7 +1817,7 @@ confirmCancelText: {
     paddingVertical: 14,
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: "#333",
   },
   dropdownText: {
     color: "#fff",
@@ -1746,7 +1850,7 @@ confirmCancelText: {
     borderColor: "#FFB800",
     paddingVertical: 25,
     alignItems: "center",
-    padding:20
+    padding: 20,
   },
   areaFadaTitle: {
     fontSize: 22,
@@ -1831,51 +1935,51 @@ confirmCancelText: {
     fontWeight: "700",
   },
   driverOnWayModalContent: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: "#1a1a1a",
     borderRadius: 20,
     padding: 30,
-    alignItems: 'center',
-    width: '100%',
+    alignItems: "center",
+    width: "100%",
     maxWidth: 350,
     borderWidth: 2,
-    borderColor: '#FEB914',
+    borderColor: "#FEB914",
   },
   driverOnWayIconContainer: {
     marginBottom: 20,
   },
   driverOnWayModalTitle: {
     fontSize: 24,
-    color: '#fff',
+    color: "#fff",
     marginBottom: 15,
-    textAlign: 'center',
-    fontWeight: 'bold',
+    textAlign: "center",
+    fontWeight: "bold",
   },
   driverOnWayModalMessage: {
     fontSize: 16,
-    color: '#ccc',
-    textAlign: 'center',
+    color: "#ccc",
+    textAlign: "center",
     marginBottom: 10,
     lineHeight: 22,
   },
   driverOnWayModalSubtext: {
     fontSize: 14,
-    color: '#aaa',
-    textAlign: 'center',
+    color: "#aaa",
+    textAlign: "center",
     marginBottom: 25,
     lineHeight: 20,
   },
   driverOnWayModalButton: {
-    backgroundColor: '#FEB914',
+    backgroundColor: "#FEB914",
     paddingVertical: 12,
     paddingHorizontal: 40,
     borderRadius: 10,
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
   },
   driverOnWayModalButtonText: {
-    color: '#000',
+    color: "#000",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   dropdownLabel: {
     color: "#aaa",
@@ -1908,23 +2012,23 @@ confirmCancelText: {
     fontWeight: "600",
   },
   statusActionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10, 
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
     marginTop: 5,
   },
   chatBtn: {
-    backgroundColor: '#FEB914',
-    width: 48, 
+    backgroundColor: "#FEB914",
+    width: 48,
     height: 48,
     borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   trackBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 12,
     borderRadius: 10,
     gap: 5,

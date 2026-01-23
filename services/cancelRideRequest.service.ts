@@ -10,15 +10,13 @@ export const useCancelRideRequest = () => {
   return useMutation<CancelRideResponse, Error, void>({
     mutationFn: async () => {
       const rideId = await AsyncStorage.getItem("ride_request_id");
-      
+
       if (!rideId) {
         throw new Error("Ride ID not found in AsyncStorage");
       }
 
       console.log("🗑️ Sending cancel request for ID:", rideId);
-      const response = await api.patch(
-        `rides/requests/${rideId}/cancel/`
-      );
+      const response = await api.patch(`rides/requests/${rideId}/cancel/`);
 
       console.log("📥 Cancel response status:", response.status);
 
@@ -26,15 +24,15 @@ export const useCancelRideRequest = () => {
     },
 
     onSuccess: () => {
-      console.log("✅ Ride request cancelled successfully");
-      AsyncStorage.removeItem("ride_request_id").catch(err => 
-        console.warn("Failed to clear async storage", err)
+      console.log("Ride request cancelled successfully");
+      AsyncStorage.removeItem("ride_request_id").catch((err) =>
+        console.warn("Failed to clear async storage", err),
       );
     },
 
     onError: (error: any) => {
       console.error("❌ Cancel error:", error);
-      
+
       if (error.response) {
         console.error("Error response data:", error.response.data);
       } else if (error.request) {

@@ -17,7 +17,7 @@ export const useBookStandard = () => {
     mutationFn: async (data: BookStandardPayload) => {
       // Get ride_request_id from AsyncStorage
       const rideId = await AsyncStorage.getItem("ride_request_id");
-      
+
       if (!rideId) {
         throw new Error("Ride ID not found in AsyncStorage");
       }
@@ -25,13 +25,13 @@ export const useBookStandard = () => {
       // Validate payment method
       const validPaymentMethods = ["CASH", "CARD", "WALLET"];
       const upperPaymentMethod = data.payment_method.toUpperCase();
-      
+
       if (!validPaymentMethods.includes(upperPaymentMethod)) {
         throw new Error(`Invalid payment method: ${data.payment_method}`);
       }
 
       // Ensure rider_offer is a number
-      if (typeof data.rider_offer !== 'number' || isNaN(data.rider_offer)) {
+      if (typeof data.rider_offer !== "number" || isNaN(data.rider_offer)) {
         throw new Error("Rider offer must be a valid number");
       }
 
@@ -47,7 +47,7 @@ export const useBookStandard = () => {
 
       const response = await api.patch(
         `rides/requests/${rideId}/book/standard/`,
-        payload
+        payload,
       );
 
       console.log("📥 Booking response:", response.data);
@@ -56,14 +56,14 @@ export const useBookStandard = () => {
     },
 
     onSuccess: ({ response, rideId }) => {
-      console.log("✅ Rider offer submitted successfully");
+      console.log("Rider offer submitted successfully");
       console.log("Ride ID:", rideId);
       console.log("Response data:", response.data);
     },
 
     onError: (error: any) => {
       console.error("❌ Booking error:", error);
-      
+
       if (error.response) {
         // Server responded with error
         console.error("Error response data:", error.response.data);

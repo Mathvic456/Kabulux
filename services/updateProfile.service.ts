@@ -6,10 +6,9 @@ export const useUpdateRiderProfile = (userId?: string) => {
 
   return useMutation({
     mutationFn: (data: {
-      
       profile_picture?: string | null;
-      ride_preference?: string;  // Changed from object to string
-      security_preference?: string;  // Changed from object to string
+      ride_preference?: string; // Changed from object to string
+      security_preference?: string; // Changed from object to string
     }) => {
       console.log("\n🔄 [useUpdateRiderProfile] Mutation initiated");
       console.log("📊 UserId parameter:", userId);
@@ -19,12 +18,15 @@ export const useUpdateRiderProfile = (userId?: string) => {
     },
 
     onSuccess: (res) => {
-      console.log("✅ Rider profile updated:", res.data);
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      console.log("Rider profile updated:", res.data);
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
 
     onError: (error: any) => {
-      console.error("❌ Rider profile update failed:", error.response?.data || error);
+      console.error(
+        "❌ Rider profile update failed:",
+        error.response?.data || error,
+      );
     },
   });
 };

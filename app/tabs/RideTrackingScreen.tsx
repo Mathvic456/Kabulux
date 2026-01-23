@@ -3,11 +3,18 @@ import { useRideDetails } from "@/services/rideDetails.service";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import Constants from "expo-constants";
 import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import {
+  ActivityIndicator,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import MapViewDirections from "react-native-maps-directions";
 import { useRide } from "../../context/RideContext";
-import { darkMapStyle } from '../../styles/darkMapStyle';
+import { darkMapStyle } from "../../styles/darkMapStyle";
 
 if (!Constants.expoConfig?.extra?.googleMapsApiKey) {
   throw new Error("Google Maps API key is missing");
@@ -24,13 +31,20 @@ interface PickupLocation {
 export default function RideTrackingScreen({ goBack }: { goBack: () => void }) {
   const { driverLocation, rideState } = useRide();
   const { rideId } = useRideId();
-  
-  const { data: rideDetails, isLoading: loadingRideDetails } = useRideDetails(rideId);
-  
+
+  const { data: rideDetails, isLoading: loadingRideDetails } =
+    useRideDetails(rideId);
+
   const mapRef = useRef<MapView>(null);
-  const [pickupLocation, setPickupLocation] = useState<PickupLocation | null>(null);
-  const [destinationLocation, setDestinationLocation] = useState<PickupLocation | null>(null);
-  const [routeInfo, setRouteInfo] = useState<{ distance: number; duration: number } | null>(null);
+  const [pickupLocation, setPickupLocation] = useState<PickupLocation | null>(
+    null,
+  );
+  const [destinationLocation, setDestinationLocation] =
+    useState<PickupLocation | null>(null);
+  const [routeInfo, setRouteInfo] = useState<{
+    distance: number;
+    duration: number;
+  } | null>(null);
 
   // Extract pickup location from ride details
   useEffect(() => {
@@ -38,10 +52,10 @@ export default function RideTrackingScreen({ goBack }: { goBack: () => void }) {
       const pickup = {
         latitude: parseFloat(rideDetails.pickup_lat),
         longitude: parseFloat(rideDetails.pickup_lng),
-        address: rideDetails.pickup_address || "Pickup Location"
+        address: rideDetails.pickup_address || "Pickup Location",
       };
       setPickupLocation(pickup);
-      console.log('📍 [TRACKING] Pickup location from ride details:', pickup);
+      console.log("📍 [TRACKING] Pickup location from ride details:", pickup);
     }
   }, [rideDetails]);
 
@@ -51,10 +65,13 @@ export default function RideTrackingScreen({ goBack }: { goBack: () => void }) {
       const destination = {
         latitude: parseFloat(rideDetails.dropoff_lat),
         longitude: parseFloat(rideDetails.dropoff_lng),
-        address: rideDetails.dropoff_address || "Destination"
+        address: rideDetails.dropoff_address || "Destination",
       };
       setDestinationLocation(destination);
-      console.log('🎯 [TRACKING] Destination location from ride details:', destination);
+      console.log(
+        "🎯 [TRACKING] Destination location from ride details:",
+        destination,
+      );
     }
   }, [rideDetails]);
 
@@ -68,32 +85,48 @@ export default function RideTrackingScreen({ goBack }: { goBack: () => void }) {
     if (rideState === "in_progress" && driverLocation && destinationLocation) {
       coordinates = [
         { latitude: driverLocation.lat, longitude: driverLocation.lng },
-        { latitude: destinationLocation.latitude, longitude: destinationLocation.longitude }
+        {
+          latitude: destinationLocation.latitude,
+          longitude: destinationLocation.longitude,
+        },
       ];
     }
     // Driver on way: show driver and pickup
-    else if (rideState === "driver_on_way" && driverLocation && pickupLocation) {
+    else if (
+      rideState === "driver_on_way" &&
+      driverLocation &&
+      pickupLocation
+    ) {
       coordinates = [
         { latitude: driverLocation.lat, longitude: driverLocation.lng },
-        { latitude: pickupLocation.latitude, longitude: pickupLocation.longitude }
+        {
+          latitude: pickupLocation.latitude,
+          longitude: pickupLocation.longitude,
+        },
       ];
     }
     // Fallback: center on available location
     else if (driverLocation) {
-      mapRef.current.animateToRegion({
-        latitude: driverLocation.lat,
-        longitude: driverLocation.lng,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      }, 1000);
+      mapRef.current.animateToRegion(
+        {
+          latitude: driverLocation.lat,
+          longitude: driverLocation.lng,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        },
+        1000,
+      );
       return;
     } else if (pickupLocation) {
-      mapRef.current.animateToRegion({
-        latitude: pickupLocation.latitude,
-        longitude: pickupLocation.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      }, 1000);
+      mapRef.current.animateToRegion(
+        {
+          latitude: pickupLocation.latitude,
+          longitude: pickupLocation.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        },
+        1000,
+      );
       return;
     }
 
@@ -128,7 +161,9 @@ export default function RideTrackingScreen({ goBack }: { goBack: () => void }) {
             {driver?.name ? `Tracking ${driver.name}` : "Tracking Driver"}
           </Text>
           {rideState && (
-            <Text style={styles.topBarSubtitle}>{rideState.replace('_', ' ').toUpperCase()}</Text>
+            <Text style={styles.topBarSubtitle}>
+              {rideState.replace("_", " ").toUpperCase()}
+            </Text>
           )}
         </View>
         <View style={styles.iconContainer} />
@@ -142,7 +177,8 @@ export default function RideTrackingScreen({ goBack }: { goBack: () => void }) {
           provider={PROVIDER_GOOGLE}
           initialRegion={{
             latitude: pickupLocation?.latitude || driverLocation?.lat || 6.5244,
-            longitude: pickupLocation?.longitude || driverLocation?.lng || 3.3792,
+            longitude:
+              pickupLocation?.longitude || driverLocation?.lng || 3.3792,
             latitudeDelta: 0.05,
             longitudeDelta: 0.05,
           }}
@@ -204,71 +240,86 @@ export default function RideTrackingScreen({ goBack }: { goBack: () => void }) {
           )}
 
           {/* Route Line - From Driver to Pickup Location (when driver_on_way) */}
-          {rideState === "driver_on_way" && driverLocation && pickupLocation && (
-            <MapViewDirections
-              origin={{
-                latitude: driverLocation.lat,
-                longitude: driverLocation.lng,
-              }}
-              destination={{
-                latitude: pickupLocation.latitude,
-                longitude: pickupLocation.longitude,
-              }}
-              apikey={GOOGLE_API_KEY}
-              strokeWidth={4}
-              strokeColor="#FEB914"
-              optimizeWaypoints={true}
-              onReady={(result) => {
-                console.log(`🚗 Route to pickup: ${result.distance.toFixed(2)} km, ${result.duration.toFixed(0)} min`);
-                setRouteInfo({
-                  distance: result.distance,
-                  duration: result.duration,
-                });
-              }}
-              onError={(errorMessage) => {
-                console.error('❌ Directions error:', errorMessage);
-              }}
-            />
-          )}
+          {rideState === "driver_on_way" &&
+            driverLocation &&
+            pickupLocation && (
+              <MapViewDirections
+                origin={{
+                  latitude: driverLocation.lat,
+                  longitude: driverLocation.lng,
+                }}
+                destination={{
+                  latitude: pickupLocation.latitude,
+                  longitude: pickupLocation.longitude,
+                }}
+                apikey={GOOGLE_API_KEY}
+                strokeWidth={4}
+                strokeColor="#FEB914"
+                optimizeWaypoints={true}
+                onReady={(result) => {
+                  console.log(
+                    `🚗 Route to pickup: ${result.distance.toFixed(2)} km, ${result.duration.toFixed(0)} min`,
+                  );
+                  setRouteInfo({
+                    distance: result.distance,
+                    duration: result.duration,
+                  });
+                }}
+                onError={(errorMessage) => {
+                  console.error(" Directions error:", errorMessage);
+                }}
+              />
+            )}
 
           {/* Route Line - From Driver to Destination (when in_progress) */}
-          {rideState === "in_progress" && driverLocation && destinationLocation && (
-            <MapViewDirections
-              origin={{
-                latitude: driverLocation.lat,
-                longitude: driverLocation.lng,
-              }}
-              destination={{
-                latitude: destinationLocation.latitude,
-                longitude: destinationLocation.longitude,
-              }}
-              apikey={GOOGLE_API_KEY}
-              strokeWidth={4}
-              strokeColor="#4CAF50"
-              optimizeWaypoints={true}
-              onReady={(result) => {
-                console.log(`🎯 Route to destination: ${result.distance.toFixed(2)} km, ${result.duration.toFixed(0)} min`);
-                setRouteInfo({
-                  distance: result.distance,
-                  duration: result.duration,
-                });
-              }}
-              onError={(errorMessage) => {
-                console.error('❌ Directions error:', errorMessage);
-              }}
-            />
-          )}
+          {rideState === "in_progress" &&
+            driverLocation &&
+            destinationLocation && (
+              <MapViewDirections
+                origin={{
+                  latitude: driverLocation.lat,
+                  longitude: driverLocation.lng,
+                }}
+                destination={{
+                  latitude: destinationLocation.latitude,
+                  longitude: destinationLocation.longitude,
+                }}
+                apikey={GOOGLE_API_KEY}
+                strokeWidth={4}
+                strokeColor="#4CAF50"
+                optimizeWaypoints={true}
+                onReady={(result) => {
+                  console.log(
+                    `🎯 Route to destination: ${result.distance.toFixed(2)} km, ${result.duration.toFixed(0)} min`,
+                  );
+                  setRouteInfo({
+                    distance: result.distance,
+                    duration: result.duration,
+                  });
+                }}
+                onError={(errorMessage) => {
+                  console.error("Directions error:", errorMessage);
+                }}
+              />
+            )}
         </MapView>
 
         {/* Route Info Badge */}
-        {routeInfo && (rideState === "driver_on_way" || rideState === "in_progress") && (
-          <View style={styles.routeInfoBadge}>
-            <FontAwesome5 name="route" size={16} color={rideState === "in_progress" ? "#4CAF50" : "#FEB914"} />
-            <Text style={styles.routeInfoText}>
-              {routeInfo.distance.toFixed(1)} km • {Math.ceil(routeInfo.duration)} min {rideState === "in_progress" ? "to destination" : "away"}
-            </Text>
-          </View>
-        )}
+        {routeInfo &&
+          (rideState === "driver_on_way" || rideState === "in_progress") && (
+            <View style={styles.routeInfoBadge}>
+              <FontAwesome5
+                name="route"
+                size={16}
+                color={rideState === "in_progress" ? "#4CAF50" : "#FEB914"}
+              />
+              <Text style={styles.routeInfoText}>
+                {routeInfo.distance.toFixed(1)} km •{" "}
+                {Math.ceil(routeInfo.duration)} min{" "}
+                {rideState === "in_progress" ? "to destination" : "away"}
+              </Text>
+            </View>
+          )}
       </View>
 
       {/* Bottom Info Card */}
@@ -277,18 +328,20 @@ export default function RideTrackingScreen({ goBack }: { goBack: () => void }) {
         {driver && (
           <View style={styles.driverInfoSection}>
             <View style={styles.driverAvatarContainer}>
-              <Image 
+              <Image
                 source={
-                  driver.profile_image 
-                  ? { uri: driver.profile_image } 
-                  : require("../../assets/images/Ava.png")
+                  driver.profile_image
+                    ? { uri: driver.profile_image }
+                    : require("../../assets/images/Ava.png")
                 }
                 style={styles.driverAvatar}
                 resizeMode="cover"
               />
             </View>
             <View style={styles.driverDetails}>
-              <Text style={styles.driverName}>{driver.name || "Your Driver"}</Text>
+              <Text style={styles.driverName}>
+                {driver.name || "Your Driver"}
+              </Text>
               <View style={styles.driverMetaRow}>
                 {driver.rating && (
                   <View style={styles.ratingContainer}>
@@ -306,15 +359,23 @@ export default function RideTrackingScreen({ goBack }: { goBack: () => void }) {
 
         {/* Status */}
         <View style={styles.statusContainer}>
-          <View style={[
-            styles.statusDot, 
-            { backgroundColor: rideState === "driver_on_way" ? "#4CAF50" : "#FEB914" }
-          ]} />
+          <View
+            style={[
+              styles.statusDot,
+              {
+                backgroundColor:
+                  rideState === "driver_on_way" ? "#4CAF50" : "#FEB914",
+              },
+            ]}
+          />
           <Text style={styles.statusText}>
-            {rideState === "driver_on_way" ? "Driver is on the way" : 
-             rideState === "driver_arrived" ? "Driver has arrived" :
-             rideState === "in_progress" ? "Ride in progress" :
-             "Tracking driver"}
+            {rideState === "driver_on_way"
+              ? "Driver is on the way"
+              : rideState === "driver_arrived"
+                ? "Driver has arrived"
+                : rideState === "in_progress"
+                  ? "Ride in progress"
+                  : "Tracking driver"}
           </Text>
         </View>
 
@@ -333,11 +394,15 @@ export default function RideTrackingScreen({ goBack }: { goBack: () => void }) {
                 <View style={styles.coordsContainer}>
                   <View style={styles.coordRow}>
                     <Text style={styles.coordLabel}>Lat:</Text>
-                    <Text style={styles.coordValue}>{pickupLocation.latitude.toFixed(6)}</Text>
+                    <Text style={styles.coordValue}>
+                      {pickupLocation.latitude.toFixed(6)}
+                    </Text>
                   </View>
                   <View style={styles.coordRow}>
                     <Text style={styles.coordLabel}>Lng:</Text>
-                    <Text style={styles.coordValue}>{pickupLocation.longitude.toFixed(6)}</Text>
+                    <Text style={styles.coordValue}>
+                      {pickupLocation.longitude.toFixed(6)}
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -355,11 +420,15 @@ export default function RideTrackingScreen({ goBack }: { goBack: () => void }) {
                 <View style={styles.coordsContainer}>
                   <View style={styles.coordRow}>
                     <Text style={styles.coordLabel}>Lat:</Text>
-                    <Text style={styles.coordValue}>{destinationLocation.latitude.toFixed(6)}</Text>
+                    <Text style={styles.coordValue}>
+                      {destinationLocation.latitude.toFixed(6)}
+                    </Text>
                   </View>
                   <View style={styles.coordRow}>
                     <Text style={styles.coordLabel}>Lng:</Text>
-                    <Text style={styles.coordValue}>{destinationLocation.longitude.toFixed(6)}</Text>
+                    <Text style={styles.coordValue}>
+                      {destinationLocation.longitude.toFixed(6)}
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -374,11 +443,15 @@ export default function RideTrackingScreen({ goBack }: { goBack: () => void }) {
                 <View style={styles.coordsContainer}>
                   <View style={styles.coordRow}>
                     <Text style={styles.coordLabel}>Lat:</Text>
-                    <Text style={styles.coordValue}>{driverLocation.lat.toFixed(6)}</Text>
+                    <Text style={styles.coordValue}>
+                      {driverLocation.lat.toFixed(6)}
+                    </Text>
                   </View>
                   <View style={styles.coordRow}>
                     <Text style={styles.coordLabel}>Lng:</Text>
-                    <Text style={styles.coordValue}>{driverLocation.lng.toFixed(6)}</Text>
+                    <Text style={styles.coordValue}>
+                      {driverLocation.lng.toFixed(6)}
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -388,16 +461,21 @@ export default function RideTrackingScreen({ goBack }: { goBack: () => void }) {
 
         {/* Status Message */}
         <View style={styles.messageContainer}>
-          <FontAwesome5 
-            name={rideState === "driver_arrived" ? "check-circle" : "info-circle"} 
-            size={20} 
-            color={rideState === "driver_arrived" ? "#4CAF50" : "#FEB914"} 
+          <FontAwesome5
+            name={
+              rideState === "driver_arrived" ? "check-circle" : "info-circle"
+            }
+            size={20}
+            color={rideState === "driver_arrived" ? "#4CAF50" : "#FEB914"}
           />
           <Text style={styles.messageText}>
-            {rideState === "driver_on_way" ? `${driver?.name || "Your driver"} is approaching. Get ready!` :
-             rideState === "driver_arrived" ? `${driver?.name || "Your driver"} has arrived at pickup location!` :
-             rideState === "in_progress" ? "Enjoy your ride! Heading to destination..." :
-             "Tracking your ride in real-time"}
+            {rideState === "driver_on_way"
+              ? `${driver?.name || "Your driver"} is approaching. Get ready!`
+              : rideState === "driver_arrived"
+                ? `${driver?.name || "Your driver"} has arrived at pickup location!`
+                : rideState === "in_progress"
+                  ? "Enjoy your ride! Heading to destination..."
+                  : "Tracking your ride in real-time"}
           </Text>
         </View>
       </View>
@@ -437,15 +515,15 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     width: 44,
     height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   titleContainer: {
     backgroundColor: "rgba(0, 0, 0, 0.6)",
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
   topBarTitle: {
     color: "#FEB914",
@@ -464,41 +542,41 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   routeInfoBadge: {
-    position: 'absolute',
+    position: "absolute",
     top: 120,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    alignSelf: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
     borderWidth: 1,
-    borderColor: '#FEB914',
+    borderColor: "#FEB914",
   },
   routeInfoText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   pickupMarkerContainer: {
     height: 50,
     width: 50,
     borderRadius: 25,
     backgroundColor: "#4CAF50",
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 3,
     borderColor: "#fff",
     elevation: 6,
-    shadowColor: '#4CAF50',
+    shadowColor: "#4CAF50",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.5,
     shadowRadius: 6,
   },
   pickupMarkerInner: {
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
     borderRadius: 20,
     padding: 8,
   },
@@ -509,10 +587,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#111",
     borderWidth: 3,
     borderColor: "#FEB914",
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     elevation: 6,
-    shadowColor: '#FEB914',
+    shadowColor: "#FEB914",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.5,
     shadowRadius: 6,
@@ -522,18 +600,18 @@ const styles = StyleSheet.create({
     width: 50,
     borderRadius: 25,
     backgroundColor: "#f44336",
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 3,
     borderColor: "#fff",
     elevation: 6,
-    shadowColor: '#f44336',
+    shadowColor: "#f44336",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.5,
     shadowRadius: 6,
   },
   destinationMarkerInner: {
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
     borderRadius: 20,
     padding: 8,
   },
@@ -634,8 +712,8 @@ const styles = StyleSheet.create({
     borderColor: "#333",
   },
   locationHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
     gap: 8,
   },

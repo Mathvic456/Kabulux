@@ -9,35 +9,33 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
-  ViewStyle
+  ViewStyle,
 } from "react-native";
 
 type IoniconsName = keyof typeof Ionicons.glyphMap;
 
 interface CentralModalProps {
-  // Control
   visible: boolean;
   onClose: () => void;
-  
+
   // Content
   title: string;
   subText?: string;
   icon?: IoniconsName;
-  contentMode?: "default" | "custom"; // "normalStructure" logic
-  children?: React.ReactNode; // Used when contentMode is 'custom'
+  contentMode?: "default" | "custom";
+  children?: React.ReactNode;
 
   // Actions
   onConfirm?: () => void;
   confirmText?: string;
   closeText?: string;
-  
+
   // Customization
   iconColor?: string;
   confirmButtonColor?: string;
-  closeButtonColor?: string; // Text color for the secondary button
-  themeColor?: string; // Global accent color (default #FEB914)
-  
-  // Styling Overrides (if needed)
+  closeButtonColor?: string;
+  themeColor?: string;
+
   containerStyle?: ViewStyle;
 }
 
@@ -58,7 +56,6 @@ const CentralModal: React.FC<CentralModalProps> = ({
   themeColor = "#FEB914",
   containerStyle,
 }) => {
-  
   // If no onConfirm is provided, the confirm button acts as a close button
   const handleConfirm = () => {
     if (onConfirm) {
@@ -78,23 +75,31 @@ const CentralModal: React.FC<CentralModalProps> = ({
     >
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.overlay}>
-          {/* KeyboardAvoidingView ensures inputs in 'custom' mode don't get hidden */}
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
             style={styles.keyboardView}
           >
-            {/* Stop propagation so clicking the modal itself doesn't close it */}
             <TouchableWithoutFeedback>
-              <View style={[styles.modalContainer, { borderColor: themeColor }, containerStyle]}>
-                
-                {/* --- 1. Header (Icon + Title) --- */}
+              <View
+                style={[
+                  styles.modalContainer,
+                  { borderColor: themeColor },
+                  containerStyle,
+                ]}
+              >
                 <View style={styles.header}>
                   {icon && (
-                    <View style={[styles.iconContainer, { backgroundColor: `${themeColor}15` }]}>
-                      <Ionicons 
-                        name={icon} 
-                        size={32} 
-                        color={iconColor || themeColor} 
+                    <View
+                      style={[
+                        styles.iconContainer,
+                        { backgroundColor: `${themeColor}15` },
+                      ]}
+                    >
+                      <Ionicons
+                        name={icon}
+                        size={32}
+                        color={iconColor || themeColor}
                       />
                     </View>
                   )}
@@ -111,7 +116,11 @@ const CentralModal: React.FC<CentralModalProps> = ({
                   ) : (
                     // Custom Mode (Pickers, Inputs, etc.)
                     <>
-                      {subText && <Text style={[styles.subText, { marginBottom: 15 }]}>{subText}</Text>}
+                      {subText && (
+                        <Text style={[styles.subText, { marginBottom: 15 }]}>
+                          {subText}
+                        </Text>
+                      )}
                       {children}
                     </>
                   )}
@@ -121,7 +130,10 @@ const CentralModal: React.FC<CentralModalProps> = ({
                 <View style={styles.footer}>
                   {/* Primary Button */}
                   <TouchableOpacity
-                    style={[styles.confirmButton, { backgroundColor: confirmButtonColor }]}
+                    style={[
+                      styles.confirmButton,
+                      { backgroundColor: confirmButtonColor },
+                    ]}
                     onPress={handleConfirm}
                     activeOpacity={0.8}
                   >
@@ -134,12 +146,16 @@ const CentralModal: React.FC<CentralModalProps> = ({
                     onPress={onClose}
                     activeOpacity={0.6}
                   >
-                    <Text style={[styles.closeButtonText, { color: closeButtonColor }]}>
+                    <Text
+                      style={[
+                        styles.closeButtonText,
+                        { color: closeButtonColor },
+                      ]}
+                    >
                       {closeText}
                     </Text>
                   </TouchableOpacity>
                 </View>
-
               </View>
             </TouchableWithoutFeedback>
           </KeyboardAvoidingView>
@@ -170,7 +186,6 @@ const styles = StyleSheet.create({
     padding: 24,
     borderWidth: 1,
     alignItems: "center",
-    // Shadow for elevation
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -222,7 +237,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   confirmButtonText: {
-    color: "#000", // Black text on Yellow button looks best
+    color: "#000",
     fontSize: 16,
     fontWeight: "bold",
   },

@@ -6,9 +6,9 @@ export const useRiderAnalytics = () => {
     queryKey: ["rider_analytics"],
     queryFn: async () => {
       try {
-        console.log("📊 [RiderAnalytics] Fetching rider analytics...");
+        console.log("[RiderAnalytics] Fetching rider analytics...");
         const response = await api.get("users/rider_analytics/");
-        console.log("✅ [RiderAnalytics] Data fetched:", response.data.data);
+        console.log("[RiderAnalytics] Data fetched:", response.data.data);
         return response.data.data;
       } catch (error: any) {
         console.error(
@@ -27,9 +27,12 @@ export const useRedeemRewards = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async () => {
-      console.log(" [RedeemRewards] Starting redemption...");
-      const response = await api.post("rewards/redeem/");
+    mutationFn: async (points: number) => {
+      console.log(
+        `[RedeemRewards] Starting redemption for ${points} points...`,
+      );
+
+      const response = await api.post("rewards/redeem/", { points });
 
       console.log("[RedeemRewards] Response:", response.data);
       return response.data;

@@ -26,7 +26,10 @@ export default function SettingsScreen({ setScreen }) {
   const { clearTokens } = useAuth();
   const { resetRide } = useRide();
   const { socket } = useContext(SocketContext);
-  const { mutate: logout, isPending: isLoggingOut } = useLogoutEndPoint(clearTokens, resetRide);
+  const { mutate: logout, isPending: isLoggingOut } = useLogoutEndPoint(
+    clearTokens,
+    resetRide,
+  );
 
   const handleLogout = () => {
     console.log("🚪 [Settings] Starting logout process...");
@@ -40,16 +43,16 @@ export default function SettingsScreen({ setScreen }) {
     // Call logout mutation
     logout(undefined, {
       onSuccess: () => {
-        console.log("✅ [Settings] Logout successful");
+        console.log(" [Settings] Logout successful");
         setShowLogoutModal(false);
         setScreen("login");
       },
       onError: (error) => {
-        console.error("❌ [Settings] Logout error:", error);
+        console.error("[Settings] Logout error:", error);
         // Even on error, still navigate to login
         setShowLogoutModal(false);
         setScreen("login");
-      }
+      },
     });
   };
 
@@ -167,7 +170,10 @@ export default function SettingsScreen({ setScreen }) {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => setScreen('profile')} style={styles.backButton}>
+          <TouchableOpacity
+            onPress={() => setScreen("profile")}
+            style={styles.backButton}
+          >
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Settings</Text>
@@ -183,7 +189,8 @@ export default function SettingsScreen({ setScreen }) {
                   key={itemIndex}
                   style={[
                     styles.item,
-                    itemIndex !== section.items.length - 1 && styles.itemWithBorder,
+                    itemIndex !== section.items.length - 1 &&
+                      styles.itemWithBorder,
                   ]}
                   onPress={item.action}
                   disabled={!item.action && !item.hasToggle}
@@ -192,9 +199,11 @@ export default function SettingsScreen({ setScreen }) {
                     <Ionicons name={item.icon} size={22} color="#FEB914" />
                     <Text style={styles.itemLabel}>{item.label}</Text>
                   </View>
-                  
+
                   <View style={styles.itemRight}>
-                    {item.value && <Text style={styles.itemValue}>{item.value}</Text>}
+                    {item.value && (
+                      <Text style={styles.itemValue}>{item.value}</Text>
+                    )}
                     {item.hasToggle ? (
                       <Switch
                         value={item.toggleValue}
@@ -203,7 +212,13 @@ export default function SettingsScreen({ setScreen }) {
                         thumbColor={item.toggleValue ? "#fff" : "#f4f3f4"}
                       />
                     ) : (
-                      item.action && <Ionicons name="chevron-forward" size={20} color="#FEB914" />
+                      item.action && (
+                        <Ionicons
+                          name="chevron-forward"
+                          size={20}
+                          color="#FEB914"
+                        />
+                      )
                     )}
                   </View>
                 </TouchableOpacity>
@@ -220,22 +235,26 @@ export default function SettingsScreen({ setScreen }) {
         animationType="fade"
         onRequestClose={() => setShowLogoutModal(false)}
       >
-        <TouchableWithoutFeedback onPress={() => !isLoggingOut && setShowLogoutModal(false)}>
+        <TouchableWithoutFeedback
+          onPress={() => !isLoggingOut && setShowLogoutModal(false)}
+        >
           <View style={styles.modalOverlay}>
             <View style={styles.confirmationModal}>
               <Text style={styles.modalTitle}>Log Out</Text>
-              <Text style={styles.modalText}>Are you sure you want to log out?</Text>
-              
+              <Text style={styles.modalText}>
+                Are you sure you want to log out?
+              </Text>
+
               <View style={styles.modalButtons}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.modalButton, styles.cancelButton]}
                   onPress={() => setShowLogoutModal(false)}
                   disabled={isLoggingOut}
                 >
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
-                
-                <TouchableOpacity 
+
+                <TouchableOpacity
                   style={[styles.modalButton, styles.confirmButton]}
                   onPress={handleLogout}
                   disabled={isLoggingOut}

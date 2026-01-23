@@ -1,5 +1,8 @@
 import CentralModal from "@/components/CentralModal";
-import { useRedeemRewards, useRiderAnalytics } from "@/services/riderAnalytics.service";
+import {
+  useRedeemRewards,
+  useRiderAnalytics,
+} from "@/services/riderAnalytics.service";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
@@ -7,8 +10,9 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -34,19 +38,30 @@ const RedeemPointsScreen: React.FC<RedeemPointsScreenProps> = ({ goBack }) => {
 
   const totalPoints = riderAnalyticsData?.total_points || 0;
 
+  const numericPoints = parseInt(
+    pointsToConvert.replace(/[^0-9]/g, "") || "0",
+    10,
+  );
+  const conversionValue = numericPoints * 10;
+  const isValidAmount = numericPoints > 0 && numericPoints <= totalPoints;
+
   const handleConvertPoints = () => {
+    setPointsToConvert(""); // Reset input when opening modal
     setIsConvertModalVisible(true);
   };
 
   const handleConversion = () => {
-    // 1. Trigger the mutation
-    redeem(undefined, {
+    if (!isValidAmount) return; // Prevent action if invalid
+
+    redeem(numericPoints, {
       onSuccess: (response) => {
         setIsConvertModalVisible(false);
+        setPointsToConvert(""); // Clear input
 
         setConversionResult({
           show: true,
-          amount: response?.converted_amount || totalPoints * 10,
+          // Use the calculated value or response value
+          amount: response?.converted_amount || conversionValue,
         });
       },
       onError: (error: any) => {
@@ -113,29 +128,44 @@ const RedeemPointsScreen: React.FC<RedeemPointsScreenProps> = ({ goBack }) => {
           <Text style={styles.confirmButtonText}>Convert points</Text>
         </TouchableOpacity>
       </ScrollView>
-
       <CentralModal
         visible={isConvertModalVisible}
         onClose={() => setIsConvertModalVisible(false)}
         title="Convert Points"
-        subText={`Available Points: ${totalPoints.toLocaleString()} points`}
+        subText={
+          numericPoints > totalPoints
+            ? "Amount exceeds your balance"
+            : `Available Balance: ${totalPoints.toLocaleString()} points`
+        }
         icon="swap-horizontal"
         contentMode="custom"
         onConfirm={handleConversion}
-        confirmText={redeemIsLoading ? "Converting..." : "Convert"}
+        confirmText={
+          redeemIsLoading
+            ? "Converting..."
+            : isValidAmount
+              ? `Convert for ₦${conversionValue.toLocaleString()}`
+              : "Enter Amount"
+        }
+        confirmButtonColor={isValidAmount ? "#FEB914" : "#333"} // Dim button if invalid
         closeText="Cancel"
         themeColor="#FEB914"
       >
-        <Text
-          style={{
-            fontSize: 14,
-            color: "#aaa",
-            textAlign: "center",
-            marginTop: 10,
-          }}
-        >
-          You are about to convert all your loyalty points into wallet credit.
-        </Text>
+        <View style={{ width: "100%" }}>
+          <TextInput
+            style={[
+              styles.input,
+              numericPoints > totalPoints && { borderColor: "#FF6B6B" },
+            ]}
+            placeholder="Enter points to convert"
+            placeholderTextColor="#666"
+            keyboardType="number-pad"
+            value={pointsToConvert}
+            onChangeText={(text) =>
+              setPointsToConvert(text.replace(/[^0-9]/g, ""))
+            }
+          />
+        </View>
       </CentralModal>
 
       {/* 2. Success Modal */}
@@ -378,7 +408,8 @@ const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: "#1F1F1F",
     borderRadius: 10,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 20,
     color: "white",
     fontSize: 16,
     marginBottom: 16,

@@ -21,7 +21,7 @@ function ApiAuthConnector() {
 
   useEffect(() => {
     setAuthTokenGetter(getValidToken);
-    console.log("✅ [App] API layer connected to AuthContext");
+    console.log("[App] API layer connected to AuthContext");
 
     setGlobalLogout(async () => {
       console.log("🚪 [App] Global logout triggered via API Interceptor");
@@ -31,7 +31,7 @@ function ApiAuthConnector() {
       await globalLogout();
     });
 
-    console.log("✅ [App] Global logout registered");
+    console.log("[App] Global logout registered");
   }, [getValidToken, clearTokens]);
 
   return null;
@@ -52,7 +52,6 @@ export default function RootLayout() {
       <ApiAuthConnector />
       <RideIdProvider>
         {" "}
-        {/* ✅ NEW: Wrap everything */}
         <WebSocketProvider>
           <RideProvider>
             <QueryClientProvider client={queryClient}>

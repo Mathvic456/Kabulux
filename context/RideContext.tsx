@@ -1,15 +1,21 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { useRideId } from './RideIdContext';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { useRideId } from "./RideIdContext";
 import { SocketContext } from "./WebSocketProvider";
 
 // 1. Granular States
-export type RideState = 
-  | "idle" 
-  | "negotiating" 
-  | "driver_on_way" 
-  | "driver_arrived" 
-  | "in_progress" 
+export type RideState =
+  | "idle"
+  | "negotiating"
+  | "driver_on_way"
+  | "driver_arrived"
+  | "in_progress"
   | "completed";
 
 interface DriverLocation {
@@ -24,22 +30,24 @@ interface RideContextValue {
 }
 
 const STORAGE_KEYS = {
-  RIDE_STATE: '@ride_state',
-  RIDE_ID: '@ride_id',
-  DRIVER_LOC: '@driver_loc',
+  RIDE_STATE: "@ride_state",
+  RIDE_ID: "@ride_id",
+  DRIVER_LOC: "@driver_loc",
 };
 
 export const RideContext = createContext<RideContextValue>({
   rideState: "idle",
   driverLocation: null,
-  resetRide: async() => {}
+  resetRide: async () => {},
 });
 
 export const useRide = () => useContext(RideContext);
 
 export const RideProvider = ({ children }: { children: React.ReactNode }) => {
   const [rideState, setRideState] = useState<RideState>("idle");
-  const [driverLocation, setDriverLocation] = useState<DriverLocation | null>(null);
+  const [driverLocation, setDriverLocation] = useState<DriverLocation | null>(
+    null,
+  );
   const { rideId, setRideId } = useRideId();
   const { socket } = useContext(SocketContext);
 
@@ -48,10 +56,10 @@ export const RideProvider = ({ children }: { children: React.ReactNode }) => {
     console.log(`🔄 [RIDE_STATE_CHANGE] ${rideState} -> ${newState}`);
     setRideState(newState);
     await AsyncStorage.setItem(STORAGE_KEYS.RIDE_STATE, newState);
-    
-if (newRideId) {
-  setRideId(newRideId); // ✅ This now uses the shared context
-}
+
+    if (newRideId) {
+      setRideId(newRideId); // This now uses the shared context
+    }
   };
 
   // Hydrate on mount
@@ -77,67 +85,77 @@ if (newRideId) {
     loadPersistedState();
   }, []);
 
-  const handleWsMessage = useCallback((event: MessageEvent) => {
-    if (!event?.data) return;
+  const handleWsMessage = useCallback(
+    (event: MessageEvent) => {
+      if (!event?.data) return;
 
-    try {
-      const msg = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
-      
-      // Handle broadcast_location messages (FIXED!)
-      if (msg.type === "broadcast_location" && msg.data) {
-        const newLocation = { lat: msg.data.lat, lng: msg.data.lng };
-        console.log("📍 [RIDE] Driver location updated:", newLocation);
-        setDriverLocation(newLocation);
-        AsyncStorage.setItem(STORAGE_KEYS.DRIVER_LOC, JSON.stringify(newLocation));
-        
-        // If we get location updates but state is idle, transition to driver_on_way
-        if (rideState === 'idle') {
-          console.log("🚗 [RIDE] Transitioning from idle to driver_on_way due to location update");
-          updateRideState('driver_on_way');
+      try {
+        const msg =
+          typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+
+        // Handle broadcast_location messages (FIXED!)
+        if (msg.type === "broadcast_location" && msg.data) {
+          const newLocation = { lat: msg.data.lat, lng: msg.data.lng };
+          console.log("📍 [RIDE] Driver location updated:", newLocation);
+          setDriverLocation(newLocation);
+          AsyncStorage.setItem(
+            STORAGE_KEYS.DRIVER_LOC,
+            JSON.stringify(newLocation),
+          );
+
+          // If we get location updates but state is idle, transition to driver_on_way
+          if (rideState === "idle") {
+            console.log(
+              "🚗 [RIDE] Transitioning from idle to driver_on_way due to location update",
+            );
+            updateRideState("driver_on_way");
+          }
+          return;
         }
-        return;
-      }
 
-      if (msg.type === "notify" && msg.data) {
-        const eventType = msg.data.type || msg.data.event; 
-        const payload = msg.data;
+        if (msg.type === "notify" && msg.data) {
+          const eventType = msg.data.type || msg.data.event;
+          const payload = msg.data;
 
-        console.log(`🔍 [RIDE] Processing Event: ${eventType}`, payload);
+          console.log(`🔍 [RIDE] Processing Event: ${eventType}`, payload);
 
-        switch (eventType) {
-          case "DRIVER_ON_WAY":
-            if (rideState !== "driver_on_way") {
-              updateRideState("driver_on_way", payload.ride_id);
-            }
-            break;
+          switch (eventType) {
+            case "DRIVER_ON_WAY":
+              if (rideState !== "driver_on_way") {
+                updateRideState("driver_on_way", payload.ride_id);
+              }
+              break;
 
-          case "driver_arrived":
-            if (rideState !== "driver_arrived") {
-              updateRideState("driver_arrived");
-            }
-            break;
+            case "driver_arrived":
+              if (rideState !== "driver_arrived") {
+                updateRideState("driver_arrived");
+              }
+              break;
 
-          case "ride_started":
-            if (rideState !== "in_progress") {
-              updateRideState("in_progress");
-            }
-            break;
-            
-          case "ride_completed":
-            console.log("🏁 [RIDE] Ride completed - waiting for user acknowledgement");
-            if (rideState !== "completed") {
-              updateRideState("completed");
-            }
-            break;
-          default:
-            break;
+            case "ride_started":
+              if (rideState !== "in_progress") {
+                updateRideState("in_progress");
+              }
+              break;
+
+            case "ride_completed":
+              console.log(
+                "🏁 [RIDE] Ride completed - waiting for user acknowledgement",
+              );
+              if (rideState !== "completed") {
+                updateRideState("completed");
+              }
+              break;
+            default:
+              break;
+          }
         }
+      } catch (error) {
+        console.error("❌ [RIDE] Failed to parse message:", error);
       }
-
-    } catch (error) {
-      console.error("❌ [RIDE] Failed to parse message:", error);
-    }
-  }, [rideState]);
+    },
+    [rideState],
+  );
 
   const resetRide = async () => {
     console.log("🧹 [RIDE] Resetting ride context to IDLE");

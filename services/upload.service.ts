@@ -32,12 +32,12 @@ export const useUploadProfilePhoto = () => {
     mutationFn: (formData: FormData) =>
       api.post("uploads/", formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
-        transformRequest: (data) => data, // ✅ Prevent Axios from stringifying FormData
+        transformRequest: (data) => data, // Prevent Axios from stringifying FormData
       }),
     onSuccess: (res) => {
-      console.log("✅ [Upload] Photo uploaded successfully:", res.data);
+      console.log("[Upload] Photo uploaded successfully:", res.data);
     },
     onError: (error: any) => {
       console.error("❌ [Upload] Photo upload error:", error);

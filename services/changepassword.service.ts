@@ -7,11 +7,14 @@ export const useChangePassword = () => {
       api.post("/auth/change_password/", data),
 
     onSuccess: (res) => {
-      console.log("✅ Password changed successfully:", res.data);
+      console.log("Password changed successfully:", res.data);
     },
 
     onError: (error: any) => {
-      console.error("❌ Password change failed:", error.response?.data || error);
+      console.error(
+        "❌ Password change failed:",
+        error.response?.data || error,
+      );
     },
   });
 };

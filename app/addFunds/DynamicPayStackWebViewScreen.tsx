@@ -2,14 +2,14 @@ import CentralModal from "@/components/CentralModal";
 import { useFundWalletEndPoint } from "@/services/funding.service";
 import React, { useState } from "react";
 import {
-    ActivityIndicator,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { WebView } from "react-native-webview";
 
@@ -19,6 +19,10 @@ type Props = {
 
 const DynamicPayStackWebViewScreen = ({ goBack }: Props) => {
   const [amount, setAmount] = useState("");
+  const [paymentChannel, setPaymentChannel] = useState<
+    "card" | "bank_transfer"
+  >("card");
+
   const [paystackUrl, setPaystackUrl] = useState<string | null>(null);
   const [modalState, setModalState] = useState<{
     visible: boolean;
@@ -40,15 +44,12 @@ const DynamicPayStackWebViewScreen = ({ goBack }: Props) => {
       return;
     }
 
-    // Generate a default email or use a placeholder
-    // You might want to use the user's actual email from your app state
-    const defaultEmail = "customer@example.com"; // Replace with actual user email if available
-    
+    const defaultEmail = "customer@example.com";
+
     initiateFunding(
       {
         amount: num,
-        email: defaultEmail, // Use default email
-        channel: "card"
+        channel: paymentChannel,
       },
       {
         onSuccess: (res) => {
@@ -75,7 +76,7 @@ const DynamicPayStackWebViewScreen = ({ goBack }: Props) => {
             message: msg,
           });
         },
-      }
+      },
     );
   };
 
@@ -104,9 +105,9 @@ const DynamicPayStackWebViewScreen = ({ goBack }: Props) => {
   return (
     <>
       <ScrollView contentContainerStyle={styles.container}>
-      <TouchableOpacity onPress={goBack}>
-        <Text style={{ fontSize: 28 }}>←</Text>
-      </TouchableOpacity>
+        <TouchableOpacity onPress={goBack}>
+          <Text style={{ fontSize: 28 }}>←</Text>
+        </TouchableOpacity>
         <Text style={styles.title}>Add Funds to Wallet</Text>
 
         <View style={styles.form}>
@@ -134,6 +135,51 @@ const DynamicPayStackWebViewScreen = ({ goBack }: Props) => {
             ))}
           </View>
 
+          {/* 3. The New Payment Method Selector */}
+          <Text
+            style={[
+              styles.note,
+              { textAlign: "left", marginBottom: 10, marginTop: 10 },
+            ]}
+          >
+            Payment Method:
+          </Text>
+          <View style={styles.methodRow}>
+            <TouchableOpacity
+              style={[
+                styles.methodBtn,
+                paymentChannel === "card" && styles.methodBtnActive,
+              ]}
+              onPress={() => setPaymentChannel("card")}
+            >
+              <Text
+                style={[
+                  styles.methodText,
+                  paymentChannel === "card" && styles.methodTextActive,
+                ]}
+              >
+                Card
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.methodBtn,
+                paymentChannel === "bank_transfer" && styles.methodBtnActive,
+              ]}
+              onPress={() => setPaymentChannel("bank_transfer")}
+            >
+              <Text
+                style={[
+                  styles.methodText,
+                  paymentChannel === "bank_transfer" && styles.methodTextActive,
+                ]}
+              >
+                Transfer
+              </Text>
+            </TouchableOpacity>
+          </View>
+
           <TouchableOpacity
             style={[styles.payBtn, isPending && styles.payBtnDisabled]}
             onPress={handleAddFunds}
@@ -143,23 +189,27 @@ const DynamicPayStackWebViewScreen = ({ goBack }: Props) => {
               <ActivityIndicator color="white" />
             ) : (
               <Text style={styles.payText}>
-                Pay ₦{amount ? Number(amount).toLocaleString() : "0"}
+                {/* Dynamically show the action */}
+                Pay with {paymentChannel === "card" ? "Card" : "Transfer"}
               </Text>
             )}
           </TouchableOpacity>
         </View>
       </ScrollView>
 
+      {/* ... (Rest of your Modal and WebView code remains the same) ... */}
       <Modal visible={!!paystackUrl} animationType="slide">
         <View style={{ flex: 1, backgroundColor: "white" }}>
           <View style={styles.modalHeader}>
-        <TouchableOpacity onPress={() => {
-          setPaystackUrl(null);
-          setAmount("");
-          goBack?.();
-        }}>
-          <Text style={{ fontSize: 28, fontWeight: "bold" }}>×</Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                setPaystackUrl(null);
+                setAmount("");
+                goBack?.();
+              }}
+            >
+              <Text style={{ fontSize: 28, fontWeight: "bold" }}>×</Text>
+            </TouchableOpacity>
             <Text style={{ fontSize: 18, fontWeight: "600" }}>
               Complete Payment
             </Text>
@@ -187,7 +237,9 @@ const DynamicPayStackWebViewScreen = ({ goBack }: Props) => {
         visible={modalState.visible}
         title={modalState.title}
         subText={modalState.message}
-        onClose={() => setModalState({ visible: false, title: "", message: "" })}
+        onClose={() =>
+          setModalState({ visible: false, title: "", message: "" })
+        }
         onConfirm={modalState.onConfirm}
         confirmText={modalState.onConfirm ? "Done" : "Close"}
       />
@@ -237,6 +289,34 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   quickText: { fontWeight: "600" },
+
+  // 4. Styles for the new Method Selector
+  methodRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 20,
+  },
+  methodBtn: {
+    flex: 1,
+    padding: 15,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
+  methodBtnActive: {
+    borderColor: "#007AFF",
+    backgroundColor: "#eff6ff",
+  },
+  methodText: {
+    fontWeight: "600",
+    color: "#666",
+  },
+  methodTextActive: {
+    color: "#007AFF",
+  },
+
   payBtn: {
     backgroundColor: "#007AFF",
     padding: 18,
