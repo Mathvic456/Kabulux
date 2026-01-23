@@ -1,32 +1,13 @@
 {
   "project_info": {
-    "project_number": "397691749213",
-    "project_id": "kablux-746b2",
-    "storage_bucket": "kablux-746b2.firebasestorage.app"
+    "project_number": "50881034757",
+    "project_id": "kabluxe",
+    "storage_bucket": "kabluxe.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:397691749213:android:35a2214736d3410330deb4",
-        "android_client_info": {
-          "package_name": "com.crashingout.kablux"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyCS702I1s-WAP7ELnz1yMEHDPvxeduUsRo"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:397691749213:android:f0eecc7cfff8d99c30deb4",
+        "mobilesdk_app_id": "1:50881034757:android:5266cdf76836a2b02cfa6c",
         "android_client_info": {
           "package_name": "com.hunchoexpo.kablux"
         }
@@ -34,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCS702I1s-WAP7ELnz1yMEHDPvxeduUsRo"
+          "current_key": "AIzaSyDDPc5fVcEJ3vphcSmiOpY_RAbVO8DmLkY"
         }
       ],
       "services": {

@@ -24,7 +24,8 @@ export default {
         backgroundColor: "#ffffff",
       },
       edgeToEdgeEnabled: true,
-      package: "com.hunchoexpo.kablux", 
+      package: "com.hunchoexpo.kablux",
+      googleServicesFile: "./google-services.json",
       config: {
         googleMaps: {
           apiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
@@ -38,7 +39,7 @@ export default {
       favicon: "./assets/images/favicon.png",
     },
 
-  plugins: [
+    plugins: [
       "expo-router",
       [
         "expo-splash-screen",
@@ -52,14 +53,13 @@ export default {
       "expo-web-browser",
       "expo-notifications",
       "@react-native-firebase/app",
-      "@react-native-firebase/messaging"
+      "@react-native-firebase/messaging",
     ],
 
     extra: {
-
       router: {},
-      "eas": {
-        "projectId": "9d63958b-4d22-43ac-a469-796f1bb6470f"
+      eas: {
+        projectId: "9d63958b-4d22-43ac-a469-796f1bb6470f",
       },
       googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
       apiUrl: process.env.EXPO_PUBLIC_API_URL,
