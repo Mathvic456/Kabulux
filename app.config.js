@@ -24,7 +24,7 @@ export default {
         backgroundColor: "#ffffff",
       },
       edgeToEdgeEnabled: true,
-      package: "com.hunchoexpo.kablux",
+      package: "com.crashingout.kablux",
       googleServicesFile: "./google-services.json",
       config: {
         googleMaps: {
@@ -66,6 +66,6 @@ export default {
       wssUrl: process.env.EXPO_PUBLIC_WSS_URL,
     },
 
-    owner: "hunchoexpo",
+    owner: "crashingout",
   },
 };
