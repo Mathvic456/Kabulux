@@ -58,12 +58,12 @@ export default {
 
     extra: {
       router: {},
-      eas: {
-        projectId: "9d63958b-4d22-43ac-a469-796f1bb6470f",
-      },
       googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
       apiUrl: process.env.EXPO_PUBLIC_API_URL,
       wssUrl: process.env.EXPO_PUBLIC_WSS_URL,
+      eas: {
+        projectId: "4781a8b8-1544-4b29-8400-9e0565a2e78f",
+      },
     },
 
     owner: "crashingout",
