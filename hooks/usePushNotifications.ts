@@ -28,7 +28,23 @@ export const usePushNotifications = () => {
     }
 
     if (Device.isDevice) {
-      // New modular API (no more warnings)
+      // Request Expo Notifications permission FIRST
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+
+      if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+
+      if (finalStatus !== "granted") {
+        console.log("❌ Local notification permission denied");
+      } else {
+        console.log("✅ Local notification permission granted");
+      }
+
+      // Then request FCM permission
       const authStatus = await messaging().requestPermission();
       const enabled = authStatus === 1 || authStatus === 2;
 
@@ -50,6 +66,5 @@ export const usePushNotifications = () => {
 
     return tokenString;
   }
-
   return { getFCMToken, fcmToken };
 };
