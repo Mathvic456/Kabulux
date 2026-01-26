@@ -84,7 +84,7 @@ export const ComingSoonModal = ({
             <FontAwesome5 name="crown" size={50} color="#FEB914" />
           </View>
 
-          <Text style={styles.comingSoonModalTitle}>Coming Soon! 🚀</Text>
+          <Text style={styles.comingSoonModalTitle}>Coming Soon!</Text>
 
           <Text style={styles.comingSoonModalMessage}>
             Our Premium Package is currently under development and will be

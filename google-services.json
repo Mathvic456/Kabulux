@@ -7,47 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:8804750263:android:ccbf9fded0a636fbb90e32",
+        "mobilesdk_app_id": "1:8804750263:android:a0d903c4fbb23721b90e32",
         "android_client_info": {
           "package_name": "com.crashingout.kablux"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyBKQMWO_FDysqUEG8BDAM23GyheIgXGPEA"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:8804750263:android:e867da6de56a3be2b90e32",
-        "android_client_info": {
-          "package_name": "com.crashingout.kabluxdrive"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyBKQMWO_FDysqUEG8BDAM23GyheIgXGPEA"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:8804750263:android:cbaa81a0bece2351b90e32",
-        "android_client_info": {
-          "package_name": "com.hunchoexpo.kablux"
         }
       },
       "oauth_client": [],
