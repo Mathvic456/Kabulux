@@ -1,36 +1,45 @@
-import messaging from "@react-native-firebase/messaging";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Platform } from "react-native";
+import Constants from "expo-constants";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
+    shouldShowBanner: true, // ✅ Added
+    shouldShowList: true,   // ✅ Added
   }),
 });
 
 export const usePushNotifications = () => {
-  const [fcmToken, setFcmToken] = useState<string | undefined>();
+  const [expoPushToken, setExpoPushToken] = useState<string | undefined>();
+  const [notification, setNotification] = useState<Notifications.Notification | undefined>();
 
-  async function getFCMToken() {
-    let tokenString: string;
+  // Fixed: Provide null as initial value
+  const notificationListener = useRef<Notifications.Subscription | null>(null);
+  const responseListener = useRef<Notifications.Subscription | null>(null);
 
-    if (Platform.OS === "android") {
-      await Notifications.setNotificationChannelAsync("default", {
-        name: "default",
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: "#FF231F7C",
-      });
-    }
+  async function registerForPushNotificationsAsync(): Promise<string | null> {
+    try {
+      if (Platform.OS === "android") {
+        await Notifications.setNotificationChannelAsync("default", {
+          name: "default",
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: "#FF231F7C",
+        });
+      }
 
-    if (Device.isDevice) {
-      // Request Expo Notifications permission FIRST
-      const { status: existingStatus } =
-        await Notifications.getPermissionsAsync();
+      if (!Device.isDevice) {
+        console.log("Must use physical device for Push Notifications");
+        return null;
+      }
+
+      // Request permissions
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
 
       if (existingStatus !== "granted") {
@@ -39,32 +48,62 @@ export const usePushNotifications = () => {
       }
 
       if (finalStatus !== "granted") {
-        console.log("❌ Local notification permission denied");
-      } else {
-        console.log("✅ Local notification permission granted");
+        console.log("❌ Push notification permission denied");
+        return null;
       }
 
-      // Then request FCM permission
-      const authStatus = await messaging().requestPermission();
-      const enabled = authStatus === 1 || authStatus === 2;
+      console.log("✅ Push notification permission granted");
 
-      if (!enabled) {
-        console.log("Push notification permission denied");
-        return;
-      }
+      // Get Expo push token
+      const tokenData = await Notifications.getExpoPushTokenAsync({
+        projectId: Constants.expoConfig?.extra?.eas?.projectId, // Get this from app.json or expo.dev
+      });
 
-      console.log("Auth status:", authStatus);
+      const token = tokenData.data;
+      console.log("🔔 Expo Push Token:", token);
+      setExpoPushToken(token);
 
-      // Get FCM token
-      tokenString = await messaging().getToken();
-
-      console.log("🔥 [FCM] Token generated:", tokenString);
-      setFcmToken(tokenString);
-    } else {
-      console.log("Must use physical device for Push Notifications");
+      return token;
+    } catch (error) {
+      console.error("Error getting push token:", error);
+      return null;
     }
-
-    return tokenString;
   }
-  return { getFCMToken, fcmToken };
+
+  useEffect(() => {
+    // Register for push notifications on mount
+    registerForPushNotificationsAsync();
+
+    // Listen for incoming notifications
+    notificationListener.current = Notifications.addNotificationReceivedListener(
+      (notification) => {
+        console.log("📬 Notification received:", notification);
+        setNotification(notification);
+      }
+    );
+
+    // Listen for notification interactions
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        console.log("👆 Notification tapped:", response);
+        // Handle notification tap here
+      }
+    );
+
+    // ✅ Fixed: Use .remove() instead of removeNotificationSubscription
+    return () => {
+      if (notificationListener.current) {
+        notificationListener.current.remove();
+      }
+      if (responseListener.current) {
+        responseListener.current.remove();
+      }
+    };
+  }, []);
+
+  return {
+    expoPushToken,
+    notification,
+    registerForPushNotificationsAsync,
+  };
 };

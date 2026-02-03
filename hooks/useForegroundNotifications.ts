@@ -1,31 +1,30 @@
-import messaging from "@react-native-firebase/messaging";
 import * as Notifications from "expo-notifications";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export const useForegroundNotifications = () => {
+  const notificationListener = useRef<Notifications.Subscription | null>(null);
+
   useEffect(() => {
-    console.log("🔔 Foreground notification listener registered");
+    console.log("Foreground notification listener registered");
 
-    const unsubscribe = messaging().onMessage(async (remoteMessage) => {
-      console.log("🔔 [FOREGROUND] Message received!", remoteMessage);
-      console.log("🔔 [FOREGROUND] Notification:", remoteMessage.notification);
-      console.log("🔔 [FOREGROUND] Data:", remoteMessage.data);
+    //Listen for notifications received while app is in foreground
+    notificationListener.current = Notifications.addNotificationReceivedListener(
+      async (notification) => {
+        console.log("[FOREGROUND] Notification received!", notification);
+        console.log("[FOREGROUND] Title:", notification.request.content.title);
+        console.log("[FOREGROUND] Body:", notification.request.content.body);
+        console.log("[FOREGROUND] Data:", notification.request.content.data);
 
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: remoteMessage.notification?.title || "No title",
-          body: remoteMessage.notification?.body || "No body",
-          data: remoteMessage.data,
-        },
-        trigger: null,
-      });
-
-      console.log("🔔 [FOREGROUND] Local notification scheduled");
-    });
+        // The notification is automatically displayed by the NotificationHandler
+        // No need to manually schedule it
+      }
+    );
 
     return () => {
-      console.log("🔔 Foreground notification listener unsubscribed");
-      unsubscribe();
+      console.log("Foreground notification listener unsubscribed");
+      if (notificationListener.current) {
+        notificationListener.current.remove();
+      }
     };
   }, []);
 };

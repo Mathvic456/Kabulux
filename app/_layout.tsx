@@ -7,7 +7,6 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { useForegroundNotifications } from "@/hooks/useForegroundNotifications";
 import { globalLogout } from "@/scripts/auth";
 import { setAuthTokenGetter, setGlobalLogout } from "@/services/api";
-import messaging from "@react-native-firebase/messaging";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import * as Notifications from "expo-notifications";
@@ -17,12 +16,20 @@ import MainNavigator from "./MainNavigator";
 
 const queryClient = new QueryClient();
 
+// Set notification handler at module level
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
+
 const checkPermissions = async () => {
   const settings = await Notifications.getPermissionsAsync();
-  console.log("📱 Notification permissions:", settings);
-
-  const authStatus = await messaging().hasPermission();
-  console.log("📱 FCM permission status:", authStatus);
+  console.log("Notification permissions:", settings);
 };
 
 function ApiAuthConnector() {
@@ -34,7 +41,7 @@ function ApiAuthConnector() {
     console.log("[App] API layer connected to AuthContext");
 
     setGlobalLogout(async () => {
-      console.log("🚪 [App] Global logout triggered via API Interceptor");
+      console.log("[App] Global logout triggered via API Interceptor");
       if (clearTokens) {
         await clearTokens();
       }
@@ -53,32 +60,26 @@ export default function RootLayout() {
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
 
-  messaging().setBackgroundMessageHandler(async (remoteMessage) => {
-    console.log("🔔 [BACKGROUND] Message received!", remoteMessage);
-  });
-
-  console.log("🔔 Background message handler registered");
-
-  useEffect(() => {
-    messaging()
-      .getInitialNotification()
-      .then((remoteMessage) => {
-        if (remoteMessage) {
-          console.log("App opened from notification:", remoteMessage);
-          // Navigate to appropriate screen based on remoteMessage.data
-        }
-      });
-  }, []);
-
   useEffect(() => {
     checkPermissions();
-    const unsubscribe = Notifications.addNotificationResponseReceivedListener(
+
+    // ✅ Handle notification when app is opened from a notification
+    Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (response) {
+        console.log("App opened from notification:", response);
+        // Navigate to appropriate screen based on response.notification.request.content.data
+      }
+    });
+
+    // ✅ Listen for notification taps while app is running
+    const subscription = Notifications.addNotificationResponseReceivedListener(
       (response) => {
         console.log("Notification tapped:", response);
-      },
+        // Handle navigation based on response.notification.request.content.data
+      }
     );
 
-    return () => unsubscribe.remove();
+    return () => subscription.remove();
   }, []);
 
   if (!loaded) {
@@ -89,7 +90,6 @@ export default function RootLayout() {
     <AuthProvider>
       <ApiAuthConnector />
       <RideIdProvider>
-        {" "}
         <WebSocketProvider>
           <RideProvider>
             <QueryClientProvider client={queryClient}>

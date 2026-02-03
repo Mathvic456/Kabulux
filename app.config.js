@@ -53,8 +53,6 @@ export default {
       ],
       "expo-web-browser",
       "expo-notifications",
-      "@react-native-firebase/app",
-      "@react-native-firebase/messaging",
     ],
 
     extra: {

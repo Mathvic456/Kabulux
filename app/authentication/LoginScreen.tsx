@@ -3,11 +3,6 @@ import { useAuth } from "@/context/AuthContext";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useLoginEndPoint } from "@/services/authentication.service";
 import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
-// import {
-//   GoogleSignin,
-//   isErrorWithCode,
-//   statusCodes
-// } from '@react-native-google-signin/google-signin';
 import React, { useState } from "react";
 import {
   Image,
@@ -44,71 +39,12 @@ export default function LoginScreen({
   });
 
   const { setTokens } = useAuth();
-  const { getFCMToken } = usePushNotifications();
+  // ✅ Changed from getFCMToken to expoPushToken and registerForPushNotificationsAsync
+  const { expoPushToken, registerForPushNotificationsAsync } = usePushNotifications();
   const { mutate: login, isPending: isLoginPending } = useLoginEndPoint(
     setTokens,
     remember,
   );
-
-  // useEffect(() => {
-  //   GoogleSignin.configure({
-  //     webClientId: 'YOUR_WEB_CLIENT_ID_FROM_CONSOLE.apps.googleusercontent.com',
-  //     offlineAccess: true,
-  //   });
-  // }, []);
-
-  // const handleGoogleSignIn = async () => {
-  //   setIsSubmitting(true);
-  //   try {
-  //     await GoogleSignin.hasPlayServices();
-
-  //     // B. Get User Info from Google
-  //     const userInfo = await GoogleSignin.signIn();
-  //     const idToken = userInfo.data?.idToken;
-
-  //     if (!idToken) {
-  //       throw new Error("No ID Token found");
-  //     }
-
-  //     console.log("🎉 [Google] Success. User:", userInfo.data.user.email);
-
-  //     // C. Get FCM Token
-  //     let fcmToken = "";
-  //     try {
-  //       const token = await getFCMToken();
-  //       if (token) fcmToken = token;
-  //     } catch (err) {
-  //       console.log("⚠️ [FCM] Failed to get token during Google Auth");
-  //     }
-
-  //     console.log("🚀 Sending to backend:", { idToken, fcmToken });
-
-  //     next();
-
-  //   } catch (error) {
-  //     if (isErrorWithCode(error)) {
-  //       switch (error.code) {
-  //         case statusCodes.SIGN_IN_CANCELLED:
-  //           console.log("🚫 User cancelled the login flow");
-  //           break;
-  //         case statusCodes.IN_PROGRESS:
-  //           console.log("⏳ Sign in is in progress");
-  //           break;
-  //         case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
-  //           Alert.alert("Error", "Google Play Services not available or outdated.");
-  //           break;
-  //         default:
-  //           console.error("Google Sign-In Error:", error);
-  //           Alert.alert("Error", "Google Sign-In failed.");
-  //       }
-  //     } else {
-  //       console.error("valid error", error);
-  //       Alert.alert("Error", "An unexpected error occurred");
-  //     }
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // };
 
   const validateForm = () => {
     let valid = true;
@@ -138,33 +74,40 @@ export default function LoginScreen({
     if (validateForm()) {
       setIsSubmitting(true);
       try {
-        let token = "";
-        try {
-          const fetchedToken = await getFCMToken();
-          if (fetchedToken) token = fetchedToken;
-        } catch (err) {
-          console.log(
-            "⚠️ [FCM] Warning: Could not fetch token before login",
-            err,
-          );
+        // ✅ Get Expo push token instead of FCM token
+        let token = expoPushToken || ""; // Use existing token if available
+
+        if (!token) {
+          // Try to fetch a new token if not already registered
+          try {
+            const fetchedToken = await registerForPushNotificationsAsync();
+            if (fetchedToken) token = fetchedToken;
+          } catch (err) {
+            console.log(
+              "⚠️ [Push] Warning: Could not fetch token before login",
+              err,
+            );
+          }
         }
+
+        console.log("🔔 Using push token:", token);
 
         login(
           {
             email,
             password,
             role: "rider",
-            fcm_token: token,
+            fcm_token: token, // ✅ Backend expects fcm_token, but now contains Expo token
             type: "android",
           },
           {
             onSuccess: () => {
-              console.log(" [Login] Login successful");
+              console.log("✅ [Login] Login successful");
               next();
             },
             onError: (error: any) => {
               console.log(
-                "[Login] LOGIN FAILED:",
+                "❌ [Login] LOGIN FAILED:",
                 error.response?.data || error,
               );
               setErrors({
@@ -300,7 +243,7 @@ export default function LoginScreen({
           {/* Google Sign In Button */}
           <TouchableOpacity
             style={[styles.googleBtn, isLoading && styles.googleBtnDisabled]}
-            onPress={() => {}}
+            onPress={() => { }}
             disabled={isLoading}
           >
             <FontAwesome
