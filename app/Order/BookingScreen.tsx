@@ -2,9 +2,9 @@ import { useAuth } from "@/context/AuthContext";
 import { SocketContext } from "@/context/WebSocketProvider";
 import { getRideEstimate } from "@/services/apiservice";
 import { useLogoutEndPoint } from "@/services/authentication.service";
-import { darkMapStyle } from "@/styles/darkMapStyle";
 import { Feather } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Mapbox from '@rnmapbox/maps';
 import Constants from "expo-constants";
 import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
@@ -21,16 +21,17 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
-import MapViewDirections from "react-native-maps-directions";
 
 const { height } = Dimensions.get("window");
 
-if (!Constants.expoConfig?.extra?.googleMapsApiKey) {
-  throw new Error("API is missing in expoConfig.extra");
+if (!Constants.expoConfig?.extra?.mapboxAccessToken) {
+  throw new Error("Mapbox token is missing in app.json extra config");
 }
 
-const GOOGLE_API_KEY = Constants.expoConfig.extra.googleMapsApiKey;
+const MAPBOX_ACCESS_TOKEN = Constants.expoConfig.extra.mapboxAccessToken;
+
+// Initialize Mapbox
+Mapbox.setAccessToken(MAPBOX_ACCESS_TOKEN);
 
 type RideOption = {
   name: string;
@@ -80,7 +81,8 @@ export default function BookingScreen({
   dropoffAddress: string;
 }) {
   const slideAnim = useRef(new Animated.Value(0)).current;
-  const mapRef = useRef<MapView>(null);
+  const cameraRef = useRef<Mapbox.Camera>(null);
+  const mapRef = useRef<Mapbox.MapView>(null);
   const [selectedRide, setSelectedRide] = useState<string | null>(null);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
@@ -89,6 +91,7 @@ export default function BookingScreen({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authExpired, setAuthExpired] = useState(false);
+  const [routeCoordinates, setRouteCoordinates] = useState<[number, number][] | null>(null);
   const [rideDetails, setRideDetails] = useState<RideDetails>({
     pickup: {
       pickupLat: 0,
@@ -103,10 +106,6 @@ export default function BookingScreen({
     car_type: "",
     estimated_fare: 0,
   });
-
-  type TimeFilter = "all" | "today" | "week" | "month";
-
-const [filter, setFilter] = useState<TimeFilter>("all");
 
   const { socket, isConnected } = useContext(SocketContext);
   const { clearTokens, getValidToken } = useAuth();
@@ -150,58 +149,51 @@ const [filter, setFilter] = useState<TimeFilter>("all");
     }
   };
 
-  const applyTimeFilter = (rides: Ride[]) => {
-  if (filter === "all") return rides;
+  // Fetch route from Mapbox Directions API
+  const fetchRoute = async () => {
+    try {
+      const response = await fetch(
+        `https://api.mapbox.com/directions/v5/mapbox/driving/${pickupLong},${pickupLat};${dropoffLong},${dropoffLat}?geometries=geojson&access_token=${MAPBOX_ACCESS_TOKEN}`
+      );
+      const data = await response.json();
 
-  const now = new Date();
+      if (data.routes && data.routes.length > 0) {
+        const route = data.routes[0];
+        const coordinates = route.geometry.coordinates as [number, number][];
+        setRouteCoordinates(coordinates);
 
-  return rides.filter((ride) => {
-    const rideDate = new Date(ride.date);
-    if (isNaN(rideDate.getTime())) return false;
-
-    switch (filter) {
-      case "today":
-        return (
-          rideDate.getDate() === now.getDate() &&
-          rideDate.getMonth() === now.getMonth() &&
-          rideDate.getFullYear() === now.getFullYear()
-        );
-
-      case "week": {
-        const diff = now.getTime() - rideDate.getTime();
-        return diff <= 7 * 24 * 60 * 60 * 1000;
+        console.log(`Distance: ${route.distance / 1000} km`);
+        console.log(`Duration: ${route.duration / 60} min`);
       }
-
-      case "month":
-        return (
-          rideDate.getMonth() === now.getMonth() &&
-          rideDate.getFullYear() === now.getFullYear()
-        );
-
-      default:
-        return true;
+    } catch (error) {
+      console.error("Error fetching route:", error);
     }
-  });
-};
+  };
 
   useEffect(() => {
     console.log("BookingScreen props:", pickupLat, pickupLong, dropoffLat, dropoffLong, pickupAddress, dropoffAddress);
   }, [pickupLat, pickupLong, dropoffLat, dropoffLong, pickupAddress, dropoffAddress]);
 
   useEffect(() => {
-    if (mapRef.current && pickupLat && pickupLong && dropoffLat && dropoffLong) {
-      setTimeout(() => {
-        mapRef.current?.fitToCoordinates(
-          [
-            { latitude: pickupLat, longitude: pickupLong },
-            { latitude: dropoffLat, longitude: dropoffLong },
-          ],
-          {
-            edgePadding: { top: 100, right: 50, bottom: 400, left: 50 },
-            animated: true,
-          }
-        );
-      }, 500);
+    if (pickupLat && pickupLong && dropoffLat && dropoffLong) {
+      fetchRoute();
+
+      // Fit map to show both markers
+      if (cameraRef.current) {
+        setTimeout(() => {
+          const bounds: [number, number][] = [
+            [pickupLong, pickupLat],
+            [dropoffLong, dropoffLat],
+          ];
+
+          cameraRef.current?.fitBounds(
+            [Math.min(pickupLong, dropoffLong), Math.min(pickupLat, dropoffLat)],
+            [Math.max(pickupLong, dropoffLong), Math.max(pickupLat, dropoffLat)],
+            [50, 100, 400, 50], // padding: [top, right, bottom, left]
+            1000 // animation duration
+          );
+        }, 500);
+      }
     }
   }, [pickupLat, pickupLong, dropoffLat, dropoffLong]);
 
@@ -237,7 +229,6 @@ const [filter, setFilter] = useState<TimeFilter>("all");
       const response = await getRideEstimate(rideData);
       console.log("Ride estimates API response:", JSON.stringify(response, null, 2));
 
-      // Updated to match your API response structure
       if (response.status_code === 200 && response.data?.rides) {
         const apiData = response.data;
 
@@ -255,11 +246,11 @@ const [filter, setFilter] = useState<TimeFilter>("all");
           details: `${Math.round(apiData.estimated_duration / 60)} min - ${apiData.estimated_distance.toFixed(2)} km`,
           price: `₦${ride.estimated_fare.toLocaleString()}`,
           rawPrice: ride.estimated_fare,
-          originalPrice: null, // No discount in current API response
+          originalPrice: null,
           carType: ride.car_type,
           passengers: ride.car_size,
           rideId: ride.name,
-          image: images[index] || images[0], // Use index to get corresponding image, fallback to first
+          image: images[index] || images[0],
           screen: "standardScreen",
         }));
 
@@ -358,30 +349,32 @@ const [filter, setFilter] = useState<TimeFilter>("all");
 
   return (
     <View style={styles.container}>
-      {/* Map View */}
+      {/* Mapbox Map View */}
       {pickupLat && pickupLong && dropoffLat && dropoffLong ? (
-        <MapView
+        <Mapbox.MapView
           ref={mapRef}
           style={styles.map}
-          provider={PROVIDER_GOOGLE}
-          initialRegion={{
-            latitude: (pickupLat + dropoffLat) / 2,
-            longitude: (pickupLong + dropoffLong) / 2,
-            latitudeDelta: Math.abs(pickupLat - dropoffLat) * 2 || 0.05,
-            longitudeDelta: Math.abs(pickupLong - dropoffLong) * 2 || 0.05,
-          }}
-          showsUserLocation={false}
-          showsMyLocationButton={false}
-          showsCompass={false}
-          customMapStyle={darkMapStyle}
+          styleURL={Mapbox.StyleURL.Dark}
+          logoEnabled={false}
+          attributionEnabled={false}
+          compassEnabled={false}
         >
-          <Marker
-            coordinate={{
-              latitude: pickupLat,
-              longitude: pickupLong,
-            }}
+          <Mapbox.Camera
+            ref={cameraRef}
+            zoomLevel={12}
+            centerCoordinate={[
+              (pickupLong + dropoffLong) / 2,
+              (pickupLat + dropoffLat) / 2
+            ]}
+            animationMode="flyTo"
+            animationDuration={1000}
+          />
+
+          {/* Pickup Marker */}
+          <Mapbox.PointAnnotation
+            id="pickup-marker"
+            coordinate={[pickupLong, pickupLat]}
             title="Pick-up Location"
-            centerOffset={{ x: 0, y: -15 }}
           >
             <View style={styles.pickupMarkerContainer}>
               <Image
@@ -390,37 +383,44 @@ const [filter, setFilter] = useState<TimeFilter>("all");
                 resizeMode="contain"
               />
             </View>
-          </Marker>
+          </Mapbox.PointAnnotation>
 
-          <Marker
-            coordinate={{
-              latitude: dropoffLat,
-              longitude: dropoffLong,
-            }}
+          {/* Dropoff Marker */}
+          <Mapbox.PointAnnotation
+            id="dropoff-marker"
+            coordinate={[dropoffLong, dropoffLat]}
             title="Drop-off Location"
-            pinColor="#f6a623"
-          />
+          >
+            <View style={styles.dropoffMarkerContainer}>
+              <View style={styles.dropoffMarkerPin} />
+            </View>
+          </Mapbox.PointAnnotation>
 
-          <MapViewDirections
-            origin={{
-              latitude: pickupLat,
-              longitude: pickupLong,
-            }}
-            destination={{
-              latitude: dropoffLat,
-              longitude: dropoffLong,
-            }}
-            apikey={GOOGLE_API_KEY}
-            strokeWidth={4}
-            strokeColor="#ffbc07"
-            optimizeWaypoints={true}
-            onReady={(result: any) => {
-              console.log(`Distance: ${result.distance} km`);
-              console.log(`Duration: ${result.duration} min`);
-            }}
-            onError={(errorMessage) => console.warn(errorMessage)}
-          />
-        </MapView>
+          {/* Route Line */}
+          {routeCoordinates && (
+            <Mapbox.ShapeSource
+              id="routeSource"
+              shape={{
+                type: 'Feature',
+                properties: {},
+                geometry: {
+                  type: 'LineString',
+                  coordinates: routeCoordinates,
+                },
+              }}
+            >
+              <Mapbox.LineLayer
+                id="routeLine"
+                style={{
+                  lineColor: '#ffbc07',
+                  lineWidth: 4,
+                  lineCap: 'round',
+                  lineJoin: 'round',
+                }}
+              />
+            </Mapbox.ShapeSource>
+          )}
+        </Mapbox.MapView>
       ) : (
         <View style={styles.mapPlaceholder}>
           <ActivityIndicator size="large" color="#f0d46d" />
@@ -616,6 +616,18 @@ const styles = StyleSheet.create({
   pickupMarkerContainer: {
     alignItems: "center",
     justifyContent: "center",
+  },
+  dropoffMarkerContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dropoffMarkerPin: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "#f6a623",
+    borderWidth: 3,
+    borderColor: "white",
   },
   panelHeader: {
     flexDirection: "row",

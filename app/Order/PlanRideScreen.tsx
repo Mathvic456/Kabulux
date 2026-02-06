@@ -1,6 +1,7 @@
 import { Feather, FontAwesome5, Ionicons } from '@expo/vector-icons';
+import Mapbox from '@rnmapbox/maps';
 import Constants from "expo-constants";
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -15,22 +16,18 @@ import {
   View,
 } from 'react-native';
 import 'react-native-get-random-values';
-import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import MapViewDirections from "react-native-maps-directions";
-import { darkMapStyle } from '../../styles/darkMapStyle';
-
-// Import your existing axios instance
+import MapboxSearchInput from '../../components/MapBoxSearchInput';
 
 const { height } = Dimensions.get('window');
 
-
-
-if (!Constants.expoConfig?.extra?.googleMapsApiKey) {
-  throw new Error("API is missing in expoConfig.extra");
+if (!Constants.expoConfig?.extra?.mapboxAccessToken) {
+  throw new Error("Mapbox token is missing in app.json extra config");
 }
 
-const GOOGLE_API_KEY = Constants.expoConfig.extra.googleMapsApiKey;
+const MAPBOX_ACCESS_TOKEN = Constants.expoConfig.extra.mapboxAccessToken;
+
+// Initialize Mapbox
+Mapbox.setAccessToken(MAPBOX_ACCESS_TOKEN);
 
 interface UserLocation {
   address: string;
@@ -50,7 +47,7 @@ interface DestinationLocation {
 }
 
 interface PlanRideScreenProps {
-  setScreen: (screen: string, navigationData: any) => void; 
+  setScreen: (screen: string, navigationData: any) => void;
   goBack: () => void;
   locationData?: UserLocation;
 }
@@ -62,27 +59,30 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
   const [currentLocation, setCurrentLocation] = useState('Current Location');
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const mapRef = useRef<MapView>(null);
+  const [routeCoordinates, setRouteCoordinates] = useState<[number, number][] | null>(null);
+  const [destinationSearchText, setDestinationSearchText] = useState('');
+
+  const cameraRef = useRef<Mapbox.Camera>(null);
+  const mapRef = useRef<Mapbox.MapView>(null);
 
   const suggestedLocations = [
-    { 
-      id: 1, 
-      name: 'ShopRite Cinema Sangotedo Lagos', 
+    {
+      id: 1,
+      name: 'ShopRite Cinema Sangotedo Lagos',
       address: 'Sangotedo Rd, Ajah, Lagos',
       latitude: 6.5244,
       longitude: 3.3792
     },
-    { 
-      id: 2, 
-      name: 'Lekki Conservation Centre', 
+    {
+      id: 2,
+      name: 'Lekki Conservation Centre',
       address: 'Lekki-Epe Expressway, Lagos',
       latitude: 6.4413,
       longitude: 3.5244
     },
-    { 
-      id: 3, 
-      name: 'Eko Atlantic City', 
+    {
+      id: 3,
+      name: 'Eko Atlantic City',
       address: 'Victoria Island, Lagos',
       latitude: 6.4167,
       longitude: 3.4333
@@ -105,35 +105,55 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
     return () => clearTimeout(timer);
   }, [locationData]);
 
+  // Fetch route from Mapbox when destination changes
+  const fetchRoute = async () => {
+    if (!locationData || !destinationLocation) return;
+
+    try {
+      const response = await fetch(
+        `https://api.mapbox.com/directions/v5/mapbox/driving/${locationData.longitude},${locationData.latitude};${destinationLocation.longitude},${destinationLocation.latitude}?geometries=geojson&access_token=${MAPBOX_ACCESS_TOKEN}`
+      );
+      const data = await response.json();
+
+      if (data.routes && data.routes.length > 0) {
+        const route = data.routes[0];
+        const coordinates = route.geometry.coordinates as [number, number][];
+        setRouteCoordinates(coordinates);
+
+        console.log(`Distance: ${route.distance / 1000} km`);
+        console.log(`Duration: ${route.duration / 60} min`);
+      }
+    } catch (error) {
+      console.error("Error fetching route:", error);
+    }
+  };
+
   // Fit map to show both markers when destination is selected
   useEffect(() => {
-    if (locationData && destinationLocation && mapRef.current) {
-      const coordinates = [
-        {
-          latitude: locationData.latitude,
-          longitude: locationData.longitude,
-        },
-        {
-          latitude: destinationLocation.latitude,
-          longitude: destinationLocation.longitude,
-        }
-      ];
-        //this basically makes sure that both coordinates fit into the map
-      mapRef.current.fitToCoordinates(coordinates, {
-        edgePadding: { top: 100, right: 50, bottom: 300, left: 50 },
-        animated: true,
-      });
-    } else if (locationData && mapRef.current) {
+    if (locationData && destinationLocation) {
+      fetchRoute();
+
+      if (cameraRef.current) {
+        setTimeout(() => {
+          cameraRef.current?.fitBounds(
+            [Math.min(locationData.longitude, destinationLocation.longitude), Math.min(locationData.latitude, destinationLocation.latitude)],
+            [Math.max(locationData.longitude, destinationLocation.longitude), Math.max(locationData.latitude, destinationLocation.latitude)],
+            [50, 100, 300, 50], // padding: [top, right, bottom, left]
+            1000
+          );
+        }, 500);
+      }
+    } else if (locationData && cameraRef.current) {
       // Just center on pickup location
-      mapRef.current.animateToRegion({
-        latitude: locationData.latitude,
-        longitude: locationData.longitude,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      }, 1000);
+      setTimeout(() => {
+        cameraRef.current?.setCamera({
+          centerCoordinate: [locationData.longitude, locationData.latitude],
+          zoomLevel: 14,
+          animationDuration: 1000,
+        });
+      }, 500);
     }
   }, [destinationLocation, locationData]);
-
 
   const prepareBookingData = () => {
     if (!destinationLocation) {
@@ -154,109 +174,65 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
     return requestData;
   };
 
- const handleConfirmRide = () => {
-  if (!destinationLocation || !locationData) {
-    Alert.alert('Error', 'Select both pickup and destination locations');
-    return;
-  }
+  const handleConfirmRide = () => {
+    if (!destinationLocation || !locationData) {
+      Alert.alert('Error', 'Select both pickup and destination locations');
+      return;
+    }
 
-  const bookingData = prepareBookingData();
+    const bookingData = prepareBookingData();
 
-  const navigationData = {
-    pickupLocation: {
-      address: currentLocation,
-      latitude: locationData.latitude,
-      longitude: locationData.longitude,
-    },
-    destination: {
-      name: destinationLocation.name,
-      address: destinationLocation.address,
-      latitude: destinationLocation.latitude,
-      longitude: destinationLocation.longitude,
-    },
-    backendRequest: bookingData, 
+    const navigationData = {
+      pickupLocation: {
+        address: currentLocation,
+        latitude: locationData.latitude,
+        longitude: locationData.longitude,
+      },
+      destination: {
+        name: destinationLocation.name,
+        address: destinationLocation.address,
+        latitude: destinationLocation.latitude,
+        longitude: destinationLocation.longitude,
+      },
+      backendRequest: bookingData,
+    };
+
+    setScreen('bookingScreen', navigationData);
   };
-
-  setScreen('bookingScreen', navigationData); 
-};
-
 
   const handleSelectDestination = (location: DestinationLocation) => {
     setDestinationLocation(location);
+    setDestinationSearchText(location.address);
     setShowSearchModal(false);
     console.log('Destination selected:', location);
   };
 
   const handleSelectSuggestedLocation = (location: any) => {
     setDestinationLocation(location);
+    setDestinationSearchText(location.address);
     console.log('Destination selected:', location);
+  };
+
+  const handleMapboxSearchSelect = (result: any) => {
+    const [lng, lat] = result.center;
+
+    const newLocation: DestinationLocation = {
+      name: result.text || result.place_name,
+      address: result.place_name,
+      latitude: lat,
+      longitude: lng,
+    };
+
+    handleSelectDestination(newLocation);
   };
 
   const handleBackPress = () => {
     goBack();
   };
 
-// Memoize the destination marker to prevent unnecessary re-renders
-const destinationMarker = useMemo(() => {
-  if (!destinationLocation) return null;
-  
-  return (
-    <Marker
-      key={`destination-${destinationLocation.latitude}-${destinationLocation.longitude}`}
-      tracksViewChanges
-      coordinate={{
-        latitude: destinationLocation.latitude,
-        longitude: destinationLocation.longitude,
-      }}
-      centerOffset={{ x: 10, y: -10 }}
-      title="Drop-off Location"
-      description={destinationLocation.address}
-    >
-      <View style={styles.markerContainer}>
-        <Image
-          source={require('../../assets/images/send.png')}
-          style={{ width: 20, height: 20 }}
-          resizeMode="contain"
-        />
-      </View>
-    </Marker>
-  );
-}, [destinationLocation?.latitude, destinationLocation?.longitude, destinationLocation?.address]);
-
   const shortenAddress = (address: string, maxLength: number = 35) => {
     if (address.length <= maxLength) return address;
     return address.substring(0, maxLength) + '...';
-  };
-
-  const testButtonPress = () => {
-    console.log('=== 🔴 DEBUG BUTTON PRESSED ===');
-    console.log('📊 Current State Values:');
-    console.log('isSubmitting:', isSubmitting);
-    
-    console.log('🚖 USER CURRENT LOCATION:');
-    if (locationData) {
-      console.log('📍 Address:', currentLocation);
-      console.log('📍 Latitude:', locationData.latitude);
-      console.log('📍 Longitude:', locationData.longitude);
-      console.log('📍 Full object:', locationData);
-    } else {
-      console.log('📍 No location data available');
-    }
-    
-    console.log('🎯 DESTINATION LOCATION:');
-    if (destinationLocation) {
-      console.log('📍 Name:', destinationLocation.name);
-      console.log('📍 Address:', destinationLocation.address);
-      console.log('📍 Latitude:', destinationLocation.latitude);
-      console.log('📍 Longitude:', destinationLocation.longitude);
-      console.log('📍 Full object:', destinationLocation);
-    } else {
-      console.log('📍 No destination selected');
-    }
-    
-    console.log('================================');
-    
-    Alert.alert('Debug', 'Button is working! Check console for both location details.');
   };
 
   const SearchModal = () => (
@@ -267,7 +243,7 @@ const destinationMarker = useMemo(() => {
     >
       <View style={styles.modalContainer}>
         <View style={styles.modalHeader}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.modalCloseButton}
             onPress={() => setShowSearchModal(false)}
           >
@@ -277,128 +253,34 @@ const destinationMarker = useMemo(() => {
         </View>
 
         <View style={styles.searchContainerWrapper}>
-          <GooglePlacesAutocomplete
-            placeholder="Search for a destination"
-            query={{
-              key: GOOGLE_API_KEY,
-              language: "en",
-              components: "country:ng",
-            }}
-            autoFillOnNotFound={false}
-            currentLocation={false}
-            currentLocationLabel="Current location"
-            debounce={300}
-            disableScroll={false}
-            enableHighAccuracyLocation={true}
-            enablePoweredByContainer={false}
-            fetchDetails={true}
-            filterReverseGeocodingByTypes={[]}
-            GooglePlacesDetailsQuery={{}}
-            GooglePlacesSearchQuery={{}}
-            GoogleReverseGeocodingQuery={{}}
-            isRowScrollable={true}
-            keyboardShouldPersistTaps="always"
-            listUnderlayColor="#c8c7cc"
-            listViewDisplayed="auto"
-            keepResultsAfterBlur={false}
-            minLength={2}
-            nearbyPlacesAPI="GooglePlacesSearch"
-            numberOfLines={1}
-            onFail={(error) => {
-              console.error("Places API error:", error);
-            }}
-            onNotFound={() => {
-              console.log("No results found");
-            }}
-            onPress={(data, details = null) => {
-              console.log("Selected place:", data.description);
-              if (details?.geometry?.location) {
-                const newLocation: DestinationLocation = {
-                  name: data.structured_formatting?.main_text || data.description,
-                  address: data.description,
-                  latitude: details.geometry.location.lat,
-                  longitude: details.geometry.location.lng,
-                };
-                handleSelectDestination(newLocation);
-              } else {
-                const newLocation: DestinationLocation = {
-                  name: data.description,
-                  address: data.description,
-                  latitude: 0,
-                  longitude: 0,
-                };
-                handleSelectDestination(newLocation);
+          <MapboxSearchInput
+            value={destinationSearchText}
+            onChangeText={setDestinationSearchText}
+            onSelectLocation={handleMapboxSearchSelect}
+            onUseCurrentLocation={() => {
+              if (locationData) {
+                setDestinationLocation({
+                  name: 'Current Location',
+                  address: locationData.address,
+                  latitude: locationData.latitude,
+                  longitude: locationData.longitude,
+                });
+                setShowSearchModal(false);
               }
             }}
-            onTimeout={() => {
-              console.warn('Google Places Autocomplete: request timeout');
-            }}
-            predefinedPlaces={[]}
-            predefinedPlacesAlwaysVisible={false}
-            suppressDefaultStyles={false}
-            textInputHide={false}
-            textInputProps={{
-              placeholderTextColor: "#666",
-              autoFocus: true,
-            }}
-            timeout={20000}
-            styles={{
-              container: { 
-                flex: 0,
-                zIndex: 1,
-              },
-              textInputContainer: {
-                flexDirection: "row",
-                alignItems: "center",
-                backgroundColor: "#2b2b2b",
-                borderRadius: 10,
-                paddingHorizontal: 15,
-              },
-              textInput: {
-                flex: 1,
-                color: "white",
-                paddingVertical: 12,
-                fontSize: 16,
-                backgroundColor: "transparent",
-              },
-              listView: {
-                backgroundColor: "#1c1c1c",
-                marginTop: 10,
-                borderRadius: 10,
-              },
-              row: {
-                backgroundColor: "#2b2b2b",
-                padding: 15,
-                minHeight: 50,
-                flexDirection: "row",
-                marginBottom: 2,
-              },
-              separator: {
-                height: 1,
-                backgroundColor: "#333",
-              },
-              description: {
-                color: "#fff",
-                fontSize: 15,
-              },
-              loader: {
-                flexDirection: "row",
-                justifyContent: "flex-end",
-                height: 20,
-              },
-            }}
-            renderLeftButton={() => (
-              <Ionicons name="search" size={20} color="#666" style={{ marginRight: 10 }} />
-            )}
+            isGettingLocation={false}
+            placeholder="Search for a destination"
+            countryCode="ng"
+            proximity={locationData ? [locationData.longitude, locationData.latitude] : undefined}
           />
         </View>
-        
+
         <View style={styles.suggestedSection}>
           <Text style={styles.suggestedTitle}>Popular Destinations</Text>
           <ScrollView>
             {suggestedLocations.map((loc) => (
-              <TouchableOpacity 
-                key={loc.id} 
+              <TouchableOpacity
+                key={loc.id}
                 style={styles.modalSuggestionItem}
                 onPress={() => handleSelectDestination(loc)}
               >
@@ -418,33 +300,31 @@ const destinationMarker = useMemo(() => {
 
   return (
     <View style={styles.container}>
-      {/* Map View */}
+      {/* Mapbox Map View */}
       <View style={styles.mapContainer}>
         {locationData ? (
-          <MapView
+          <Mapbox.MapView
             ref={mapRef}
             style={styles.map}
-            provider={PROVIDER_GOOGLE}
-            initialRegion={{
-              latitude: locationData.latitude,
-              longitude: locationData.longitude,
-              latitudeDelta: 0.05,
-              longitudeDelta: 0.05,
-            }}
-            showsUserLocation={false}
-            showsMyLocationButton={false}
-            showsCompass={false}
-            customMapStyle={darkMapStyle}
+            styleURL={Mapbox.StyleURL.Dark}
+            logoEnabled={false}
+            attributionEnabled={false}
+            compassEnabled={false}
           >
+            <Mapbox.Camera
+              ref={cameraRef}
+              zoomLevel={14}
+              centerCoordinate={[locationData.longitude, locationData.latitude]}
+              animationMode="flyTo"
+              animationDuration={1000}
+            />
+
             {/* Pickup Location Marker */}
-            <Marker
-              coordinate={{
-                latitude: locationData.latitude,
-                longitude: locationData.longitude,
-              }}
+            <Mapbox.PointAnnotation
+              id="pickup-marker"
+              coordinate={[locationData.longitude, locationData.latitude]}
               title="Pick-up Location"
-              description={locationData.address}
-              centerOffset={{ x: 10, y: 0 }}
+              snippet={locationData.address}
             >
               <View style={styles.pickupMarkerContainer}>
                 <Image
@@ -453,34 +333,51 @@ const destinationMarker = useMemo(() => {
                   resizeMode="contain"
                 />
               </View>
-            </Marker>
+            </Mapbox.PointAnnotation>
 
             {/* Destination Marker */}
-          
-           {destinationMarker}
-            {/* Route Line */}
             {destinationLocation && (
-         <MapViewDirections
-           origin={{
-            latitude: locationData.latitude,
-            longitude: locationData.longitude,
-          }}
-          destination={{
-            latitude: destinationLocation.latitude,
-            longitude: destinationLocation.longitude,
-          }}
-          apikey={GOOGLE_API_KEY}
-          strokeWidth={4}
-          strokeColor="#ffbc07"
-          optimizeWaypoints={true}
-          onReady={(result: any) => {
-            console.log(`Distance: ${result.distance} km`);
-            console.log(`Duration: ${result.duration} min`);
-          }}
-          onError={(errMessage) => console.warn(errMessage)}
-        />
+              <Mapbox.PointAnnotation
+                id="destination-marker"
+                coordinate={[destinationLocation.longitude, destinationLocation.latitude]}
+                title="Drop-off Location"
+                snippet={destinationLocation.address}
+              >
+                <View style={styles.markerContainer}>
+                  <Image
+                    source={require('../../assets/images/send.png')}
+                    style={{ width: 20, height: 20 }}
+                    resizeMode="contain"
+                  />
+                </View>
+              </Mapbox.PointAnnotation>
             )}
-          </MapView>
+
+            {/* Route Line */}
+            {routeCoordinates && (
+              <Mapbox.ShapeSource
+                id="routeSource"
+                shape={{
+                  type: 'Feature',
+                  properties: {},
+                  geometry: {
+                    type: 'LineString',
+                    coordinates: routeCoordinates,
+                  },
+                }}
+              >
+                <Mapbox.LineLayer
+                  id="routeLine"
+                  style={{
+                    lineColor: '#ffbc07',
+                    lineWidth: 4,
+                    lineCap: 'round',
+                    lineJoin: 'round',
+                  }}
+                />
+              </Mapbox.ShapeSource>
+            )}
+          </Mapbox.MapView>
         ) : (
           <View style={styles.mapPlaceholder}>
             <ActivityIndicator size="large" color="#f0d46d" />
@@ -522,7 +419,7 @@ const destinationMarker = useMemo(() => {
           )}
         </View>
 
-        <ScrollView 
+        <ScrollView
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
@@ -540,11 +437,6 @@ const destinationMarker = useMemo(() => {
                   <Text style={[styles.inputValue, styles.currentLocationText]}>
                     {locationData ? '📍 ' + shortenAddress(currentLocation, 40) : 'Current Location'}
                   </Text>
-                  {/* {locationData && (
-                    <Text style={styles.locationAccuracy}>
-                      ✓ Latitude: {locationData.latitude.toFixed(6)}, Longitude: {locationData.longitude.toFixed(6)}
-                    </Text>
-                  )} */}
                 </View>
                 <View style={styles.inputBox}>
                   <Text style={styles.inputLabel}>Where to?</Text>
@@ -553,11 +445,6 @@ const destinationMarker = useMemo(() => {
                       {destinationLocation ? '🏁 ' + shortenAddress(destinationLocation.address, 40) : 'Select your destination'}
                     </Text>
                   </TouchableOpacity>
-                  {/* {destinationLocation && (
-                    <Text style={styles.locationAccuracy}>
-                      ✓ Latitude: {destinationLocation.latitude.toFixed(6)}, Longitude: {destinationLocation.longitude.toFixed(6)}
-                    </Text>
-                  )} */}
                 </View>
               </View>
             </View>
@@ -566,18 +453,18 @@ const destinationMarker = useMemo(() => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Suggested Locations</Text>
             {suggestedLocations.map((loc) => (
-              <TouchableOpacity 
-                key={loc.id} 
+              <TouchableOpacity
+                key={loc.id}
                 style={[
                   styles.suggestionItem,
                   destinationLocation?.name === loc.name && styles.selectedSuggestion
-                ]} 
+                ]}
                 onPress={() => handleSelectSuggestedLocation(loc)}
               >
-                <FontAwesome5 
-                  name="map-marker-alt" 
-                  size={18} 
-                  color={destinationLocation?.name === loc.name ? '#f0d46d' : '#aaa'} 
+                <FontAwesome5
+                  name="map-marker-alt"
+                  size={18}
+                  color={destinationLocation?.name === loc.name ? '#f0d46d' : '#aaa'}
                 />
                 <View style={styles.suggestionTextContainer}>
                   <Text style={[
@@ -595,7 +482,7 @@ const destinationMarker = useMemo(() => {
             ))}
           </View>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.searchButton}
             onPress={() => setShowSearchModal(true)}
           >
@@ -603,11 +490,11 @@ const destinationMarker = useMemo(() => {
             <Text style={styles.searchButtonText}>Search for another destination</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[
               styles.confirmButton,
-              { 
-                backgroundColor: destinationLocation && locationData? '#f0d46d' : '#555',
+              {
+                backgroundColor: destinationLocation && locationData ? '#f0d46d' : '#555',
                 opacity: (!destinationLocation || !locationData || isSubmitting) ? 0.6 : 1
               }
             ]}
@@ -622,9 +509,9 @@ const destinationMarker = useMemo(() => {
               </View>
             ) : (
               <Text style={styles.confirmButtonText}>
-                {!locationData ? 'Waiting for Location...' : 
-                 !destinationLocation ? 'Select Destination' : 
-                 `Get Estimate to ${shortenAddress(destinationLocation.address, 20)}`}
+                {!locationData ? 'Waiting for Location...' :
+                  !destinationLocation ? 'Select Destination' :
+                    `Get Estimate to ${shortenAddress(destinationLocation.address, 20)}`}
               </Text>
             )}
           </TouchableOpacity>
@@ -649,7 +536,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   map: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
   },
   mapPlaceholder: {
     flex: 1,
@@ -685,11 +572,8 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     justifyContent: 'center'
-
-
   },
-
-    pickupMarkerContainer: {
+  pickupMarkerContainer: {
     height: 40,
     width: 40,
     borderRadius: 10,
@@ -702,17 +586,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
-  },
-
-  mapContent: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mapSubtext: {
-    fontSize: 14,
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 5,
   },
   topBar: {
     position: 'absolute',
@@ -842,12 +715,6 @@ const styles = StyleSheet.create({
   selectedDestination: {
     color: '#f0d46d',
     fontWeight: '600',
-  },
-  locationAccuracy: {
-    fontSize: 12,
-    color: '#4CAF50',
-    marginTop: 4,
-    fontStyle: 'italic',
   },
   section: {
     marginBottom: 20,

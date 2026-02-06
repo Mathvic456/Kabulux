@@ -422,7 +422,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
         <View style={styles.divider} />
 
         <View style={styles.offerSection}>
-          <Text style={styles.offerLabel}>Driver's Offer</Text>
+          <Text style={styles.offerLabel}>Drivers Offer</Text>
           <Text style={styles.originalOffer}>
             ₦{item.counter_offer.toLocaleString()}
           </Text>
@@ -555,7 +555,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
         <View style={[styles.connectionBanner, styles.offlineBanner]}>
           <Ionicons name="cloud-offline" size={16} color="#f44336" />
           <Text style={styles.offlineText}>
-            You're offline. Messages will be sent when back online.
+            You&apos;re offline. Messages will be sent when back online.
           </Text>
         </View>
       )}

@@ -1,15 +1,14 @@
 import CentralModal from "@/components/CentralModal";
 import { Ionicons } from "@expo/vector-icons";
+import Mapbox from '@rnmapbox/maps';
+import Constants from "expo-constants";
 import * as Location from "expo-location";
 import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Image } from "react-native";
-import MapView, { Marker } from "react-native-maps";
-import { darkMapStyle } from "../../styles/darkMapStyle";
-
-import Constants from "expo-constants";
 import {
+  ActivityIndicator,
   Alert,
   Animated,
+  Image,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -19,14 +18,16 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import "react-native-get-random-values";
-import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
+import MapboxSearchInput from "../../components/MapBoxSearchInput";
 
-if (!Constants.expoConfig?.extra?.googleMapsApiKey) {
-  throw new Error("API is missing in expoConfig.extra");
+if (!Constants.expoConfig?.extra?.mapboxAccessToken) {
+  throw new Error("Mapbox token is missing in app.json extra config");
 }
 
-const GOOGLE_API_KEY = Constants.expoConfig.extra.googleMapsApiKey;
+const MAPBOX_ACCESS_TOKEN = Constants.expoConfig.extra.mapboxAccessToken;
+
+// Initialize Mapbox
+Mapbox.setAccessToken(MAPBOX_ACCESS_TOKEN);
 
 interface UserLocation {
   address: string;
@@ -48,16 +49,12 @@ export default function PickUpScreen({
   const [pickup, setPickup] = useState("");
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
-  const [initialRegion, setInitialRegion] = useState({
-    latitude: 9.082, // Center of Nigeria as fallback
-    longitude: 8.6753,
-    latitudeDelta: 8,
-    longitudeDelta: 8,
-  });
   const slideAnim = useRef(new Animated.Value(0)).current;
   const [showErrorModal, setShowErrorModal] = useState(false);
-  const mapRef = useRef<MapView>(null);
-  const autocompleteRef = useRef<any>(null);
+
+  const cameraRef = useRef<Mapbox.Camera>(null);
+  const mapRef = useRef<Mapbox.MapView>(null);
+  const [proximityCoords, setProximityCoords] = useState<[number, number] | undefined>();
 
   useEffect(() => {
     Animated.timing(slideAnim, {
@@ -66,34 +63,43 @@ export default function PickUpScreen({
       useNativeDriver: true,
     }).start();
 
-    // Automatically request location and get user's position on screen load
     requestLocationAndCenter();
   }, []);
 
-  // Animate map to user location when it's available
   useEffect(() => {
-    if (userLocation && mapRef.current) {
-      mapRef.current.animateToRegion(
-        {
-          latitude: userLocation.latitude,
-          longitude: userLocation.longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        },
-        1000,
-      );
+    if (userLocation && cameraRef.current) {
+      cameraRef.current.setCamera({
+        centerCoordinate: [userLocation.longitude, userLocation.latitude],
+        zoomLevel: 15,
+        animationDuration: 1000,
+      });
     }
   }, [userLocation]);
+
+  const reverseGeocodeMapbox = async (lng: number, lat: number): Promise<string> => {
+    try {
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_ACCESS_TOKEN}&types=address,place,poi`
+      );
+      const data = await response.json();
+
+      if (data.features && data.features.length > 0) {
+        return data.features[0].place_name;
+      }
+      return "Unknown Location";
+    } catch (error) {
+      console.error("Reverse geocoding error:", error);
+      return "Unknown Location";
+    }
+  };
 
   const requestLocationAndCenter = async () => {
     try {
       setIsGettingLocation(true);
 
-      // Request location permission
       let { status } = await Location.requestForegroundPermissionsAsync();
 
       if (status !== "granted") {
-        // Permission denied - keep default center (Nigeria)
         Alert.alert(
           "Location Permission Required",
           "Please enable location access to automatically center the map on your current location.",
@@ -103,54 +109,38 @@ export default function PickUpScreen({
         return;
       }
 
-      // Permission granted - get current location
       let location = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
 
-      // Update initial region to user's location
-      const newRegion = {
+      setProximityCoords([location.coords.longitude, location.coords.latitude]);
+
+      const address = await reverseGeocodeMapbox(
+        location.coords.longitude,
+        location.coords.latitude
+      );
+
+      const locationData: UserLocation = {
+        address: address,
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      };
-      setInitialRegion(newRegion);
-
-      // Get address from coordinates
-      let addresses = await Location.reverseGeocodeAsync({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      });
-
-      if (addresses && addresses.length > 0) {
-        const address = addresses[0];
-        const formattedAddress = formatAddress(address);
-
-        const locationData: UserLocation = {
-          address: formattedAddress,
+        coordinates: {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
-          coordinates: {
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-          },
-        };
+        },
+      };
 
-        setUserLocation(locationData);
-        setPickup(formattedAddress);
+      setUserLocation(locationData);
+      setPickup(address);
 
-        // Set the text in the autocomplete input
-        if (autocompleteRef.current) {
-          autocompleteRef.current.setAddressText(formattedAddress);
-        }
-
-        // Animate map to the detected location
-        if (mapRef.current) {
-          setTimeout(() => {
-            mapRef.current?.animateToRegion(newRegion, 1000);
-          }, 500);
-        }
+      if (cameraRef.current) {
+        setTimeout(() => {
+          cameraRef.current?.setCamera({
+            centerCoordinate: [location.coords.longitude, location.coords.latitude],
+            zoomLevel: 15,
+            animationDuration: 1000,
+          });
+        }, 500);
       }
     } catch (error) {
       console.error("Error getting location:", error);
@@ -178,73 +168,66 @@ export default function PickUpScreen({
         accuracy: Location.Accuracy.BestForNavigation,
       });
 
-      let addresses = await Location.reverseGeocodeAsync({
+      setProximityCoords([location.coords.longitude, location.coords.latitude]);
+
+      const address = await reverseGeocodeMapbox(
+        location.coords.longitude,
+        location.coords.latitude
+      );
+
+      const locationData: UserLocation = {
+        address: address,
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
-      });
-
-      if (addresses && addresses.length > 0) {
-        const address = addresses[0];
-        const formattedAddress = formatAddress(address);
-
-        const locationData: UserLocation = {
-          address: formattedAddress,
+        coordinates: {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
-          coordinates: {
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-          },
-        };
-        setIsGettingLocation(false);
-        setUserLocation(locationData);
-        setPickup(formattedAddress);
+        },
+      };
 
-        // Set the text in the autocomplete input
-        if (autocompleteRef.current) {
-          autocompleteRef.current.setAddressText(formattedAddress);
-        }
-      }
+      setUserLocation(locationData);
+      setPickup(address);
+      setIsGettingLocation(false);
     } catch (error) {
       console.error("Error getting location:", error);
       setShowErrorModal(true);
-    } finally {
       setIsGettingLocation(false);
     }
   };
 
-  const formatAddress = (address: Location.LocationGeocodedAddress): string => {
-    if (!address) return "";
+  const handleSelectLocation = (result: any) => {
+    const [lng, lat] = result.center;
 
-    const parts = [];
+    const locationData: UserLocation = {
+      address: result.place_name,
+      latitude: lat,
+      longitude: lng,
+      coordinates: {
+        latitude: lat,
+        longitude: lng,
+      },
+    };
 
-    if (address.name && address.name !== address.street)
-      parts.push(address.name);
-    if (address.street) parts.push(address.street);
-    if (address.district) parts.push(address.district);
-    if (address.city) parts.push(address.city);
-    if (address.region) parts.push(address.region);
-    if (address.postalCode) parts.push(address.postalCode);
-    if (address.country) parts.push(address.country);
+    setUserLocation(locationData);
+    setPickup(result.place_name);
 
-    return parts.filter((part) => part && part.trim() !== "").join(", ");
+    if (cameraRef.current) {
+      cameraRef.current.setCamera({
+        centerCoordinate: [lng, lat],
+        zoomLevel: 15,
+        animationDuration: 1000,
+      });
+    }
   };
 
   const handleManualConfirm = () => {
-    console.log("🔍 handleManualConfirm called");
-    console.log("📍 userLocation:", userLocation);
-    console.log("📝 pickup text:", pickup);
-
     if (userLocation) {
       const finalLocation: UserLocation = {
         ...userLocation,
         address: pickup || userLocation.address || "Unnamed Location",
       };
-      console.log("Final location prepared:", finalLocation);
-      console.log("🚀 Calling setScreen with 'planRide'");
       setScreen("planRide", finalLocation);
     } else {
-      console.log("No userLocation set");
       Alert.alert(
         "No location",
         "Please pick a location or use your current one.",
@@ -267,7 +250,6 @@ export default function PickUpScreen({
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
-          {/* Top Navigation */}
           <View style={styles.topBar}>
             <TouchableOpacity style={styles.iconContainer} onPress={goBack}>
               <Ionicons name="arrow-back" size={24} color="white" />
@@ -280,35 +262,47 @@ export default function PickUpScreen({
             </TouchableOpacity>
           </View>
 
-          {/* Map View */}
           <View style={styles.mapPlaceholder}>
-            <MapView
+            <Mapbox.MapView
               ref={mapRef}
               style={styles.map}
-              initialRegion={initialRegion}
-              showsUserLocation
-              showsMyLocationButton={false}
-              showsCompass={false}
-              customMapStyle={darkMapStyle}
+              styleURL={Mapbox.StyleURL.Dark}
+              logoEnabled={false}
+              attributionEnabled={false}
+              compassEnabled={false}
             >
+              <Mapbox.Camera
+                ref={cameraRef}
+                zoomLevel={12}
+                centerCoordinate={[8.6753, 9.082]}
+                animationMode="flyTo"
+                animationDuration={1000}
+              />
+
+              <Mapbox.UserLocation
+                visible={true}
+                showsUserHeadingIndicator={true}
+              />
+
               {userLocation && (
-                <Marker
-                  coordinate={userLocation.coordinates}
-                  title="Pick-up Location"
-                  description={userLocation.address}
+                <Mapbox.PointAnnotation
+                  id="pickup-marker"
+                  coordinate={[userLocation.longitude, userLocation.latitude]}
                 >
                   <View style={styles.markerContainer}>
                     <Image
                       source={require("../../assets/images/target.png")}
                       style={{ width: 40, height: 40 }}
                       resizeMode="contain"
+                      fadeDuration={0}
                     />
                   </View>
-                </Marker>
+                  {/* Callout for when marker is tapped */}
+                  <Mapbox.Callout title="Pick-up Location" />
+                </Mapbox.PointAnnotation>
               )}
-            </MapView>
+            </Mapbox.MapView>
 
-            {/* Overlay for loading state */}
             {isGettingLocation && (
               <View style={styles.overlayContainer}>
                 <View style={styles.loadingContainer}>
@@ -326,155 +320,22 @@ export default function PickUpScreen({
             )}
           </View>
 
-          {/* Bottom Sheet */}
           <View style={styles.bottomSheet}>
             <Text style={styles.title}>Set your Pick-up Location</Text>
-            {/* Search Bar */}
+
             <View style={styles.searchContainer}>
-              <GooglePlacesAutocomplete
-                ref={autocompleteRef}
+              <MapboxSearchInput
+                value={pickup}
+                onChangeText={setPickup}
+                onSelectLocation={handleSelectLocation}
+                onUseCurrentLocation={handleUseCurrentLocation}
+                isGettingLocation={isGettingLocation}
                 placeholder="Search or use current location"
-                query={{
-                  key: GOOGLE_API_KEY,
-                  language: "en",
-                  components: "country:ng",
-                }}
-                autoFillOnNotFound={false}
-                currentLocation={false}
-                currentLocationLabel="Current location"
-                debounce={300}
-                disableScroll={false}
-                enableHighAccuracyLocation={true}
-                enablePoweredByContainer={false}
-                fetchDetails={true}
-                filterReverseGeocodingByTypes={[]}
-                GooglePlacesDetailsQuery={{}}
-                GooglePlacesSearchQuery={{}}
-                GoogleReverseGeocodingQuery={{}}
-                isRowScrollable={true}
-                keyboardShouldPersistTaps="always"
-                listUnderlayColor="#c8c7cc"
-                listViewDisplayed="auto"
-                keepResultsAfterBlur={false}
-                minLength={2}
-                nearbyPlacesAPI="GooglePlacesSearch"
-                numberOfLines={1}
-                onFail={(error) => {
-                  console.error("Places API error:", error);
-                }}
-                onNotFound={() => {
-                  console.log("No results found");
-                }}
-                onPress={(data, details = null) => {
-                  console.log("Selected place:", data.description);
-                  if (details?.geometry?.location) {
-                    const newLocation: UserLocation = {
-                      address: data.description,
-                      latitude: details.geometry.location.lat,
-                      longitude: details.geometry.location.lng,
-                      coordinates: {
-                        latitude: details.geometry.location.lat,
-                        longitude: details.geometry.location.lng,
-                      },
-                    };
-                    setUserLocation(newLocation);
-                    setPickup(data.description);
-                  }
-                }}
-                onTimeout={() => {
-                  console.warn("Google Places Autocomplete: request timeout");
-                }}
-                predefinedPlaces={[]}
-                predefinedPlacesAlwaysVisible={false}
-                suppressDefaultStyles={false}
-                textInputHide={false}
-                textInputProps={{
-                  onChangeText: (text) => {
-                    setPickup(text);
-                  },
-                  placeholderTextColor: "#aaa",
-                }}
-                timeout={20000}
-                styles={{
-                  container: {
-                    flex: 0,
-                    zIndex: 1,
-                  },
-                  textInputContainer: {
-                    flexDirection: "row",
-                    alignItems: "center",
-                    backgroundColor: "#2b2b2b",
-                    borderRadius: 12,
-                    paddingHorizontal: 12,
-                    borderWidth: 1,
-                    borderColor: "#444",
-                    elevation: 2,
-                    shadowColor: "#000",
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.2,
-                    shadowRadius: 2,
-                  },
-                  textInput: {
-                    flex: 1,
-                    color: "white",
-                    paddingVertical: 10,
-                    marginLeft: 8,
-                    backgroundColor: "transparent",
-                  },
-                  listView: {
-                    backgroundColor: "#1c1c1c",
-                    marginTop: 10,
-                    borderRadius: 12,
-                    maxHeight: 250,
-                    elevation: 5,
-                    shadowColor: "#000",
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.25,
-                    shadowRadius: 3.84,
-                    borderWidth: 1,
-                    borderColor: "#333",
-                  },
-                  row: {
-                    backgroundColor: "#2b2b2b",
-                    padding: 15,
-                    minHeight: 50,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginBottom: 1,
-                  },
-                  separator: {
-                    height: 0.5,
-                    backgroundColor: "#444",
-                  },
-                  description: {
-                    color: "#fff",
-                  },
-                  loader: {
-                    flexDirection: "row",
-                    justifyContent: "flex-end",
-                    height: 20,
-                  },
-                }}
-                renderLeftButton={() => (
-                  <Ionicons name="search" size={20} color="white" />
-                )}
-                renderRightButton={() => (
-                  <TouchableOpacity
-                    onPress={handleUseCurrentLocation}
-                    disabled={isGettingLocation}
-                    style={{ marginLeft: 8, padding: 5 }}
-                  >
-                    <Ionicons
-                      name="locate"
-                      size={20}
-                      color={isGettingLocation ? "#666" : "#f6a623"}
-                    />
-                  </TouchableOpacity>
-                )}
+                countryCode="ng"
+                proximity={proximityCoords}
               />
             </View>
 
-            {/* Loading State or Confirm Button */}
             {isGettingLocation ? (
               <View style={[styles.confirmButton, { backgroundColor: "#555" }]}>
                 <Text style={styles.confirmText}>
@@ -496,6 +357,7 @@ export default function PickUpScreen({
               </TouchableOpacity>
             )}
           </View>
+
           <CentralModal
             visible={showErrorModal}
             onClose={() => setShowErrorModal(false)}
@@ -537,7 +399,7 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   map: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
   },
   overlayContainer: {
     ...StyleSheet.absoluteFillObject,
@@ -555,34 +417,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 10,
     textAlign: "center",
-  },
-  locationFoundBadge: {
-    position: "absolute",
-    top: 100,
-    alignSelf: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.8)",
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 25,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  locationFoundBadgeText: {
-    color: "#4CAF50",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  addressPreview: {
-    color: "#a10505",
-    fontSize: 14,
-    textAlign: "center",
-    marginTop: 10,
-  },
-  mapText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#f6a623",
   },
   markerContainer: {
     height: 50,
@@ -620,15 +454,6 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     marginBottom: 15,
-    zIndex: 1,
-  },
-  locationDetails: {
-    backgroundColor: "rgba(76, 175, 80, 0.1)",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 15,
-    borderLeftWidth: 3,
-    borderLeftColor: "#4CAF50",
   },
   confirmButton: {
     borderRadius: 10,

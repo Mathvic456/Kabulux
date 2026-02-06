@@ -11,16 +11,17 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
-import MapViewDirections from "react-native-maps-directions";
+import Mapbox from '@rnmapbox/maps';
 import { useRide } from "../../context/RideContext";
-import { darkMapStyle } from "../../styles/darkMapStyle";
 
-if (!Constants.expoConfig?.extra?.googleMapsApiKey) {
-  throw new Error("Google Maps API key is missing");
+if (!Constants.expoConfig?.extra?.mapboxAccessToken) {
+  throw new Error("Mapbox token is missing in app.json extra config");
 }
 
-const GOOGLE_API_KEY = Constants.expoConfig.extra.googleMapsApiKey;
+const MAPBOX_ACCESS_TOKEN = Constants.expoConfig.extra.mapboxAccessToken;
+
+// Initialize Mapbox
+Mapbox.setAccessToken(MAPBOX_ACCESS_TOKEN);
 
 interface PickupLocation {
   latitude: number;
@@ -35,12 +36,14 @@ export default function RideTrackingScreen({ goBack }: { goBack: () => void }) {
   const { data: rideDetails, isLoading: loadingRideDetails } =
     useRideDetails(rideId);
 
-  const mapRef = useRef<MapView>(null);
+  const cameraRef = useRef<Mapbox.Camera>(null);
+  const mapRef = useRef<Mapbox.MapView>(null);
   const [pickupLocation, setPickupLocation] = useState<PickupLocation | null>(
     null,
   );
   const [destinationLocation, setDestinationLocation] =
     useState<PickupLocation | null>(null);
+  const [routeCoordinates, setRouteCoordinates] = useState<[number, number][] | null>(null);
   const [routeInfo, setRouteInfo] = useState<{
     distance: number;
     duration: number;
@@ -75,20 +78,55 @@ export default function RideTrackingScreen({ goBack }: { goBack: () => void }) {
     }
   }, [rideDetails]);
 
+  // Fetch route from Mapbox Directions API
+  const fetchRoute = async (origin: { lat: number; lng: number }, destination: { latitude: number; longitude: number }) => {
+    try {
+      const response = await fetch(
+        `https://api.mapbox.com/directions/v5/mapbox/driving/${origin.lng},${origin.lat};${destination.longitude},${destination.latitude}?geometries=geojson&access_token=${MAPBOX_ACCESS_TOKEN}`
+      );
+      const data = await response.json();
+
+      if (data.routes && data.routes.length > 0) {
+        const route = data.routes[0];
+        const coordinates = route.geometry.coordinates as [number, number][];
+        setRouteCoordinates(coordinates);
+
+        const distance = route.distance / 1000; // Convert to km
+        const duration = route.duration / 60; // Convert to minutes
+
+        console.log(`🚗 Route: ${distance.toFixed(2)} km, ${duration.toFixed(0)} min`);
+        setRouteInfo({
+          distance: distance,
+          duration: duration,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching route:", error);
+    }
+  };
+
+  // Fetch route when locations change based on ride state
+  useEffect(() => {
+    if (rideState === "in_progress" && driverLocation && destinationLocation) {
+      fetchRoute(driverLocation, destinationLocation);
+    } else if (rideState === "driver_on_way" && driverLocation && pickupLocation) {
+      fetchRoute(driverLocation, pickupLocation);
+    }
+  }, [driverLocation, pickupLocation, destinationLocation, rideState]);
+
   // Fit map to show relevant locations based on ride state
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!cameraRef.current) return;
 
-    let coordinates = [];
+    let bounds: [[number, number], [number, number]] | null = null;
 
     // In progress: show driver and destination
     if (rideState === "in_progress" && driverLocation && destinationLocation) {
-      coordinates = [
-        { latitude: driverLocation.lat, longitude: driverLocation.lng },
-        {
-          latitude: destinationLocation.latitude,
-          longitude: destinationLocation.longitude,
-        },
+      const lngs = [driverLocation.lng, destinationLocation.longitude];
+      const lats = [driverLocation.lat, destinationLocation.latitude];
+      bounds = [
+        [Math.min(...lngs), Math.min(...lats)],
+        [Math.max(...lngs), Math.max(...lats)]
       ];
     }
     // Driver on way: show driver and pickup
@@ -97,44 +135,39 @@ export default function RideTrackingScreen({ goBack }: { goBack: () => void }) {
       driverLocation &&
       pickupLocation
     ) {
-      coordinates = [
-        { latitude: driverLocation.lat, longitude: driverLocation.lng },
-        {
-          latitude: pickupLocation.latitude,
-          longitude: pickupLocation.longitude,
-        },
+      const lngs = [driverLocation.lng, pickupLocation.longitude];
+      const lats = [driverLocation.lat, pickupLocation.latitude];
+      bounds = [
+        [Math.min(...lngs), Math.min(...lats)],
+        [Math.max(...lngs), Math.max(...lats)]
       ];
     }
     // Fallback: center on available location
     else if (driverLocation) {
-      mapRef.current.animateToRegion(
-        {
-          latitude: driverLocation.lat,
-          longitude: driverLocation.lng,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        },
-        1000,
-      );
+      cameraRef.current.setCamera({
+        centerCoordinate: [driverLocation.lng, driverLocation.lat],
+        zoomLevel: 15,
+        animationDuration: 1000,
+      });
       return;
     } else if (pickupLocation) {
-      mapRef.current.animateToRegion(
-        {
-          latitude: pickupLocation.latitude,
-          longitude: pickupLocation.longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        },
-        1000,
-      );
+      cameraRef.current.setCamera({
+        centerCoordinate: [pickupLocation.longitude, pickupLocation.latitude],
+        zoomLevel: 15,
+        animationDuration: 1000,
+      });
       return;
     }
 
-    if (coordinates.length > 0) {
-      mapRef.current.fitToCoordinates(coordinates, {
-        edgePadding: { top: 150, right: 50, bottom: 400, left: 50 },
-        animated: true,
-      });
+    if (bounds) {
+      setTimeout(() => {
+        cameraRef.current?.fitBounds(
+          bounds![0],
+          bounds![1],
+          [50, 150, 400, 50], // padding: [top, right, bottom, left]
+          1000
+        );
+      }, 500);
     }
   }, [driverLocation, pickupLocation, destinationLocation, rideState]);
 
@@ -171,138 +204,90 @@ export default function RideTrackingScreen({ goBack }: { goBack: () => void }) {
 
       {/* Map View */}
       <View style={styles.mapContainer}>
-        <MapView
+        <Mapbox.MapView
           ref={mapRef}
           style={styles.map}
-          provider={PROVIDER_GOOGLE}
-          initialRegion={{
-            latitude: pickupLocation?.latitude || driverLocation?.lat || 6.5244,
-            longitude:
-              pickupLocation?.longitude || driverLocation?.lng || 3.3792,
-            latitudeDelta: 0.05,
-            longitudeDelta: 0.05,
-          }}
-          showsUserLocation={false}
-          showsMyLocationButton={false}
-          showsCompass={false}
-          customMapStyle={darkMapStyle}
+          styleURL={Mapbox.StyleURL.Dark}
+          logoEnabled={false}
+          attributionEnabled={false}
+          compassEnabled={false}
         >
+          <Mapbox.Camera
+            ref={cameraRef}
+            zoomLevel={14}
+            centerCoordinate={[
+              pickupLocation?.longitude || driverLocation?.lng || 3.3792,
+              pickupLocation?.latitude || driverLocation?.lat || 6.5244
+            ]}
+            animationMode="flyTo"
+            animationDuration={1000}
+          />
+
           {/* Pickup Location Marker */}
           {pickupLocation && (
-            <Marker
-              coordinate={{
-                latitude: pickupLocation.latitude,
-                longitude: pickupLocation.longitude,
-              }}
-              title="Pickup Location"
-              description={pickupLocation.address}
+            <Mapbox.MarkerView
+              id="pickup-marker"
+              coordinate={[pickupLocation.longitude, pickupLocation.latitude]}
             >
               <View style={styles.pickupMarkerContainer}>
                 <View style={styles.pickupMarkerInner}>
                   <Ionicons name="person" size={20} color="#fff" />
                 </View>
               </View>
-            </Marker>
+            </Mapbox.MarkerView>
           )}
 
           {/* Driver Location Marker */}
           {driverLocation && (
-            <Marker
-              coordinate={{
-                latitude: driverLocation.lat,
-                longitude: driverLocation.lng,
-              }}
-              title={driver?.name || "Driver Location"}
-              description={driver?.vehicle || "Your driver is here"}
+            <Mapbox.MarkerView
+              id="driver-marker"
+              coordinate={[driverLocation.lng, driverLocation.lat]}
             >
               <View style={styles.driverMarkerContainer}>
                 <FontAwesome5 name="car" size={24} color="#FEB914" />
               </View>
-            </Marker>
+            </Mapbox.MarkerView>
           )}
 
           {/* Destination Location Marker - Show during in_progress */}
           {rideState === "in_progress" && destinationLocation && (
-            <Marker
-              coordinate={{
-                latitude: destinationLocation.latitude,
-                longitude: destinationLocation.longitude,
-              }}
-              title="Destination"
-              description={destinationLocation.address}
+            <Mapbox.MarkerView
+              id="destination-marker"
+              coordinate={[destinationLocation.longitude, destinationLocation.latitude]}
             >
               <View style={styles.destinationMarkerContainer}>
                 <View style={styles.destinationMarkerInner}>
                   <Ionicons name="flag" size={20} color="#fff" />
                 </View>
               </View>
-            </Marker>
+            </Mapbox.MarkerView>
           )}
 
-          {/* Route Line - From Driver to Pickup Location (when driver_on_way) */}
-          {rideState === "driver_on_way" &&
-            driverLocation &&
-            pickupLocation && (
-              <MapViewDirections
-                origin={{
-                  latitude: driverLocation.lat,
-                  longitude: driverLocation.lng,
-                }}
-                destination={{
-                  latitude: pickupLocation.latitude,
-                  longitude: pickupLocation.longitude,
-                }}
-                apikey={GOOGLE_API_KEY}
-                strokeWidth={4}
-                strokeColor="#FEB914"
-                optimizeWaypoints={true}
-                onReady={(result) => {
-                  console.log(
-                    `🚗 Route to pickup: ${result.distance.toFixed(2)} km, ${result.duration.toFixed(0)} min`,
-                  );
-                  setRouteInfo({
-                    distance: result.distance,
-                    duration: result.duration,
-                  });
-                }}
-                onError={(errorMessage) => {
-                  console.error(" Directions error:", errorMessage);
+          {/* Route Line */}
+          {routeCoordinates && (
+            <Mapbox.ShapeSource
+              id="routeSource"
+              shape={{
+                type: 'Feature',
+                properties: {},
+                geometry: {
+                  type: 'LineString',
+                  coordinates: routeCoordinates,
+                },
+              }}
+            >
+              <Mapbox.LineLayer
+                id="routeLine"
+                style={{
+                  lineColor: rideState === 'in_progress' ? '#4CAF50' : '#FEB914',
+                  lineWidth: 4,
+                  lineCap: 'round',
+                  lineJoin: 'round',
                 }}
               />
-            )}
-
-          {/* Route Line - From Driver to Destination (when in_progress) */}
-          {rideState === "in_progress" &&
-            driverLocation &&
-            destinationLocation && (
-              <MapViewDirections
-                origin={{
-                  latitude: driverLocation.lat,
-                  longitude: driverLocation.lng,
-                }}
-                destination={{
-                  latitude: destinationLocation.latitude,
-                  longitude: destinationLocation.longitude,
-                }}
-                apikey={GOOGLE_API_KEY}
-                strokeWidth={4}
-                strokeColor="#4CAF50"
-                optimizeWaypoints={true}
-                onReady={(result) => {
-                  console.log(
-                    `🎯 Route to destination: ${result.distance.toFixed(2)} km, ${result.duration.toFixed(0)} min`,
-                  );
-                  setRouteInfo({
-                    distance: result.distance,
-                    duration: result.duration,
-                  });
-                }}
-                onError={(errorMessage) => {
-                  console.error("Directions error:", errorMessage);
-                }}
-              />
-            )}
-        </MapView>
+            </Mapbox.ShapeSource>
+          )}
+        </Mapbox.MapView>
 
         {/* Route Info Badge */}
         {routeInfo &&
@@ -539,7 +524,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   map: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
   },
   routeInfoBadge: {
     position: "absolute",

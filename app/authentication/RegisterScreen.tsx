@@ -15,7 +15,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Logo from "../../assets/images/logo.png";
+
+const Logo = require("../../assets/images/logo.png");
 
 type RegisterScreenProps = {
   next: (email: string) => void;

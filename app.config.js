@@ -9,13 +9,10 @@ export default {
     icon: "./assets/images/log.png",
     scheme: "kabulux",
     userInterfaceStyle: "automatic",
-    newArchEnabled: true,
+    newArchEnabled: false,
 
     ios: {
       supportsTablet: true,
-      config: {
-        googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
-      },
     },
 
     android: {
@@ -26,11 +23,6 @@ export default {
       edgeToEdgeEnabled: true,
       package: "com.crashingout.kablux",
       googleServicesFile: "./google-services.json",
-      config: {
-        googleMaps: {
-          apiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
-        },
-      },
     },
 
     web: {
@@ -53,6 +45,13 @@ export default {
       ],
       "expo-web-browser",
       "expo-notifications",
+      [
+        "@rnmapbox/maps",
+        {
+          RNMapboxMapsDownloadToken: process.env.MAPBOX_SECRET_TOKEN,
+          RNMapboxMapsVersion: "10.14.1"
+        }
+      ],
     ],
 
     extra: {
@@ -63,6 +62,7 @@ export default {
       eas: {
         projectId: "4781a8b8-1544-4b29-8400-9e0565a2e78f",
       },
+      mapboxAccessToken: process.env.MAPBOX_PUBLIC_TOKEN,
     },
 
     owner: "crashingout",
