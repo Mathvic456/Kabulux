@@ -4,6 +4,7 @@ import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState } from "react";
 import {
+  Dimensions,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -29,6 +30,8 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [referral, setReferral] = useState("");
+  const { width, height } = Dimensions.get('window');
+
 
   const [errors, setErrors] = useState({
     fullName: "",
@@ -41,121 +44,143 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
 
   const { mutate: register, isPending } = useRegisterEndPoint();
 
-  const validateForm = () => {
-  let valid = true;
-  let normalizedPhone = phone.trim();
-
-  const newErrors = {
-    fullName: "",
-    email: "",
-    phone: "",
-    address: "",
-    password: "",
-    referral: "",
+  // Responsive scaling functions
+  const scaleFont = (size) => {
+    const scaleFactor = width / 375;
+    return Math.round(size * Math.min(scaleFactor, 1.3));
   };
 
-  if (!fullName.trim()) {
-    newErrors.fullName = "Full name is required";
-    valid = false;
-  } else if (fullName.trim().length < 3) {
-    newErrors.fullName = "Full name must be at least 3 characters";
-    valid = false;
-  }
+  const scaleSize = (size) => {
+    const scaleFactor = width / 375;
+    return Math.round(size * Math.min(scaleFactor, 1.2));
+  };
 
-  if (!email) {
-    newErrors.email = "Email is required";
-    valid = false;
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    newErrors.email = "Please enter a valid email address";
-    valid = false;
-  }
+  const validateForm = () => {
+    let valid = true;
+    let normalizedPhone = phone.trim();
 
-  // --- PHONE NORMALIZATION ---
-  if (/^0\d{9,}$/.test(normalizedPhone)) {
-    normalizedPhone = "+234" + normalizedPhone.slice(1);
-  }
+    const newErrors = {
+      fullName: "",
+      email: "",
+      phone: "",
+      address: "",
+      password: "",
+      referral: "",
+    };
 
-  if (/^234\d{9,}$/.test(normalizedPhone)) {
-    normalizedPhone = "+" + normalizedPhone;
-  }
-
-  if (!normalizedPhone) {
-    newErrors.phone = "Phone number is required";
-    valid = false;
-  } else if (!/^\+234\d{10}$/.test(normalizedPhone)) {
-    newErrors.phone = "Please enter a valid phone number";
-    valid = false;
-  }
-
-  // address validation…
-  if (!address.trim()) {
-    newErrors.address = "Address is required";
-    valid = false;
-  } else if (address.trim().length < 10) {
-    newErrors.address = "Address must be at least 10 characters";
-    valid = false;
-  }
-
-  // password validation…
-  if (!password) {
-    newErrors.password = "Password is required";
-    valid = false;
-  } else if (password.length < 8) {
-    newErrors.password = "Password must be at least 8 characters";
-    valid = false;
-  } else if (!/[A-Z]/.test(password)) {
-    newErrors.password = "Password must contain at least one uppercase letter";
-    valid = false;
-  } else if (!/[0-9]/.test(password)) {
-    newErrors.password = "Password must contain at least one number";
-    valid = false;
-  } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-    newErrors.password = "Password must contain at least one special character";
-    valid = false;
-  }
-
-  setErrors(newErrors);
-
-  return { valid, normalizedPhone };
-};
-
-const handleSubmit = async () => {
-  const { valid, normalizedPhone } = validateForm();
-  if (!valid) return;
-
-  const [first_name, ...rest] = fullName.trim().split(" ");
-  const last_name = rest.length > 0 ? rest.join(" ") : "";
-
-  await AsyncStorage.setItem("pendingEmail", email);
-
-  register(
-    {
-      email,
-      password,
-      role: "rider",
-      first_name,
-      last_name,
-      phone_number: normalizedPhone,
-      address,
-    },
-    {
-      onSuccess: () => next(email),
-      onError: (err) => {
-        const errorData = err.response?.data;
-
-        if (errorData?.email?.[0]?.includes("already exists")) {
-          setErrors((prev) => ({
-            ...prev,
-            email: "This email is already registered. Try signing in instead.",
-          }));
-        } else {
-          console.error("Registration failed:", errorData || err.message);
-          alert("Something went wrong. Please try again.");
-        }
-      },
+    if (!fullName.trim()) {
+      newErrors.fullName = "Full name is required";
+      valid = false;
+    } else if (fullName.trim().length < 3) {
+      newErrors.fullName = "Full name must be at least 3 characters";
+      valid = false;
     }
-  );
-};
+
+    if (!email) {
+      newErrors.email = "Email is required";
+      valid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = "Please enter a valid email address";
+      valid = false;
+    }
+
+    // --- PHONE NORMALIZATION ---
+    if (/^0\d{9,}$/.test(normalizedPhone)) {
+      normalizedPhone = "+234" + normalizedPhone.slice(1);
+    }
+
+    if (/^234\d{9,}$/.test(normalizedPhone)) {
+      normalizedPhone = "+" + normalizedPhone;
+    }
+
+    if (!normalizedPhone) {
+      newErrors.phone = "Phone number is required";
+      valid = false;
+    } else if (!/^\+234\d{10}$/.test(normalizedPhone)) {
+      newErrors.phone = "Please enter a valid phone number";
+      valid = false;
+    }
+
+    // address validation…
+    if (!address.trim()) {
+      newErrors.address = "Address is required";
+      valid = false;
+    } else if (address.trim().length < 10) {
+      newErrors.address = "Address must be at least 10 characters";
+      valid = false;
+    }
+
+    // password validation…
+    if (!password) {
+      newErrors.password = "Password is required";
+      valid = false;
+    } else if (password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
+      valid = false;
+    } else if (!/[A-Z]/.test(password)) {
+      newErrors.password = "Password must contain at least one uppercase letter";
+      valid = false;
+    } else if (!/[0-9]/.test(password)) {
+      newErrors.password = "Password must contain at least one number";
+      valid = false;
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      newErrors.password = "Password must contain at least one special character";
+      valid = false;
+    }
+
+    setErrors(newErrors);
+
+    return { valid, normalizedPhone };
+  };
+
+  const handleSubmit = async () => {
+    const { valid, normalizedPhone } = validateForm();
+    if (!valid) return;
+
+    const [first_name, ...rest] = fullName.trim().split(" ");
+    const last_name = rest.length > 0 ? rest.join(" ") : "";
+
+    await AsyncStorage.setItem("pendingEmail", email);
+
+    register(
+      {
+        email,
+        password,
+        role: "rider",
+        first_name,
+        last_name,
+        phone_number: normalizedPhone,
+        address,
+      },
+      {
+        onSuccess: () => next(email),
+        onError: (err) => {
+          const errorData = err.response?.data;
+
+          // Handle "already exists" errors
+          const newErrors = { ...errors };
+          let hasError = false;
+
+          if (errorData?.email?.[0]?.includes("already exists")) {
+            newErrors.email = "This email is already registered. Try signing in instead.";
+            hasError = true;
+          }
+
+          if (errorData?.phone_number?.[0]?.includes("already exists")) {
+            newErrors.phone = "This phone number is already registered. Try signing in instead.";
+            hasError = true;
+          }
+
+          if (hasError) {
+            setErrors(newErrors);
+          } else {
+            console.error("Registration failed:", errorData || err.message);
+            alert("Something went wrong. Please try again.");
+          }
+        },
+      }
+    );
+  };
 
 
   return (
@@ -164,20 +189,22 @@ const handleSubmit = async () => {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <ScrollView
+          keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContainer}
         >
           <View style={styles.card}>
             <Image source={Logo} style={styles.logoIcon} />
-        <TouchableOpacity 
-        style={styles.backButton} 
-        onPress={goLogin}
-      >
-        <Ionicons name="chevron-back" size={24} color="#ffffff" />
-      </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={goLogin}
+            >
+              <Ionicons name="chevron-back" size={24} color="#ffffff" />
+            </TouchableOpacity>
             <Text style={styles.title}>Get Started Now</Text>
             <Text style={styles.subtitle}>Let&apos;s create an account</Text>
 
@@ -188,7 +215,13 @@ const handleSubmit = async () => {
             {/* All Inputs */}
             {renderInput("user", fullName, setFullName, "Full Name", errors.fullName, "words")}
             {renderInput("envelope", email, setEmail, "Email", errors.email, "none", "email-address")}
+            {errors.email ? (
+              <Text style={[styles.errorText, { fontSize: scaleFont(12) }]}>
+                {errors.email}
+              </Text>
+            ) : null}
             {renderInput("phone", phone, setPhone, "Phone Number", errors.phone, "none", "phone-pad")}
+
             {renderInput("map-marker", address, setAddress, "Address", errors.address)}
             {renderInput("lock", password, setPassword, "Password", errors.password, "none", "default", !showPassword, showPassword, setShowPassword)}
             {renderInput("tag", referral, setReferral, "Referral Code", errors.referral)}
@@ -245,7 +278,7 @@ const renderInput = (
         keyboardType={keyboardType}
         secureTextEntry={secureTextEntry}
       />
-       {placeholder === "Password" && (
+      {placeholder === "Password" && (
         <TouchableOpacity onPress={() => setShowPassword?.(!showPassword)}>
           <Ionicons
             name={showPassword ? "eye-off" : "eye"}
@@ -344,7 +377,7 @@ const styles = StyleSheet.create({
   dividerText: { color: "#aaa", marginHorizontal: 10 },
   footerText: { textAlign: "center", color: "#888", fontSize: 12 },
   signup: { color: "#fcbf24", fontWeight: "bold" },
-    backButton: {
+  backButton: {
     position: "absolute",
     left: 30,
     top: 60,

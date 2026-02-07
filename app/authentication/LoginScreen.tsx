@@ -97,7 +97,7 @@ export default function LoginScreen({
             email,
             password,
             role: "rider",
-            fcm_token: token, // ✅ Backend expects fcm_token, but now contains Expo token
+            fcm_token: token,
             type: "android",
           },
           {
