@@ -34,11 +34,12 @@ allprojects {
       }
       credentials {
         username = 'mapbox'
-        password = System.getenv('MAPBOX_DOWNLOADS_TOKEN') ?: 
-                   project.findProperty('MAPBOX_DOWNLOADS_TOKEN') ?: ''
+        password = System.getenv('MAPBOX_DOWNLOADS_TOKEN') ?: ''
       }
     }
   }
 }
+println "MAPBOX_DOWNLOADS_TOKEN present: ${System.getenv('MAPBOX_DOWNLOADS_TOKEN') != null}"
 
 // @generated end @rnmapbox/maps-v2-maven
+
