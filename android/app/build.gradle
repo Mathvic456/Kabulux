@@ -2,7 +2,7 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
-def hermesEnabled = (findProperty('expo.jsEngine') ?: "hermes") == "hermes"
+ext.hermesEnabled = (findProperty('expo.jsEngine') ?: "hermes") == "hermes"
 
 
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
