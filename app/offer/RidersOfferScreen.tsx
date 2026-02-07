@@ -40,9 +40,10 @@ type OfferItem = {
 interface RiderOfferProps {
   goBack: () => void;
   next: () => void;
+  ride_request_id?: string;
 }
 
-export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
+export default function RiderOffersScreen({ goBack, next, ride_request_id }: RiderOfferProps) {
   const {
     driverOffers,
     rideAccepted,
@@ -62,7 +63,6 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
   const { rideId } = useContext(RideIdContext);
 
   const route = useRoute();
-  const { ride_request_id } = (route.params as any) || {};
 
   const [localOffers, setLocalOffers] = useState<Record<string, OfferItem>>({});
   const [acceptedModalVisible, setAcceptedModalVisible] = useState(false);
@@ -86,6 +86,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
       console.warn("[RIDER] Missing ride_request_id");
       return;
     }
+    // console.log('rider_req-id', ride_request_id)
 
     if (isConnected && !subscriptionAttempted.current) {
       console.log("📡 [RIDER] Subscribing to offers for:", ride_request_id);

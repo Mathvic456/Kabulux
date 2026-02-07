@@ -42,7 +42,7 @@ interface RideData {
 
 interface StandardScreenProps {
   goBack: () => void;
-  next: () => void;
+  next: (params?: any) => void;
   rideData?: RideData;
 }
 
@@ -135,7 +135,7 @@ export default function StandardScreen({
       {
         onSuccess: () => {
           console.log("Offer sent successfully");
-          next();
+          next({ ride_request_id: rideData?.ride_request_id || "" });
         },
         onError: (error: any) => {
           console.error("Offer submission failed:", error);

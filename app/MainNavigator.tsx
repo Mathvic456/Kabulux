@@ -86,7 +86,7 @@ type Screen =
   | "redeemPoints"
   | "wallet"
   | "analyticsScreen"
-  | "loyalty" 
+  | "loyalty"
   | "orderScreen"
   | "planRide"
   | "bookingScreen"
@@ -129,16 +129,16 @@ export default function MainNavigator() {
   const [url, setUrl] = useState("");
 
   const [registeredEmail, setRegisteredEmail] = useState("");
-  const [ forgotPasswordEmail, setForgotPasswordEmail] = useState("")
-  
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("")
+
 
   useEffect(() => {
     registerSetScreen((scr: string) => {
-  setScreen(scr as Screen);
-});
+      setScreen(scr as Screen);
+    });
   }, []);
 
-    useMemo(() => {
+  useMemo(() => {
     console.log("📱 [MainNavigator] Registering navigation ref");
     registerSetScreen((scr: string) => {
       console.log(`📱 [Navigation] Navigating to: ${scr}`);
@@ -164,18 +164,18 @@ export default function MainNavigator() {
     setScreen(newScreen);
   };
 
- const checkIfRemembered = async () => {
-  const rememberedEmail = await AsyncStorage.getItem("rememberedEmail");
-  const token = await AsyncStorage.getItem("token");
+  const checkIfRemembered = async () => {
+    const rememberedEmail = await AsyncStorage.getItem("rememberedEmail");
+    const token = await AsyncStorage.getItem("token");
 
-  if (token || rememberedEmail) {
+    if (token || rememberedEmail) {
 
-    setScreen("dashboard");
-  } else {
+      setScreen("dashboard");
+    } else {
 
-    setScreen("login");
-  }
-};
+      setScreen("login");
+    }
+  };
 
 
 
@@ -186,10 +186,10 @@ export default function MainNavigator() {
 
   switch (screen) {
     case "onboard1":
-        return <OnboardingScreen1 next={() => checkIfRemembered()} />;
-      
+      return <OnboardingScreen1 next={() => checkIfRemembered()} />;
+
     case "onboard2":
-    return <OnboardingScreen2 next={() => {}}/>;
+      return <OnboardingScreen2 next={() => { }} />;
     case "login":
       return (
         <LoginScreen
@@ -222,13 +222,13 @@ export default function MainNavigator() {
       );
     case "verify":
       return (
-      <VerifyEmailScreen
-      goBack={() => setScreen("register")}
-      next={() => setScreen("accountSuccess")}
-      goRegister={() => setScreen("register")}
-      goForgot={() => setScreen("reset")}
-    />
-  );
+        <VerifyEmailScreen
+          goBack={() => setScreen("register")}
+          next={() => setScreen("accountSuccess")}
+          goRegister={() => setScreen("register")}
+          goForgot={() => setScreen("reset")}
+        />
+      );
     case "passwordSet":
       return (
         <PasswordSetScreen
@@ -237,8 +237,8 @@ export default function MainNavigator() {
           goForgot={() => setScreen("reset")}
         />
       );
-      case "trackRide":
-        return <RideTrackingScreen goBack={() => setScreen("dashboard")} />
+    case "trackRide":
+      return <RideTrackingScreen goBack={() => setScreen("dashboard")} />
     case "profile":
       return <ProfileScreen setScreen={setScreen} />;
     case "accountSuccess":
@@ -258,13 +258,14 @@ export default function MainNavigator() {
         />
       );
 
-      case "offerScreen":
-        return (
-          <RiderOffersScreen
-            goBack={() => setScreen('dashboard')}
-            next={() => setScreen('dashboard')}
-          />
-        )
+    case "offerScreen":
+      return (
+        <RiderOffersScreen
+          goBack={() => setScreen('dashboard')}
+          next={() => setScreen('dashboard')}
+          ride_request_id={rideData?.ride_request_id}
+        />
+      )
     case "passwordChangeSuccess":
       return (
         <PasswordChangeSuccessScreen
@@ -300,7 +301,7 @@ export default function MainNavigator() {
         />
       );
 
-    
+
     case "paymentMethod":
       return (
         <PaymentMethodScreen
@@ -348,7 +349,7 @@ export default function MainNavigator() {
         />
       );
     case "helpAndSupport":
-      return (  
+      return (
         <HelpAndSupportScreen
           goBack={() => setScreen("profile")}
           next={() => setScreen("dashboard")}
@@ -386,49 +387,49 @@ export default function MainNavigator() {
       );
 
     case "legal":
-      return(
+      return (
         <LegalScreen
           goBack={() => setScreen("profile")}
           next={() => setScreen("dashboard")}
         />
       );
-      case "aboutus":
-        return (
-          <AboutUs 
-            goBack={() => setScreen("settings")}
-          />
-        )
-        case "language":
-        return (
-          <Language
-            goBack={() => setScreen("settings")}
-          />
-        )
-        case "terms":
-          return (
-            <TermsOfServiceScreen 
-              goBack={() => setScreen("settings")}
-            />
-          )
-        case "rateapscreen":
-        return (
-          <RateAppScreen 
-            goBack={() => setScreen("settings")}
-          />
-        )
+    case "aboutus":
+      return (
+        <AboutUs
+          goBack={() => setScreen("settings")}
+        />
+      )
+    case "language":
+      return (
+        <Language
+          goBack={() => setScreen("settings")}
+        />
+      )
+    case "terms":
+      return (
+        <TermsOfServiceScreen
+          goBack={() => setScreen("settings")}
+        />
+      )
+    case "rateapscreen":
+      return (
+        <RateAppScreen
+          goBack={() => setScreen("settings")}
+        />
+      )
 
-        case "report":
-        return (
-          <ReportIssue
-            goBack={() => setScreen("settings")}
-          />
-        )
-      case "ridereceipts":
-        return (
-          <RideReceipts 
-            goBack={() => setScreen("settings")}
-          />
-        )
+    case "report":
+      return (
+        <ReportIssue
+          goBack={() => setScreen("settings")}
+        />
+      )
+    case "ridereceipts":
+      return (
+        <RideReceipts
+          goBack={() => setScreen("settings")}
+        />
+      )
     case "redeemPoints":
       return (
         <RedeemPointsScreen
@@ -448,7 +449,7 @@ export default function MainNavigator() {
         <AnalyticsScreen
           setScreen={handleSetScreen}
           next={() => setScreen("loyalty")}
-          goBack={()=> setScreen('dashboard')}
+          goBack={() => setScreen('dashboard')}
         />);
 
     case "wallet":
@@ -457,55 +458,55 @@ export default function MainNavigator() {
           setScreen={handleSetScreen}
         />);
 
- /*   case "paystack":
-      return <PaystackWebView 
-        setScreen={setScreen}
-      />*/
+    /*   case "paystack":
+         return <PaystackWebView 
+           setScreen={setScreen}
+         />*/
 
     case "loyalty":
       return (
         <LoyaltyPointsScreen
-        next={() => setScreen("aboutus")}
-        back={() => setScreen("analyticsScreen")}
+          next={() => setScreen("aboutus")}
+          back={() => setScreen("analyticsScreen")}
         />);
 
     case "orderScreen":
       return (
         <PickUpScreen setScreen={handleSetScreen}
-        goBack={() => setScreen("dashboard")}
+          goBack={() => setScreen("dashboard")}
         />);
 
     case "planRide":
       return (
         <PlanRideScreen setScreen={handleSetScreen}
-        goBack={() => setScreen("orderScreen")} 
-        locationData={pickupLocationData}
+          goBack={() => setScreen("orderScreen")}
+          locationData={pickupLocationData}
         />);
 
-// MainNavigator.tsx
+    // MainNavigator.tsx
 
-case "bookingScreen":
-  return (
-    <BookingScreen 
-      setScreen={handleSetScreen} 
-      goBack={() => setScreen("planRide")}
-      pickupLat={bookingData?.pickupLocation?.latitude}
-      pickupLong={bookingData?.pickupLocation?.longitude}
-      pickupAddress={bookingData?.pickupLocation?.address}
-      dropoffLat={bookingData?.destination?.latitude}
-      dropoffLong={bookingData?.destination?.longitude}
-      dropoffAddress={bookingData?.destination?.address}
-    />
-  );
+    case "bookingScreen":
+      return (
+        <BookingScreen
+          setScreen={handleSetScreen}
+          goBack={() => setScreen("planRide")}
+          pickupLat={bookingData?.pickupLocation?.latitude}
+          pickupLong={bookingData?.pickupLocation?.longitude}
+          pickupAddress={bookingData?.pickupLocation?.address}
+          dropoffLat={bookingData?.destination?.latitude}
+          dropoffLong={bookingData?.destination?.longitude}
+          dropoffAddress={bookingData?.destination?.address}
+        />
+      );
 
-case "standardScreen":
-  return (
-    <StandardScreen
-      goBack={() => setScreen("bookingScreen")}
-      next={() => setScreen("offerScreen")}
-      rideData={rideData}
-    />
-  );
+    case "standardScreen":
+      return (
+        <StandardScreen
+          goBack={() => setScreen("bookingScreen")}
+          next={() => setScreen("offerScreen")}
+          rideData={rideData}
+        />
+      );
 
 
     case "originalPriceDetails":
@@ -539,21 +540,21 @@ case "standardScreen":
         />
       );
 
-      case "bookings": 
+    case "bookings":
       return (
-        <BookingsScreen 
+        <BookingsScreen
           setScreen={setScreen}
-          next={() => {setScreen("orderScreen")}}
-          setSelectedRide={setSelectedRide} 
+          next={() => { setScreen("orderScreen") }}
+          setSelectedRide={setSelectedRide}
         />
       )
 
     case "additionalInformation":
-     return (
+      return (
         <AdditionalInformationScreen
           setScreen={setScreen}
           goBack={() => setScreen("bookingScreen")}
-           rideOptions={rideOptions}
+          rideOptions={rideOptions}
           setRideOptions={setRideOptions}
         />
       );
@@ -569,28 +570,28 @@ case "standardScreen":
     case "specialServices":
       return (
         <SpecialServicesScreen
-        setScreen={setScreen}
-        goBack={() => setScreen("premiumCarSelect")}
-        rideOptions={rideOptions} 
-        goNext={() => setScreen("modifyRide")}
+          setScreen={setScreen}
+          goBack={() => setScreen("premiumCarSelect")}
+          rideOptions={rideOptions}
+          goNext={() => setScreen("modifyRide")}
 
         />
       );
 
     case "modifyRide":
-      return ( 
+      return (
         <ModifyRideScreen
-        setScreen={setScreen}
-        goBack={() => setScreen("premiumCarSelect")}
+          setScreen={setScreen}
+          goBack={() => setScreen("premiumCarSelect")}
         />
       );
 
     case "businessCodeScreen":
       return (
         <BusinessCodeScreen
-        setScreen={setScreen}
-        goBack={() => setScreen("modifyRide")}
-        goNext={() => setScreen("bookingScreen")}
+          setScreen={setScreen}
+          goBack={() => setScreen("modifyRide")}
+          goNext={() => setScreen("bookingScreen")}
         />
       );
 
