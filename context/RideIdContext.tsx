@@ -10,7 +10,7 @@ const RIDE_ID_KEY = '@current_ride_id';
 
 export const RideIdContext = createContext<RideIdContextValue>({
   rideId: null,
-  setRideId: () => {},
+  setRideId: () => { },
 });
 
 export const useRideId = () => useContext(RideIdContext);
@@ -38,7 +38,7 @@ export const RideIdProvider = ({ children }: { children: React.ReactNode }) => {
   const updateRideId = async (newId: string | null) => {
     console.log("🔄 [RIDE_ID] Updating to:", newId);
     setRideId(newId);
-    
+
     if (newId) {
       await AsyncStorage.setItem(RIDE_ID_KEY, newId);
     } else {

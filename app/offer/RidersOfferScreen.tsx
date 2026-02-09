@@ -37,12 +37,38 @@ type OfferItem = {
   timestamp: number;
 };
 
+interface RideData {
+  name: string;
+  details: string;
+  price: string;
+  rawPrice?: number;
+  carType: string;
+  passengers: number;
+  rideDetails: {
+    pickup: {
+      pickupLat: number;
+      pickupLong: number;
+    };
+    destination: {
+      dropoffLat: number;
+      dropoffLong: number;
+    };
+    estimated_distance: string;
+    estimated_duration: string;
+    car_type: string;
+    estimated_fare: number;
+  };
+  ride_request_id: string;
+  paymentMethod: string;
+}
+
 interface RiderOfferProps {
   goBack: () => void;
   next: () => void;
+  rideData?: RideData;
 }
 
-export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
+export default function RiderOffersScreen({ goBack, next, rideData }: RiderOfferProps) {
   const {
     driverOffers,
     rideAccepted,
@@ -62,7 +88,6 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
   const { rideId } = useContext(RideIdContext);
 
   const route = useRoute();
-  const { ride_request_id } = (route.params as any) || {};
 
   const [localOffers, setLocalOffers] = useState<Record<string, OfferItem>>({});
   const [acceptedModalVisible, setAcceptedModalVisible] = useState(false);
@@ -82,23 +107,23 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
 
   // 1. Subscribe to WS when connected and have ride_request_id
   useEffect(() => {
-    if (!ride_request_id) {
+    if (!rideData) {
       console.warn("[RIDER] Missing ride_request_id");
       return;
     }
 
     if (isConnected && !subscriptionAttempted.current) {
-      console.log("📡 [RIDER] Subscribing to offers for:", ride_request_id);
-      subscribeToRideOffers(ride_request_id);
+      console.log("[RIDER] Subscribing to offers for:", rideData.ride_request_id);
+      subscribeToRideOffers(rideData.ride_request_id);
       subscriptionAttempted.current = true;
     }
 
     // Re-subscribe on reconnection
     if (isConnected && subscriptionAttempted.current) {
       console.log("📡 [RIDER] Re-subscribing after reconnection");
-      subscribeToRideOffers(ride_request_id);
+      subscribeToRideOffers(rideData.ride_request_id);
     }
-  }, [ride_request_id, isConnected]);
+  }, [rideData, isConnected, subscribeToRideOffers]);
 
   // 2. Sync Context -> Local State (but NOT after ride is accepted)
   useEffect(() => {
