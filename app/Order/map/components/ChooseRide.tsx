@@ -26,12 +26,12 @@ export default function ChooseRide({ setModal, setScreen }: ChooseRideProps) {
         if (!pickupLocation || !dropoffLocation) return null;
 
         return {
-            pickup_lat: round6(pickupLocation.latitude),
-            pickup_lng: round6(pickupLocation.longitude),
-            dropoff_lat: round6(dropoffLocation.latitude),
-            dropoff_lng: round6(dropoffLocation.longitude),
-            dropoff_address: dropoffLocation.address,
-            pickup_address: pickupLocation.address
+            pickup_lat: round6(pickupLocation?.latitude),
+            pickup_lng: round6(pickupLocation?.longitude),
+            dropoff_lat: round6(dropoffLocation?.latitude),
+            dropoff_lng: round6(dropoffLocation?.longitude),
+            dropoff_address: dropoffLocation?.address,
+            pickup_address: pickupLocation?.address
 
         };
     }, [pickupLocation, dropoffLocation]);
@@ -64,21 +64,21 @@ export default function ChooseRide({ setModal, setScreen }: ChooseRideProps) {
             ...selectedOption,
             rideDetails: {
                 pickup: {
-                    pickupLat: pickupLocation.latitude,
-                    pickupLong: pickupLocation.longitude,
+                    pickupLat: pickupLocation?.latitude,
+                    pickupLong: pickupLocation?.longitude,
                     // pickupAddress: pickupLocation.address,
                     // pickupName: pickupLocation.name,
                 },
                 destination: {
-                    dropoffLat: dropoffLocation.latitude,
-                    dropoffLong: dropoffLocation.longitude,
+                    dropoffLat: dropoffLocation?.latitude,
+                    dropoffLong: dropoffLocation?.longitude,
                     // dropoffAddress: dropoffLocation.address,
                     // dropoffName: dropoffLocation.name,
                 },
                 estimated_distance: rideDetails?.estimated_distance,
                 estimated_duration: rideDetails?.estimated_duration,
-                car_type: selectedOption.carType,
-                estimated_fare: selectedOption.rawPrice,
+                car_type: selectedOption?.carType,
+                estimated_fare: selectedOption?.rawPrice,
             },
             ride_request_id: rideId,
             paymentMethod: selectedPaymentMethod,
@@ -114,24 +114,24 @@ export default function ChooseRide({ setModal, setScreen }: ChooseRideProps) {
                 data: {
                     ride_request_id: rideId,
                     pickup_location: {
-                        latitude: data.rideDetails.pickup.pickupLat,
-                        longitude: data.rideDetails.pickup.pickupLong,
-                        address: data.rideDetails.pickup.pickupAddress,
+                        latitude: data?.rideDetails?.pickup?.pickupLat,
+                        longitude: data?.rideDetails?.pickup?.pickupLong,
+                        address: data?.rideDetails?.pickup?.pickupAddress,
                         // name: data.rideDetails.pickup.pickupName,
                     },
                     dropoff_location: {
-                        latitude: data.rideDetails.destination.dropoffLat,
-                        longitude: data.rideDetails.destination.dropoffLong,
-                        address: data.rideDetails.destination.dropoffAddress,
+                        latitude: data?.rideDetails?.destination?.dropoffLat,
+                        longitude: data?.rideDetails?.destination?.dropoffLong,
+                        address: data?.rideDetails?.destination?.dropoffAddress,
                         // name: data.rideDetails.destination.dropoffName,
                     },
                     ride_details: {
-                        car_type: data.rideDetails.car_type,
-                        estimated_fare: data.rideDetails.estimated_fare,
-                        estimated_distance: data.rideDetails.estimated_distance,
-                        estimated_duration: data.rideDetails.estimated_duration,
+                        car_type: data?.rideDetails?.car_type,
+                        estimated_fare: data?.rideDetails?.estimated_fare,
+                        estimated_distance: data?.rideDetails?.estimated_distance,
+                        estimated_duration: data?.rideDetails?.estimated_duration,
                     },
-                    payment_method: data.paymentMethod,
+                    payment_method: data?.paymentMethod,
                 },
             };
 
@@ -229,8 +229,8 @@ export default function ChooseRide({ setModal, setScreen }: ChooseRideProps) {
                             >
                                 <Image source={option.image} style={styles.rideImage} />
                                 <View style={styles.rideDetails}>
-                                    <Text style={styles.rideName}>{option.name}</Text>
-                                    <Text style={styles.rideTiming}>{option.details}</Text>
+                                    <Text style={styles.rideName}>{option?.name}</Text>
+                                    <Text style={styles.rideTiming}>{option?.details}</Text>
                                     <Text style={styles.rideInfo}>
                                         {`${option.carType} `}
                                         <Feather name="user" size={12} color="#aaa" />
@@ -239,8 +239,8 @@ export default function ChooseRide({ setModal, setScreen }: ChooseRideProps) {
                                 </View>
 
                                 <View style={styles.ridePriceContainer}>
-                                    <Text style={styles.ridePrice}>{option.price}</Text>
-                                    {option.originalPrice && <Text style={styles.rideOriginalPrice}>{option.originalPrice}</Text>}
+                                    <Text style={styles.ridePrice}>{option?.price}</Text>
+                                    {option.originalPrice && <Text style={styles.rideOriginalPrice}>{option?.originalPrice}</Text>}
                                 </View>
                             </TouchableOpacity>
                         ))}

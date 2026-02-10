@@ -21,13 +21,14 @@ export const reverseGeocode = async (
         );
 
         if (!response.ok) {
-            throw new Error(`Geocoding API error: ${response.status}`);
+            console.error(`Geocoding API error: ${response.status}`)
+            // throw new Error(`Geocoding API error: ${response.status}`);
         }
 
         const data = await response.json();
 
         if (data.features && data.features.length > 0) {
-            return data.features[0].place_name;
+            return data?.features[0]?.place_name;
         }
 
         return 'Unknown location';
@@ -59,13 +60,14 @@ export const forwardGeocode = async (
         );
 
         if (!response.ok) {
-            throw new Error(`Geocoding API error: ${response.status}`);
+            console.error(`Geocoding API error: ${response.status}`);
+            // throw new Error(`Geocoding API error: ${response.status}`);
         }
 
         const data = await response.json();
 
-        if (data.features && data.features.length > 0) {
-            const [longitude, latitude] = data.features[0].center;
+        if (data?.features && data?.features.length > 0) {
+            const [longitude, latitude] = data?.features[0]?.center;
             return { latitude, longitude };
         }
 

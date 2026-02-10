@@ -4,20 +4,15 @@ import useMapModal from "../hooks/useMapModal";
 
 export default function PickLocation({ setModal, handleSelectPlace }) {
 
-    const { selectedLocation, modal, } = useMapModal();
-
-    // console.log('object of location', location, 'object of selected location', selectedLocation, 'object of modal', modal)
-
-
-
+    const { pickupLocation, modal, } = useMapModal();
 
     const handleManualConfirm = () => {
         console.log("Manual Confirm Clicked");
+        console.log('selected', pickupLocation)
         setModal('setDestination');
         console.log(modal)
-        if (selectedLocation) {
-            console.log("Confirmed Location:", selectedLocation);
-
+        if (pickupLocation) {
+            console.log("Confirmed Location:", pickupLocation);
         }
     };
 
@@ -38,7 +33,7 @@ export default function PickLocation({ setModal, handleSelectPlace }) {
                     styles.confirmButton,
                     { backgroundColor: '#f6a623' },
                 ]}
-                disabled={!location}
+                // disabled={!pickupLocation}
                 onPress={handleManualConfirm}
             >
                 <Text style={styles.confirmText}>

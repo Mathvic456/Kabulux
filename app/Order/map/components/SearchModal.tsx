@@ -29,10 +29,10 @@ export default function SearchModal({
         console.log("📍 MapboxSearch selected:", place);
 
         const destinationData = {
-            latitude: place.center[1],
-            longitude: place.center[0],
-            address: place.place_name,
-            name: place.text || place.place_name.split(',')[0],
+            latitude: place?.center[1],
+            longitude: place?.center[0],
+            address: place?.place_name,
+            name: place?.text || place?.place_name.split(',')[0],
         };
 
         handleSelectDestination(destinationData);
@@ -45,10 +45,10 @@ export default function SearchModal({
         console.log("📍 Suggestion selected:", loc);
 
         const destinationData = {
-            latitude: loc.latitude,
-            longitude: loc.longitude,
-            address: loc.address,
-            name: loc.name,
+            latitude: loc?.latitude,
+            longitude: loc?.longitude,
+            address: loc?.address,
+            name: loc?.name,
         };
 
         handleSelectDestination(destinationData);

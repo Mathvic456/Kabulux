@@ -29,17 +29,17 @@ export default function SetLocation({ goBack, setScreen }: SetLocationProps) {
         setAddressLoading(true);
 
         const pickupData = {
-            longitude: place.center[0],
-            latitude: place.center[1],
-            address: place.place_name,
-            name: place.text || place.place_name.split(',')[0],
+            longitude: place?.center[0],
+            latitude: place?.center[1],
+            address: place?.place_name,
+            name: place?.text || place.place_name.split(',')[0],
         };
 
         console.log('pickuoDta', pickupData)
 
         // Update selected location for map
         setSelectedLocation(pickupData);
-        setLocation({ longitude: place.center[0], latitude: place.center[1] });
+        setLocation({ longitude: place?.center[0], latitude: place?.center[1] });
 
         // Update pickup location in context
         setPickupLocation(pickupData);
@@ -68,8 +68,8 @@ export default function SetLocation({ goBack, setScreen }: SetLocationProps) {
                 // Get address for current location
                 setAddressLoading(true);
                 const address = await reverseGeocode(
-                    currentLocation.latitude,
-                    currentLocation.longitude
+                    currentLocation?.latitude,
+                    currentLocation?.longitude
                 );
                 setAddressLoading(false);
 
@@ -77,9 +77,9 @@ export default function SetLocation({ goBack, setScreen }: SetLocationProps) {
 
                 // Set as pickup location in context
                 setPickupLocation({
-                    latitude: currentLocation.latitude,
-                    longitude: currentLocation.longitude,
-                    address: address,
+                    latitude: currentLocation?.latitude,
+                    longitude: currentLocation?.longitude,
+                    address: address ? address : '',
                     name: 'Current Location',
                 });
             } catch (error) {

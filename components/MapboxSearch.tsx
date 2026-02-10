@@ -50,12 +50,12 @@ export default function MapboxSearch({ onSelectPlace, accessToken }: MapboxSearc
 
             // Filter to prioritize POIs but keep addresses too
             const features = data.features?.map((feature: any) => ({
-                id: feature.id,
-                place_name: feature.place_name,
-                center: feature.center as [number, number],
-                text: feature.text,
-                place_type: feature.place_type,
-                poi_category: feature.properties?.category,
+                id: feature?.id,
+                place_name: feature?.place_name,
+                center: feature?.center as [number, number],
+                text: feature?.text,
+                place_type: feature?.place_type,
+                poi_category: feature?.properties?.category,
             })) || [];
 
             // Sort: POIs first, then addresses
@@ -76,7 +76,7 @@ export default function MapboxSearch({ onSelectPlace, accessToken }: MapboxSearc
     };
 
     const handleSelectPlace = async (suggestion: Suggestion) => {
-        setQuery(suggestion.place_name);
+        setQuery(suggestion?.place_name);
         setSuggestions([]);
 
         // Retrieve full details including coordinates
@@ -89,16 +89,16 @@ export default function MapboxSearch({ onSelectPlace, accessToken }: MapboxSearc
                 );
 
                 const data = await response.json();
-                const feature = data.features?.[0];
+                const feature = data?.features?.[0];
 
                 if (feature) {
                     const place: Suggestion = {
-                        id: feature.properties.mapbox_id,
-                        place_name: feature.properties.name + (feature.properties.place_formatted ? `, ${feature.properties.place_formatted}` : ''),
-                        center: feature.geometry.coordinates as [number, number],
-                        text: feature.properties.name,
-                        place_type: [feature.properties.feature_type || 'poi'],
-                        poi_category: feature.properties.poi_category,
+                        id: feature?.properties?.mapbox_id,
+                        place_name: feature?.properties?.name + (feature.properties.place_formatted ? `, ${feature.properties.place_formatted}` : ''),
+                        center: feature?.geometry?.coordinates as [number, number],
+                        text: feature?.properties?.name,
+                        place_type: [feature?.properties?.feature_type || 'poi'],
+                        poi_category: feature?.properties?.poi_category,
                     };
 
                     onSelectPlace(place);

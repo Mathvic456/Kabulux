@@ -16,16 +16,16 @@ export default function PickDestination({ setModal }) {
     } = useMapModal();
 
     const shortenAddress = (address: string, maxLength: number = 35) => {
-        if (address.length <= maxLength) return address;
+        if (address && address.length <= maxLength) return address;
         return address.substring(0, maxLength) + '...';
     };
 
     const handleSuggestionSelect = (loc) => {
         handleSelectDestination({
-            latitude: loc.latitude,
-            longitude: loc.longitude,
-            address: loc.address,
-            name: loc.name,
+            latitude: loc?.latitude,
+            longitude: loc?.longitude,
+            address: loc?.address,
+            name: loc?.name,
         });
         setModal('chooseRide');
     };
@@ -83,15 +83,15 @@ export default function PickDestination({ setModal }) {
                         <TouchableOpacity
                             style={styles.suggestionItem}
                             onPress={() => handleSuggestionSelect(loc)}
-                            key={loc.id}
+                            key={loc?.id}
                         >
                             <Ionicons name="location-sharp" size={16} color="#fff" style={{ marginRight: 8 }} />
                             <View style={{ flex: 1 }}>
                                 <Text style={styles.suggestionText} numberOfLines={1}>
-                                    {loc.name}
+                                    {loc?.name}
                                 </Text>
                                 <Text style={[styles.suggestionText, { fontSize: 12, color: "#aaa" }]} numberOfLines={1}>
-                                    {loc.address}
+                                    {loc?.address}
                                 </Text>
                             </View>
                         </TouchableOpacity>

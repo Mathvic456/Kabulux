@@ -13,10 +13,10 @@ export default function useMapModal() {
     const handleSelectDestination = (location) => {
         console.log('Destination selected:', location);
         setDropoffLocation({
-            latitude: location.latitude,
-            longitude: location.longitude,
-            address: location.address,
-            name: location.name,
+            latitude: location?.latitude,
+            longitude: location?.longitude,
+            address: location?.address,
+            name: location?.name,
         });
         setShowSearchModal(false);
     };
