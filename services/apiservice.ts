@@ -33,19 +33,20 @@ export const bookRide = async (bookingData: object): Promise<any> => {
  * @param rideData - Pickup and dropoff coordinates
  */
 export const getRideEstimate = async (rideData: object) => {
+
   try {
     const response = await api.post('/rides/requests/estimate/', rideData);
     return response.data;
   } catch (error: any) {
-  if (error.response) {
-    console.log("❌ Status:", error.response.status);
-    console.log("❌ Headers:", error.response.headers);
-    console.log("❌ Data:", error.response.data);
-  } else {
-    console.log("❌ Network / setup error:", error.message);
+    if (error.response) {
+      console.log("❌ Status:", error.response.status);
+      console.log("❌ Headers:", error.response.headers);
+      console.log("❌ Data:", error.response.data);
+    } else {
+      console.log("❌ Network / setup error:", error.message);
+    }
+    throw error;
   }
-  throw error;
-}
 };
 
 /**

@@ -3,7 +3,7 @@ import "dotenv/config";
 export default {
   expo: {
     name: "Kablux",
-    slug: "kablux",
+    slug: "kablux-rider",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/log.png",
@@ -16,6 +16,7 @@ export default {
       config: {
         googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
       },
+      buildNumber: "7"
     },
 
     android: {
@@ -31,6 +32,7 @@ export default {
           apiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
         },
       },
+      versionCode: 7
     },
 
     web: {
@@ -53,6 +55,13 @@ export default {
       ],
       "expo-web-browser",
       "expo-notifications",
+      [
+        "@rnmapbox/maps",
+        {
+          RNMapboxMapsDownloadToken: process.env.MAPBOX_DOWNLOADS_TOKEN,
+          RNMapboxMapsVersion: "11.0.0"
+        }
+      ]
     ],
 
     extra: {
@@ -61,10 +70,10 @@ export default {
       apiUrl: process.env.EXPO_PUBLIC_API_URL,
       wssUrl: process.env.EXPO_PUBLIC_WSS_URL,
       eas: {
-        projectId: "4781a8b8-1544-4b29-8400-9e0565a2e78f",
+        projectId: "3b016a1e-861d-4cf7-a69f-99c404717571",
       },
     },
 
-    owner: "crashingout",
+    owner: "ag0213m",
   },
 };

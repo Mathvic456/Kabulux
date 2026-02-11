@@ -1,5 +1,6 @@
 import { RideCompletionModal } from "@/components/RideCompletionModal";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { RideBookingProvider } from "@/context/RideBookingContext";
 import { RideProvider } from "@/context/RideContext";
 import { RideIdProvider } from "@/context/RideIdContext";
 import { WebSocketProvider } from "@/context/WebSocketProvider";
@@ -92,10 +93,12 @@ export default function RootLayout() {
       <RideIdProvider>
         <WebSocketProvider>
           <RideProvider>
-            <QueryClientProvider client={queryClient}>
-              <MainNavigator />
-              <RideCompletionModal />
-            </QueryClientProvider>
+            <RideBookingProvider>
+              <QueryClientProvider client={queryClient}>
+                <MainNavigator />
+                <RideCompletionModal />
+              </QueryClientProvider>
+            </RideBookingProvider>
           </RideProvider>
         </WebSocketProvider>
       </RideIdProvider>

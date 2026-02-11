@@ -326,7 +326,7 @@ const AdditionalInfoOverlay = ({
                     style={[
                       styles.dropdownMenuItem,
                       ridePreference === option &&
-                        styles.dropdownMenuItemSelected,
+                      styles.dropdownMenuItemSelected,
                     ]}
                     onPress={() => {
                       setRidePreference(option);
@@ -337,7 +337,7 @@ const AdditionalInfoOverlay = ({
                       style={[
                         styles.dropdownMenuText,
                         ridePreference === option &&
-                          styles.dropdownMenuTextSelected,
+                        styles.dropdownMenuTextSelected,
                       ]}
                     >
                       {option}
@@ -370,7 +370,7 @@ const AdditionalInfoOverlay = ({
                     style={[
                       styles.dropdownMenuItem,
                       securityPreference === option &&
-                        styles.dropdownMenuItemSelected,
+                      styles.dropdownMenuItemSelected,
                     ]}
                     onPress={() => {
                       setSecurityPreference(option);
@@ -381,7 +381,7 @@ const AdditionalInfoOverlay = ({
                       style={[
                         styles.dropdownMenuText,
                         securityPreference === option &&
-                          styles.dropdownMenuTextSelected,
+                        styles.dropdownMenuTextSelected,
                       ]}
                     >
                       {option}
@@ -846,7 +846,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
 
       <TouchableOpacity
         style={styles.searchContainer}
-        onPress={() => setScreen("orderScreen")}
+        onPress={() => setScreen("setLocation")}
       >
         <FontAwesome name="car" size={19} color="white" />
         <TextInput
@@ -957,7 +957,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
       <View style={styles.suggestionRow}>
         <TouchableOpacity
           style={styles.suggestionCard}
-          onPress={() => setScreen("orderScreen")}
+          onPress={() => setScreen("setLocation")}
         >
           <Image
             source={require("../../assets/images/car.png")}
@@ -1036,7 +1036,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
         </Text>
         <TouchableOpacity
           style={styles.emptyRideButton}
-          onPress={() => setScreen("orderScreen")}
+          onPress={() => setScreen("setLocation")}
         >
           <Text style={styles.emptyRideButtonText}>Book a Ride</Text>
         </TouchableOpacity>
@@ -1159,7 +1159,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
                   style={[
                     styles.reasonButton,
                     selectedCancelReason === reason &&
-                      styles.reasonButtonSelected,
+                    styles.reasonButtonSelected,
                   ]}
                   onPress={() => setSelectedCancelReason(reason)}
                 >
@@ -1167,7 +1167,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
                     style={[
                       styles.reasonText,
                       selectedCancelReason === reason &&
-                        styles.reasonTextSelected,
+                      styles.reasonTextSelected,
                     ]}
                   >
                     {reason}
