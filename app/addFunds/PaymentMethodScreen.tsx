@@ -69,12 +69,12 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
           expiry: "09/26",
         },
         {
-            id: "2",
-            last4: "8842",
-            brand: "mastercard",
-            holder: "Victor Matthew",
-            expiry: "11/25",
-          },
+          id: "2",
+          last4: "8842",
+          brand: "mastercard",
+          holder: "Victor Matthew",
+          expiry: "11/25",
+        },
       ];
       setCards(dummy);
       setSelectedCardId(dummy[0].id);
@@ -94,11 +94,11 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         // Simulate a 90% success rate
-        const isSuccess = Math.random() > 0.1; 
+        const isSuccess = Math.random() > 0.1;
         if (isSuccess) {
-            resolve({ status: 'success', token: 'tok_12345' });
+          resolve({ status: 'success', token: 'tok_12345' });
         } else {
-            reject(new Error('Bank declined transaction'));
+          reject(new Error('Bank declined transaction'));
         }
       }, 2000); // 2 second delay
     });
@@ -112,217 +112,220 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
 
     // 1. Basic Validation
     if (!cardNumber || !expiry || !cvv || !cardName) {
-        setModalState({
-          visible: true,
-          title: "Missing Details",
-          message: "Please fill in all card information."
-        });
-        return;
+      setModalState({
+        visible: true,
+        title: "Missing Details",
+        message: "Please fill in all card information."
+      });
+      return;
     }
 
     // 2. Format Validation (Simple MM/YY check)
     const expiryRegex = /^(0[1-9]|1[0-2])\/?([0-9]{2})$/;
     if (!expiryRegex.test(expiry)) {
-        setModalState({
-          visible: true,
-          title: "Invalid Expiry",
-          message: "Use MM/YY format (e.g., 12/25)"
-        });
-        return;
+      setModalState({
+        visible: true,
+        title: "Invalid Expiry",
+        message: "Use MM/YY format (e.g., 12/25)"
+      });
+      return;
     }
 
     if (cardNumber.length < 12) {
-        setModalState({
-          visible: true,
-          title: "Invalid Card",
-          message: "Card number is too short."
-        });
-        return;
+      setModalState({
+        visible: true,
+        title: "Invalid Card",
+        message: "Card number is too short."
+      });
+      return;
     }
 
     setIsLoading(true);
 
     try {
-        // 3. Prepare data
-        const cleaned = cardNumber.replace(/\D/g, "");
-        const newCard: Card = {
-            id: Date.now().toString(),
-            last4: cleaned.slice(-4),
-            brand: cleaned.startsWith("5") ? "mastercard" : "visa",
-            holder: cardName,
-            expiry,
-        };
+      // 3. Prepare data
+      const cleaned = cardNumber.replace(/\D/g, "");
+      const newCard: Card = {
+        id: Date.now().toString(),
+        last4: cleaned.slice(-4),
+        brand: cleaned.startsWith("5") ? "mastercard" : "visa",
+        holder: cardName,
+        expiry,
+      };
 
-        // 4. Simulate sending to backend
-        // In a real app, you would send `cardNumber`, `cvv`, etc. here securely
-        await simulateBackendVerification({
-            number: cleaned,
-            cvv,
-            expiry,
-            name: cardName
-        });
+      // 4. Simulate sending to backend
+      // In a real app, you would send `cardNumber`, `cvv`, etc. here securely
+      await simulateBackendVerification({
+        number: cleaned,
+        cvv,
+        expiry,
+        name: cardName
+      });
 
-        // 5. On Success: Save locally
-        const updated = [...cards, newCard];
-        await saveCards(updated);
+      // 5. On Success: Save locally
+      const updated = [...cards, newCard];
+      await saveCards(updated);
 
-        setSelectedCardId(newCard.id);
-        setShowAddModal(false);
+      setSelectedCardId(newCard.id);
+      setShowAddModal(false);
 
-        // Reset form
-        setCardNumber("");
-        setExpiry("");
-        setCvv("");
-        setCardName("");
-        
-        setModalState({
-          visible: true,
-          title: "Success",
-          message: "Payment method verified and added."
-        });
+      // Reset form
+      setCardNumber("");
+      setExpiry("");
+      setCvv("");
+      setCardName("");
+
+      setModalState({
+        visible: true,
+        title: "Success",
+        message: "Payment method verified and added."
+      });
 
     } catch (error: any) {
-        // 6. On Failure
-        setModalState({
-          visible: true,
-          title: "Verification Failed",
-          message: error.message || "Could not add card."
-        });
+      // 6. On Failure
+      setModalState({
+        visible: true,
+        title: "Verification Failed",
+        message: error.message || "Could not add card."
+      });
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <SafeAreaView style={styles.container}>
-        <StatusBar style="light" />
+    <>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <SafeAreaView style={styles.container}>
+          <StatusBar style="light" />
 
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={goBack}>
-            <Ionicons name="arrow-back" size={24} color="black" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Payment Methods</Text>
-        </View>
-
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-
-          {/* Saved cards */}
-          <Text style={styles.sectionTitle}>Saved cards</Text>
-
-          {cards.map((card) => (
-            <TouchableOpacity
-              key={card.id}
-              style={[
-                styles.cardRow,
-                selectedCardId === card.id && styles.cardRowActive,
-              ]}
-              onPress={() => setSelectedCardId(card.id)}
-            >
-              <Ionicons
-                name={card.brand === "visa" ? "logo-visa" : "card"}
-                size={28}
-                color="#FEB914"
-              />
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={styles.cardText}>
-                  •••• {card.last4}
-                </Text>
-                <Text style={styles.cardSub}>
-                  {card.holder} · {card.expiry}
-                </Text>
-              </View>
-              {selectedCardId === card.id && (
-                <Ionicons name="checkmark-circle" size={22} color="#FEB914" />
-              )}
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.backButton} onPress={goBack}>
+              <Ionicons name="arrow-back" size={24} color="black" />
             </TouchableOpacity>
-          ))}
+            <Text style={styles.headerTitle}>Payment Methods</Text>
+          </View>
 
-          {/* Add new card */}
-          <TouchableOpacity
-            style={styles.addCardButton}
-            onPress={() => setShowAddModal(true)}
-          >
-            <Ionicons name="add-circle" size={22} color="#FEB914" />
-            <Text style={styles.addCardText}>Add new card</Text>
-          </TouchableOpacity>
-        </ScrollView>
+          <ScrollView contentContainerStyle={styles.scrollContent}>
 
-        {/* Add Card Modal */}
-        <Modal transparent animationType="slide" visible={showAddModal}>
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>Add card</Text>
+            {/* Saved cards */}
+            <Text style={styles.sectionTitle}>Saved cards</Text>
 
-                <TextInput
-                  style={styles.input}
-                  placeholder="Card number"
-                  placeholderTextColor="#9CA3AF"
-                  keyboardType="numeric"
-                  value={cardNumber}
-                  onChangeText={(text) => setCardNumber(text.replace(/\D/g, '').slice(0, 16))} // Limit to 16 digits
+            {cards.map((card) => (
+              <TouchableOpacity
+                key={card.id}
+                style={[
+                  styles.cardRow,
+                  selectedCardId === card.id && styles.cardRowActive,
+                ]}
+                onPress={() => setSelectedCardId(card.id)}
+              >
+                <Ionicons
+                  name={card.brand === "visa" ? "card" : "card"}
+                  size={28}
+                  color="#FEB914"
                 />
-                <TextInput
-                  style={styles.input}
-                  placeholder="MM/YY"
-                  placeholderTextColor="#9CA3AF"
-                  value={expiry}
-                  maxLength={5} // Limit length
-                  onChangeText={setExpiry}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="CVV"
-                  placeholderTextColor="#9CA3AF"
-                  keyboardType="numeric"
-                  secureTextEntry
-                  value={cvv}
-                  maxLength={4}
-                  onChangeText={setCvv}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Name on card"
-                  placeholderTextColor="#9CA3AF"
-                  value={cardName}
-                  onChangeText={setCardName}
-                />
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={styles.cardText}>
+                    •••• {card.last4}
+                  </Text>
+                  <Text style={styles.cardSub}>
+                    {card.holder} · {card.expiry}
+                  </Text>
+                </View>
+                {selectedCardId === card.id && (
+                  <Ionicons name="checkmark-circle" size={22} color="#FEB914" />
+                )}
+              </TouchableOpacity>
+            ))}
 
-                <TouchableOpacity
-                  style={[styles.saveButton, isLoading && { opacity: 0.7 }]}
-                  onPress={handleSaveCard}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <ActivityIndicator color="black" />
-                  ) : (
-                    <Text style={styles.saveButtonText}>Save card</Text>
-                  )}
-                </TouchableOpacity>
-                
-                {/* Optional Cancel Button */}
-                 <TouchableOpacity
-                  style={{ marginTop: 15 }}
-                  onPress={() => !isLoading && setShowAddModal(false)}
-                >
-                  <Text style={{ color: '#9CA3AF', textAlign: 'center'}}>Cancel</Text>
-                </TouchableOpacity>
+            {/* Add new card */}
+            <TouchableOpacity
+              style={styles.addCardButton}
+              onPress={() => setShowAddModal(true)}
+            >
+              <Ionicons name="add-circle" size={22} color="#FEB914" />
+              <Text style={styles.addCardText}>Add new card</Text>
+            </TouchableOpacity>
+          </ScrollView>
 
+          {/* Add Card Modal */}
+          <Modal transparent animationType="slide" visible={showAddModal}>
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalContent}>
+                  <Text style={styles.modalTitle}>Add card</Text>
+
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Card number"
+                    placeholderTextColor="#9CA3AF"
+                    keyboardType="numeric"
+                    value={cardNumber}
+                    onChangeText={(text) => setCardNumber(text.replace(/\D/g, '').slice(0, 16))} // Limit to 16 digits
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="MM/YY"
+                    placeholderTextColor="#9CA3AF"
+                    value={expiry}
+                    maxLength={5} // Limit length
+                    onChangeText={setExpiry}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="CVV"
+                    placeholderTextColor="#9CA3AF"
+                    keyboardType="numeric"
+                    secureTextEntry
+                    value={cvv}
+                    maxLength={4}
+                    onChangeText={setCvv}
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Name on card"
+                    placeholderTextColor="#9CA3AF"
+                    value={cardName}
+                    onChangeText={setCardName}
+                  />
+
+                  <TouchableOpacity
+                    style={[styles.saveButton, isLoading && { opacity: 0.7 }]}
+                    onPress={handleSaveCard}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <ActivityIndicator color="black" />
+                    ) : (
+                      <Text style={styles.saveButtonText}>Save card</Text>
+                    )}
+                  </TouchableOpacity>
+
+                  {/* Optional Cancel Button */}
+                  <TouchableOpacity
+                    style={{ marginTop: 15 }}
+                    onPress={() => !isLoading && setShowAddModal(false)}
+                  >
+                    <Text style={{ color: '#9CA3AF', textAlign: 'center' }}>Cancel</Text>
+                  </TouchableOpacity>
+
+                </View>
               </View>
-            </View>
-          </TouchableWithoutFeedback>
-        </Modal>
-      </SafeAreaView>
+            </TouchableWithoutFeedback>
+          </Modal>
+        </SafeAreaView>
 
+      </TouchableWithoutFeedback>
       <CentralModal
         visible={modalState.visible}
         title={modalState.title}
         subText={modalState.message}
         onClose={() => setModalState({ visible: false, title: "", message: "" })}
       />
-    </TouchableWithoutFeedback>
+    </>
+
   );
 }
 

@@ -387,7 +387,7 @@ export function RideReceiptsScreen({ goBack }: { goBack: () => void }) {
                   <View style={[styles.detailRow, styles.totalRow]}>
                     <Text style={styles.totalLabel}>Total Fare</Text>
                     <Text style={styles.totalValue}>
-                      ${selectedReceipt.fare}
+                      ₦{selectedReceipt.fare}
                     </Text>
                   </View>
                 </View>
