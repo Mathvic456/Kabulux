@@ -1,3 +1,4 @@
+import CentralModal from "@/components/CentralModal";
 import CustomButton from "@/components/ui/CustomButton";
 import { useRegisterEndPoint } from "@/services/authentication.service";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
@@ -31,6 +32,8 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [referral, setReferral] = useState("");
   const { width, height } = Dimensions.get('window');
+  const [modalState, setModalState] = useState<{ showModal: boolean, modalErr: string }>({ showModal: false, modalErr: '' })
+
 
 
   const [errors, setErrors] = useState({
@@ -170,6 +173,9 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
             newErrors.phone = "This phone number is already registered. Try signing in instead.";
             hasError = true;
           }
+          if (errorData[0]?.includes("already registered")) {
+            setModalState((prev) => ({ ...prev, showModal: true, modalErr: errorData[0] || 'This account already exists' }))
+          }
 
           if (hasError) {
             setErrors(newErrors);
@@ -221,6 +227,11 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
               </Text>
             ) : null}
             {renderInput("phone", phone, setPhone, "Phone Number", errors.phone, "none", "phone-pad")}
+            {errors.phone ? (
+              <Text style={[styles.errorText, { fontSize: scaleFont(12) }]}>
+                {errors.phone}
+              </Text>
+            ) : null}
 
             {renderInput("map-marker", address, setAddress, "Address", errors.address)}
             {renderInput("lock", password, setPassword, "Password", errors.password, "none", "default", !showPassword, showPassword, setShowPassword)}
@@ -248,6 +259,12 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      <CentralModal
+        visible={modalState.showModal}
+        title={'Sorry!'}
+        subText={modalState.modalErr}
+        onClose={() => setModalState((prev) => { return { ...prev, showModal: false } })}
+      />
     </View>
   );
 }

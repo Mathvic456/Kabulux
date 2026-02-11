@@ -316,7 +316,6 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
             </TouchableWithoutFeedback>
           </Modal>
         </SafeAreaView>
-
       </TouchableWithoutFeedback>
       <CentralModal
         visible={modalState.visible}
