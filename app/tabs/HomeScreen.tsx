@@ -957,7 +957,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
       <View style={styles.suggestionRow}>
         <TouchableOpacity
           style={styles.suggestionCard}
-          onPress={() => setScreen("orderScreen")}
+          onPress={() => setScreen("setLocation")}
         >
           <Image
             source={require("../../assets/images/car.png")}
