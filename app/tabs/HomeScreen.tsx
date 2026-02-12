@@ -1060,41 +1060,42 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
 
       <Text style={styles.sectionTitle}>Special Service</Text>
       <View style={styles.specialServiceRow}>
-        <TouchableOpacity
-          style={styles.specialCard}
-          onPress={() => setShowComingSoonModal(true)}
-        >
-          <Image
-            source={require("../../assets/images/car2.png")}
-            style={styles.specialImage}
-          />
-          <Text style={styles.specialTitle}>Our Special AI Security</Text>
-          <Text style={styles.specialSub}>Checkout our Special AI</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.specialCard}
-          onPress={() => setShowComingSoonModal(true)}
-        >
-          <Image
-            source={require("../../assets/images/car2.png")}
-            style={styles.specialImage}
-          />
-          <Text style={styles.specialTitle}>Share your Ride</Text>
-          <Text style={styles.specialSub}>See how to share ride</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.specialCard}
-          onPress={() => setShowComingSoonModal(true)}
-        >
-          <Image
-            source={require("../../assets/images/car2.png")}
-            style={styles.specialImage}
-          />
-          <Text style={styles.specialTitle}>Share your Ride</Text>
-          <Text style={styles.specialSub}>See how to share ride</Text>
-        </TouchableOpacity>
+        <FlatList
+          data={[
+            {
+              id: "1",
+              image: require("../../assets/images/car2.png"),
+              title: "Our Special AI Security",
+              subtitle: "Checkout our Special AI",
+            },
+            {
+              id: "2",
+              image: require("../../assets/images/car2.png"),
+              title: "Share your Ride",
+              subtitle: "See how to share ride",
+            },
+            {
+              id: "3",
+              image: require("../../assets/images/car2.png"),
+              title: "Share your Ride",
+              subtitle: "See how to share ride",
+            },
+          ]}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.specialCard}
+              onPress={() => setShowComingSoonModal(true)}
+            >
+              <Image source={item.image} style={styles.specialImage} />
+              <Text style={styles.specialTitle}>{item.title}</Text>
+              <Text style={styles.specialSub}>{item.subtitle}</Text>
+            </TouchableOpacity>
+          )}
+          contentContainerStyle={{ paddingRight: 20 }}
+        />
       </View>
 
       <UploadPhotoOverlay
@@ -1638,16 +1639,14 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   specialServiceRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 150,
-    gap: 10,
+    marginBottom: 150
   },
   specialCard: {
     backgroundColor: "#1a1a1a",
     borderRadius: 15,
     padding: 10,
-    width: "48%",
+    width: 200,
+    marginRight: 12,
   },
   specialImage: {
     width: "100%",

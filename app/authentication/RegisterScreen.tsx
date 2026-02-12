@@ -175,6 +175,7 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
           }
           if (errorData[0]?.includes("already registered")) {
             setModalState((prev) => ({ ...prev, showModal: true, modalErr: errorData[0] || 'This account already exists' }))
+            return
           }
 
           if (hasError) {
