@@ -58,6 +58,7 @@ import WalletScreen from "./tabs/WalletScreen";
 
 //NEW MAPBOX SCREENS GODSWILL AG
 import SetLocation from "./Order/map/SetLocation";
+import TrackDriver from "./Order/map/TrackDriver";
 
 
 // Define screen names
@@ -116,7 +117,8 @@ type Screen =
   | "rateapscreen"
   | "terms"
   | "trackRide"
-  | "setLocation"; // <-- add setLocation to the type
+  | "setLocation" // <-- add setLocation to the type
+  | "trackDriver";
 
 export default function MainNavigator() {
   const [screen, setScreen] = useState<Screen>("onboard1");
@@ -190,6 +192,8 @@ export default function MainNavigator() {
     //NEW MAPBOX SCREENS GODSWILL AG
     case "setLocation":
       return <SetLocation goBack={() => setScreen("dashboard")} setScreen={handleSetScreen} />;
+    case "trackDriver":
+      return <TrackDriver goBack={() => setScreen("dashboard")} setScreen={handleSetScreen} />;
 
     case "onboard2":
       return <OnboardingScreen2 next={() => { }} />;
@@ -505,7 +509,7 @@ export default function MainNavigator() {
     case "standardScreen":
       return (
         <StandardScreen
-          goBack={() => setScreen("bookingScreen")}
+          goBack={() => setScreen("setLocation")}
           next={() => setScreen("offerScreen")}
           rideData={rideData}
         />

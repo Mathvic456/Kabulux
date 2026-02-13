@@ -13,14 +13,16 @@ interface LocationData {
 
 interface RideMapViewProps {
     pickupLocation: LocationData | null;
-    dropoffLocation: LocationData | null;
+    dropoffLocation?: LocationData | null;
     showRoute?: boolean;
+    driver?: boolean;
 }
 
 export default function RideMapView({
     pickupLocation,
     dropoffLocation,
-    showRoute = false
+    showRoute = false,
+    driver = false
 }: RideMapViewProps) {
     const cameraRef = useRef<any>(null);
     const [routeGeometry, setRouteGeometry] = useState<any>(null);
@@ -204,7 +206,8 @@ export default function RideMapView({
                     coordinate={[dropoffLocation.longitude, dropoffLocation.latitude]}
                 >
                     <View style={styles.dropoffMarker}>
-                        <Ionicons name="location-sharp" size={24} color="#f6a623" />
+                        {driver ? <Ionicons name="location-sharp" size={24} color="#f6a623" /> :
+                            <Ionicons name="car" size={24} color="#f6a623" />}
                     </View>
                 </Mapbox.PointAnnotation>
             )}

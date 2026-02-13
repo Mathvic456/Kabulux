@@ -920,7 +920,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
                 styles.trackBtn,
                 { backgroundColor: activeRideStatus.color, flex: 1 },
               ]}
-              onPress={() => setScreen("trackRide")}
+              onPress={() => setScreen("trackDriver")}
             >
               <Text style={styles.trackBtnText}>Track Ride</Text>
               <Entypo name="chevron-right" size={18} color="black" />
