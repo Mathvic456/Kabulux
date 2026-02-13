@@ -547,7 +547,7 @@ const WalletScreen = ({
                 style={[
                   styles.paymentMethodItem,
                   selectedPaymentMethod === "card" &&
-                    styles.selectedPaymentMethod,
+                  styles.selectedPaymentMethod,
                 ]}
                 onPress={() => handlePaymentMethodSelect("card")}
               >
@@ -563,7 +563,7 @@ const WalletScreen = ({
                     style={[
                       styles.paymentMethodText,
                       selectedPaymentMethod === "card" &&
-                        styles.selectedPaymentMethodText,
+                      styles.selectedPaymentMethodText,
                     ]}
                   >
                     Card
@@ -578,7 +578,7 @@ const WalletScreen = ({
                 style={[
                   styles.paymentMethodItem,
                   selectedPaymentMethod === "cash" &&
-                    styles.selectedPaymentMethod,
+                  styles.selectedPaymentMethod,
                 ]}
                 onPress={() => handlePaymentMethodSelect("cash")}
               >
@@ -594,7 +594,7 @@ const WalletScreen = ({
                     style={[
                       styles.paymentMethodText,
                       selectedPaymentMethod === "cash" &&
-                        styles.selectedPaymentMethodText,
+                      styles.selectedPaymentMethodText,
                     ]}
                   >
                     Cash
@@ -617,7 +617,7 @@ const WalletScreen = ({
       </Modal>
 
       {/* Bottom Navigation */}
-      <View
+      {/* <View
         style={{
           flexDirection: "row",
           justifyContent: "space-around",
@@ -638,7 +638,7 @@ const WalletScreen = ({
         <TouchableOpacity onPress={() => setScreen("profile")}>
           <Ionicons name="person-outline" size={24} color="#fff" />
         </TouchableOpacity>
-      </View>
+      </View> */}
 
       <ComingSoonModal
         isVisible={showComingSoonModal}

@@ -205,10 +205,14 @@ export default function RideMapView({
                     id="dropoffLocation"
                     coordinate={[dropoffLocation.longitude, dropoffLocation.latitude]}
                 >
-                    <View style={styles.dropoffMarker}>
-                        {driver ? <Ionicons name="location-sharp" size={24} color="#f6a623" /> :
-                            <Ionicons name="car" size={24} color="#f6a623" />}
-                    </View>
+                    {driver ?
+                        <View style={styles.dropoffMarker}>
+                            <Ionicons name="car" size={24} color="#f6a623" />
+                        </View> :
+                        <View style={styles.dropoffMarker}>
+                            <Ionicons name="location-sharp" size={24} color="#f6a623" />
+                        </View>
+                    }
                 </Mapbox.PointAnnotation>
             )}
 

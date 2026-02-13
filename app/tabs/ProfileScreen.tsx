@@ -24,7 +24,7 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [authExpired, setAuthExpired] = useState(false);
 
-    const { data: profile, isLoading, isError, error } = useProfile();
+  const { data: profile, isLoading, isError, error } = useProfile();
 
   useEffect(() => {
     console.log("🔍 [ProfileScreen] Profile state changed:");
@@ -76,55 +76,55 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
 
   ];
 
-  
 
-    if (isLoading) {
-      return (
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0a0a0a",  }}>
-          <Text style={{ color: "#fff"  }}>Loading profile...</Text>
-        </View>
-      );
-    }
 
-    if (isError && (error as AxiosError)?.response?.status === 401) 
-      return (
-    <Modal
-      animationType="fade"
-      transparent={true}
-      visible={authExpired}
-      onRequestClose={() => setAuthExpired(false)}
-      >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalIcon}>
-            <Ionicons name="alert-circle-outline" size={40} color="#f7b731" />
-          </View>
-
-          <Text style={styles.modalTitle}>Session Expired</Text>
-          <Text style={styles.modalMessage}>
-            There has been an error authenticating your profile. Please log in again.
-          </Text>
-
-          <TouchableOpacity
-            style={styles.logoutButton}
-            onPress={handleLogout}
-          >
-            <Text style={styles.logoutButtonText}>Go to Login</Text>
-          </TouchableOpacity>
-        </View>
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0a0a0a", }}>
+        <Text style={{ color: "#fff" }}>Loading profile...</Text>
       </View>
-    </Modal>
-      )
+    );
+  }
 
-    if (isError) {
-      return (
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <Text style={{ color: "red" }}>Failed to load profile</Text>
+  if (isError && (error as AxiosError)?.response?.status === 401)
+    return (
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={authExpired}
+        onRequestClose={() => setAuthExpired(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalIcon}>
+              <Ionicons name="alert-circle-outline" size={40} color="#f7b731" />
+            </View>
+
+            <Text style={styles.modalTitle}>Session Expired</Text>
+            <Text style={styles.modalMessage}>
+              There has been an error authenticating your profile. Please log in again.
+            </Text>
+
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={handleLogout}
+            >
+              <Text style={styles.logoutButtonText}>Go to Login</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      );
-    }
+      </Modal>
+    )
 
-    
+  if (isError) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text style={{ color: "red" }}>Failed to load profile</Text>
+      </View>
+    );
+  }
+
+
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
@@ -142,7 +142,7 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
         </Text>
 
         {/* Profile Section */}
-        <View style={{ alignItems: "center", marginVertical: 20,}}>
+        <View style={{ alignItems: "center", marginVertical: 20, }}>
           {profile?.profile_image ? (
             <Image
               source={{ uri: profile.profile_image }}
@@ -170,8 +170,8 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
           )}
           <Text style={{ color: "#fff", fontSize: 18, fontWeight: "600" }}>
             {profile && `${profile.first_name} ${profile.last_name}`}
-        </Text>
-{/* 
+          </Text>
+          {/* 
           <View style={{ flexDirection: "row", marginTop: 5 }}>
             <Text style={{ color: "#fff", marginRight: 5 }}>4.99</Text>
             <FontAwesome name="star" size={14} color="#f7b731" />
@@ -262,7 +262,7 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
       </ScrollView>
 
       {/* Bottom Navigation */}
-      <View
+      {/* <View
         style={{
           flexDirection: "row",
           justifyContent: "space-around",
@@ -283,7 +283,7 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
         <TouchableOpacity>
           <Ionicons name="person-outline" size={24} color="#f7b731" />
         </TouchableOpacity>
-      </View>
+      </View> */}
 
     </View>
   );
