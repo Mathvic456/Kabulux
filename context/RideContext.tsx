@@ -38,7 +38,7 @@ const STORAGE_KEYS = {
 export const RideContext = createContext<RideContextValue>({
   rideState: "idle",
   driverLocation: null,
-  resetRide: async () => {},
+  resetRide: async () => { },
 });
 
 export const useRide = () => useContext(RideContext);
@@ -96,7 +96,7 @@ export const RideProvider = ({ children }: { children: React.ReactNode }) => {
         // Handle broadcast_location messages (FIXED!)
         if (msg.type === "broadcast_location" && msg.data) {
           const newLocation = { lat: msg.data.lat, lng: msg.data.lng };
-          console.log("📍 [RIDE] Driver location updated:", newLocation);
+          console.log("[RIDE] Driver location updated:", newLocation);
           setDriverLocation(newLocation);
           AsyncStorage.setItem(
             STORAGE_KEYS.DRIVER_LOC,
@@ -106,7 +106,7 @@ export const RideProvider = ({ children }: { children: React.ReactNode }) => {
           // If we get location updates but state is idle, transition to driver_on_way
           if (rideState === "idle") {
             console.log(
-              "🚗 [RIDE] Transitioning from idle to driver_on_way due to location update",
+              "[RIDE] Transitioning from idle to driver_on_way due to location update",
             );
             updateRideState("driver_on_way");
           }
@@ -154,7 +154,7 @@ export const RideProvider = ({ children }: { children: React.ReactNode }) => {
         console.error("❌ [RIDE] Failed to parse message:", error);
       }
     },
-    [rideState],
+    [rideState]
   );
 
   const resetRide = async () => {

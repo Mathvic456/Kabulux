@@ -32,8 +32,7 @@ export default function RideTrackingScreen({ goBack }: { goBack: () => void }) {
   const { driverLocation, rideState } = useRide();
   const { rideId } = useRideId();
 
-  const { data: rideDetails, isLoading: loadingRideDetails } =
-    useRideDetails(rideId);
+  const { data: rideDetails, isLoading: loadingRideDetails } = useRideDetails(rideId);
 
   const mapRef = useRef<MapView>(null);
   const [pickupLocation, setPickupLocation] = useState<PickupLocation | null>(

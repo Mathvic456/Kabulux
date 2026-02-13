@@ -846,7 +846,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
 
       <TouchableOpacity
         style={styles.searchContainer}
-        onPress={() => setScreen("orderScreen")}
+        onPress={() => setScreen("setLocation")}
       >
         <FontAwesome name="car" size={19} color="white" />
         <TextInput
@@ -920,7 +920,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
                 styles.trackBtn,
                 { backgroundColor: activeRideStatus.color, flex: 1 },
               ]}
-              onPress={() => setScreen("trackRide")}
+              onPress={() => setScreen("trackDriver")}
             >
               <Text style={styles.trackBtnText}>Track Ride</Text>
               <Entypo name="chevron-right" size={18} color="black" />
@@ -957,7 +957,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
       <View style={styles.suggestionRow}>
         <TouchableOpacity
           style={styles.suggestionCard}
-          onPress={() => setScreen("orderScreen")}
+          onPress={() => setScreen("setLocation")}
         >
           <Image
             source={require("../../assets/images/car.png")}
@@ -1036,7 +1036,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
         </Text>
         <TouchableOpacity
           style={styles.emptyRideButton}
-          onPress={() => setScreen("orderScreen")}
+          onPress={() => setScreen("setLocation")}
         >
           <Text style={styles.emptyRideButtonText}>Book a Ride</Text>
         </TouchableOpacity>

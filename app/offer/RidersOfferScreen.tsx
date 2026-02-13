@@ -37,12 +37,38 @@ type OfferItem = {
   timestamp: number;
 };
 
+interface RideData {
+  name: string;
+  details: string;
+  price: string;
+  rawPrice?: number;
+  carType: string;
+  passengers: number;
+  rideDetails: {
+    pickup: {
+      pickupLat: number;
+      pickupLong: number;
+    };
+    destination: {
+      dropoffLat: number;
+      dropoffLong: number;
+    };
+    estimated_distance: string;
+    estimated_duration: string;
+    car_type: string;
+    estimated_fare: number;
+  };
+  ride_request_id: string;
+  paymentMethod: string;
+}
+
 interface RiderOfferProps {
   goBack: () => void;
   next: () => void;
+  rideData?: RideData;
 }
 
-export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
+export default function RiderOffersScreen({ goBack, next, rideData }: RiderOfferProps) {
   const {
     driverOffers,
     rideAccepted,
@@ -62,7 +88,6 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
   const { rideId } = useContext(RideIdContext);
 
   const route = useRoute();
-  const { ride_request_id } = (route.params as any) || {};
 
   const [localOffers, setLocalOffers] = useState<Record<string, OfferItem>>({});
   const [acceptedModalVisible, setAcceptedModalVisible] = useState(false);
@@ -73,41 +98,47 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
   const lastDeclinedTimestamps = useRef<Record<string, number>>({});
   const rideAcceptedRef = useRef(false);
 
-  // Track if we've already shown the modal to prevent duplicate shows
+  // Track connection state for proper re-subscription
+  const previousConnectionState = useRef(false);
   const hasShownModal = useRef(false);
   const isInitialMount = useRef(true);
   const subscriptionAttempted = useRef(false);
-  const { mutate: cancelRide, isPending: isCancelling } =
-    useCancelRideRequest();
 
-  // 1. Subscribe to WS when connected and have ride_request_id
+  const { mutate: cancelRide, isPending: isCancelling } = useCancelRideRequest();
+
+  // ✅ FIX #1: Proper subscription logic with reconnection handling
   useEffect(() => {
-    if (!ride_request_id) {
+    if (!rideData?.ride_request_id) {
       console.warn("[RIDER] Missing ride_request_id");
       return;
     }
 
+    // Initial subscription
     if (isConnected && !subscriptionAttempted.current) {
-      console.log("📡 [RIDER] Subscribing to offers for:", ride_request_id);
-      subscribeToRideOffers(ride_request_id);
+      console.log("[RIDER] 📡 Initial subscription for:", rideData.ride_request_id);
+      subscribeToRideOffers(rideData.ride_request_id);
       subscriptionAttempted.current = true;
+      previousConnectionState.current = true;
+      return;
     }
 
-    // Re-subscribe on reconnection
-    if (isConnected && subscriptionAttempted.current) {
+    // Re-subscribe ONLY when transitioning from disconnected to connected
+    if (isConnected && !previousConnectionState.current && subscriptionAttempted.current) {
       console.log("📡 [RIDER] Re-subscribing after reconnection");
-      subscribeToRideOffers(ride_request_id);
+      subscribeToRideOffers(rideData.ride_request_id);
     }
-  }, [ride_request_id, isConnected]);
 
-  // 2. Sync Context -> Local State (but NOT after ride is accepted)
+    previousConnectionState.current = isConnected;
+  }, [rideData, isConnected, subscribeToRideOffers]);
+
+  // Sync Context -> Local State (but NOT after ride is accepted)
   useEffect(() => {
     if (!rideAcceptedRef.current) {
       setLocalOffers(driverOffers);
     }
   }, [driverOffers]);
 
-  // 3. Handle Initial Mount - Clear stale data
+  // Handle Initial Mount - Clear stale data
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
@@ -121,8 +152,9 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
         clearRideAcceptError();
       }
     }
-  }, []);
+  }, [rideAccepted, rideAcceptError, clearRideAccepted, clearRideAcceptError]);
 
+  // Filter offers based on decline history
   useEffect(() => {
     // Don't filter/process offers if ride already accepted
     if (rideAcceptedRef.current) {
@@ -145,6 +177,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     setLocalOffers(filteredOffers);
   }, [driverOffers]);
 
+  // Show acceptance modal
   useEffect(() => {
     if (rideAccepted && !hasShownModal.current && !isInitialMount.current) {
       console.log("🎉 [RIDER] Ride accepted, showing modal:", rideAccepted);
@@ -153,6 +186,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     }
   }, [rideAccepted]);
 
+  // Handle acceptance errors
   useEffect(() => {
     if (rideAcceptError && !isInitialMount.current) {
       console.log("[RIDER] Ride accept error:", rideAcceptError);
@@ -167,14 +201,10 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
           return copy;
         });
       }
-
-      // Clear busy state for the offer
-      if (rideAcceptError.offerId) {
-        setBusyMap((prev) => ({ ...prev, [rideAcceptError.offerId]: false }));
-      }
     }
   }, [rideAcceptError]);
 
+  // Navigate when ride state changes to driver_on_way
   useEffect(() => {
     if (rideState === "driver_on_way" && rideId) {
       console.log(
@@ -187,9 +217,9 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
         }
       }, 500);
     }
-  }, [rideState, rideId]);
+  }, [rideState, rideId, acceptedModalVisible, next]);
 
-  // 7. Clear all offer cards when ride is accepted (driver_on_way)
+  // Clear all offer cards when ride is accepted (driver_on_way)
   useEffect(() => {
     if (rideState === "driver_on_way") {
       console.log("🧹 [RIDER] Clearing all offer cards on driver_on_way");
@@ -202,6 +232,26 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     }
   }, [rideState]);
 
+  // ✅ FIX #2: Clear all busy states when ride is accepted
+  useEffect(() => {
+    if (rideAccepted) {
+      console.log("🧹 [RIDER] Clearing all busy states on acceptance");
+      setBusyMap({});
+    }
+  }, [rideAccepted]);
+
+  // ✅ FIX #3: Clear specific busy state on error
+  useEffect(() => {
+    if (rideAcceptError?.offerId) {
+      console.log("🧹 [RIDER] Clearing busy for failed offer:", rideAcceptError.offerId);
+      setBusyMap((prev) => {
+        const updated = { ...prev };
+        delete updated[rideAcceptError.offerId];
+        return updated;
+      });
+    }
+  }, [rideAcceptError]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -211,7 +261,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
       clearRideAccepted();
       clearRideAcceptError();
     };
-  }, []);
+  }, [clearRideAccepted, clearRideAcceptError]);
 
   const closeModalAndContinue = () => {
     setAcceptedModalVisible(false);
@@ -272,7 +322,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
 
   const sendNegotiation = async (
     offerId: string,
-    rideId: string,
+    rideRequestId: string,
     price: number,
   ) => {
     if (!isConnected && !isOnline) {
@@ -299,7 +349,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
       await sendMessage({
         type: type,
         data: {
-          ride_request_id: rideId,
+          ride_request_id: rideRequestId,
           negotiated_price: price,
           ride_request_view_id: offerId,
         },
@@ -347,6 +397,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
     try {
       console.log("📤 [RIDER] Accepting ride:", message);
       await sendMessage(message);
+      // Note: busy state will be cleared by useEffect when rideAccepted changes
     } catch (err) {
       console.error("[RIDER] Accept failed:", err);
       Alert.alert(
@@ -374,7 +425,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
       data: { ride_request_view_id: offerId },
     };
 
-    console.log(JSON.stringify(message));
+    console.log("📤 [RIDER] Declining offer:", JSON.stringify(message));
 
     try {
       sendMessage(message);
@@ -422,7 +473,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
         <View style={styles.divider} />
 
         <View style={styles.offerSection}>
-          <Text style={styles.offerLabel}>Driver's Offer</Text>
+          <Text style={styles.offerLabel}>Drivers Offer</Text>
           <Text style={styles.originalOffer}>
             ₦{item.counter_offer.toLocaleString()}
           </Text>
@@ -555,7 +606,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
         <View style={[styles.connectionBanner, styles.offlineBanner]}>
           <Ionicons name="cloud-offline" size={16} color="#f44336" />
           <Text style={styles.offlineText}>
-            You're offline. Messages will be sent when back online.
+            Youre offline. Messages will be sent when back online.
           </Text>
         </View>
       )}
@@ -684,7 +735,7 @@ export default function RiderOffersScreen({ goBack, next }: RiderOfferProps) {
         </View>
       </Modal>
 
-      {/* --- CANCEL SUCCESS MODAL --- */}
+      {/* Cancel Success Modal */}
       <Modal visible={cancelModalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -764,7 +815,7 @@ const styles = StyleSheet.create({
     bottom: 40,
     left: 20,
     right: 20,
-    backgroundColor: "#d32f2f", // Red
+    backgroundColor: "#d32f2f",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

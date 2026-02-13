@@ -19,6 +19,8 @@ import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplet
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import MapViewDirections from "react-native-maps-directions";
 import { darkMapStyle } from '../../styles/darkMapStyle';
+import { suggestedLocations } from './map/lib/constants';
+
 
 // Import your existing axios instance
 
@@ -42,7 +44,7 @@ interface UserLocation {
   };
 }
 
-interface DestinationLocation {
+export interface DestinationLocation {
   name: string;
   address: string;
   latitude: number;
@@ -50,7 +52,7 @@ interface DestinationLocation {
 }
 
 interface PlanRideScreenProps {
-  setScreen: (screen: string, navigationData: any) => void; 
+  setScreen: (screen: string, navigationData: any) => void;
   goBack: () => void;
   locationData?: UserLocation;
 }
@@ -62,32 +64,10 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
   const [currentLocation, setCurrentLocation] = useState('Current Location');
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const mapRef = useRef<MapView>(null);
 
-  const suggestedLocations = [
-    { 
-      id: 1, 
-      name: 'ShopRite Cinema Sangotedo Lagos', 
-      address: 'Sangotedo Rd, Ajah, Lagos',
-      latitude: 6.5244,
-      longitude: 3.3792
-    },
-    { 
-      id: 2, 
-      name: 'Lekki Conservation Centre', 
-      address: 'Lekki-Epe Expressway, Lagos',
-      latitude: 6.4413,
-      longitude: 3.5244
-    },
-    { 
-      id: 3, 
-      name: 'Eko Atlantic City', 
-      address: 'Victoria Island, Lagos',
-      latitude: 6.4167,
-      longitude: 3.4333
-    },
-  ];
+
 
   useEffect(() => {
     if (locationData && locationData.address) {
@@ -118,7 +98,7 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
           longitude: destinationLocation.longitude,
         }
       ];
-        //this basically makes sure that both coordinates fit into the map
+      //this basically makes sure that both coordinates fit into the map
       mapRef.current.fitToCoordinates(coordinates, {
         edgePadding: { top: 100, right: 50, bottom: 300, left: 50 },
         animated: true,
@@ -154,31 +134,31 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
     return requestData;
   };
 
- const handleConfirmRide = () => {
-  if (!destinationLocation || !locationData) {
-    Alert.alert('Error', 'Select both pickup and destination locations');
-    return;
-  }
+  const handleConfirmRide = () => {
+    if (!destinationLocation || !locationData) {
+      Alert.alert('Error', 'Select both pickup and destination locations');
+      return;
+    }
 
-  const bookingData = prepareBookingData();
+    const bookingData = prepareBookingData();
 
-  const navigationData = {
-    pickupLocation: {
-      address: currentLocation,
-      latitude: locationData.latitude,
-      longitude: locationData.longitude,
-    },
-    destination: {
-      name: destinationLocation.name,
-      address: destinationLocation.address,
-      latitude: destinationLocation.latitude,
-      longitude: destinationLocation.longitude,
-    },
-    backendRequest: bookingData, 
+    const navigationData = {
+      pickupLocation: {
+        address: currentLocation,
+        latitude: locationData.latitude,
+        longitude: locationData.longitude,
+      },
+      destination: {
+        name: destinationLocation.name,
+        address: destinationLocation.address,
+        latitude: destinationLocation.latitude,
+        longitude: destinationLocation.longitude,
+      },
+      backendRequest: bookingData,
+    };
+
+    setScreen('bookingScreen', navigationData);
   };
-
-  setScreen('bookingScreen', navigationData); 
-};
 
 
   const handleSelectDestination = (location: DestinationLocation) => {
@@ -196,32 +176,32 @@ export default function PlanRideScreen({ setScreen, goBack, locationData }: Plan
     goBack();
   };
 
-// Memoize the destination marker to prevent unnecessary re-renders
-const destinationMarker = useMemo(() => {
-  if (!destinationLocation) return null;
-  
-  return (
-    <Marker
-      key={`destination-${destinationLocation.latitude}-${destinationLocation.longitude}`}
-      tracksViewChanges
-      coordinate={{
-        latitude: destinationLocation.latitude,
-        longitude: destinationLocation.longitude,
-      }}
-      centerOffset={{ x: 10, y: -10 }}
-      title="Drop-off Location"
-      description={destinationLocation.address}
-    >
-      <View style={styles.markerContainer}>
-        <Image
-          source={require('../../assets/images/send.png')}
-          style={{ width: 20, height: 20 }}
-          resizeMode="contain"
-        />
-      </View>
-    </Marker>
-  );
-}, [destinationLocation?.latitude, destinationLocation?.longitude, destinationLocation?.address]);
+  // Memoize the destination marker to prevent unnecessary re-renders
+  const destinationMarker = useMemo(() => {
+    if (!destinationLocation) return null;
+
+    return (
+      <Marker
+        key={`destination-${destinationLocation.latitude}-${destinationLocation.longitude}`}
+        tracksViewChanges
+        coordinate={{
+          latitude: destinationLocation.latitude,
+          longitude: destinationLocation.longitude,
+        }}
+        centerOffset={{ x: 10, y: -10 }}
+        title="Drop-off Location"
+        description={destinationLocation.address}
+      >
+        <View style={styles.markerContainer}>
+          <Image
+            source={require('../../assets/images/send.png')}
+            style={{ width: 20, height: 20 }}
+            resizeMode="contain"
+          />
+        </View>
+      </Marker>
+    );
+  }, [destinationLocation?.latitude, destinationLocation?.longitude, destinationLocation?.address]);
 
   const shortenAddress = (address: string, maxLength: number = 35) => {
     if (address.length <= maxLength) return address;
@@ -232,7 +212,7 @@ const destinationMarker = useMemo(() => {
     console.log('=== 🔴 DEBUG BUTTON PRESSED ===');
     console.log('📊 Current State Values:');
     console.log('isSubmitting:', isSubmitting);
-    
+
     console.log('🚖 USER CURRENT LOCATION:');
     if (locationData) {
       console.log('📍 Address:', currentLocation);
@@ -242,7 +222,7 @@ const destinationMarker = useMemo(() => {
     } else {
       console.log('📍 No location data available');
     }
-    
+
     console.log('🎯 DESTINATION LOCATION:');
     if (destinationLocation) {
       console.log('📍 Name:', destinationLocation.name);
@@ -253,9 +233,9 @@ const destinationMarker = useMemo(() => {
     } else {
       console.log('📍 No destination selected');
     }
-    
+
     console.log('================================');
-    
+
     Alert.alert('Debug', 'Button is working! Check console for both location details.');
   };
 
@@ -267,7 +247,7 @@ const destinationMarker = useMemo(() => {
     >
       <View style={styles.modalContainer}>
         <View style={styles.modalHeader}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.modalCloseButton}
             onPress={() => setShowSearchModal(false)}
           >
@@ -343,7 +323,7 @@ const destinationMarker = useMemo(() => {
             }}
             timeout={20000}
             styles={{
-              container: { 
+              container: {
                 flex: 0,
                 zIndex: 1,
               },
@@ -392,13 +372,13 @@ const destinationMarker = useMemo(() => {
             )}
           />
         </View>
-        
+
         <View style={styles.suggestedSection}>
           <Text style={styles.suggestedTitle}>Popular Destinations</Text>
           <ScrollView>
             {suggestedLocations.map((loc) => (
-              <TouchableOpacity 
-                key={loc.id} 
+              <TouchableOpacity
+                key={loc.id}
                 style={styles.modalSuggestionItem}
                 onPress={() => handleSelectDestination(loc)}
               >
@@ -456,29 +436,29 @@ const destinationMarker = useMemo(() => {
             </Marker>
 
             {/* Destination Marker */}
-          
-           {destinationMarker}
+
+            {destinationMarker}
             {/* Route Line */}
             {destinationLocation && (
-         <MapViewDirections
-           origin={{
-            latitude: locationData.latitude,
-            longitude: locationData.longitude,
-          }}
-          destination={{
-            latitude: destinationLocation.latitude,
-            longitude: destinationLocation.longitude,
-          }}
-          apikey={GOOGLE_API_KEY}
-          strokeWidth={4}
-          strokeColor="#ffbc07"
-          optimizeWaypoints={true}
-          onReady={(result: any) => {
-            console.log(`Distance: ${result.distance} km`);
-            console.log(`Duration: ${result.duration} min`);
-          }}
-          onError={(errMessage) => console.warn(errMessage)}
-        />
+              <MapViewDirections
+                origin={{
+                  latitude: locationData.latitude,
+                  longitude: locationData.longitude,
+                }}
+                destination={{
+                  latitude: destinationLocation.latitude,
+                  longitude: destinationLocation.longitude,
+                }}
+                apikey={GOOGLE_API_KEY}
+                strokeWidth={4}
+                strokeColor="#ffbc07"
+                optimizeWaypoints={true}
+                onReady={(result: any) => {
+                  console.log(`Distance: ${result.distance} km`);
+                  console.log(`Duration: ${result.duration} min`);
+                }}
+                onError={(errMessage) => console.warn(errMessage)}
+              />
             )}
           </MapView>
         ) : (
@@ -522,7 +502,7 @@ const destinationMarker = useMemo(() => {
           )}
         </View>
 
-        <ScrollView 
+        <ScrollView
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
@@ -566,18 +546,18 @@ const destinationMarker = useMemo(() => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Suggested Locations</Text>
             {suggestedLocations.map((loc) => (
-              <TouchableOpacity 
-                key={loc.id} 
+              <TouchableOpacity
+                key={loc.id}
                 style={[
                   styles.suggestionItem,
                   destinationLocation?.name === loc.name && styles.selectedSuggestion
-                ]} 
+                ]}
                 onPress={() => handleSelectSuggestedLocation(loc)}
               >
-                <FontAwesome5 
-                  name="map-marker-alt" 
-                  size={18} 
-                  color={destinationLocation?.name === loc.name ? '#f0d46d' : '#aaa'} 
+                <FontAwesome5
+                  name="map-marker-alt"
+                  size={18}
+                  color={destinationLocation?.name === loc.name ? '#f0d46d' : '#aaa'}
                 />
                 <View style={styles.suggestionTextContainer}>
                   <Text style={[
@@ -595,7 +575,7 @@ const destinationMarker = useMemo(() => {
             ))}
           </View>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.searchButton}
             onPress={() => setShowSearchModal(true)}
           >
@@ -603,11 +583,11 @@ const destinationMarker = useMemo(() => {
             <Text style={styles.searchButtonText}>Search for another destination</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[
               styles.confirmButton,
-              { 
-                backgroundColor: destinationLocation && locationData? '#f0d46d' : '#555',
+              {
+                backgroundColor: destinationLocation && locationData ? '#f0d46d' : '#555',
                 opacity: (!destinationLocation || !locationData || isSubmitting) ? 0.6 : 1
               }
             ]}
@@ -622,9 +602,9 @@ const destinationMarker = useMemo(() => {
               </View>
             ) : (
               <Text style={styles.confirmButtonText}>
-                {!locationData ? 'Waiting for Location...' : 
-                 !destinationLocation ? 'Select Destination' : 
-                 `Get Estimate to ${shortenAddress(destinationLocation.address, 20)}`}
+                {!locationData ? 'Waiting for Location...' :
+                  !destinationLocation ? 'Select Destination' :
+                    `Get Estimate to ${shortenAddress(destinationLocation.address, 20)}`}
               </Text>
             )}
           </TouchableOpacity>
@@ -689,7 +669,7 @@ const styles = StyleSheet.create({
 
   },
 
-    pickupMarkerContainer: {
+  pickupMarkerContainer: {
     height: 40,
     width: 40,
     borderRadius: 10,
