@@ -8,7 +8,7 @@
       "developmentClient": true,
       "distribution": "internal",
       "android": {
-        "env": {
+        "buildEnvironment": {
           "MAPBOX_DOWNLOADS_TOKEN": "$(MAPBOX_DOWNLOADS_TOKEN)"
         }
       },
@@ -21,7 +21,7 @@
     "preview": {
       "distribution": "internal",
       "android": {
-        "env": {
+        "buildEnvironment": {
           "MAPBOX_DOWNLOADS_TOKEN": "$(MAPBOX_DOWNLOADS_TOKEN)"
         }
       },
@@ -34,7 +34,7 @@
     "production": {
       "autoIncrement": true,
       "android": {
-        "env": {
+        "buildEnvironment": {
           "MAPBOX_DOWNLOADS_TOKEN": "$(MAPBOX_DOWNLOADS_TOKEN)"
         }
       },
