@@ -34,9 +34,9 @@ allprojects {
       }
       credentials {
         username = 'mapbox'
-        // Read from environment variable (for EAS) or gradle.properties (for local)
-        password = System.getenv('MAPBOX_DOWNLOADS_TOKEN') ?: 
-                   project.findProperty('RNMAPBOX_MAPS_DOWNLOAD_TOKEN') ?: ''
+        // Read from gradle.properties (which reads from env var)
+        password = project.findProperty('MAPBOX_DOWNLOADS_TOKEN') ?: 
+                   System.getenv('MAPBOX_DOWNLOADS_TOKEN') ?: ''
       }
     }
   }
