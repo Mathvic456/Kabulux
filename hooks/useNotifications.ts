@@ -126,7 +126,7 @@ export function usePushNotifications(enabled: boolean = true) {
         });
 
         const subscription = Notifications.addNotificationResponseReceivedListener(response => {
-            console.log("🔔 Notification clicked:", response.notification.request.content.data);
+            console.log(" Notification clicked:", response.notification.request.content.data);
         });
 
         getPushToken().then((token) => {

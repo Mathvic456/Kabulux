@@ -10,7 +10,13 @@ export default {
     scheme: "kabulux",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
-
+    notification: {
+      icon: "",
+      color: "#ffffff",
+      sounds: [
+        "./assets/sounds/kablux-sound.mp3"
+      ]
+    },
     ios: {
       supportsTablet: true,
       config: {

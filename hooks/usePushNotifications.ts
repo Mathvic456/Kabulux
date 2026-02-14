@@ -1,8 +1,8 @@
+import Constants from "expo-constants";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Platform } from "react-native";
-import Constants from "expo-constants";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -25,12 +25,18 @@ export const usePushNotifications = () => {
   async function registerForPushNotificationsAsync(): Promise<string | null> {
     try {
       if (Platform.OS === "android") {
-        await Notifications.setNotificationChannelAsync("default", {
-          name: "default",
-          importance: Notifications.AndroidImportance.MAX,
-          vibrationPattern: [0, 250, 250, 250],
-          lightColor: "#FF231F7C",
-        });
+        try {
+          await Notifications.setNotificationChannelAsync("default", {
+            name: "default",
+            importance: Notifications.AndroidImportance.MAX,
+            vibrationPattern: [0, 250, 250, 250],
+            lightColor: "#FF231F7C",
+            sound: 'kablux-sound.mp3',
+            enableVibrate: true,
+          });
+        } catch (channelError) {
+          console.error("❌ Failed to set Android notification channel:", channelError);
+        }
       }
 
       if (!Device.isDevice) {
