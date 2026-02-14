@@ -10,7 +10,9 @@ export default {
     scheme: "kabulux",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
-
+    notification: {
+      color: "#ffffff"
+    },
     ios: {
       supportsTablet: true,
       config: {
@@ -70,10 +72,10 @@ export default {
       apiUrl: process.env.EXPO_PUBLIC_API_URL,
       wssUrl: process.env.EXPO_PUBLIC_WSS_URL,
       eas: {
-        projectId: "3b016a1e-861d-4cf7-a69f-99c404717571",
+        projectId: "6d795b25-3717-4acc-a71d-91d3afb6ac76",
       },
     },
 
-    owner: "ag0213m",
+    owner: "ag0213m02",
   },
 };

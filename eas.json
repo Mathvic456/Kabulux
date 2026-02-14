@@ -8,17 +8,41 @@
       "developmentClient": true,
       "distribution": "internal",
       "android": {
-        "gradleCommand": ":app:assembleDebug",
+        "env": {
+          "MAPBOX_DOWNLOADS_TOKEN": "$(MAPBOX_DOWNLOADS_TOKEN)"
+        }
+      },
+      "ios": {
         "env": {
           "MAPBOX_DOWNLOADS_TOKEN": "$(MAPBOX_DOWNLOADS_TOKEN)"
         }
       }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "android": {
+        "env": {
+          "MAPBOX_DOWNLOADS_TOKEN": "$(MAPBOX_DOWNLOADS_TOKEN)"
+        }
+      },
+      "ios": {
+        "env": {
+          "MAPBOX_DOWNLOADS_TOKEN": "$(MAPBOX_DOWNLOADS_TOKEN)"
+        }
+      }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "android": {
+        "env": {
+          "MAPBOX_DOWNLOADS_TOKEN": "$(MAPBOX_DOWNLOADS_TOKEN)"
+        }
+      },
+      "ios": {
+        "env": {
+          "MAPBOX_DOWNLOADS_TOKEN": "$(MAPBOX_DOWNLOADS_TOKEN)"
+        }
+      }
     }
   },
   "submit": {

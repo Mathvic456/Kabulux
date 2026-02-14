@@ -34,12 +34,12 @@ allprojects {
       }
       credentials {
         username = 'mapbox'
-        password = System.getenv('MAPBOX_DOWNLOADS_TOKEN') ?: ''
+        // Read from environment variable (for EAS) or gradle.properties (for local)
+        password = System.getenv('MAPBOX_DOWNLOADS_TOKEN') ?: 
+                   project.findProperty('RNMAPBOX_MAPS_DOWNLOAD_TOKEN') ?: ''
       }
     }
   }
 }
-println "MAPBOX_DOWNLOADS_TOKEN present: ${System.getenv('MAPBOX_DOWNLOADS_TOKEN') != null}"
 
 // @generated end @rnmapbox/maps-v2-maven
-
