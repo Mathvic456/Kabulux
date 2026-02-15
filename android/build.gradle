@@ -32,19 +32,6 @@ allprojects {
       }
     }
   }
-  
-  // Force resolution of correct Mapbox artifact
-  configurations.all {
-  resolutionStrategy {
-    force 'com.mapbox.maps:android:11.8.0'
-    eachDependency { DependencyResolveDetails details ->
-      if (details.requested.group == 'com.mapbox.maps' && 
-          details.requested.name.startsWith('android-ndk')) {
-        details.useTarget 'com.mapbox.maps:android:11.11.0'
-      }
-    }
-  }
-}
 }
 
 apply plugin: "expo-root-project"
