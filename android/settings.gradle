@@ -23,8 +23,7 @@ plugins {
 }
 
 dependencyResolutionManagement {
-  // Changed from PREFER_SETTINGS to PREFER_PROJECT
-  repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
+  // REMOVED: repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
   repositories {
     google()
     mavenCentral()
