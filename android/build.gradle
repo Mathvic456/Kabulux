@@ -6,7 +6,7 @@ buildscript {
     mavenCentral()
   }
   dependencies {
-        classpath 'com.google.gms:google-services:4.4.1'
+    classpath 'com.google.gms:google-services:4.4.1'
     classpath('com.android.tools.build:gradle')
     classpath('com.facebook.react:react-native-gradle-plugin')
     classpath('org.jetbrains.kotlin:kotlin-gradle-plugin')
@@ -18,15 +18,8 @@ allprojects {
     google()
     mavenCentral()
     maven { url 'https://www.jitpack.io' }
-  }
-}
-
-apply plugin: "expo-root-project"
-apply plugin: "com.facebook.react.rootproject"
-// @generated begin @rnmapbox/maps-v2-maven - expo prebuild (DO NOT MODIFY) sync-d4ccbfdff48fdba3138b02a8ba41b9722af001d8
-
-allprojects {
-  repositories {
+    
+    // Mapbox repository with authentication
     maven {
       url 'https://api.mapbox.com/downloads/v2/releases/maven'
       authentication {
@@ -34,12 +27,25 @@ allprojects {
       }
       credentials {
         username = 'mapbox'
-        // Read from gradle.properties (which reads from env var)
         password = project.findProperty('MAPBOX_DOWNLOADS_TOKEN') ?: 
                    System.getenv('MAPBOX_DOWNLOADS_TOKEN') ?: ''
       }
     }
   }
+  
+  // Force resolution of correct Mapbox artifact
+  configurations.all {
+  resolutionStrategy {
+    force 'com.mapbox.maps:android:11.8.0'
+    eachDependency { DependencyResolveDetails details ->
+      if (details.requested.group == 'com.mapbox.maps' && 
+          details.requested.name.startsWith('android-ndk')) {
+        details.useTarget 'com.mapbox.maps:android:11.11.0'
+      }
+    }
+  }
+}
 }
 
-// @generated end @rnmapbox/maps-v2-maven
+apply plugin: "expo-root-project"
+apply plugin: "com.facebook.react.rootproject"

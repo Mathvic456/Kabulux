@@ -22,6 +22,30 @@ plugins {
   id("expo-autolinking-settings")
 }
 
+dependencyResolutionManagement {
+  // Changed from PREFER_SETTINGS to PREFER_PROJECT
+  repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
+  repositories {
+    google()
+    mavenCentral()
+    maven { url = uri("https://www.jitpack.io") }
+    
+    // Mapbox repository with authentication
+    maven {
+      url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
+      authentication {
+        basic(BasicAuthentication)
+      }
+      credentials {
+        username = "mapbox"
+        password = providers.gradleProperty("MAPBOX_DOWNLOADS_TOKEN").getOrElse(
+          providers.environmentVariable("MAPBOX_DOWNLOADS_TOKEN").getOrElse("")
+        )
+      }
+    }
+  }
+}
+
 extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
   if (System.getenv('EXPO_USE_COMMUNITY_AUTOLINKING') == '1') {
     ex.autolinkLibrariesFromCommand()
@@ -29,6 +53,7 @@ extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
     ex.autolinkLibrariesFromCommand(expoAutolinking.rnConfigCommand)
   }
 }
+
 expoAutolinking.useExpoModules()
 
 rootProject.name = 'Kablux'
