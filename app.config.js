@@ -61,7 +61,7 @@ export default {
         "@rnmapbox/maps",
         {
           RNMapboxMapsDownloadToken: process.env.MAPBOX_DOWNLOADS_TOKEN,
-          RNMapboxMapsVersion: "11.0.0"
+
         }
       ]
     ],
@@ -72,10 +72,10 @@ export default {
       apiUrl: process.env.EXPO_PUBLIC_API_URL,
       wssUrl: process.env.EXPO_PUBLIC_WSS_URL,
       eas: {
-        projectId: "6d795b25-3717-4acc-a71d-91d3afb6ac76",
+        projectId: "5048eba6-0946-40cd-97fb-f146a2a47163",
       },
     },
 
-    owner: "ag0213m02",
+    owner: "agbaby",
   },
 };
