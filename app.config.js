@@ -11,11 +11,7 @@ export default {
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
     notification: {
-      icon: "",
-      color: "#ffffff",
-      sounds: [
-        "./assets/sounds/kablux-sound.mp3"
-      ]
+      color: "#ffffff"
     },
     ios: {
       supportsTablet: true,
@@ -65,7 +61,7 @@ export default {
         "@rnmapbox/maps",
         {
           RNMapboxMapsDownloadToken: process.env.MAPBOX_DOWNLOADS_TOKEN,
-          RNMapboxMapsVersion: "11.0.0"
+
         }
       ]
     ],
@@ -76,10 +72,10 @@ export default {
       apiUrl: process.env.EXPO_PUBLIC_API_URL,
       wssUrl: process.env.EXPO_PUBLIC_WSS_URL,
       eas: {
-        projectId: "3b016a1e-861d-4cf7-a69f-99c404717571",
+        projectId: "5048eba6-0946-40cd-97fb-f146a2a47163",
       },
     },
 
-    owner: "ag0213m",
+    owner: "agbaby",
   },
 };

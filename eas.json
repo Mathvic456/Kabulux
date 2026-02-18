@@ -6,13 +6,7 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal",
-      "android": {
-        "gradleCommand": ":app:assembleDebug",
-        "env": {
-          "MAPBOX_DOWNLOADS_TOKEN": "$(MAPBOX_DOWNLOADS_TOKEN)"
-        }
-      }
+      "distribution": "internal"
     },
     "preview": {
       "distribution": "internal"
