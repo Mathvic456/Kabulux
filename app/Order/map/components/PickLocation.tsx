@@ -1,4 +1,4 @@
-import MapboxSearch from "@/components/MapboxSearch";
+import GooglePlacesSearch from "@/components/GooglePlacesSearch";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import useMapModal from "../hooks/useMapModal";
 
@@ -21,9 +21,9 @@ export default function PickLocation({ setModal, handleSelectPlace }) {
             <Text style={styles.title}>Set your Pick-up Location</Text>
             {/* Search Bar */}
             <View style={styles.searchContainer}>
-                <MapboxSearch
+                <GooglePlacesSearch
                     onSelectPlace={handleSelectPlace}
-                    accessToken={process.env.EXPO_PUBLIC_MAPBOX_PUBLIC_TOKEN || ''}
+                    apiKey={process.env.EXPO_PUBLIC_GOOGLE_API_KEY || ''}
                 />
             </View>
 

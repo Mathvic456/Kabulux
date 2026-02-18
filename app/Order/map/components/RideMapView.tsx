@@ -1,8 +1,8 @@
-import Mapbox from "@/utils/mapbox";
-import { getDirections } from "@/utils/mapboxDirections";
+import { getDirectionsGeometry } from "@/utils/googleDirections";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Alert, StyleSheet, View } from "react-native";
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE, Region } from "react-native-maps";
 
 interface LocationData {
     latitude: number;
@@ -24,196 +24,209 @@ export default function RideMapView({
     showRoute = false,
     driver = false
 }: RideMapViewProps) {
-    const cameraRef = useRef<any>(null);
-    const [routeGeometry, setRouteGeometry] = useState<any>(null);
+    const mapRef = useRef<MapView>(null);
+    const [routeCoordinates, setRouteCoordinates] = useState<{ latitude: number; longitude: number }[]>([]);
     const [loadingRoute, setLoadingRoute] = useState(false);
+    const [region, setRegion] = useState<Region>({
+        latitude: 6.5244, // Default to Lagos
+        longitude: 3.3792,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+    });
 
-    // Fetch actual route from Mapbox Directions API
+    // Fetch route from Google Directions API
     useEffect(() => {
         if (showRoute && pickupLocation && dropoffLocation) {
             setLoadingRoute(true);
-            console.log('Fetching route...');
+            console.log('Fetching route from Google Directions API...');
 
-            getDirections(
+            getDirectionsGeometry(
                 pickupLocation.longitude,
                 pickupLocation.latitude,
                 dropoffLocation.longitude,
                 dropoffLocation.latitude
             ).then(geometry => {
-                if (geometry) {
-                    console.log('Route fetched, points:', geometry.coordinates?.length);
-                    setRouteGeometry(geometry);
+                if (geometry && geometry.coordinates) {
+                    console.log('Route fetched, points:', geometry.coordinates.length);
+                    // Convert from [lng, lat] to {latitude, longitude} format
+                    const coords = geometry.coordinates.map(([lng, lat]) => ({
+                        latitude: lat,
+                        longitude: lng,
+                    }));
+                    setRouteCoordinates(coords);
                 } else {
                     console.warn('No route geometry returned');
+                    setRouteCoordinates([]);
                 }
                 setLoadingRoute(false);
-            }).catch((error) => {
+            }).catch((error: any) => {
                 console.error('Error fetching route:', error);
+                setRouteCoordinates([]);
                 setLoadingRoute(false);
+
+                // Show user-friendly error message
+                if (error.message?.includes('API key') || error.message?.includes('billing')) {
+                    Alert.alert(
+                        'Route Error',
+                        'Unable to calculate route. Please check your Google Maps API configuration.',
+                        [{ text: 'OK' }]
+                    );
+                } else if (error.message?.includes('No route found')) {
+                    Alert.alert(
+                        'No Route Found',
+                        'Could not find a route between the selected locations. Please try different locations.',
+                        [{ text: 'OK' }]
+                    );
+                } else {
+                    Alert.alert(
+                        'Route Error',
+                        'Unable to calculate route. Please try again.',
+                        [{ text: 'OK' }]
+                    );
+                }
             });
         } else {
-            setRouteGeometry(null);
+            setRouteCoordinates([]);
         }
     }, [pickupLocation, dropoffLocation, showRoute]);
 
-    // Fit map to show both locations
+    // Calculate and update map region to fit both locations
     useEffect(() => {
-        if (!cameraRef.current) return;
-
         if (pickupLocation && dropoffLocation) {
             // Use route coordinates if available for better bounds
-            let allCoordinates: number[][] = [];
+            let allLatitudes: number[] = [];
+            let allLongitudes: number[] = [];
 
-            if (routeGeometry?.coordinates && routeGeometry.coordinates.length > 0) {
-                allCoordinates = routeGeometry.coordinates;
-                console.log('Using route coordinates for bounds, points:', allCoordinates.length);
+            if (routeCoordinates.length > 0) {
+                allLatitudes = routeCoordinates.map(coord => coord.latitude);
+                allLongitudes = routeCoordinates.map(coord => coord.longitude);
+                console.log('Using route coordinates for bounds, points:', routeCoordinates.length);
             } else {
-                allCoordinates = [
-                    [pickupLocation.longitude, pickupLocation.latitude],
-                    [dropoffLocation.longitude, dropoffLocation.latitude],
-                ];
+                allLatitudes = [pickupLocation.latitude, dropoffLocation.latitude];
+                allLongitudes = [pickupLocation.longitude, dropoffLocation.longitude];
                 console.log('Using pickup/dropoff for bounds');
             }
 
-            // Calculate bounds from all coordinates
-            const lngs = allCoordinates.map(coord => coord[0]);
-            const lats = allCoordinates.map(coord => coord[1]);
-
-            const minLng = Math.min(...lngs);
-            const maxLng = Math.max(...lngs);
-            const minLat = Math.min(...lats);
-            const maxLat = Math.max(...lats);
+            const minLat = Math.min(...allLatitudes);
+            const maxLat = Math.max(...allLatitudes);
+            const minLng = Math.min(...allLongitudes);
+            const maxLng = Math.max(...allLongitudes);
 
             // Calculate center
-            const centerLng = (minLng + maxLng) / 2;
             const centerLat = (minLat + maxLat) / 2;
+            const centerLng = (minLng + maxLng) / 2;
 
-            // Add 20% padding to bounds
-            const lngDiff = maxLng - minLng;
+            // Calculate deltas with 20% padding
             const latDiff = maxLat - minLat;
-            const lngPadding = lngDiff * 0.2 || 0.01; // Ensure minimum padding
+            const lngDiff = maxLng - minLng;
             const latPadding = latDiff * 0.2 || 0.01;
+            const lngPadding = lngDiff * 0.2 || 0.01;
 
-            const paddedLngDiff = lngDiff + (lngPadding * 2);
-            const paddedLatDiff = latDiff + (latPadding * 2);
-            const maxDiff = Math.max(paddedLngDiff, paddedLatDiff);
+            const newRegion: Region = {
+                latitude: centerLat,
+                longitude: centerLng,
+                latitudeDelta: Math.max(latDiff + (latPadding * 2), 0.01),
+                longitudeDelta: Math.max(lngDiff + (lngPadding * 2), 0.01),
+            };
 
-            // Calculate zoom level based on distance
-            let zoomLevel = 15;
-            if (maxDiff > 0.5) zoomLevel = 9;
-            else if (maxDiff > 0.3) zoomLevel = 10;
-            else if (maxDiff > 0.2) zoomLevel = 11;
-            else if (maxDiff > 0.1) zoomLevel = 12;
-            else if (maxDiff > 0.05) zoomLevel = 13;
-            else if (maxDiff > 0.02) zoomLevel = 14;
-            else if (maxDiff > 0.01) zoomLevel = 14.5;
+            console.log("Calculated region:", newRegion);
+            setRegion(newRegion);
 
-            console.log("Calculated view:", {
-                center: [centerLng, centerLat],
-                zoom: zoomLevel,
-                distance: maxDiff.toFixed(4),
-                bounds: { minLng, maxLng, minLat, maxLat }
-            });
-
-            // Delay to ensure map is ready
+            // Animate to region
             setTimeout(() => {
                 try {
-                    cameraRef.current?.setCamera({
-                        centerCoordinate: [centerLng, centerLat],
-                        zoomLevel: zoomLevel,
-                        animationDuration: 1000,
-                    });
-                    console.log('Camera set');
+                    mapRef.current?.animateToRegion(newRegion, 1000);
+                    console.log('Map animated to region');
                 } catch (error) {
-                    console.error("Error setting camera:", error);
+                    console.error("Error animating map:", error);
                 }
             }, 600);
         } else if (pickupLocation) {
             // Only pickup exists
             console.log('Centering on pickup only');
+            const newRegion: Region = {
+                latitude: pickupLocation.latitude,
+                longitude: pickupLocation.longitude,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+            };
+            setRegion(newRegion);
             setTimeout(() => {
-                cameraRef.current?.setCamera({
-                    centerCoordinate: [pickupLocation.longitude, pickupLocation.latitude],
-                    zoomLevel: 14,
-                    animationDuration: 1000,
-                });
+                mapRef.current?.animateToRegion(newRegion, 1000);
             }, 600);
         }
-    }, [pickupLocation, dropoffLocation, routeGeometry]);
+    }, [pickupLocation, dropoffLocation, routeCoordinates]);
 
     return (
-        <Mapbox.MapView style={styles.map}>
-            <Mapbox.Camera
-                ref={cameraRef}
-                zoomLevel={13}
-                centerCoordinate={
-                    pickupLocation
-                        ? [pickupLocation.longitude, pickupLocation.latitude]
-                        : [3.3792, 6.5244] // Default to Lagos
-                }
-            />
-
-            {/* Actual Route from Mapbox Directions */}
-            {routeGeometry && (
-                <Mapbox.ShapeSource
-                    id="routeSource"
-                    shape={{
-                        type: 'Feature',
-                        properties: {},
-                        geometry: routeGeometry,
-                    }}
-                >
+        <MapView
+            ref={mapRef}
+            style={styles.map}
+            provider={PROVIDER_GOOGLE}
+            initialRegion={region}
+            showsUserLocation={false}
+            showsMyLocationButton={false}
+            showsCompass={false}
+        >
+            {/* Route Polyline */}
+            {showRoute && routeCoordinates.length > 0 && (
+                <>
                     {/* Route outline/shadow */}
-                    <Mapbox.LineLayer
-                        id="routeOutline"
-                        style={{
-                            lineColor: '#000',
-                            lineWidth: 6,
-                            lineCap: 'round',
-                            lineJoin: 'round',
-                            lineOpacity: 0.4,
-                        }}
+                    <Polyline
+                        coordinates={routeCoordinates}
+                        strokeColor="#000"
+                        strokeWidth={6}
+                        lineCap="round"
+                        lineJoin="round"
+                        zIndex={1}
                     />
                     {/* Main route line */}
-                    <Mapbox.LineLayer
-                        id="routeLine"
-                        style={{
-                            lineColor: '#f6a623',
-                            lineWidth: 4,
-                            lineCap: 'round',
-                            lineJoin: 'round',
-                        }}
+                    <Polyline
+                        coordinates={routeCoordinates}
+                        strokeColor="#f6a623"
+                        strokeWidth={4}
+                        lineCap="round"
+                        lineJoin="round"
+                        zIndex={2}
                     />
-                </Mapbox.ShapeSource>
+                </>
             )}
 
             {/* Pickup Location Marker */}
             {pickupLocation && (
-                <Mapbox.PointAnnotation
-                    id="pickupLocation"
-                    coordinate={[pickupLocation.longitude, pickupLocation.latitude]}
+                <Marker
+                    coordinate={{
+                        latitude: pickupLocation.latitude,
+                        longitude: pickupLocation.longitude,
+                    }}
+                    title="Pickup Location"
+                    description={pickupLocation.address}
                 >
                     <View style={styles.pickupMarker}>
                         <Ionicons name="navigate" size={20} color="#f6a623" />
                     </View>
-                </Mapbox.PointAnnotation>
+                </Marker>
             )}
 
             {/* Dropoff Location Marker */}
             {dropoffLocation && (
-                <Mapbox.PointAnnotation
-                    id="dropoffLocation"
-                    coordinate={[dropoffLocation.longitude, dropoffLocation.latitude]}
+                <Marker
+                    coordinate={{
+                        latitude: dropoffLocation.latitude,
+                        longitude: dropoffLocation.longitude,
+                    }}
+                    title="Dropoff Location"
+                    description={dropoffLocation.address}
                 >
-                    {driver ?
+                    {driver ? (
                         <View style={styles.dropoffMarker}>
                             <Ionicons name="car" size={24} color="#f6a623" />
-                        </View> :
+                        </View>
+                    ) : (
                         <View style={styles.dropoffMarker}>
                             <Ionicons name="location-sharp" size={24} color="#f6a623" />
                         </View>
-                    }
-                </Mapbox.PointAnnotation>
+                    )}
+                </Marker>
             )}
 
             {/* Loading indicator for route */}
@@ -222,7 +235,7 @@ export default function RideMapView({
                     <ActivityIndicator size="small" color="#f6a623" />
                 </View>
             )}
-        </Mapbox.MapView>
+        </MapView>
     );
 }
 

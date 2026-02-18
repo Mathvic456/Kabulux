@@ -1,5 +1,5 @@
 import { getCurrentLocation } from "@/hooks/useCurrLocation";
-import { reverseGeocode } from "@/utils/geocoding";
+import { reverseGeocode } from "@/utils/googleGeocoding";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Animated, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -19,7 +19,7 @@ export default function SetLocation({ goBack, setScreen }: SetLocationProps) {
     const [locationLoading, setLocationLoading] = useState(false);
     const [addressLoading, setAddressLoading] = useState(false);
 
-    const { cameraRef, setSelectedLocation, setPickupLocation, pickupLocation, dropoffLocation, setDropoffLocation } = useMapModal();
+    const { setSelectedLocation, setPickupLocation, pickupLocation, dropoffLocation, setDropoffLocation } = useMapModal();
     const [isPanelUp, setIsPanelUp] = useState(false);
     const [slideAnim] = useState(new Animated.Value(height));
 
@@ -46,14 +46,7 @@ export default function SetLocation({ goBack, setScreen }: SetLocationProps) {
 
         setAddressLoading(false);
 
-        // Animate camera to selected location
-        if (cameraRef.current) {
-            cameraRef.current.setCamera({
-                centerCoordinate: place.center,
-                zoomLevel: 14,
-                animationDuration: 1000,
-            });
-        }
+        // Map will automatically update when pickupLocation changes in RideMapView
     };
 
     useEffect(() => {

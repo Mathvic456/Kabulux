@@ -56,14 +56,7 @@ export default {
         },
       ],
       "expo-web-browser",
-      "expo-notifications",
-      [
-        "@rnmapbox/maps",
-        {
-          RNMapboxMapsDownloadToken: process.env.MAPBOX_DOWNLOADS_TOKEN,
-
-        }
-      ]
+      "expo-notifications"
     ],
 
     extra: {

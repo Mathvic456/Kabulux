@@ -1,4 +1,4 @@
-import MapboxSearch from "@/components/MapboxSearch";
+import GooglePlacesSearch from "@/components/GooglePlacesSearch";
 import { Feather, FontAwesome5 } from "@expo/vector-icons";
 import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -24,9 +24,9 @@ export default function SearchModal({
     suggestedLocations
 }: SearchModalProps) {
 
-    // Handle MapboxSearch selection
-    const handleMapboxSelect = (place: any) => {
-        console.log("📍 MapboxSearch selected:", place);
+    // Handle GooglePlacesSearch selection
+    const handleGooglePlacesSelect = (place: any) => {
+        console.log("📍 GooglePlacesSearch selected:", place);
 
         const destinationData = {
             latitude: place?.center[1],
@@ -74,10 +74,9 @@ export default function SearchModal({
                 </View>
 
                 <View style={styles.searchContainerWrapper}>
-                    <MapboxSearch
-                        onSelectPlace={handleMapboxSelect}
-                        accessToken={process.env.EXPO_PUBLIC_MAPBOX_PUBLIC_TOKEN || ''}
-
+                    <GooglePlacesSearch
+                        onSelectPlace={handleGooglePlacesSelect}
+                        apiKey={process.env.EXPO_PUBLIC_GOOGLE_API_KEY || ''}
                     />
                 </View>
 
