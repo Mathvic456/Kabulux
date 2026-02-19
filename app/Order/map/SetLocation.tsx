@@ -100,11 +100,14 @@ export default function SetLocation({ goBack, setScreen }: SetLocationProps) {
 
     return (
         <View style={{ flex: 1 }}>
-            <RideMapView
-                pickupLocation={pickupLocation}
-                dropoffLocation={dropoffLocation}
-                showRoute={true} // Set to true if you want a line between points
-            />
+            <View style={{ flex: 1, height: height * 0.55 }}>
+                <RideMapView
+                    pickupLocation={pickupLocation}
+                    dropoffLocation={dropoffLocation}
+                    showRoute={true}
+                />
+            </View>
+
 
             {/* Loading overlay */}
             {locationLoading && (

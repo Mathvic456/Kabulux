@@ -9,7 +9,7 @@ export default {
     icon: "./assets/images/log.png",
     scheme: "kabulux",
     userInterfaceStyle: "automatic",
-    newArchEnabled: true,
+    newArchEnabled: false,
     notification: {
       color: "#ffffff"
     },
@@ -26,7 +26,7 @@ export default {
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff",
       },
-      edgeToEdgeEnabled: true,
+      edgeToEdgeEnabled: false,
       package: "com.crashingout.kablux",
       googleServicesFile: "./google-services.json",
       config: {
