@@ -9,7 +9,7 @@ export default {
     icon: "./assets/images/log.png",
     scheme: "kabulux",
     userInterfaceStyle: "automatic",
-    newArchEnabled: false,
+    newArchEnabled: true,
     notification: {
       color: "#ffffff"
     },
