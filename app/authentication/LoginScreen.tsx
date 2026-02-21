@@ -1,4 +1,5 @@
 import CustomButton from "@/components/ui/CustomButton";
+import GoogleSignInButton from "@/components/ui/GoogleSignInButton";
 import { useAuth } from "@/context/AuthContext";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useLoginEndPoint } from "@/services/authentication.service";
@@ -15,7 +16,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
 import Logo from "../../assets/images/logo.png";
 
 export default function LoginScreen({
@@ -32,19 +32,13 @@ export default function LoginScreen({
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [remember, setRemember] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const [errors, setErrors] = useState({
-    email: "",
-    password: "",
-  });
+  const [errors, setErrors] = useState({ email: "", password: "" });
 
   const { setTokens } = useAuth();
-  // ✅ Changed from getFCMToken to expoPushToken and registerForPushNotificationsAsync
   const { expoPushToken, registerForPushNotificationsAsync } = usePushNotifications();
-  const { mutate: login, isPending: isLoginPending } = useLoginEndPoint(
-    setTokens,
-    remember,
-  );
+  const { mutate: login, isPending: isLoginPending } = useLoginEndPoint(setTokens, remember);
+
+  const isLoading = isLoginPending || isSubmitting;
 
   const validateForm = () => {
     let valid = true;
@@ -71,62 +65,53 @@ export default function LoginScreen({
   };
 
   const handleSubmit = async () => {
-    if (validateForm()) {
-      setIsSubmitting(true);
-      try {
-        // ✅ Get Expo push token instead of FCM token
-        let token = expoPushToken || ""; // Use existing token if available
+    if (!validateForm()) return;
 
-        if (!token) {
-          // Try to fetch a new token if not already registered
-          try {
-            const fetchedToken = await registerForPushNotificationsAsync();
-            if (fetchedToken) token = fetchedToken;
-          } catch (err) {
-            console.log(
-              "⚠️ [Push] Warning: Could not fetch token before login",
-              err,
-            );
-          }
+    setIsSubmitting(true);
+    try {
+      let token = expoPushToken || "";
+      if (!token) {
+        try {
+          const fetchedToken = await registerForPushNotificationsAsync();
+          if (fetchedToken) token = fetchedToken;
+        } catch (err) {
+          console.log("⚠️ Could not fetch push token before login", err);
         }
-
-        console.log("🔔 Using push token:", token);
-
-        login(
-          {
-            email,
-            password,
-            role: "rider",
-            fcm_token: token,
-            type: "android",
-          },
-          {
-            onSuccess: () => {
-              console.log("✅ [Login] Login successful");
-              next();
-            },
-            onError: (error: any) => {
-              console.log(
-                "❌ [Login] LOGIN FAILED:",
-                error.response?.data || error,
-              );
-              setErrors({
-                email: "",
-                password:
-                  error.response?.data?.message || "Invalid email or password",
-              });
-            },
-            onSettled: () => setIsSubmitting(false),
-          },
-        );
-      } catch (error) {
-        setIsSubmitting(false);
-        console.error("Unexpected error during submit", error);
       }
+
+      login(
+        { email, password, role: "rider", fcm_token: token, type: "android" },
+        {
+          onSuccess: () => next(),
+          onError: (error: any) => {
+            setErrors({
+              email: "",
+              password: error.response?.data?.message || "Invalid email or password",
+            });
+          },
+          onSettled: () => setIsSubmitting(false),
+        },
+      );
+    } catch (error) {
+      setIsSubmitting(false);
+      console.error("Unexpected error during submit", error);
     }
   };
 
-  const isLoading = isLoginPending || isSubmitting;
+  const handleGoogleLogin = async (idToken: string) => {
+    try {
+      const result = await fetch(`${process.env.EXPO_PUBLIC_API_URL}auth/google_auth/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_token: idToken, role: 'rider' }),
+      });
+      const data = await result.json();
+      console.log('Google login success:', data);
+      // TODO: store tokens and call next()
+    } catch (error: any) {
+      console.log('Google login error:', error.message);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -151,12 +136,7 @@ export default function LoginScreen({
 
           {/* Email Input */}
           <View style={styles.inputContainer}>
-            <MaterialIcons
-              name="email"
-              size={20}
-              color="#aaa"
-              style={styles.inputIcon}
-            />
+            <MaterialIcons name="email" size={20} color="#aaa" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Email"
@@ -168,18 +148,11 @@ export default function LoginScreen({
               editable={!isLoading}
             />
           </View>
-          {errors.email ? (
-            <Text style={styles.errorText}>{errors.email}</Text>
-          ) : null}
+          {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
 
           {/* Password Input */}
           <View style={styles.inputContainer}>
-            <FontAwesome
-              name="lock"
-              size={20}
-              color="#aaa"
-              style={styles.inputIcon}
-            />
+            <FontAwesome name="lock" size={20} color="#aaa" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Password"
@@ -193,29 +166,16 @@ export default function LoginScreen({
               onPress={() => setIsPasswordVisible(!isPasswordVisible)}
               style={styles.eyeIcon}
             >
-              <Ionicons
-                name={isPasswordVisible ? "eye-off" : "eye"}
-                size={18}
-                color="#ccc"
-              />
+              <Ionicons name={isPasswordVisible ? "eye-off" : "eye"} size={18} color="#ccc" />
             </TouchableOpacity>
           </View>
-          {errors.password ? (
-            <Text style={styles.errorText}>{errors.password}</Text>
-          ) : null}
+          {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
 
           {/* Remember & Forgot */}
           <View style={styles.row}>
-            <TouchableOpacity
-              onPress={() => setRemember(!remember)}
-              style={styles.checkboxRow}
-            >
-              <View
-                style={[styles.checkbox, remember && styles.checkboxChecked]}
-              >
-                {remember && (
-                  <MaterialIcons name="check" size={16} color="#000" />
-                )}
+            <TouchableOpacity onPress={() => setRemember(!remember)} style={styles.checkboxRow}>
+              <View style={[styles.checkbox, remember && styles.checkboxChecked]}>
+                {remember && <MaterialIcons name="check" size={16} color="#000" />}
               </View>
               <Text style={styles.checkboxLabel}>Remember Password</Text>
             </TouchableOpacity>
@@ -224,7 +184,6 @@ export default function LoginScreen({
             </TouchableOpacity>
           </View>
 
-          {/* Proceed Button */}
           <CustomButton
             title="Proceed"
             onPress={handleSubmit}
@@ -233,29 +192,18 @@ export default function LoginScreen({
             loading={isLoading}
           />
 
-          {/* OR Divider */}
           <View style={styles.dividerContainer}>
             <View style={styles.dividerLine} />
             <Text style={styles.dividerText}>OR</Text>
             <View style={styles.dividerLine} />
           </View>
 
-          {/* Google Sign In Button */}
-          <TouchableOpacity
-            style={[styles.googleBtn, isLoading && styles.googleBtnDisabled]}
-            onPress={() => { }}
+          <GoogleSignInButton
+            onSuccess={handleGoogleLogin}
+            onError={(e) => console.log('Google error:', e)}
             disabled={isLoading}
-          >
-            <FontAwesome
-              name="google"
-              size={20}
-              color="#fff"
-              style={styles.googleIcon}
-            />
-            <Text style={styles.googleText}>Sign in with Google</Text>
-          </TouchableOpacity>
+          />
 
-          {/* Footer */}
           <View style={{ marginTop: 20 }}>
             <TouchableOpacity onPress={goRegister} disabled={isLoading}>
               <Text style={styles.footerText}>
@@ -289,19 +237,8 @@ const styles = StyleSheet.create({
     width: "95%",
     alignSelf: "center",
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#fff",
-    textAlign: "center",
-    marginBottom: 10,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#ccc",
-    textAlign: "center",
-    marginBottom: 20,
-  },
+  title: { fontSize: 24, fontWeight: "bold", color: "#fff", textAlign: "center", marginBottom: 10 },
+  subtitle: { fontSize: 14, color: "#ccc", textAlign: "center", marginBottom: 20 },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -313,12 +250,7 @@ const styles = StyleSheet.create({
   eyeIcon: { marginLeft: 8 },
   inputIcon: { marginRight: 10 },
   input: { flex: 1, color: "#fff", height: 50 },
-  errorText: {
-    color: "#ff4444",
-    fontSize: 12,
-    marginBottom: 10,
-    marginLeft: 10,
-  },
+  errorText: { color: "#ff4444", fontSize: 12, marginBottom: 10, marginLeft: 10 },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -339,52 +271,13 @@ const styles = StyleSheet.create({
   checkboxChecked: { backgroundColor: "#fcbf24" },
   checkboxLabel: { color: "#fff", fontSize: 12 },
   forgot: { color: "#fcbf24", fontSize: 12 },
-  proceedBtn: {
-    backgroundColor: "#fcbf24",
-    borderRadius: 10,
-    paddingVertical: 14,
-    marginTop: 10,
-  },
+  proceedBtn: { backgroundColor: "#fcbf24", borderRadius: 10, paddingVertical: 14, marginTop: 10 },
   proceedText: { color: "#000", fontWeight: "bold", fontSize: 16 },
   footerText: { textAlign: "center", color: "#888", fontSize: 12 },
   signup: { color: "#fcbf24", fontWeight: "bold" },
   LogoContainer: {},
-  Logoicon: {
-    width: 130,
-    height: 100,
-    resizeMode: "contain",
-    alignSelf: "center",
-  },
-
-  // Google Auth Styles
-  dividerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 20,
-  },
+  Logoicon: { width: 130, height: 100, resizeMode: "contain", alignSelf: "center" },
+  dividerContainer: { flexDirection: "row", alignItems: "center", marginVertical: 20 },
   dividerLine: { flex: 1, height: 1, backgroundColor: "#333" },
   dividerText: { marginHorizontal: 10, color: "#666", fontSize: 12 },
-  googleBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "transparent",
-    borderColor: "#fcbf24",
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 12,
-    marginTop: 0,
-  },
-  googleBtnDisabled: {
-    opacity: 0.7,
-    backgroundColor: "transparent",
-  },
-  googleIcon: {
-    marginRight: 10,
-  },
-  googleText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
 });

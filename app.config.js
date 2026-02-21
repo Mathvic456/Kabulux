@@ -7,7 +7,7 @@ export default {
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/log.png",
-    scheme: "kabulux",
+    scheme: "com.crashingout.kablux",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
     notification: {
