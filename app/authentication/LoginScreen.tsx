@@ -100,6 +100,7 @@ export default function LoginScreen({
   };
 
   const handleGoogleLogin = async (idToken: string) => {
+    setIsSubmitting(true);
     try {
       const result = await fetch(`${process.env.EXPO_PUBLIC_API_URL}auth/google_auth/`, {
         method: 'POST',
@@ -107,10 +108,17 @@ export default function LoginScreen({
         body: JSON.stringify({ id_token: idToken, role: 'rider' }),
       });
       const data = await result.json();
-      console.log('Google login success:', data);
-      // TODO: store tokens and call next()
+
+      if (data.access && data.refresh) {
+        // await setTokens(data.access, data.refresh);
+        next(); // navigate forward
+      } else {
+        console.error('Google login: unexpected response', data);
+      }
     } catch (error: any) {
       console.log('Google login error:', error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

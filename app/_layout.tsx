@@ -8,6 +8,7 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { useForegroundNotifications } from "@/hooks/useForegroundNotifications";
 import { globalLogout } from "@/scripts/auth";
 import { setAuthTokenGetter, setGlobalLogout } from "@/services/api";
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import * as Notifications from "expo-notifications";
@@ -80,7 +81,16 @@ export default function RootLayout() {
       }
     );
 
+
+
     return () => subscription.remove();
+  }, []);
+
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+      offlineAccess: true, // required for idToken to be non-null
+    });
   }, []);
 
   if (!loaded) {

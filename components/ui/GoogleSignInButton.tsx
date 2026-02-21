@@ -2,13 +2,12 @@
 import { FontAwesome } from "@expo/vector-icons";
 import {
     GoogleSignin,
+    isErrorWithCode,
+    isSuccessResponse,
     statusCodes,
 } from '@react-native-google-signin/google-signin';
 import { StyleSheet, Text, TouchableOpacity } from "react-native";
 
-GoogleSignin.configure({
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-});
 
 interface GoogleSignInButtonProps {
     onSuccess: (idToken: string) => void;
@@ -21,20 +20,31 @@ export default function GoogleSignInButton({ onSuccess, onError, disabled }: Goo
     const handlePress = async () => {
         try {
             await GoogleSignin.hasPlayServices();
-            const userInfo = await GoogleSignin.signIn();
-            const idToken = userInfo.data?.idToken;
-            if (idToken) {
-                onSuccess(idToken);
-            } else {
-                onError?.('No ID token returned');
+            const response = await GoogleSignin.signIn();
+
+            if (isSuccessResponse(response)) {
+                const idToken = response.data?.idToken;
+                if (idToken) {
+                    onSuccess(idToken);
+                } else {
+                    onError?.('No ID token — check that webClientId is set and is of type Web');
+                }
             }
-        } catch (error: any) {
-            if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-                console.log('User cancelled sign in');
-            } else if (error.code === statusCodes.IN_PROGRESS) {
-                console.log('Sign in already in progress');
-            } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-                console.log('Play services not available');
+        } catch (error) {
+            if (isErrorWithCode(error)) {
+                switch (error.code) {
+                    case statusCodes.SIGN_IN_CANCELLED:
+                        console.log('User cancelled sign in');
+                        break;
+                    case statusCodes.IN_PROGRESS:
+                        console.log('Sign in already in progress');
+                        break;
+                    case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+                        console.log('Play services not available');
+                        break;
+                    default:
+                        onError?.(error);
+                }
             } else {
                 onError?.(error);
             }
