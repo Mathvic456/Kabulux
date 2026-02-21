@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -192,7 +193,7 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.banner} />
+      <StatusBar barStyle="light-content" backgroundColor="#000" />
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -204,6 +205,7 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContainer}
         >
+          <View style={styles.banner} />
           <View style={styles.card}>
             <Image source={Logo} style={styles.logoIcon} />
             <TouchableOpacity

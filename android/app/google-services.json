@@ -1,26 +1,44 @@
 {
   "project_info": {
-    "project_number": "8804750263",
-    "project_id": "kablux-1dbbe",
-    "storage_bucket": "kablux-1dbbe.firebasestorage.app"
+    "project_number": "482339209517",
+    "project_id": "kablux-d2be9",
+    "storage_bucket": "kablux-d2be9.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:8804750263:android:a0d903c4fbb23721b90e32",
+        "mobilesdk_app_id": "1:482339209517:android:d2a1ebeff92486709293a4",
         "android_client_info": {
           "package_name": "com.crashingout.kablux"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "482339209517-o3ve85bctmllnsrrf5n9snqhlk11jjna.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.crashingout.kablux",
+            "certificate_hash": "2437d01a686231ddaf33147701f6290e56157d60"
+          }
+        },
+        {
+          "client_id": "482339209517-s7hk2n63q7fg8pncq3fdp7jpb3n44l1v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyBKQMWO_FDysqUEG8BDAM23GyheIgXGPEA"
+          "current_key": "AIzaSyA-FLkmO-6J0c8HmanGeBAJ2WUQRWq9IH8"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "482339209517-s7hk2n63q7fg8pncq3fdp7jpb3n44l1v.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
