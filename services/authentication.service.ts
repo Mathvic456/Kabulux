@@ -20,7 +20,7 @@ export const useRegisterEndPoint = () => {
       console.log("[Auth] Registration successful:", res.data);
     },
     onError: (error: any) => {
-      console.error("❌ [Auth] Registration error:", error);
+      console.error("[Auth] Registration error:", error);
     },
   });
 

@@ -1,8 +1,10 @@
 import { useAuth } from "@/context/AuthContext";
 import { useRide } from "@/context/RideContext";
 import { SocketContext } from "@/context/WebSocketProvider";
+import { api } from "@/services/api";
 import { useLogoutEndPoint } from "@/services/authentication.service";
 import { Ionicons } from "@expo/vector-icons";
+import axios from "axios";
 import React, { useContext, useState } from "react";
 import {
   ActivityIndicator,
@@ -11,6 +13,7 @@ import {
   StyleSheet,
   Switch,
   Text,
+  TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
@@ -22,6 +25,13 @@ export default function SettingsScreen({ setScreen }) {
   const [soundEffects, setSoundEffects] = useState(true);
   const [hapticFeedback, setHapticFeedback] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [dLoading, setDLoading] = useState(false);
+  const [deleteForm, setDeleteForm] = useState<{ reason: string; password: string }>({
+    reason: "",
+    password: "",
+  });
+  const [deleteErrors, setDeleteErrors] = useState<{ reason?: string; password?: string }>({});
 
   const { clearTokens } = useAuth();
   const { resetRide } = useRide();
@@ -34,37 +44,79 @@ export default function SettingsScreen({ setScreen }) {
   const handleLogout = () => {
     console.log("🚪 [Settings] Starting logout process...");
 
-    // Close WebSocket connection first
     if (socket) {
       console.log("🔌 [Settings] Closing WebSocket connection...");
       socket.close(1000, "User logged out");
     }
 
-    // Call logout mutation
     logout(undefined, {
       onSuccess: () => {
-        console.log(" [Settings] Logout successful");
+        console.log("✅ [Settings] Logout successful");
         setShowLogoutModal(false);
         setScreen("login");
       },
       onError: (error) => {
         console.error("[Settings] Logout error:", error);
-        // Even on error, still navigate to login
         setShowLogoutModal(false);
         setScreen("login");
       },
     });
   };
 
+  const validateDeleteForm = () => {
+    const errors: { reason?: string; password?: string } = {};
+
+    if (!deleteForm.password || deleteForm.password.trim().length === 0) {
+      errors.password = "Password is required to delete your account.";
+    } if (!deleteForm.reason || deleteForm.reason.trim().length === 0) {
+      errors.password = "Reason is required to delete your account.";
+    } else if (deleteForm.password.length < 6) {
+      errors.password = "Password must be at least 6 characters.";
+    }
+
+    setDeleteErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleDeleteAcct = async () => {
+    if (!validateDeleteForm()) return;
+
+    setDLoading(true);
+    try {
+      await api.post('auth/request_delete_account/', {
+        password: deleteForm.password,
+        reason: deleteForm.reason,
+      });
+
+      console.log("[Settings] Delete account request successful");
+      setShowDeleteModal(false);
+      setDeleteForm({ reason: "", password: "" });
+      setDeleteErrors({ reason: "", password: "" });
+      setScreen("login");
+    } catch (error: any) {
+      console.log('actual err', error)
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong. Please try again.";
+      console.error("[Settings] Delete account error:", message);
+      setDeleteErrors({ password: message, reason: message });
+    } finally {
+      setDLoading(false);
+    }
+  };
+
+  const handleCloseDeleteModal = () => {
+    if (dLoading) return;
+    setShowDeleteModal(false);
+    setDeleteForm({ reason: "", password: "" });
+    setDeleteErrors({});
+  };
+
   const settingsSections = [
     {
       title: "Account",
       items: [
-        // {
-        //   icon: "lock-closed-outline",
-        //   label: "Login & Security",
-        //   action: () => setScreen("loginAndSecurity"),
-        // },
         {
           icon: "card-outline",
           label: "Payment Methods",
@@ -140,26 +192,22 @@ export default function SettingsScreen({ setScreen }) {
     {
       title: "About",
       items: [
-        // {
-        //   icon: "information-circle-outline",
-        //   label: "App Version",
-        //   value: "3.2.1",
-        // },
         {
           icon: "people-outline",
           label: "About Us",
           action: () => setScreen("aboutus"),
         },
-        // {
-        //   icon: "business-outline",
-        //   label: "Careers",
-        //   action: () => console.log("Careers"),
-        // },
         {
           icon: "log-out-outline",
           label: "Log Out",
           isAction: true,
           action: () => setShowLogoutModal(true),
+        },
+        {
+          icon: "trash-outline",
+          label: "Delete account",
+          isAction: true,
+          action: () => setShowDeleteModal(true),
         },
       ],
     },
@@ -189,8 +237,7 @@ export default function SettingsScreen({ setScreen }) {
                   key={itemIndex}
                   style={[
                     styles.item,
-                    itemIndex !== section.items.length - 1 &&
-                      styles.itemWithBorder,
+                    itemIndex !== section.items.length - 1 && styles.itemWithBorder,
                   ]}
                   onPress={item.action}
                   disabled={!item.action && !item.hasToggle}
@@ -213,11 +260,7 @@ export default function SettingsScreen({ setScreen }) {
                       />
                     ) : (
                       item.action && (
-                        <Ionicons
-                          name="chevron-forward"
-                          size={20}
-                          color="#FEB914"
-                        />
+                        <Ionicons name="chevron-forward" size={20} color="#FEB914" />
                       )
                     )}
                   </View>
@@ -267,6 +310,103 @@ export default function SettingsScreen({ setScreen }) {
                 </TouchableOpacity>
               </View>
             </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* Delete Account Modal */}
+      <Modal
+        visible={showDeleteModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleCloseDeleteModal}
+      >
+        <TouchableWithoutFeedback onPress={handleCloseDeleteModal}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.confirmationModal}>
+                {/* Header */}
+                <View style={styles.deleteModalHeader}>
+                  <Ionicons name="warning-outline" size={28} color="#FF4444" />
+                  <Text style={[styles.modalTitle, { color: "#FF4444", marginBottom: 0, marginLeft: 8 }]}>
+                    Delete Account
+                  </Text>
+                </View>
+
+                <Text style={styles.modalText}>
+                  This action is permanent and cannot be undone. All your data will be erased.
+                </Text>
+
+                {/* Reason Field (optional) */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>
+                    Reason for leaving<Text style={styles.requiredTag}>*</Text>
+                  </Text>
+                  <TextInput
+                    style={styles.textArea}
+                    placeholder="Tell us why you're leaving..."
+                    placeholderTextColor="#666"
+                    value={deleteForm.reason}
+                    onChangeText={(text) =>
+                      setDeleteForm((prev) => ({ ...prev, reason: text }))
+                    }
+                    multiline
+                    numberOfLines={3}
+                    editable={!dLoading}
+                  />
+                </View>
+
+                {/* Password Field (required) */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>
+                    Confirm your password <Text style={styles.requiredTag}>*</Text>
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.textInput,
+                      deleteErrors.password ? styles.inputError : null,
+                    ]}
+                    placeholder="Enter your password"
+                    placeholderTextColor="#666"
+                    value={deleteForm.password}
+                    onChangeText={(text) => {
+                      setDeleteForm((prev) => ({ ...prev, password: text }));
+                      if (deleteErrors.password) {
+                        setDeleteErrors((prev) => ({ ...prev, password: undefined }));
+                      }
+                    }}
+                    secureTextEntry
+                    editable={!dLoading}
+                  />
+                  {deleteErrors.password ? (
+                    <Text style={styles.errorText}>{deleteErrors.password}</Text>
+                  ) : null}
+                </View>
+
+                {/* Buttons */}
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.cancelButton]}
+                    onPress={handleCloseDeleteModal}
+                    disabled={dLoading}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.deleteButton]}
+                    onPress={handleDeleteAcct}
+                    disabled={dLoading}
+                  >
+                    {dLoading ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Text style={styles.deleteButtonText}>Delete</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
       </Modal>
@@ -357,8 +497,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#2C2C2C",
     borderRadius: 16,
     padding: 24,
-    width: "80%",
+    width: "85%",
     alignItems: "center",
+  },
+  deleteModalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
   },
   modalTitle: {
     color: "#fff",
@@ -368,14 +513,16 @@ const styles = StyleSheet.create({
   },
   modalText: {
     color: "#9CA3AF",
-    fontSize: 16,
+    fontSize: 14,
     textAlign: "center",
     marginBottom: 20,
+    lineHeight: 20,
   },
   modalButtons: {
     flexDirection: "row",
     justifyContent: "space-between",
     width: "100%",
+    marginTop: 8,
   },
   modalButton: {
     flex: 1,
@@ -390,6 +537,9 @@ const styles = StyleSheet.create({
   confirmButton: {
     backgroundColor: "#FEB914",
   },
+  deleteButton: {
+    backgroundColor: "#FF4444",
+  },
   cancelButtonText: {
     color: "#fff",
     fontWeight: "600",
@@ -397,5 +547,57 @@ const styles = StyleSheet.create({
   confirmButtonText: {
     color: "#000",
     fontWeight: "600",
+  },
+  deleteButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+  // Form styles
+  inputGroup: {
+    width: "100%",
+    marginBottom: 14,
+  },
+  inputLabel: {
+    color: "#ccc",
+    fontSize: 13,
+    marginBottom: 6,
+    fontWeight: "500",
+  },
+  optionalTag: {
+    color: "#666",
+    fontWeight: "400",
+  },
+  requiredTag: {
+    color: "#FF4444",
+  },
+  textInput: {
+    backgroundColor: "#1A1A1A",
+    borderWidth: 1,
+    borderColor: "#444",
+    borderRadius: 8,
+    color: "#fff",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+  },
+  textArea: {
+    backgroundColor: "#1A1A1A",
+    borderWidth: 1,
+    borderColor: "#444",
+    borderRadius: 8,
+    color: "#fff",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    textAlignVertical: "top",
+    minHeight: 70,
+  },
+  inputError: {
+    borderColor: "#FF4444",
+  },
+  errorText: {
+    color: "#FF4444",
+    fontSize: 12,
+    marginTop: 4,
   },
 });
