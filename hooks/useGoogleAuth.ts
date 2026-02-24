@@ -23,11 +23,15 @@ export function useGoogleAuth({ onSuccess, onError }: UseGoogleAuthOptions) {
   });
 
   const exchangeWithBackend = async (idToken: string) => {
+    console.log('token before req', idToken)
     try {
+
       const res = await api.post('auth/google_auth/', {
         id_token: idToken,
         role: 'rider',
       });
+
+      console.log('res from be req', res)
 
       const accessToken: string | undefined = res.data?.data?.access;
       const refreshToken: string | undefined = res.data?.data?.refresh;
@@ -41,6 +45,7 @@ export function useGoogleAuth({ onSuccess, onError }: UseGoogleAuthOptions) {
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : 'Authentication failed.';
+      console.log('eerrrr', err)
       setError(msg);
       onError?.(msg);
     } finally {
@@ -49,10 +54,13 @@ export function useGoogleAuth({ onSuccess, onError }: UseGoogleAuthOptions) {
   };
 
   useEffect(() => {
+
     if (!response || response.type !== 'success') return;
 
     const idToken =
       response.params?.id_token ?? response.authentication?.idToken;
+
+    console.log('id token', idToken)
 
     if (!idToken) {
       const msg = 'Google sign-in succeeded but returned no ID token.';
@@ -63,7 +71,7 @@ export function useGoogleAuth({ onSuccess, onError }: UseGoogleAuthOptions) {
     }
 
     void exchangeWithBackend(idToken);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [response]);
 
   const promptGoogleSignIn = async () => {

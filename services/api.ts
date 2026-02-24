@@ -60,9 +60,9 @@ api.interceptors.request.use(
 
     if (getValidTokenFn) {
       token = await getValidTokenFn();
-      // console.log(`🔐 [API Request] Token attached: ${!!token}`);
+      // console.log(`[API Request] Token attached: ${!!token}`);
     } else {
-      console.warn(`⚠️ [API Request] Auth getter not initialized yet`);
+      console.warn(`[API Request] Auth getter not initialized yet`);
     }
 
     if (token) {
@@ -91,7 +91,7 @@ api.interceptors.response.use(
 
     // Handle 401 - Authentication Error
     const requestId = Math.random().toString(36).substring(7);
-    console.error(`🔐 [API Error ${requestId}] 401 Detected`);
+    console.error(`[API Error ${requestId}] 401 Detected`);
 
     // Prevent infinite loops
     if (originalRequest._retry) {
