@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
+import { BackHandler } from "react-native";
 import AddFundsScreen from "./addFunds/AddFundsScreen";
 import CryptoDepositScreenOne from "./addFunds/CryptoDepositScreenOne";
 import CryptoDepositScreenTwo from "./addFunds/CryptoDepositScreenTwo";
@@ -28,7 +28,7 @@ import BookingScreen from "./Order/BookingScreen";
 import PickUpScreen from "./Order/PickUpScreen";
 import PlanRideScreen from "./Order/PlanRideScreen";
 import AboutUs from "./profile/AboutUs";
-import RateAppScreen from "./profile/ExtraScreens";
+import { RateAppScreen } from "./profile/ExtraScreens";
 import HelpAndSupportScreen from "./profile/HelpAndSupportScreen";
 import Language from "./profile/Language";
 import LegalScreen from "./profile/LegalScreen";
@@ -60,7 +60,6 @@ import WalletScreen from "./tabs/WalletScreen";
 import SetLocation from "./Order/map/SetLocation";
 import TrackDriver from "./Order/map/TrackDriver";
 
-
 // Define screen names
 type Screen =
   | "onboard1"
@@ -82,8 +81,8 @@ type Screen =
   | "cryptoDepositOne"
   | "cryptoDepositTwo"
   | "personalInfo"
-  | "loginAndSecurity" // <-- include loginAndSecurity
-  | "helpAndSupport" // <-- include helpAndSupport
+  | "loginAndSecurity"
+  | "helpAndSupport"
   | "savedPlaces"
   | "referAndEarn"
   | "settings"
@@ -117,16 +116,15 @@ type Screen =
   | "rateapscreen"
   | "terms"
   | "trackRide"
-  | "setLocation" // <-- add setLocation to the type
+  | "setLocation"
   | "trackDriver";
+
+const STACK_RESET_SCREENS: Screen[] = ["dashboard", "login"];
 
 export default function MainNavigator() {
   const [screen, setScreen] = useState<Screen>("onboard1");
-  const navigation = useNavigation();
+  const [screenHistory, setScreenHistory] = useState<Screen[]>([]);
 
-
-
-  // Keep track of the selected ride
   const [selectedRide, setSelectedRide] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -137,7 +135,7 @@ export default function MainNavigator() {
   const [url, setUrl] = useState("");
 
   const [registeredEmail, setRegisteredEmail] = useState("");
-  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("")
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
 
   useEffect(() => {
     console.log("📱 [MainNavigator] Registering navigation ref");
@@ -162,28 +160,46 @@ export default function MainNavigator() {
     }
 
     console.log(`🔄 Updating screen state to: ${newScreen}`);
+
+    if (STACK_RESET_SCREENS.includes(newScreen)) {
+      setScreenHistory([]);
+    } else {
+      setScreenHistory((h) => [...h, screen]);
+    }
+
     setScreen(newScreen);
   };
+
+  const goBack = () => {
+    if (screenHistory.length > 0) {
+      const prev = screenHistory[screenHistory.length - 1];
+      setScreenHistory((h) => h.slice(0, -1));
+      setScreen(prev);
+    }
+  };
+
+  useEffect(() => {
+    const handleHardwareBack = () => {
+      if (screenHistory.length > 0) {
+        goBack();
+        return true;
+      }
+      return false;
+    };
+    const subscription = BackHandler.addEventListener("hardwareBackPress", handleHardwareBack);
+    return () => subscription.remove();
+  }, [screenHistory]);
 
   const checkIfRemembered = async () => {
     const rememberedEmail = await AsyncStorage.getItem("rememberedEmail");
     const token = await AsyncStorage.getItem("token");
 
     if (token || rememberedEmail) {
-
-      setScreen("dashboard");
+      handleSetScreen("dashboard");
     } else {
-
-      setScreen("login");
+      handleSetScreen("login");
     }
   };
-
-
-
-
-
-
-
 
   switch (screen) {
     case "onboard1":
@@ -191,263 +207,282 @@ export default function MainNavigator() {
 
     //NEW MAPBOX SCREENS GODSWILL AG
     case "setLocation":
-      return <SetLocation goBack={() => setScreen("dashboard")} setScreen={handleSetScreen} />;
+      return <SetLocation goBack={goBack} setScreen={handleSetScreen} />;
     case "trackDriver":
-      return <TrackDriver goBack={() => setScreen("dashboard")} setScreen={handleSetScreen} />;
+      return <TrackDriver goBack={goBack} setScreen={handleSetScreen} />;
 
     case "onboard2":
-      return <OnboardingScreen2 next={() => { }} />;
+      return <OnboardingScreen2 next={() => {}} />;
+
     case "login":
       return (
         <LoginScreen
-          next={() => setScreen("dashboard")}
-          goRegister={() => setScreen("register")}
-          goForgot={() => setScreen("reset")}
+          next={() => handleSetScreen("dashboard")}
+          goRegister={() => handleSetScreen("register")}
+          goForgot={() => handleSetScreen("reset")}
         />
       );
+
     case "register":
       return (
         <RegisterScreen
           next={(email) => {
             setRegisteredEmail(email);
-            setScreen("verify");
+            handleSetScreen("verify");
           }}
-          goLogin={() => setScreen("login")}
+          goLogin={() => handleSetScreen("login")}
         />
       );
-
 
     case "reset":
       return (
         <ResetPasswordScreen
-          goLogin={() => setScreen("login")}
+          goLogin={() => handleSetScreen("login")}
           next={(email) => {
             setForgotPasswordEmail(email);
-            setScreen("resetCredentials")
+            handleSetScreen("resetCredentials");
           }}
         />
       );
+
     case "verify":
       return (
         <VerifyEmailScreen
-          goBack={() => setScreen("register")}
-          next={() => setScreen("accountSuccess")}
-          goRegister={() => setScreen("register")}
-          goForgot={() => setScreen("reset")}
+          goBack={goBack}
+          next={() => handleSetScreen("accountSuccess")}
+          goRegister={() => handleSetScreen("register")}
         />
       );
+
     case "passwordSet":
       return (
         <PasswordSetScreen
-          next={() => setScreen("accountSuccess")}
-          goRegister={() => setScreen("register")}
-          goForgot={() => setScreen("reset")}
+          next={() => handleSetScreen("accountSuccess")}
+          goRegister={() => handleSetScreen("register")}
+          goForgot={() => handleSetScreen("reset")}
         />
       );
+
     case "trackRide":
-      return <RideTrackingScreen goBack={() => setScreen("dashboard")} />
+      return <RideTrackingScreen goBack={goBack} />;
+
     case "profile":
-      return <ProfileScreen setScreen={setScreen} />;
+      return <ProfileScreen setScreen={handleSetScreen} />;
+
     case "accountSuccess":
       return (
         <AccountSuccessScreen
-          next={() => setScreen("login")}
-          goRegister={() => setScreen("register")}
-          goForgot={() => setScreen("reset")}
+          next={() => handleSetScreen("login")}
+          goRegister={() => handleSetScreen("register")}
+          goForgot={() => handleSetScreen("reset")}
         />
       );
+
     case "passwordResetSuccess":
       return (
         <PasswordResetSuccessScreen
-          next={() => setScreen("login")}
-          goRegister={() => setScreen("register")}
-          goForgot={() => setScreen("reset")}
+          next={() => handleSetScreen("login")}
+          goRegister={() => handleSetScreen("register")}
+          goForgot={() => handleSetScreen("reset")}
         />
       );
 
     case "offerScreen":
       return (
         <RiderOffersScreen
-          goBack={() => setScreen('dashboard')}
-          next={() => setScreen('dashboard')}
+          goBack={goBack}
+          next={() => handleSetScreen("dashboard")}
           rideData={rideData}
-        />
-      )
-    case "passwordChangeSuccess":
-      return (
-        <PasswordChangeSuccessScreen
-          next={() => setScreen("login")}
-          goRegister={() => setScreen("register")}
-          goForgot={() => setScreen("reset")}
-        />
-      );
-    case "logout":
-      return <LogoutScreen next={() => setScreen("login")} />;
-    case "dashboard":
-      return (
-        <TabNavigator
-          setScreen={setScreen}
-          setSelectedRide={setSelectedRide} // <-- pass this down
-        />
-      );
-    case "rideDetails":
-      return (
-        <RideDetailsScreen
-          ride={selectedRide} // <-- use ride stored in state
-          goBack={() => setScreen("dashboard")}
-        />
-      );
-    case "addFunds":
-      return (
-        <AddFundsScreen
-          next={() => setScreen("paymentMethod")}
-          goRegister={() => setScreen("register")}
-          goForgot={() => setScreen("reset")}
-          goCryptoDeposit={() => setScreen("cryptoDepositOne")}
-          goBack={() => setScreen("wallet")}
         />
       );
 
+    case "passwordChangeSuccess":
+      return (
+        <PasswordChangeSuccessScreen
+          next={() => handleSetScreen("login")}
+          goRegister={() => handleSetScreen("register")}
+          goForgot={() => handleSetScreen("reset")}
+        />
+      );
+
+    case "logout":
+      return <LogoutScreen next={() => handleSetScreen("login")} />;
+
+    case "dashboard":
+      return (
+        <TabNavigator
+          setScreen={handleSetScreen}
+          setSelectedRide={setSelectedRide}
+        />
+      );
+
+    case "rideDetails":
+      return (
+        <RideDetailsScreen
+          ride={selectedRide}
+          goBack={goBack}
+        />
+      );
+
+    case "addFunds":
+      return (
+        <AddFundsScreen
+          next={() => handleSetScreen("paymentMethod")}
+          goRegister={() => handleSetScreen("register")}
+          goForgot={() => handleSetScreen("reset")}
+          goCryptoDeposit={() => handleSetScreen("cryptoDepositOne")}
+          goBack={goBack}
+        />
+      );
 
     case "paymentMethod":
       return (
         <PaymentMethodScreen
-          next={() => setScreen("dashboard")}
-          goRegister={() => setScreen("register")}
-          goForgot={() => setScreen("reset")}
-          goCryptoDeposit={() => setScreen("cryptoDepositOne")}
-          goBack={() => setScreen("settings")}
+          next={() => handleSetScreen("dashboard")}
+          goRegister={() => handleSetScreen("register")}
+          goForgot={() => handleSetScreen("reset")}
+          goCryptoDeposit={() => handleSetScreen("cryptoDepositOne")}
+          goBack={goBack}
         />
       );
+
     case "cryptoDepositOne":
       return (
         <CryptoDepositScreenOne
-          next={() => setScreen("cryptoDepositTwo")}
-          goRegister={() => setScreen("register")}
-          goForgot={() => setScreen("reset")}
-          goCryptoDeposit={() => setScreen("cryptoDepositOne")}
-          goBack={() => setScreen("paymentMethod")}
+          next={() => handleSetScreen("cryptoDepositTwo")}
+          goRegister={() => handleSetScreen("register")}
+          goForgot={() => handleSetScreen("reset")}
+          goCryptoDeposit={() => handleSetScreen("cryptoDepositOne")}
+          goBack={goBack}
         />
       );
+
     case "cryptoDepositTwo":
       return (
         <CryptoDepositScreenTwo
-          next={() => setScreen("paymentMethod")}
-          goRegister={() => setScreen("register")}
-          goForgot={() => setScreen("reset")}
-          goCryptoDeposit={() => setScreen("cryptoDepositOne")}
-          goBack={() => setScreen("cryptoDepositOne")}
+          next={() => handleSetScreen("paymentMethod")}
+          goRegister={() => handleSetScreen("register")}
+          goForgot={() => handleSetScreen("reset")}
+          goCryptoDeposit={() => handleSetScreen("cryptoDepositOne")}
+          goBack={goBack}
         />
       );
 
     case "personalInfo":
       return (
         <PersonalInfoScreen
-          goBack={() => setScreen("profile")}
-          next={() => setScreen("dashboard")}
+          goBack={goBack}
         />
       );
 
     case "loginAndSecurity":
       return (
         <LoginAndSecurityScreen
-          goBack={() => setScreen("profile")}
-          next={() => setScreen("dashboard")}
+          goBack={goBack}
+          next={() => handleSetScreen("dashboard")}
         />
       );
+
     case "helpAndSupport":
       return (
         <HelpAndSupportScreen
-          goBack={() => setScreen("profile")}
-          next={() => setScreen("dashboard")}
+          goBack={goBack}
+          next={() => handleSetScreen("dashboard")}
         />
       );
 
     case "savedPlaces":
       return (
         <SavedPlacesScreen
-          goBack={() => setScreen("profile")}
-          next={() => setScreen("dashboard")}
+          goBack={goBack}
+          next={() => handleSetScreen("dashboard")}
         />
       );
 
     case "referAndEarn":
       return (
         <ReferAndEarnScreen
-          goBack={() => setScreen("profile")}
-          next={() => setScreen("dashboard")}
+          goBack={goBack}
+          next={() => handleSetScreen("dashboard")}
         />
       );
 
     case "paystack":
       return (
         <DynamicPayStackWebViewScreen
-          goBack={() => setScreen("wallet")}
+          goBack={goBack}
         />
       );
 
     case "settings":
       return (
         <SettingsScreen
-          setScreen={setScreen}
+          setScreen={handleSetScreen}
         />
       );
 
     case "legal":
       return (
         <LegalScreen
-          goBack={() => setScreen("profile")}
-          next={() => setScreen("dashboard")}
+          goBack={goBack}
+          next={() => handleSetScreen("dashboard")}
         />
       );
+
     case "aboutus":
       return (
         <AboutUs
-          goBack={() => setScreen("settings")}
+          goBack={goBack}
         />
-      )
+      );
+
     case "language":
       return (
         <Language
-          goBack={() => setScreen("settings")}
+          goBack={goBack}
         />
-      )
+      );
+
     case "terms":
       return (
         <TermsOfServiceScreen
-          goBack={() => setScreen("settings")}
+          goBack={goBack}
         />
-      )
+      );
+
     case "rateapscreen":
       return (
         <RateAppScreen
-          goBack={() => setScreen("settings")}
+          goBack={goBack}
         />
-      )
+      );
 
     case "report":
       return (
         <ReportIssue
-          goBack={() => setScreen("settings")}
+          goBack={goBack}
         />
-      )
+      );
+
     case "ridereceipts":
       return (
         <RideReceipts
-          goBack={() => setScreen("settings")}
+          goBack={goBack}
         />
-      )
+      );
+
     case "redeemPoints":
       return (
         <RedeemPointsScreen
-          goBack={() => setScreen('wallet')}
+          goBack={goBack}
         />
       );
+
     case "resetCredentials":
       return (
         <ResetCredentialsScreen
-          back={() => setScreen('reset')}
-          next={() => setScreen("login")}
+          back={goBack}
+          next={() => handleSetScreen("login")}
         />
       );
 
@@ -455,48 +490,47 @@ export default function MainNavigator() {
       return (
         <AnalyticsScreen
           setScreen={handleSetScreen}
-          next={() => setScreen("loyalty")}
-          goBack={() => setScreen('dashboard')}
-        />);
+          next={() => handleSetScreen("loyalty")}
+          goBack={goBack}
+        />
+      );
 
     case "wallet":
       return (
         <WalletScreen
           setScreen={handleSetScreen}
-        />);
-
-    /*   case "paystack":
-         return <PaystackWebView 
-           setScreen={setScreen}
-         />*/
+        />
+      );
 
     case "loyalty":
       return (
         <LoyaltyPointsScreen
-          next={() => setScreen("aboutus")}
-          back={() => setScreen("analyticsScreen")}
-        />);
+          back={goBack}
+        />
+      );
 
     case "orderScreen":
       return (
-        <PickUpScreen setScreen={handleSetScreen}
-          goBack={() => setScreen("dashboard")}
-        />);
+        <PickUpScreen
+          setScreen={handleSetScreen}
+          goBack={goBack}
+        />
+      );
 
     case "planRide":
       return (
-        <PlanRideScreen setScreen={handleSetScreen}
-          goBack={() => setScreen("orderScreen")}
+        <PlanRideScreen
+          setScreen={handleSetScreen}
+          goBack={goBack}
           locationData={pickupLocationData}
-        />);
-
-    // MainNavigator.tsx
+        />
+      );
 
     case "bookingScreen":
       return (
         <BookingScreen
           setScreen={handleSetScreen}
-          goBack={() => setScreen("planRide")}
+          goBack={goBack}
           pickupLat={bookingData?.pickupLocation?.latitude}
           pickupLong={bookingData?.pickupLocation?.longitude}
           pickupAddress={bookingData?.pickupLocation?.address}
@@ -509,58 +543,57 @@ export default function MainNavigator() {
     case "standardScreen":
       return (
         <StandardScreen
-          goBack={() => setScreen("setLocation")}
-          next={() => setScreen("offerScreen")}
+          goBack={goBack}
+          next={() => handleSetScreen("offerScreen")}
           rideData={rideData}
         />
       );
 
-
     case "originalPriceDetails":
       return (
         <OriginalPriceDetailsScreen
-          setScreen={setScreen}
-          goBack={() => setScreen("planRide")}
+          setScreen={handleSetScreen}
+          goBack={goBack}
         />
       );
 
     case "originalDriverDetails":
       return (
         <OriginalDriverDetailScreen
-          setScreen={setScreen}
-          goBack={() => setScreen("bookingScreen")}
+          setScreen={handleSetScreen}
+          goBack={goBack}
         />
       );
 
     case "chatScreen":
       return (
         <ChatScreen
-          goBack={() => setScreen("dashboard")}
+          goBack={goBack}
         />
       );
 
     case "businessRideSelect":
       return (
         <BusinessRideSelectScreen
-          setScreen={setScreen}
-          goBack={() => setScreen("bookingScreen")}
+          setScreen={handleSetScreen}
+          goBack={goBack}
         />
       );
 
     case "bookings":
       return (
         <BookingsScreen
-          setScreen={setScreen}
-          next={() => { setScreen("orderScreen") }}
+          setScreen={handleSetScreen}
+          next={() => handleSetScreen("orderScreen")}
           setSelectedRide={setSelectedRide}
         />
-      )
+      );
 
     case "additionalInformation":
       return (
         <AdditionalInformationScreen
-          setScreen={setScreen}
-          goBack={() => setScreen("bookingScreen")}
+          setScreen={handleSetScreen}
+          goBack={goBack}
           rideOptions={rideOptions}
           setRideOptions={setRideOptions}
         />
@@ -569,36 +602,34 @@ export default function MainNavigator() {
     case "premiumCarSelect":
       return (
         <PremiumCarSelectScreen
-          setScreen={setScreen}
-          goBack={() => setScreen("bookingScreen")}
+          setScreen={handleSetScreen}
+          goBack={goBack}
         />
       );
 
     case "specialServices":
       return (
         <SpecialServicesScreen
-          setScreen={setScreen}
-          goBack={() => setScreen("premiumCarSelect")}
+          setScreen={handleSetScreen}
+          goBack={goBack}
           rideOptions={rideOptions}
-          goNext={() => setScreen("modifyRide")}
-
+          goNext={() => handleSetScreen("modifyRide")}
         />
       );
 
     case "modifyRide":
       return (
         <ModifyRideScreen
-          setScreen={setScreen}
-          goBack={() => setScreen("premiumCarSelect")}
+          setScreen={handleSetScreen}
+          goBack={goBack}
         />
       );
 
     case "businessCodeScreen":
       return (
         <BusinessCodeScreen
-          setScreen={setScreen}
-          goBack={() => setScreen("modifyRide")}
-          goNext={() => setScreen("bookingScreen")}
+          setScreen={handleSetScreen}
+          goBack={goBack}
         />
       );
 
