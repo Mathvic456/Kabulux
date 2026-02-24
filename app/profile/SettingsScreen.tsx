@@ -4,7 +4,7 @@ import { SocketContext } from "@/context/WebSocketProvider";
 import { api } from "@/services/api";
 import { useLogoutEndPoint } from "@/services/authentication.service";
 import { Ionicons } from "@expo/vector-icons";
-import axios from "axios";
+import { useRouter } from "expo-router";
 import React, { useContext, useState } from "react";
 import {
   ActivityIndicator,
@@ -19,7 +19,7 @@ import {
   View,
 } from "react-native";
 
-export default function SettingsScreen({ setScreen }) {
+export default function SettingsScreen({ setScreen, goBack }) {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [promoNotifications, setPromoNotifications] = useState(false);
   const [soundEffects, setSoundEffects] = useState(true);
@@ -27,6 +27,7 @@ export default function SettingsScreen({ setScreen }) {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [dLoading, setDLoading] = useState(false);
+  const route = useRouter()
   const [deleteForm, setDeleteForm] = useState<{ reason: string; password: string }>({
     reason: "",
     password: "",
@@ -40,6 +41,7 @@ export default function SettingsScreen({ setScreen }) {
     clearTokens,
     resetRide,
   );
+
 
   const handleLogout = () => {
     console.log("🚪 [Settings] Starting logout process...");
@@ -219,7 +221,7 @@ export default function SettingsScreen({ setScreen }) {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => setScreen("profile")}
+            onPress={() => goBack()}
             style={styles.backButton}
           >
             <Ionicons name="arrow-back" size={24} color="#fff" />

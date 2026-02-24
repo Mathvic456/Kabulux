@@ -120,7 +120,7 @@ type Screen =
   | "setLocation" // <-- add setLocation to the type
   | "trackDriver";
 
-export default function MainNavigator() {
+export default function MainNavigator({ deletePage }) {
   const [screen, setScreen] = useState<Screen>("onboard1");
   const navigation = useNavigation();
 
@@ -139,17 +139,25 @@ export default function MainNavigator() {
   const [registeredEmail, setRegisteredEmail] = useState("");
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState("")
 
+
   useEffect(() => {
-    console.log("📱 [MainNavigator] Registering navigation ref");
+    console.log('eeeerrrrrr')
+    if (deletePage) {
+      setScreen('settings');
+    }
+  }, [deletePage]);
+
+  useEffect(() => {
+    console.log("[MainNavigator] Registering navigation ref");
     registerSetScreen((scr: string, data?: any) => {
-      console.log(`📱 [Navigation] Navigating to: ${scr}`, data);
+      console.log(`[Navigation] Navigating to: ${scr}`, data);
       handleSetScreen(scr as Screen, data);
     });
   }, []);
 
   const handleSetScreen = (newScreen: Screen, params?: any) => {
     if (newScreen === "planRide" && params) {
-      console.log("📍 Setting pickup location data:", params);
+      console.log("Setting pickup location data:", params);
       setPickupLocationData(params);
     }
     if (newScreen === "bookingScreen" && params) {
@@ -157,7 +165,7 @@ export default function MainNavigator() {
       setBookingData(params);
     }
     if (newScreen === "standardScreen" && params) {
-      console.log("🚗 Setting ride data:", params);
+      console.log("Setting ride data:", params);
       setRideData(params);
     }
 
@@ -390,6 +398,7 @@ export default function MainNavigator() {
       return (
         <SettingsScreen
           setScreen={setScreen}
+          goBack={() => setScreen('profile')}
         />
       );
 

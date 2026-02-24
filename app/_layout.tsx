@@ -11,6 +11,7 @@ import { setAuthTokenGetter, setGlobalLogout } from "@/services/api";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import * as Notifications from "expo-notifications";
+import { useLocalSearchParams } from "expo-router";
 import React, { useEffect } from "react";
 import "react-native-reanimated";
 import MainNavigator from "./MainNavigator";
@@ -56,6 +57,10 @@ function ApiAuthConnector() {
 }
 
 export default function RootLayout() {
+  const { deletePage } = useLocalSearchParams();
+
+  console.log('stufff', deletePage)
+
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
@@ -95,7 +100,7 @@ export default function RootLayout() {
           <RideProvider>
             <RideBookingProvider>
               <QueryClientProvider client={queryClient}>
-                <MainNavigator />
+                <MainNavigator deletePage={deletePage} />
                 <RideCompletionModal />
               </QueryClientProvider>
             </RideBookingProvider>
