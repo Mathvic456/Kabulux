@@ -418,6 +418,7 @@ export default function MainNavigator() {
       return (
         <SettingsScreen
           setScreen={handleSetScreen}
+          goBack={goBack}
         />
       );
 

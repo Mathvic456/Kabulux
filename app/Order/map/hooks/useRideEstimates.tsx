@@ -76,6 +76,7 @@ export default function useRideEstimates({ rideData }: UseRideEstimatesProps) {
             // Updated to match your API response structure
             if (response.status_code === 200 && response.data?.rides) {
                 const apiData = response.data;
+                console.log('api data----------------', apiData)
 
                 // FIX: Use the actual rideData values instead of undefined variables
                 setRideDetails({
@@ -95,7 +96,7 @@ export default function useRideEstimates({ rideData }: UseRideEstimatesProps) {
 
                 const formattedRides = apiData.rides.map((ride: any, index: number) => ({
                     name: `Kablux ${ride.name.charAt(0).toUpperCase() + ride.name.slice(1)}`,
-                    details: `${Math.round(apiData.estimated_duration / 60)} min - ${apiData.estimated_distance.toFixed(2)} km`,
+                    details: `${Math.round(apiData.estimated_duration)} min - ${apiData.estimated_distance.toFixed(2)} km`,
                     price: `₦${ride.estimated_fare.toLocaleString()}`,
                     rawPrice: ride.estimated_fare,
                     originalPrice: null, // No discount in current API response

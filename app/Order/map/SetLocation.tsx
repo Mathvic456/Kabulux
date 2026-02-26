@@ -2,7 +2,7 @@ import { getCurrentLocation } from "@/hooks/useCurrLocation";
 import { reverseGeocode } from "@/utils/googleGeocoding";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Animated, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Animated, Dimensions, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import MapModal from "./SwitchModal";
 import RideMapView from "./components/RideMapView";
 import useMapModal from "./hooks/useMapModal";
@@ -100,6 +100,8 @@ export default function SetLocation({ goBack, setScreen }: SetLocationProps) {
 
     return (
         <View style={{ flex: 1 }}>
+            <StatusBar barStyle="light-content" backgroundColor={'#000'} />
+
             <View style={{ flex: 1, height: height * 0.55 }}>
                 <RideMapView
                     pickupLocation={pickupLocation}

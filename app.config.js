@@ -6,7 +6,7 @@ export default {
     slug: "kablux-rider",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/icons/rider-logo.png",
+    icon: "./assets/icons/r-logo.png",
     scheme: "com.crashingout.kablux",
     userInterfaceStyle: "automatic",
     newArchEnabled: false,
@@ -18,7 +18,7 @@ export default {
       config: {
         googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
       },
-      buildNumber: "7"
+      buildNumber: "33"
     },
 
     android: {
@@ -34,7 +34,7 @@ export default {
           apiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
         },
       },
-      versionCode: 7
+      versionCode: 33
     },
 
     web: {
@@ -66,10 +66,10 @@ export default {
       apiUrl: process.env.EXPO_PUBLIC_API_URL,
       wssUrl: process.env.EXPO_PUBLIC_WSS_URL,
       eas: {
-        projectId: "5048eba6-0946-40cd-97fb-f146a2a47163",
+        projectId: "cf905950-121d-4ddc-9d09-e4539b9fd7fb",
       },
     },
 
-    owner: "agbaby",
+    owner: "agbaby02",
   },
 };

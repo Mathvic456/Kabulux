@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -172,53 +173,45 @@ export default function StandardScreen({
   const canDecrease = riderOffer > basePrice;
   const isValidOffer = riderOffer >= basePrice;
 
-  // Helper to format duration
   const formatDuration = (durationString: string) => {
-    // Handle if it's already in seconds (number)
+    // Check for "X min" pattern FIRST before trying to parse as number
+    const minMatch = durationString.match(/(\d+)\s*min/);
+    if (minMatch) {
+      return `${minMatch[1]} min`;
+    }
+
     let durationInSeconds: number;
 
     if (typeof durationString === "number") {
       durationInSeconds = durationString;
     } else {
-      // Try to parse as number first
       const parsed = parseFloat(durationString);
       if (!isNaN(parsed)) {
         durationInSeconds = parsed;
       } else {
-        // Fallback: try to extract minutes from string like "45 min"
-        const match = durationString.match(/(\d+)/);
-        if (match) {
-          return `${match[1]} min`;
-        }
         return durationString;
       }
     }
 
-    // Convert seconds to minutes
     const minutes = Math.round(durationInSeconds / 60);
-
     if (minutes < 60) return `${minutes} min`;
 
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
-
     if (remainingMinutes === 0) return `${hours} hr`;
     return `${hours} hr ${remainingMinutes} min`;
   };
 
-  // Helper to format distance
-  const formatDistance = (distanceString: string) => {
+  const formatDistance = (distanceString: string | number): string => {
     if (typeof distanceString === "number") {
       return `${distanceString.toFixed(2)} km`;
     }
 
-    // Try to parse as number first
     const parsed = parseFloat(distanceString);
     if (!isNaN(parsed)) {
       return `${parsed.toFixed(2)} km`;
     }
 
-    // Fallback: extract number from string
     const match = distanceString.match(/(\d+\.?\d*)/);
     if (match) {
       return `${parseFloat(match[1]).toFixed(2)} km`;
@@ -229,6 +222,8 @@ export default function StandardScreen({
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={'#000'} />
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={goBack}>
@@ -286,7 +281,7 @@ export default function StandardScreen({
                 <View style={styles.detailTextContainer}>
                   <Text style={styles.detailLabel}>Estimated Time</Text>
                   <Text style={styles.detailValue}>
-                    {formatDuration(rideData.rideDetails.estimated_duration)}
+                    {formatDuration(rideData.details)}
                   </Text>
                 </View>
               </View>
