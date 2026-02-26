@@ -44,6 +44,12 @@ export default {
     },
 
     plugins: [
+      [
+        "expo-notifications",
+        {
+          sound: "./assets/sounds/kablux-sound.wav"
+        },
+      ],
       "expo-router",
       "expo-font",
       "@react-native-google-signin/google-signin",
