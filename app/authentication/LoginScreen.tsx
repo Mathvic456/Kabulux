@@ -1,11 +1,12 @@
 import CustomButton from "@/components/ui/CustomButton";
 import GoogleSignInButton from "@/components/ui/GoogleSignInButton";
 import { useAuth } from "@/context/AuthContext";
-import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useGoogleAuth } from "@/hooks/useGoogleAuth";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useLoginEndPoint } from "@/services/authentication.service";
 import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import React, { useState } from "react";
+
 import {
   Image,
   KeyboardAvoidingView,
@@ -29,6 +30,7 @@ export default function LoginScreen({
   goRegister: () => void;
   goForgot: () => void;
 }) {
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);

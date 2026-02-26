@@ -31,10 +31,10 @@ export function useGoogleAuth({ onSuccess, onError }: UseGoogleAuthOptions) {
         role: 'rider',
       });
 
-      console.log('res from be req', res)
+      console.log('res from be req', res.data)
 
-      const accessToken: string | undefined = res.data?.data?.access;
-      const refreshToken: string | undefined = res.data?.data?.refresh;
+      const accessToken: string | undefined = res.data?.access;
+      const refreshToken: string | undefined = res.data?.refresh;
 
       if (!accessToken || !refreshToken) {
         throw new Error('Server did not return valid tokens.');

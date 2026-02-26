@@ -22,6 +22,7 @@ import {
   Image,
   Modal,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -814,7 +815,8 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
   ];
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={'#000'} />
       <View style={styles.logoContainer}>
         <Image
           source={require("../../assets/images/logo.png")}
@@ -860,347 +862,349 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
           <Text style={styles.laterText}>Later</Text>
         </TouchableOpacity>
       </TouchableOpacity>
+      <ScrollView showsVerticalScrollIndicator={false}>
 
-      {activeRideStatus && (
-        <View
-          style={[styles.statusCard, { borderColor: activeRideStatus.color }]}
-        >
-          <View style={styles.statusContentRow}>
-            {/* 2. Driver Profile Image (Replaces the Icon Circle) */}
-            <View
-              style={[
-                styles.statusIconCircle,
-                {
-                  overflow: "hidden",
-                  padding: 0,
-                  backgroundColor: "transparent",
-                },
-              ]}
-            >
-              <Image
-                source={
-                  driver?.profile_image
-                    ? { uri: driver.profile_image }
-                    : require("../../assets/images/Ava.png")
-                }
-                style={styles.driverAvatar}
-                resizeMode="cover"
-              />
-            </View>
-
-            {/* 3. Driver Info Text */}
-            <View style={styles.statusTextCol}>
-              {/* Dynamic Title: "John is on the way" */}
-              <Text style={styles.statusTitle}>
-                {driver?.name
-                  ? `${driver.name} is on the way`
-                  : activeRideStatus.title}
-              </Text>
-
-              <View style={styles.liveIndicatorRow}>
-                {/* Status Dot */}
-                <View
-                  style={[
-                    styles.pulsingDot,
-                    { backgroundColor: activeRideStatus.color },
-                  ]}
+        {activeRideStatus && (
+          <View
+            style={[styles.statusCard, { borderColor: activeRideStatus.color }]}
+          >
+            <View style={styles.statusContentRow}>
+              {/* 2. Driver Profile Image (Replaces the Icon Circle) */}
+              <View
+                style={[
+                  styles.statusIconCircle,
+                  {
+                    overflow: "hidden",
+                    padding: 0,
+                    backgroundColor: "transparent",
+                  },
+                ]}
+              >
+                <Image
+                  source={
+                    driver?.profile_image
+                      ? { uri: driver.profile_image }
+                      : require("../../assets/images/Ava.png")
+                  }
+                  style={styles.driverAvatar}
+                  resizeMode="cover"
                 />
+              </View>
 
-                <Text style={styles.statusSubtitle}>
-                  {driver?.vehicle ? driver.vehicle : activeRideStatus.subtitle}
+              {/* 3. Driver Info Text */}
+              <View style={styles.statusTextCol}>
+                {/* Dynamic Title: "John is on the way" */}
+                <Text style={styles.statusTitle}>
+                  {driver?.name
+                    ? `${driver.name} is on the way`
+                    : activeRideStatus.title}
                 </Text>
+
+                <View style={styles.liveIndicatorRow}>
+                  {/* Status Dot */}
+                  <View
+                    style={[
+                      styles.pulsingDot,
+                      { backgroundColor: activeRideStatus.color },
+                    ]}
+                  />
+
+                  <Text style={styles.statusSubtitle}>
+                    {driver?.vehicle ? driver.vehicle : activeRideStatus.subtitle}
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
 
-          {/* Action Button */}
-          <View style={styles.statusActionRow}>
-            <TouchableOpacity
-              style={[
-                styles.trackBtn,
-                { backgroundColor: activeRideStatus.color, flex: 1 },
-              ]}
-              onPress={() => setScreen("trackDriver")}
-            >
-              <Text style={styles.trackBtnText}>Track Ride</Text>
-              <Entypo name="chevron-right" size={18} color="black" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.chatBtn}
-              onPress={() => setScreen("chatScreen")}
-            >
-              <Ionicons name="chatbubble-ellipses" size={24} color="#000" />
-            </TouchableOpacity>{" "}
-            {/* Added closing tag */}
-          </View>
-
-          {rideState === "driver_on_way" && (
-            <TouchableOpacity
-              style={[
-                styles.cancelRideButton,
-                isCanceling && { backgroundColor: "#444444ff" },
-              ]}
-              onPress={handleCancelPress}
-              disabled={isCanceling}
-            >
-              {isCanceling ? (
-                <ActivityIndicator size="small" color="#ff4444" />
-              ) : (
-                <Text style={styles.cancelRideButtonText}>Cancel Ride</Text>
-              )}
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
-
-      <Text style={styles.sectionTitle}>Suggestion</Text>
-      <View style={styles.suggestionRow}>
-        <TouchableOpacity
-          style={styles.suggestionCard}
-          onPress={() => setScreen("setLocation")}
-        >
-          <Image
-            source={require("../../assets/images/car.png")}
-            style={styles.suggestionIcon}
-          />
-          <Text style={styles.suggestionText}>Ride</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.suggestionCard}
-          onPress={() => setShowComingSoonModal(true)}
-        >
-          <Image
-            source={require("../../assets/images/courier.png")}
-            style={styles.suggestionIcon}
-          />
-          <Text style={styles.suggestionText}>Courier</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.suggestionCard}
-          onPress={() => setShowComingSoonModal(true)}
-        >
-          <Image
-            source={require("../../assets/images/reserve.png")}
-            style={styles.suggestionIcon}
-          />
-          <Text style={styles.suggestionText}>Reserve</Text>
-        </TouchableOpacity>
-      </View>
-
-      <FlatList
-        data={banners}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.banner}
-            onPress={() => setShowComingSoonModal(true)}
-            activeOpacity={0.8}
-          >
-            <View>
-              <Text style={styles.bannerText}>{item.text}</Text>
+            {/* Action Button */}
+            <View style={styles.statusActionRow}>
               <TouchableOpacity
-                style={styles.bannerBtn}
-                onPress={() => setShowComingSoonModal(true)}
+                style={[
+                  styles.trackBtn,
+                  { backgroundColor: activeRideStatus.color, flex: 1 },
+                ]}
+                onPress={() => setScreen("trackDriver")}
               >
-                <Text style={styles.bannerBtnText}>
-                  Try our Premium Package
-                </Text>
+                <Text style={styles.trackBtnText}>Track Ride</Text>
+                <Entypo name="chevron-right" size={18} color="black" />
               </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.chatBtn}
+                onPress={() => setScreen("chatScreen")}
+              >
+                <Ionicons name="chatbubble-ellipses" size={24} color="#000" />
+              </TouchableOpacity>{" "}
+              {/* Added closing tag */}
             </View>
-            <Image source={item.image} style={styles.bannerImage} />
-          </TouchableOpacity>
+
+            {rideState === "driver_on_way" && (
+              <TouchableOpacity
+                style={[
+                  styles.cancelRideButton,
+                  isCanceling && { backgroundColor: "#444444ff" },
+                ]}
+                onPress={handleCancelPress}
+                disabled={isCanceling}
+              >
+                {isCanceling ? (
+                  <ActivityIndicator size="small" color="#ff4444" />
+                ) : (
+                  <Text style={styles.cancelRideButtonText}>Cancel Ride</Text>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
         )}
-        contentContainerStyle={{ paddingRight: 20 }}
-      />
 
-      <ComingSoonModal
-        isVisible={showComingSoonModal}
-        onClose={() => setShowComingSoonModal(false)}
-      />
+        <Text style={styles.sectionTitle}>Suggestion</Text>
+        <View style={styles.suggestionRow}>
+          <TouchableOpacity
+            style={styles.suggestionCard}
+            onPress={() => setScreen("setLocation")}
+          >
+            <Image
+              source={require("../../assets/images/car.png")}
+              style={styles.suggestionIcon}
+            />
+            <Text style={styles.suggestionText}>Ride</Text>
+          </TouchableOpacity>
 
-      <View style={styles.recentRideHeader}>
-        <Text style={styles.sectionTitle}>Recent Ride</Text>
-      </View>
+          <TouchableOpacity
+            style={styles.suggestionCard}
+            onPress={() => setShowComingSoonModal(true)}
+          >
+            <Image
+              source={require("../../assets/images/courier.png")}
+              style={styles.suggestionIcon}
+            />
+            <Text style={styles.suggestionText}>Courier</Text>
+          </TouchableOpacity>
 
-      <View style={styles.emptyRideCard}>
-        <View style={styles.emptyRideIconContainer}>
-          <FontAwesome5 name="car" size={40} color="#FEB914" />
+          <TouchableOpacity
+            style={styles.suggestionCard}
+            onPress={() => setShowComingSoonModal(true)}
+          >
+            <Image
+              source={require("../../assets/images/reserve.png")}
+              style={styles.suggestionIcon}
+            />
+            <Text style={styles.suggestionText}>Reserve</Text>
+          </TouchableOpacity>
         </View>
-        <Text style={styles.emptyRideTitle}>No Recent Rides</Text>
-        <Text style={styles.emptyRideMessage}>
-          Take a ride to see your ride history here
-        </Text>
-        <TouchableOpacity
-          style={styles.emptyRideButton}
-          onPress={() => setScreen("setLocation")}
-        >
-          <Text style={styles.emptyRideButtonText}>Book a Ride</Text>
-        </TouchableOpacity>
-      </View>
 
-      <View style={styles.analyticsCard}>
-        <Text style={styles.analyticsTitle}>Check your ride Analytics</Text>
-        <TouchableOpacity
-          style={styles.analyticsButton}
-          onPress={() => setScreen("analyticsScreen")}
-        >
-          <Text style={styles.analyticsButtonText}>View your Ride Summary</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* <TouchableOpacity style={styles.resetButton} onPress={resetRide}>
-        <Text style={styles.resetButtonText}>
-          Debug: Reset, current state: {rideState}
-        </Text>
-      </TouchableOpacity> */}
-
-      <Text style={styles.sectionTitle}>Special Service</Text>
-      <View style={styles.specialServiceRow}>
         <FlatList
-          data={[
-            {
-              id: "1",
-              image: require("../../assets/images/car2.png"),
-              title: "Our Special AI Security",
-              subtitle: "Checkout our Special AI",
-            },
-            {
-              id: "2",
-              image: require("../../assets/images/car2.png"),
-              title: "Share your Ride",
-              subtitle: "See how to share ride",
-            },
-            {
-              id: "3",
-              image: require("../../assets/images/car2.png"),
-              title: "Share your Ride",
-              subtitle: "See how to share ride",
-            },
-          ]}
+          data={banners}
           horizontal
           showsHorizontalScrollIndicator={false}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={styles.specialCard}
+              style={styles.banner}
               onPress={() => setShowComingSoonModal(true)}
+              activeOpacity={0.8}
             >
-              <Image source={item.image} style={styles.specialImage} />
-              <Text style={styles.specialTitle}>{item.title}</Text>
-              <Text style={styles.specialSub}>{item.subtitle}</Text>
+              <View>
+                <Text style={styles.bannerText}>{item.text}</Text>
+                <TouchableOpacity
+                  style={styles.bannerBtn}
+                  onPress={() => setShowComingSoonModal(true)}
+                >
+                  <Text style={styles.bannerBtnText}>
+                    Try our Premium Package
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <Image source={item.image} style={styles.bannerImage} />
             </TouchableOpacity>
           )}
           contentContainerStyle={{ paddingRight: 20 }}
         />
-      </View>
 
-      <UploadPhotoOverlay
-        isVisible={showUploadOverlay}
-        onClose={() => setShowUploadOverlay(false)}
-        onTakePhoto={takePhoto}
-        imageUri={imageUri}
-        onSubmit={uploadPhotoToServer}
-        loading={uploadMutation.isPending}
-      />
+        <ComingSoonModal
+          isVisible={showComingSoonModal}
+          onClose={() => setShowComingSoonModal(false)}
+        />
 
-      <AdditionalInfoOverlay
-        isVisible={showAdditionalInfoOverlay}
-        onClose={() => setShowAdditionalInfoOverlay(false)}
-        profileImageId={uploadedProfileImageId}
-        onSubmit={handleAdditionalInfoSubmit}
-        loading={updateProfileMutation.isPending}
-      />
+        <View style={styles.recentRideHeader}>
+          <Text style={styles.sectionTitle}>Recent Ride</Text>
+        </View>
 
-      <LoginSuccessModal
-        isVisible={showLoginSuccessModal}
-        onClose={handleLoginSuccessClose}
-      />
+        <View style={styles.emptyRideCard}>
+          <View style={styles.emptyRideIconContainer}>
+            <FontAwesome5 name="car" size={40} color="#FEB914" />
+          </View>
+          <Text style={styles.emptyRideTitle}>No Recent Rides</Text>
+          <Text style={styles.emptyRideMessage}>
+            Take a ride to see your ride history here
+          </Text>
+          <TouchableOpacity
+            style={styles.emptyRideButton}
+            onPress={() => setScreen("setLocation")}
+          >
+            <Text style={styles.emptyRideButtonText}>Book a Ride</Text>
+          </TouchableOpacity>
+        </View>
 
-      <AreaFadaOverlay
-        visible={showAreaFadaOverlay}
-        onClose={() => setShowAreaFadaOverlay(false)}
-      />
+        <View style={styles.analyticsCard}>
+          <Text style={styles.analyticsTitle}>Check your ride Analytics</Text>
+          <TouchableOpacity
+            style={styles.analyticsButton}
+            onPress={() => setScreen("analyticsScreen")}
+          >
+            <Text style={styles.analyticsButtonText}>View your Ride Summary</Text>
+          </TouchableOpacity>
+        </View>
 
-      <DriverOnWayModal
-        isVisible={showDriverOnWayModal}
-        onClose={() => setShowDriverOnWayModal(false)}
-      />
+        {/* <TouchableOpacity style={styles.resetButton} onPress={resetRide}>
+        <Text style={styles.resetButtonText}>
+          Debug: Reset, current state: {rideState}
+        </Text>
+      </TouchableOpacity> */}
 
-      <ProfileUpdateSuccessModal
-        isVisible={showProfileUpdateSuccessModal}
-        onClose={handleProfileUpdateSuccessClose}
-      />
+        <Text style={styles.sectionTitle}>Special Service</Text>
+        <View style={styles.specialServiceRow}>
+          <FlatList
+            data={[
+              {
+                id: "1",
+                image: require("../../assets/images/car2.png"),
+                title: "Our Special AI Security",
+                subtitle: "Checkout our Special AI",
+              },
+              {
+                id: "2",
+                image: require("../../assets/images/car2.png"),
+                title: "Share your Ride",
+                subtitle: "See how to share ride",
+              },
+              {
+                id: "3",
+                image: require("../../assets/images/car2.png"),
+                title: "Share your Ride",
+                subtitle: "See how to share ride",
+              },
+            ]}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.specialCard}
+                onPress={() => setShowComingSoonModal(true)}
+              >
+                <Image source={item.image} style={styles.specialImage} />
+                <Text style={styles.specialTitle}>{item.title}</Text>
+                <Text style={styles.specialSub}>{item.subtitle}</Text>
+              </TouchableOpacity>
+            )}
+            contentContainerStyle={{ paddingRight: 20 }}
+          />
+        </View>
 
-      {/* Cancel Ride Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={cancelModalVisible}
-        onRequestClose={() => setCancelModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.cancelModalContent}>
-            {/* Modal Header */}
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Why are you cancelling?</Text>
-              <TouchableOpacity onPress={() => setCancelModalVisible(false)}>
-                <Ionicons name="close" size={24} color="#999" />
+        <UploadPhotoOverlay
+          isVisible={showUploadOverlay}
+          onClose={() => setShowUploadOverlay(false)}
+          onTakePhoto={takePhoto}
+          imageUri={imageUri}
+          onSubmit={uploadPhotoToServer}
+          loading={uploadMutation.isPending}
+        />
+
+        <AdditionalInfoOverlay
+          isVisible={showAdditionalInfoOverlay}
+          onClose={() => setShowAdditionalInfoOverlay(false)}
+          profileImageId={uploadedProfileImageId}
+          onSubmit={handleAdditionalInfoSubmit}
+          loading={updateProfileMutation.isPending}
+        />
+
+        <LoginSuccessModal
+          isVisible={showLoginSuccessModal}
+          onClose={handleLoginSuccessClose}
+        />
+
+        <AreaFadaOverlay
+          visible={showAreaFadaOverlay}
+          onClose={() => setShowAreaFadaOverlay(false)}
+        />
+
+        <DriverOnWayModal
+          isVisible={showDriverOnWayModal}
+          onClose={() => setShowDriverOnWayModal(false)}
+        />
+
+        <ProfileUpdateSuccessModal
+          isVisible={showProfileUpdateSuccessModal}
+          onClose={handleProfileUpdateSuccessClose}
+        />
+
+        {/* Cancel Ride Modal */}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={cancelModalVisible}
+          onRequestClose={() => setCancelModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.cancelModalContent}>
+              {/* Modal Header */}
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Why are you cancelling?</Text>
+                <TouchableOpacity onPress={() => setCancelModalVisible(false)}>
+                  <Ionicons name="close" size={24} color="#999" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Reasons List */}
+              <View style={styles.reasonsContainer}>
+                {CANCELLATION_REASONS.map((reason) => (
+                  <TouchableOpacity
+                    key={reason}
+                    style={[
+                      styles.reasonButton,
+                      selectedCancelReason === reason &&
+                      styles.reasonButtonSelected,
+                    ]}
+                    onPress={() => setSelectedCancelReason(reason)}
+                  >
+                    <Text
+                      style={[
+                        styles.reasonText,
+                        selectedCancelReason === reason &&
+                        styles.reasonTextSelected,
+                      ]}
+                    >
+                      {reason}
+                    </Text>
+                    {selectedCancelReason === reason && (
+                      <Ionicons name="checkmark-circle" size={20} color="#000" />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Confirm Button */}
+              <TouchableOpacity
+                style={[
+                  styles.confirmCancelButton,
+                  (!selectedCancelReason || isCanceling) && {
+                    backgroundColor: "#202020ff",
+                  },
+                ]}
+                onPress={submitCancellation}
+                disabled={!selectedCancelReason || isCanceling}
+              >
+                {isCanceling ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text style={styles.confirmCancelText}>Cancel Ride</Text>
+                )}
               </TouchableOpacity>
             </View>
-
-            {/* Reasons List */}
-            <View style={styles.reasonsContainer}>
-              {CANCELLATION_REASONS.map((reason) => (
-                <TouchableOpacity
-                  key={reason}
-                  style={[
-                    styles.reasonButton,
-                    selectedCancelReason === reason &&
-                    styles.reasonButtonSelected,
-                  ]}
-                  onPress={() => setSelectedCancelReason(reason)}
-                >
-                  <Text
-                    style={[
-                      styles.reasonText,
-                      selectedCancelReason === reason &&
-                      styles.reasonTextSelected,
-                    ]}
-                  >
-                    {reason}
-                  </Text>
-                  {selectedCancelReason === reason && (
-                    <Ionicons name="checkmark-circle" size={20} color="#000" />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Confirm Button */}
-            <TouchableOpacity
-              style={[
-                styles.confirmCancelButton,
-                (!selectedCancelReason || isCanceling) && {
-                  backgroundColor: "#202020ff",
-                },
-              ]}
-              onPress={submitCancellation}
-              disabled={!selectedCancelReason || isCanceling}
-            >
-              {isCanceling ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <Text style={styles.confirmCancelText}>Cancel Ride</Text>
-              )}
-            </TouchableOpacity>
           </View>
-        </View>
-      </Modal>
-    </ScrollView>
+        </Modal>
+      </ScrollView>
+    </View>
   );
 }
 
