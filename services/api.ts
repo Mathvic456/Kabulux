@@ -67,6 +67,7 @@ api.interceptors.request.use(
 
     if (getValidTokenFn) {
       token = await getValidTokenFn();
+      // console.log(`[API Request] Token attached: ${!!token}`);
     } else {
       console.warn(`[API Request] Auth getter not initialized yet`);
     }
@@ -95,7 +96,7 @@ api.interceptors.response.use(
     }
 
     const requestId = Math.random().toString(36).substring(7);
-    console.error(`🔐 [API Error ${requestId}] 401 Detected`);
+    console.error(`[API Error ${requestId}] 401 Detected`);
 
     if (originalRequest._retry) {
       console.error(`[API Error ${requestId}] Retry failed, logging out`);

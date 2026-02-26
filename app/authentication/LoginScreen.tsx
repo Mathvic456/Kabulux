@@ -1,10 +1,12 @@
 import CustomButton from "@/components/ui/CustomButton";
 import GoogleSignInButton from "@/components/ui/GoogleSignInButton";
 import { useAuth } from "@/context/AuthContext";
+import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useLoginEndPoint } from "@/services/authentication.service";
 import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import React, { useState } from "react";
+
 import {
   Image,
   KeyboardAvoidingView,
@@ -28,6 +30,7 @@ export default function LoginScreen({
   goRegister: () => void;
   goForgot: () => void;
 }) {
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -39,7 +42,12 @@ export default function LoginScreen({
   const { expoPushToken, registerForPushNotificationsAsync } = usePushNotifications();
   const { mutate: login, isPending: isLoginPending } = useLoginEndPoint(setTokens, remember);
 
-  const isLoading = isLoginPending || isSubmitting;
+  const { promptGoogleSignIn, isLoading: isGoogleLoading } = useGoogleAuth({
+    onSuccess: next,
+    onError: (msg) => console.error('[Google Auth]', msg),
+  });
+
+  const isLoading = isLoginPending || isSubmitting || isGoogleLoading;
 
   const validateForm = () => {
     let valid = true;
@@ -99,20 +107,6 @@ export default function LoginScreen({
     }
   };
 
-  const handleGoogleLogin = async (idToken: string) => {
-    try {
-      const result = await fetch(`${process.env.EXPO_PUBLIC_API_URL}auth/google_auth/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_token: idToken, role: 'rider' }),
-      });
-      const data = await result.json();
-      console.log('Google login success:', data);
-      // TODO: store tokens and call next()
-    } catch (error: any) {
-      console.log('Google login error:', error.message);
-    }
-  };
 
   return (
     <KeyboardAvoidingView
@@ -202,9 +196,9 @@ export default function LoginScreen({
           </View>
 
           <GoogleSignInButton
-            onSuccess={handleGoogleLogin}
-            onError={(e) => console.log('Google error:', e)}
+            onPress={promptGoogleSignIn}
             disabled={isLoading}
+            loading={isGoogleLoading}
           />
 
           <View style={{ marginTop: 20 }}>

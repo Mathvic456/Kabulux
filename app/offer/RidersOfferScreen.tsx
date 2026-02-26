@@ -325,6 +325,7 @@ export default function RiderOffersScreen({ goBack, next, rideData }: RiderOffer
     rideRequestId: string,
     price: number,
   ) => {
+    console.log({ 'offerId': offerId, 'rideRequestId': rideRequestId, 'price': price })
     if (!isConnected && !isOnline) {
       return Alert.alert(
         "No Connection",
@@ -443,6 +444,7 @@ export default function RiderOffersScreen({ goBack, next, rideData }: RiderOffer
   );
 
   const renderOffer = ({ item }: { item: OfferItem }) => {
+    console.log('itemmmmm', item)
     const busy = !!busyMap[item.id];
     const diff = item.negotiated_price - item.counter_offer;
 

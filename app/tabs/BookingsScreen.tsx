@@ -1,23 +1,20 @@
 import { Ride, RideCard } from "@/components/RideCard";
 import { RideHistoryAPIItem, useRideHistory } from "@/services/rides.service";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import * as Print from "expo-print";
+import * as Sharing from "expo-sharing";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert, // <--- Added Alert Import
   Modal,
-  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
-
-import * as FileSystem from "expo-file-system"; // Standard import (SDK 54+)
-import * as Print from "expo-print";
-import * as Sharing from "expo-sharing";
 
 interface BookingsScreenProps {
   setScreen: (screen: string) => void;
@@ -219,70 +216,35 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({
       setIsDownloading(true);
 
       const html = generateReceiptHTML(ride);
-      const safeId = String(ride.id).replace(/[^a-zA-Z0-9]/g, "_");
-      const fileName = `Kablux_Receipt_${safeId}.pdf`;
 
-      const { uri: tempUri } = await Print.printToFileAsync({
+      const safeId = String(ride.id || Date.now()).replace(
+        /[^a-zA-Z0-9]/g,
+        "_"
+      );
+
+      // 1️⃣ Generate PDF
+      const { uri } = await Print.printToFileAsync({
         html,
-        base64: true,
+        base64: false,
       });
 
-      if (Platform.OS === "android" && FileSystem.StorageAccessFramework) {
-        try {
-          // Ask user for permission to save in a specific folder
-          const permissions =
-            await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+      // 2️⃣ Open system save/share sheet directly
+      const available = await Sharing.isAvailableAsync();
 
-          if (permissions.granted) {
-            // Create the file in the chosen folder
-            const newFileUri =
-              await FileSystem.StorageAccessFramework.createFileAsync(
-                permissions.directoryUri,
-                fileName,
-                "application/pdf",
-              );
-
-            // Read the temp file and write to the new location
-            // Note: We already have base64 data available if we wanted,
-            // but reading from the tempUri is reliable.
-            const fileString = await FileSystem.readAsStringAsync(tempUri, {
-              encoding: FileSystem.EncodingType.Base64,
-            });
-
-            await FileSystem.writeAsStringAsync(newFileUri, fileString, {
-              encoding: FileSystem.EncodingType.Base64,
-            });
-
-            Alert.alert("Success", "Receipt saved to your Downloads folder");
-            return; // Exit function on success
-          } else {
-            return;
-          }
-        } catch (androidError) {
-          console.log(
-            "Android SAF failed, falling back to Share:",
-            androidError,
-          );
-          // If SAF fails for any reason, fall through to the Sharing code below
-        }
+      if (!available) {
+        Alert.alert("Error", "Sharing not available on this device.");
+        return;
       }
 
-      // ============================================================
-      // iOS / FALLBACK STRATEGY (Share Sheet)
-      // ============================================================
-      // This runs for iOS OR if Android SAF failed/was unavailable
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(tempUri, {
-          mimeType: "application/pdf",
-          dialogTitle: "Save Receipt",
-          UTI: "com.adobe.pdf",
-        });
-      } else {
-        Alert.alert("Error", "Sharing is not available on this device");
-      }
+      await Sharing.shareAsync(uri, {
+        mimeType: "application/pdf",
+        dialogTitle: `Download Kablux Receipt`,
+        UTI: "com.adobe.pdf",
+      });
+
     } catch (error) {
-      console.error("Receipt Download Error:", error);
-      Alert.alert("Error", "Could not download receipt. Please try again.");
+      console.error("Receipt error:", error);
+      Alert.alert("Error", "Could not download receipt.");
     } finally {
       setIsDownloading(false);
     }
@@ -417,12 +379,12 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({
       >
         {filteredRides.length > 0
           ? filteredRides.map((ride, index) => (
-              <RideCard
-                key={`${ride.id}-${index}`}
-                ride={ride}
-                onPress={() => openReceiptModal(ride)}
-              />
-            ))
+            <RideCard
+              key={`${ride.id}-${index}`}
+              ride={ride}
+              onPress={() => openReceiptModal(ride)}
+            />
+          ))
           : renderEmptyState()}
       </ScrollView>
 

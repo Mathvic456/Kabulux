@@ -137,7 +137,7 @@ export default function SettingsScreen({ setScreen, goBack }) {
         {
           icon: "notifications-outline",
           label: "Notifications",
-          action: () => setScreen("notifications"),
+          // action: () => setScreen("notifications"),
           hasToggle: true,
           toggleValue: notificationsEnabled,
           toggleAction: setNotificationsEnabled,
@@ -239,7 +239,8 @@ export default function SettingsScreen({ setScreen, goBack }) {
                   key={itemIndex}
                   style={[
                     styles.item,
-                    itemIndex !== section.items.length - 1 && styles.itemWithBorder,
+                    itemIndex !== section.items.length - 1 &&
+                    styles.itemWithBorder,
                   ]}
                   onPress={item.action}
                   disabled={!item.action && !item.hasToggle}

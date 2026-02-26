@@ -6,10 +6,10 @@ export default {
     slug: "kablux-rider",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/images/log.png",
+    icon: "./assets/icons/rider-logo.png",
     scheme: "com.crashingout.kablux",
     userInterfaceStyle: "automatic",
-    newArchEnabled: true,
+    newArchEnabled: false,
     notification: {
       color: "#ffffff"
     },
@@ -46,6 +46,7 @@ export default {
     plugins: [
       "expo-router",
       "expo-font",
+      "@react-native-google-signin/google-signin",
       [
         "expo-splash-screen",
         {
