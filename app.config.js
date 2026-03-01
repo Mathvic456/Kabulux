@@ -9,7 +9,7 @@ export default {
     icon: "./assets/icons/r-logo.png",
     scheme: "com.crashingout.kablux",
     userInterfaceStyle: "automatic",
-    newArchEnabled: false,
+    newArchEnabled: true,
     notification: {
       color: "#ffffff"
     },
@@ -18,7 +18,7 @@ export default {
       config: {
         googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
       },
-      buildNumber: "33"
+      buildNumber: "34"
     },
 
     android: {
