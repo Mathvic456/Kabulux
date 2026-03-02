@@ -49,7 +49,8 @@ const styles = StyleSheet.create({
     },
     modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 20 },
     modalOption: {
-        padding: 15,
+        padding: 5,
+        paddingVertical: 15,
         backgroundColor: "#f5f5f5",
         borderRadius: 10,
         marginVertical: 8,
@@ -59,9 +60,13 @@ const styles = StyleSheet.create({
     modalOptionText: { fontSize: 16, color: "#333" },
     modalCloseButton: {
         marginTop: 15,
-        padding: 10,
+        padding: 5,
+        paddingVertical: 15,
         backgroundColor: "#f6a623",
         borderRadius: 10,
+        width: "100%",
+        alignItems: "center",
+        justifyContent: "center",
     },
     modalCloseText: { color: "white", fontWeight: "bold" },
 });

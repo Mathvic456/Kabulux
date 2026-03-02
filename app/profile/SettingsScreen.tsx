@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Modal,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Switch,
   Text,
@@ -217,6 +218,7 @@ export default function SettingsScreen({ setScreen, goBack }) {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#000" />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>

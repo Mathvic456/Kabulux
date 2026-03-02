@@ -11,13 +11,14 @@ export interface PaystackInitResponse {
   access_code: string;
   reference: string;
 }
+
 export type WalletBalanceResponse = {
   balance: number;
   currency?: string;
 };
 
 export type Transaction = {
-  id: string; // Changed from number to string
+  id: string;
   amount: string | null;
   channel: string;
   direction: "credit" | "debit" | "";
@@ -28,17 +29,20 @@ export type Transaction = {
   date?: string;
 };
 
-// CORRECTED: Matches the JSON log structure {"data": [...], "status": "success"}
 export type TransactionsResponse = {
   status: string;
   message: string;
-  data: Transaction[]; // Key is 'data', not 'results'
+  data: Transaction[];
   errors: any;
+  // Pagination fields (if backend supports them)
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
 };
 
-// --- New Types for Withdrawal ---
 export type WithdrawPayload = {
   amount: number;
+  reason?: string;
 };
 
 export type WithdrawResponse = {
@@ -59,16 +63,20 @@ export type CreateRecipientPayload = {
   bank_code: string;
 };
 
+export type TransactionFilters = {
+  filter?: "all" | "today" | "week" | "month";
+  page?: number;
+  page_size?: number;
+};
+
 // --- Hooks ---
 
 const useFundWalletEndPoint = () => {
   return useMutation({
     mutationFn: async (data: FundWalletPayload) => {
-      // Using your original endpoint
       return api.post<PaystackInitResponse>("/wallets/fund_initiate/", data);
     },
     onSuccess: (res) => {
-      console.log(res);
       const paystackUrl = res.data?.authorization_url;
       console.log("Paystack checkout URL:", paystackUrl);
     },
@@ -83,33 +91,36 @@ const useGetMyBalance = () => {
     queryKey: ["balance"],
     queryFn: async () => {
       const res = await api.get<any>("/wallets/my_balance/");
-
-      console.log("DEBUG BALANCE RAW:", res);
-
       const responseData = res.data ? res.data : res;
-
-      // Check if balance is nested inside another 'data' key or at the root
       if (responseData.data && responseData.data.balance !== undefined) {
         return responseData.data;
       } else if (responseData.balance !== undefined) {
         return responseData;
       }
-
       return { balance: 0 };
     },
   });
 };
 
-const useGetMyTransactions = (options?: {
-  enabled?: boolean;
-  refetchInterval?: number;
-}) => {
+const useGetMyTransactions = (
+  filters?: TransactionFilters,
+  options?: {
+    enabled?: boolean;
+    refetchInterval?: number;
+  }
+) => {
+  const page = filters?.page ?? 1;
+  const page_size = filters?.page_size ?? 10;
+
   return useQuery({
-    queryKey: ["myTransactions"],
+    queryKey: ["myTransactions", page, page_size],
     queryFn: async () => {
-      // Using your original endpoint
+      const params = new URLSearchParams();
+      params.append("page", String(page));
+      params.append("page_size", String(page_size));
+
       const res = await api.get<TransactionsResponse>(
-        "/wallets/my_transactions/",
+        `/wallets/my_transactions/?${params.toString()}`
       );
       console.log("Transaction Data:", res.data);
       return res.data;
@@ -137,7 +148,7 @@ const useCreateTransferRecipient = () => {
     mutationFn: async (data: CreateRecipientPayload) => {
       return api.post<CreateRecipientResponse>(
         "/wallets/create_transfer_recipient/",
-        data,
+        data
       );
     },
     onSuccess: (res) => {
@@ -154,6 +165,5 @@ export {
   useFundWalletEndPoint,
   useGetMyBalance,
   useGetMyTransactions,
-  useWithdrawFunds
+  useWithdrawFunds,
 };
-

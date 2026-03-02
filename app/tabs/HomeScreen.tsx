@@ -1566,9 +1566,9 @@ const styles = StyleSheet.create({
   suggestionCard: {
     backgroundColor: "#1a1a1a",
     borderRadius: 10,
-    padding: 15,
     alignItems: "center",
     width: "30%",
+    paddingVertical: 10,
   },
   suggestionIcon: {
     width: 32,

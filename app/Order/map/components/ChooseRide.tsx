@@ -216,7 +216,7 @@ export default function ChooseRide({ setModal, setScreen }: ChooseRideProps) {
                 <>
                     <View>
                         {fetchedRideOptions.map((option, index) => (
-                            <TouchableOpacity
+                            option.carType === "standard Vehicle" ? <TouchableOpacity
                                 key={index}
                                 style={[
                                     styles.rideOptionItem,
@@ -225,7 +225,7 @@ export default function ChooseRide({ setModal, setScreen }: ChooseRideProps) {
                                         borderWidth: 2,
                                     },
                                 ]}
-                                onPress={() => setSelectedRide(option.name)}
+                                onPress={() => { if (option.carType === "standard Vehicle") { setSelectedRide(option.name) } }}
                             >
                                 <Image source={option.image} style={styles.rideImage} />
                                 <View style={styles.rideDetails}>
@@ -243,6 +243,7 @@ export default function ChooseRide({ setModal, setScreen }: ChooseRideProps) {
                                     {option.originalPrice && <Text style={styles.rideOriginalPrice}>{option?.originalPrice}</Text>}
                                 </View>
                             </TouchableOpacity>
+                                : null
                         ))}
                     </View>
 
@@ -312,7 +313,8 @@ const styles = StyleSheet.create({
     paymentText: { fontSize: 16, color: "white", marginLeft: 15 },
     confirmButton: {
         borderRadius: 10,
-        padding: 15,
+        padding: 5,
+        paddingVertical: 15,
         alignItems: "center",
         marginTop: 20,
         marginBottom: 10
