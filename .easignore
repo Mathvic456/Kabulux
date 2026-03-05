@@ -5,3 +5,4 @@ android/build
 android/app/build
 android/.cxx
 *.log
+ios

@@ -8,7 +8,7 @@ export const useProfile = () => {
     queryFn: async () => {
       try {
         console.log("📥 [Profile] Fetching user profile...");
-        const response = await api.get<{ data: ProfileResponse }>("users/me");
+        const response = await api.get<{ data: ProfileResponse }>("users/me/");
         console.log(
           "[Profile] Profile fetched successfully:",
           response.data.data,

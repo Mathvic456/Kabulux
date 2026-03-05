@@ -89,7 +89,7 @@ export default function LoginScreen({
       }
 
       login(
-        { email, password, role: "rider", fcm_token: token, type: "android" },
+        { email, password, role: "rider", fcm_token: token, type: "iPhone" },
         {
           onSuccess: () => next(),
           onError: (error: any) => {

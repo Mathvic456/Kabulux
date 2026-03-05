@@ -799,7 +799,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
   const banners = [
     {
       id: "1",
-      text: "Save up to 30% on Kablux\nand ride with style",
+      text: "Save up to 30% on \nand ride with style",
       image: require("../../assets/images/person.png"),
     },
     {
@@ -1003,7 +1003,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
               onPress={() => setShowComingSoonModal(true)}
               activeOpacity={0.8}
             >
-              <View>
+              <View style={styles.bannerTextCol}>
                 <Text style={styles.bannerText}>{item.text}</Text>
                 <TouchableOpacity
                   style={styles.bannerBtn}
@@ -1014,7 +1014,9 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
                   </Text>
                 </TouchableOpacity>
               </View>
-              <Image source={item.image} style={styles.bannerImage} />
+              <View style={styles.bannerImageCol}>
+                <Image source={item.image} style={styles.bannerImage} />
+              </View>
             </TouchableOpacity>
           )}
           contentContainerStyle={{ paddingRight: 20 }}
@@ -1370,6 +1372,10 @@ const styles = StyleSheet.create({
   bannerTextContainer: {
     flex: 1,
   },
+  bannerTextCol: {
+    flex: 1,
+    maxWidth: "auto"
+  },
   bannerTitle: {
     color: "#fff",
     fontSize: 18,
@@ -1599,7 +1605,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#000",
     borderRadius: 8,
     paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
+    flexShrink: 1,
     alignSelf: "flex-start",
   },
   bannerBtnText: {
@@ -1607,10 +1614,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   bannerImage: {
-    width: 80,
+    width: "100%",
     height: 80,
     borderRadius: 10,
     marginLeft: 10,
+  },
+  bannerImageCol: {
+    width: 80,
+    // height: 80,
+    // borderRadius: 10,
+    // marginLeft: 10,
   },
   recentRideHeader: {
     flexDirection: "row",

@@ -55,7 +55,7 @@ export const getRideEstimate = async (rideData: object) => {
  */
 export const sendLocationData = async (locationData: object) => {
   try {
-    const response = await api.post('/locations/update', locationData);
+    const response = await api.post('/locations/update/', locationData);
     return response.data;
   } catch (error) {
     console.warn('⚠️ Failed to send location data (non-blocking):', error);

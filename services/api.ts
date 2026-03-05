@@ -12,6 +12,13 @@ console.log("[API Config] Base URL:", API_URL);
 let getValidTokenFn: (() => Promise<string | null>) | null = null;
 let globalLogoutFn: (() => Promise<void>) | null = null;
 
+// Synced from AuthContext on setTokens/clearTokens so first request after login has the token (avoids iOS timing race).
+let latestAccessToken: string | null = null;
+
+export const setLatestAccessToken = (token: string | null) => {
+  latestAccessToken = token;
+};
+
 export const setAuthTokenGetter = (fn: () => Promise<string | null>) => {
   getValidTokenFn = fn;
   console.log("[API] Auth token getter registered");
@@ -63,13 +70,9 @@ api.interceptors.request.use(
       return config;
     }
 
-    let token: string | null = null;
-
-    if (getValidTokenFn) {
+    let token: string | null = latestAccessToken;
+    if (!token && getValidTokenFn) {
       token = await getValidTokenFn();
-      // console.log(`[API Request] Token attached: ${!!token}`);
-    } else {
-      console.warn(`[API Request] Auth getter not initialized yet`);
     }
 
     if (token) {
@@ -121,9 +124,10 @@ api.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      if (!getValidTokenFn) throw new Error("No token getter");
-
-      const newToken = await getValidTokenFn();
+      let newToken: string | null = latestAccessToken;
+      if (!newToken && getValidTokenFn) {
+        newToken = await getValidTokenFn();
+      }
 
       if (!newToken) throw new Error("Failed to get valid token");
 

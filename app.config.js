@@ -6,7 +6,7 @@ export default {
     slug: "kablux-rider",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/icons/r-logo.png",
+    icon: "./assets/icons/rider-logo.png",
     scheme: "com.crashingout.kablux",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
@@ -16,9 +16,10 @@ export default {
     ios: {
       supportsTablet: true,
       config: {
-        googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
+        googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_IOS_API_KEY,
       },
-      buildNumber: "34"
+      buildNumber: "4",
+      bundleIdentifier: "com.kablux.kabluxrider",
     },
 
     android: {

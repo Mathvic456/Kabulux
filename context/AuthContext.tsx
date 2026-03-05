@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { jwtDecode } from "jwt-decode";
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { setLatestAccessToken } from "@/services/api";
 
 if (!Constants.expoConfig?.extra?.apiUrl) {
   throw new Error("API URL is missing in expoConfig.extra");
@@ -84,7 +85,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   ) => {
     console.log(`🔑 [Auth] Setting tokens (Remember Me: ${remember})`);
 
-    // Always set in Context (in-memory)
+    setLatestAccessToken(access);
     setToken(access);
     setRefreshToken(refresh);
     setRememberMe(remember);
@@ -108,7 +109,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const clearTokens = async () => {
     console.log("🚪 [Auth] Clearing all tokens");
 
-    // Clear Context
+    setLatestAccessToken(null);
     setToken(null);
     setRefreshToken(null);
     setRememberMe(false);
@@ -149,7 +150,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw new Error("Invalid refresh response");
       }
 
-      // Update Context
+      setLatestAccessToken(newAccessToken);
       setToken(newAccessToken);
 
       if (rememberMe) {
@@ -181,6 +182,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const storedToken = await AsyncStorage.getItem("token");
     if (storedToken && !isTokenExpired(storedToken)) {
       console.log("📦 [Auth] Using token from AsyncStorage");
+      setLatestAccessToken(storedToken);
       setToken(storedToken);
       return storedToken;
     }
