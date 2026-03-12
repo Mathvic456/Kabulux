@@ -1,16 +1,17 @@
 import { useRiderAnalytics } from "@/services/riderAnalytics.service";
+import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {
   Dimensions,
-  Image,
   Modal,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -152,7 +153,7 @@ export default function AnalyticsScreen({ goBack, next, setScreen }: Props) {
                   style={[
                     styles.modalOptionText,
                     selectedLocation === location &&
-                      styles.modalOptionTextSelected,
+                    styles.modalOptionTextSelected,
                   ]}
                 >
                   {location}
@@ -167,18 +168,21 @@ export default function AnalyticsScreen({ goBack, next, setScreen }: Props) {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#000" />
+
       <ScrollView style={styles.scrollContainer}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBack}>
-            <Text style={styles.backArrow}>←</Text>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Analytics Summary</Text>
         </View>
 
         {/* Search Bar */}
         <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>⌕</Text>
+          <Ionicons name="search" size={24} color="#777" />
+
           <TextInput
             style={styles.searchInput}
             placeholder="search..."
@@ -266,7 +270,7 @@ export default function AnalyticsScreen({ goBack, next, setScreen }: Props) {
         </View>
 
         {/* Suggestion Section */}
-        <Text style={styles.sectionTitle}>Suggestion</Text>
+        {/* <Text style={styles.sectionTitle}>Suggestion</Text>
         <View style={styles.suggestionGrid}>
           <View style={styles.suggestionCard}>
             <Image
@@ -295,7 +299,7 @@ export default function AnalyticsScreen({ goBack, next, setScreen }: Props) {
             />
             <Text style={styles.suggestionText}>Reserve</Text>
           </View>
-        </View>
+        </View> */}
       </ScrollView>
 
       {/* Modals */}

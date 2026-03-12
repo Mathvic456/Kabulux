@@ -122,65 +122,75 @@ const AreaFadaOverlay = ({
     <Modal animationType="slide" transparent visible={visible}>
       <View style={styles.areaFadaOverlay}>
         <View style={styles.areaFadaModalContainer}>
-          <Text style={styles.areaFadaTitle}>KabLüx</Text>
-          <Text style={styles.areaFadaSubtitle}>Area Fada</Text>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ alignItems: "center", paddingVertical: 25, paddingHorizontal: 20 }}
+          >
+            <Text style={styles.areaFadaTitle}>KabLüx</Text>
+            <Text style={styles.areaFadaSubtitle}>Area Fada</Text>
 
-          <View style={styles.areaFadaCrownContainer}>
-            <Image
-              source={require("../../assets/images/Ava.png")}
-              style={styles.areaFadaMainAvatar}
-            />
-            <FontAwesome5
-              name="crown"
-              size={40}
-              color="#FFB800"
-              style={styles.areaFadaCrown}
-            />
-          </View>
-
-          <Text style={styles.areaFadaHighlightText}>
-            You are ahead of your peeps
-          </Text>
-
-          <View style={styles.areaFadaAvatarRow}>
-            {["#D9D9D9", "#8B5E3C", "#FFB800", "#F86E6E", "#004AAD"].map(
-              (color, index) => (
-                <View
-                  key={index}
-                  style={[styles.areaFadaAvatarCircle, { borderColor: color }]}
-                >
-                  <Image
-                    source={require("../../assets/images/Ava.png")}
-                    style={styles.areaFadaSmallAvatar}
-                  />
-                </View>
-              ),
-            )}
-          </View>
-
-          <View style={styles.areaFadaStatsContainer}>
-            <View style={styles.areaFadaStatBox}>
-              <MaterialIcons name="local-taxi" size={20} color="#FFB800" />
-              <Text style={styles.areaFadaStatTitle}>Trips</Text>
-              <Text style={styles.areaFadaStatValue}>5</Text>
+            <View style={styles.areaFadaCrownContainer}>
+              <Image
+                source={require("../../assets/images/Ava.png")}
+                style={styles.areaFadaMainAvatar}
+              />
+              <FontAwesome5
+                name="crown"
+                size={40}
+                color="#FFB800"
+                style={styles.areaFadaCrown}
+              />
             </View>
 
-            <View style={styles.areaFadaStatBox}>
-              <MaterialIcons name="route" size={20} color="#FFB800" />
-              <Text style={styles.areaFadaStatTitle}>Kilometers covered</Text>
-              <Text style={styles.areaFadaStatValue}>5</Text>
+            <Text style={styles.areaFadaHighlightText}>
+              You are ahead of your peeps
+            </Text>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.areaFadaAvatarRow}
+              style={{ marginBottom: 25 }}
+            >
+              {["#D9D9D9", "#8B5E3C", "#FFB800", "#F86E6E", "#004AAD"].map(
+                (color, index) => (
+                  <View
+                    key={index}
+                    style={[styles.areaFadaAvatarCircle, { borderColor: color }]}
+                  >
+                    <Image
+                      source={require("../../assets/images/Ava.png")}
+                      style={styles.areaFadaSmallAvatar}
+                    />
+                  </View>
+                ),
+              )}
+            </ScrollView>
+
+            <View style={styles.areaFadaStatsContainer}>
+              <View style={styles.areaFadaStatBox}>
+                <MaterialIcons name="local-taxi" size={20} color="#FFB800" />
+                <Text style={styles.areaFadaStatTitle}>Trips</Text>
+                <Text style={styles.areaFadaStatValue}>5</Text>
+              </View>
+
+              <View style={styles.areaFadaStatBox}>
+                <MaterialIcons name="route" size={20} color="#FFB800" />
+                <Text style={styles.areaFadaStatTitle}>Kilometers covered</Text>
+                <Text style={styles.areaFadaStatValue}>5</Text>
+              </View>
+
+              <View style={styles.areaFadaStatBox}>
+                <FontAwesome5 name="medal" size={20} color="#FFB800" />
+                <Text style={styles.areaFadaStatTitle}>Points</Text>
+                <Text style={styles.areaFadaStatValue}>5</Text>
+              </View>
             </View>
 
-            <View style={styles.areaFadaStatBox}>
-              <FontAwesome5 name="medal" size={20} color="#FFB800" />
-              <Text style={styles.areaFadaStatTitle}>Points</Text>
-              <Text style={styles.areaFadaStatValue}>5</Text>
-            </View>
-          </View>
-
-          <TouchableOpacity style={styles.areaFadaCloseBtn} onPress={onClose}>
-            <Text style={styles.areaFadaCloseText}>Close</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={styles.areaFadaCloseBtn} onPress={onClose}>
+              <Text style={styles.areaFadaCloseText}>Close</Text>
+            </TouchableOpacity>
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -211,39 +221,51 @@ const UploadPhotoOverlay = ({
             <Entypo name="cross" size={24} color="#fff" />
           </TouchableOpacity>
 
-          <Text style={styles.overlayTitle}>Take A Photo</Text>
-          <Text style={styles.overlaySubtitle}>
-            Take a profile photo for verification
-          </Text>
-
-          <View style={styles.uploadIconContainer}>
-            {imageUri ? (
-              <Image
-                source={{ uri: imageUri }}
-                style={{ width: 120, height: 120, borderRadius: 60 }}
-              />
-            ) : (
-              <Feather name="camera" size={80} color="#f7b731" />
-            )}
-          </View>
-
-          <TouchableOpacity style={styles.uploadButton} onPress={onTakePhoto}>
-            <Text style={styles.uploadButtonText}>
-              {imageUri ? "Retake Photo" : "Take Photo"}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              alignItems: "center",
+              width: "100%",
+              paddingBottom: 10,
+            }}
+          >
+            <Text style={styles.overlayTitle}>Take A Photo</Text>
+            <Text style={styles.overlaySubtitle}>
+              Take a profile photo for verification
             </Text>
-          </TouchableOpacity>
 
-          {imageUri && (
+            <View style={styles.uploadIconContainer}>
+              {imageUri ? (
+                <Image
+                  source={{ uri: imageUri }}
+                  style={{ width: 120, height: 120, borderRadius: 60 }}
+                />
+              ) : (
+                <Feather name="camera" size={80} color="#f7b731" />
+              )}
+            </View>
+
             <TouchableOpacity
-              style={styles.submitButton}
-              onPress={onSubmit}
-              disabled={loading}
+              style={styles.uploadButton}
+              onPress={onTakePhoto}
             >
-              <Text style={styles.submitText}>
-                {loading ? "Uploading..." : "Submit"}
+              <Text style={styles.uploadButtonText}>
+                {imageUri ? "Retake Photo" : "Take Photo"}
               </Text>
             </TouchableOpacity>
-          )}
+
+            {imageUri && (
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={onSubmit}
+                disabled={loading}
+              >
+                <Text style={styles.submitText}>
+                  {loading ? "Uploading..." : "Submit"}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -1700,6 +1722,7 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: "center",
     paddingBottom: 40,
+    maxHeight: "90%",
   },
   closeButton: {
     alignSelf: "flex-end",
@@ -1860,13 +1883,12 @@ const styles = StyleSheet.create({
   },
   areaFadaModalContainer: {
     width: "88%",
+    maxHeight: "85%",
     backgroundColor: "#000",
     borderRadius: 20,
     borderWidth: 1,
     borderColor: "#FFB800",
-    paddingVertical: 25,
-    alignItems: "center",
-    padding: 20,
+    overflow: "hidden",
   },
   areaFadaTitle: {
     fontSize: 22,
@@ -1900,9 +1922,8 @@ const styles = StyleSheet.create({
   },
   areaFadaAvatarRow: {
     flexDirection: "row",
-    justifyContent: "center",
     alignItems: "center",
-    marginBottom: 25,
+    paddingHorizontal: 10,
   },
   areaFadaAvatarCircle: {
     borderWidth: 2,

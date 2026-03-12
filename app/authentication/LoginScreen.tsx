@@ -114,7 +114,7 @@ export default function LoginScreen({
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
+      <StatusBar barStyle="light-content" backgroundColor="#fcbf24" />
 
       <ScrollView
         contentContainerStyle={styles.scrollContainer}

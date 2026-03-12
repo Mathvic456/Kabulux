@@ -18,10 +18,16 @@ import {
   View,
 } from "react-native";
 import Logo from "../../assets/images/logo.png";
+const { width, height } = Dimensions.get('window');
 
 type RegisterScreenProps = {
   next: (email: string) => void;
   goLogin: () => void;
+};
+// Responsive scaling functions
+const scaleFont = (size) => {
+  const scaleFactor = width / 375;
+  return Math.round(size * Math.min(scaleFactor, 1.3));
 };
 
 export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
@@ -32,7 +38,6 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [referral, setReferral] = useState("");
-  const { width, height } = Dimensions.get('window');
   const [modalState, setModalState] = useState<{ showModal: boolean, modalErr: string }>({ showModal: false, modalErr: '' })
 
 
@@ -48,16 +53,8 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
 
   const { mutate: register, isPending } = useRegisterEndPoint();
 
-  // Responsive scaling functions
-  const scaleFont = (size) => {
-    const scaleFactor = width / 375;
-    return Math.round(size * Math.min(scaleFactor, 1.3));
-  };
 
-  const scaleSize = (size) => {
-    const scaleFactor = width / 375;
-    return Math.round(size * Math.min(scaleFactor, 1.2));
-  };
+
 
   const validateForm = () => {
     let valid = true;
@@ -193,7 +190,7 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
+      <StatusBar barStyle="light-content" backgroundColor="#fcbf24" />
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}

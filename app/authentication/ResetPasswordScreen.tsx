@@ -3,21 +3,22 @@ import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    Image,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
 import Logo from '../../assets/images/logo.png';
 
-export default function ResetPasswordScreen({ next, goLogin }: { 
+export default function ResetPasswordScreen({ next, goLogin }: {
   next: (email: any) => void;
   goLogin: () => void;
 }) {
@@ -26,14 +27,14 @@ export default function ResetPasswordScreen({ next, goLogin }: {
   const [showModal, setShowModal] = useState(false);
   const [emailError, setEmailError] = useState("");
   const forgotPassword = useForgotPassword();
-  
+
   // Email validation function
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  const handleProceed = async() => {
+  const handleProceed = async () => {
     // Clear previous errors
     setEmailError("");
 
@@ -48,10 +49,10 @@ export default function ResetPasswordScreen({ next, goLogin }: {
       return;
     }
 
-     await forgotPassword.mutateAsync({email})
-     await AsyncStorage.setItem("forgotPasswordEmail", email);
+    await forgotPassword.mutateAsync({ email })
+    await AsyncStorage.setItem("forgotPasswordEmail", email);
     console.log("📩 Email saved for OTP verification:", email);
-     setShowModal(true);
+    setShowModal(true);
   };
 
   const handleModalContinue = () => {
@@ -73,100 +74,102 @@ export default function ResetPasswordScreen({ next, goLogin }: {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 80}
     >
+      <StatusBar barStyle="light-content" backgroundColor="#fcbf24" />
+
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
-      {/* Top Banner */}
-      <View style={styles.banner} />
+        {/* Top Banner */}
+        <View style={styles.banner} />
 
-      {/* Card */}
-      <View style={styles.card}>
-        <TouchableOpacity style={styles.backButton} onPress={goLogin}>
-      <Ionicons name="arrow-back" size={22} color="#fff" />
-    </TouchableOpacity>
+        {/* Card */}
+        <View style={styles.card}>
+          <TouchableOpacity style={styles.backButton} onPress={goLogin}>
+            <Ionicons name="arrow-back" size={22} color="#fff" />
+          </TouchableOpacity>
 
-        <View style={styles.LogoContainer}>
-          <Image
-            source={Logo}
-            style={styles.Logoicon}
-          />
-        </View>
-
-        <View style={styles.envelopeContainer}>
-          <FontAwesome name="envelope" size={24} color="#fcbf24" />
-        </View>
-
-        <View style={styles.bottomSection}>
-          <Text style={styles.title}>Enter Your Email</Text>
-          <Text style={styles.subtitle}>We'll send you a verification code to reset your password</Text>
-
-          <View style={styles.inputContainer}>
-            <FontAwesome name="envelope" size={20} color="#aaa" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Email Address"
-              placeholderTextColor="#aaa"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={handleEmailChange}
+          <View style={styles.LogoContainer}>
+            <Image
+              source={Logo}
+              style={styles.Logoicon}
             />
           </View>
 
-          {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
+          <View style={styles.envelopeContainer}>
+            <FontAwesome name="envelope" size={24} color="#fcbf24" />
+          </View>
 
-          <TouchableOpacity 
-            style={[
-              styles.proceedButton,
-              (!email.trim() || isLoading) && styles.disabledButton
-            ]} 
-            onPress={handleProceed}
-            disabled={!email.trim() || forgotPassword.isPending}
-          >
-            {forgotPassword.isPending ? (
-              <ActivityIndicator color="#000" />
-            ) : (
-              <Text style={styles.proceedButtonText}>Send Code</Text>
-            )}
-          </TouchableOpacity>        
-        </View>
-      </View>
+          <View style={styles.bottomSection}>
+            <Text style={styles.title}>Enter Your Email</Text>
+            <Text style={styles.subtitle}>We'll send you a verification code to reset your password</Text>
 
-      {/* Success Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={showModal}
-        onRequestClose={() => setShowModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalIconContainer}>
-              <FontAwesome name="check-circle" size={50} color="#4CAF50" />
+            <View style={styles.inputContainer}>
+              <FontAwesome name="envelope" size={20} color="#aaa" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Email Address"
+                placeholderTextColor="#aaa"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={handleEmailChange}
+              />
             </View>
-            
-            <Text style={styles.modalTitle}>OTP Sent Successfully!</Text>
-            
-            <Text style={styles.modalMessage}>
-              A verification code has been sent to{"\n"}
-              <Text style={styles.emailText}>{email}</Text>
-            </Text>
-            
-            <Text style={styles.modalSubtext}>
-              Please check your email and enter the code to continue.
-            </Text>
 
-            <TouchableOpacity 
-              style={styles.modalButton}
-              onPress={handleModalContinue}
+            {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
+
+            <TouchableOpacity
+              style={[
+                styles.proceedButton,
+                (!email.trim() || isLoading) && styles.disabledButton
+              ]}
+              onPress={handleProceed}
+              disabled={!email.trim() || forgotPassword.isPending}
             >
-              <Text style={styles.modalButtonText}>Continue to OTP</Text>
+              {forgotPassword.isPending ? (
+                <ActivityIndicator color="#000" />
+              ) : (
+                <Text style={styles.proceedButtonText}>Send Code</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+
+        {/* Success Modal */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={showModal}
+          onRequestClose={() => setShowModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalIconContainer}>
+                <FontAwesome name="check-circle" size={50} color="#4CAF50" />
+              </View>
+
+              <Text style={styles.modalTitle}>OTP Sent Successfully!</Text>
+
+              <Text style={styles.modalMessage}>
+                A verification code has been sent to{"\n"}
+                <Text style={styles.emailText}>{email}</Text>
+              </Text>
+
+              <Text style={styles.modalSubtext}>
+                Please check your email and enter the code to continue.
+              </Text>
+
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={handleModalContinue}
+              >
+                <Text style={styles.modalButtonText}>Continue to OTP</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -175,21 +178,21 @@ export default function ResetPasswordScreen({ next, goLogin }: {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000" },
   scrollContainer: { flexGrow: 1, paddingBottom: 40 },
-  banner: { 
-    height: 200, 
-    backgroundColor: "#fcbf24", 
-    borderBottomLeftRadius: 40, 
-    borderBottomRightRadius: 40 
+  banner: {
+    height: 200,
+    backgroundColor: "#fcbf24",
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40
   },
-  card: { 
-    flex: 1, 
-    marginTop: -40, 
-    backgroundColor: "#000", 
-    borderTopLeftRadius: 40, 
-    borderTopRightRadius: 40, 
-    padding: 30, 
-    width: '95%', 
-    alignSelf: 'center' 
+  card: {
+    flex: 1,
+    marginTop: -40,
+    backgroundColor: "#000",
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    padding: 30,
+    width: '95%',
+    alignSelf: 'center'
   },
   LogoContainer: {},
   Logoicon: {
@@ -227,22 +230,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 20,
   },
-  inputContainer: { 
-    flexDirection: "row", 
-    alignItems: "center", 
-    backgroundColor: "#111", 
-    borderRadius: 10, 
-    marginBottom: 5, 
-    paddingHorizontal: 10, 
-    borderWidth: 2, 
-    borderColor: 'white', 
-    width: '100%' 
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#111",
+    borderRadius: 10,
+    marginBottom: 5,
+    paddingHorizontal: 10,
+    borderWidth: 2,
+    borderColor: 'white',
+    width: '100%'
   },
   inputIcon: { marginRight: 10 },
-  input: { 
-    flex: 1, 
-    color: "#fff", 
-    height: 50 
+  input: {
+    flex: 1,
+    color: "#fff",
+    height: 50
   },
   errorText: {
     color: '#ff5252',
@@ -330,15 +333,15 @@ const styles = StyleSheet.create({
   },
 
   backButton: {
-  flexDirection: "row",
-  alignItems: "center",
-  marginBottom: 10,
-},
-backText: {
-  color: "#fff",
-  fontSize: 16,
-  marginLeft: 6,
-  fontFamily: "BebasNeue",
-},
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  backText: {
+    color: "#fff",
+    fontSize: 16,
+    marginLeft: 6,
+    fontFamily: "BebasNeue",
+  },
 
 });
