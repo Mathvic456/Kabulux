@@ -9,6 +9,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -125,6 +126,8 @@ export default function VerifyEmailScreen({
       keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 80}
       style={{ flex: 1 }}
     >
+      <StatusBar barStyle="light-content" backgroundColor="#000" />
+
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.scrollContainer}
