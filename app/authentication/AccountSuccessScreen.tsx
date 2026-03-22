@@ -11,6 +11,9 @@
 // }
 
 import CustomButton from "@/components/ui/CustomButton";
+import { useAuth } from "@/context/AuthContext";
+import { useLoginEndPoint } from "@/services/authentication.service";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
@@ -20,12 +23,48 @@ import Success from '../../assets/images/success.png';
 
 export default function AccountSuccessScreen({ next }: { next: () => void }) {
   const [isLoading, setIsLoading] = useState(false);
-  
+  const { setTokens } = useAuth();
+  const { expoPushToken } = usePushNotifications();
+  const { mutate: login } = useLoginEndPoint(setTokens, true);
+
   const handleProceed = async() => {
     setIsLoading(true);
-    await AsyncStorage.removeItem("pendingEmail");
-    next();
-    setIsLoading(false);
+
+    try {
+      const email = await AsyncStorage.getItem("pendingEmail");
+      const password = await AsyncStorage.getItem("pendingPassword");
+
+      if (email && password) {
+        const fcmToken = expoPushToken || "";
+
+        login(
+          { email, password, role: "rider", fcm_token: fcmToken, type: "iPhone" },
+          {
+            onSuccess: async () => {
+              await AsyncStorage.removeItem("pendingEmail");
+              await AsyncStorage.removeItem("pendingPassword");
+              next();
+            },
+            onError: async () => {
+              await AsyncStorage.removeItem("pendingEmail");
+              await AsyncStorage.removeItem("pendingPassword");
+              next();
+            },
+            onSettled: () => setIsLoading(false),
+          }
+        );
+      } else {
+        await AsyncStorage.removeItem("pendingEmail");
+        await AsyncStorage.removeItem("pendingPassword");
+        next();
+        setIsLoading(false);
+      }
+    } catch {
+      await AsyncStorage.removeItem("pendingEmail");
+      await AsyncStorage.removeItem("pendingPassword");
+      next();
+      setIsLoading(false);
+    }
   };
 
 

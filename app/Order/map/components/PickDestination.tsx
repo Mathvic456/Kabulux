@@ -1,5 +1,7 @@
+import { forwardGeocode } from "@/utils/googleGeocoding";
 import { Ionicons } from "@expo/vector-icons";
-import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useCallback, useRef, useState } from "react";
+import { Dimensions, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import useMapModal from "../hooks/useMapModal";
 import { suggestedLocations } from "../lib/constants";
 import SearchModal from "./SearchModal";
@@ -13,7 +15,65 @@ export default function PickDestination({ setModal }) {
         handleSelectDestination,
         pickupLocation,
         dropoffLocation,
+        setPickupLocation,
     } = useMapModal();
+
+    const [pickupText, setPickupText] = useState(pickupLocation?.address || pickupLocation?.name || '');
+    const [dropoffText, setDropoffText] = useState(dropoffLocation?.address || '');
+    const [isGeocodingPickup, setIsGeocodingPickup] = useState(false);
+    const [isGeocodingDropoff, setIsGeocodingDropoff] = useState(false);
+    const pickupTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const dropoffTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    const handlePickupTextChange = useCallback((text: string) => {
+        setPickupText(text);
+        if (pickupTimerRef.current) clearTimeout(pickupTimerRef.current);
+        if (text.trim().length < 5) return;
+
+        pickupTimerRef.current = setTimeout(async () => {
+            setIsGeocodingPickup(true);
+            try {
+                const result = await forwardGeocode(text.trim());
+                if (result) {
+                    setPickupLocation({
+                        latitude: result.latitude,
+                        longitude: result.longitude,
+                        address: text.trim(),
+                        name: text.trim(),
+                    });
+                }
+            } catch (e) {
+                console.error('[PickDestination] Pickup geocode error:', e);
+            } finally {
+                setIsGeocodingPickup(false);
+            }
+        }, 800);
+    }, [setPickupLocation]);
+
+    const handleDropoffTextChange = useCallback((text: string) => {
+        setDropoffText(text);
+        if (dropoffTimerRef.current) clearTimeout(dropoffTimerRef.current);
+        if (text.trim().length < 5) return;
+
+        dropoffTimerRef.current = setTimeout(async () => {
+            setIsGeocodingDropoff(true);
+            try {
+                const result = await forwardGeocode(text.trim());
+                if (result) {
+                    handleSelectDestination({
+                        latitude: result.latitude,
+                        longitude: result.longitude,
+                        address: text.trim(),
+                        name: text.trim(),
+                    });
+                }
+            } catch (e) {
+                console.error('[PickDestination] Dropoff geocode error:', e);
+            } finally {
+                setIsGeocodingDropoff(false);
+            }
+        }, 800);
+    }, [handleSelectDestination]);
 
     const shortenAddress = (address: string, maxLength: number = 35) => {
         if (address && address.length <= maxLength) return address;
@@ -27,6 +87,7 @@ export default function PickDestination({ setModal }) {
             address: loc?.address,
             name: loc?.name,
         });
+        setDropoffText(loc?.address || loc?.name || '');
         setModal('chooseRide');
     };
 
@@ -55,11 +116,15 @@ export default function PickDestination({ setModal }) {
                         </View>
                         <View style={styles.inputContainer}>
                             <View style={styles.inputBox}>
-                                <Text style={styles.inputLabel}>Pick up Location</Text>
-                                <Text style={[styles.inputValue, styles.currentLocationText]}>
-                                    {pickupLocation?.name || 'Current Location'}
-                                </Text>
-                                {pickupLocation?.address && (
+                                <Text style={styles.inputLabel}>Pick up Location {isGeocodingPickup ? '(locating...)' : ''}</Text>
+                                <TextInput
+                                    style={[styles.inputValue, styles.currentLocationText, styles.editableInput]}
+                                    value={pickupText}
+                                    onChangeText={handlePickupTextChange}
+                                    placeholder="Enter pickup address"
+                                    placeholderTextColor="#666"
+                                />
+                                {pickupLocation?.address && pickupText !== pickupLocation.address && (
                                     <Text style={{ fontSize: 12, color: '#aaa', marginTop: 4 }}>
                                         {shortenAddress(pickupLocation.address, 50)}
                                     </Text>
@@ -67,12 +132,17 @@ export default function PickDestination({ setModal }) {
                             </View>
 
                             <View style={styles.inputBox}>
-                                <Text style={styles.inputLabel}>Where to?</Text>
-                                <TouchableOpacity onPress={() => setShowSearchModal(true)}>
-                                    <Text style={[styles.inputValue, dropoffLocation ? styles.selectedDestination : styles.placeholderText]}>
-                                        {dropoffLocation ? shortenAddress(dropoffLocation.address, 40) : 'Select your destination'}
-                                    </Text>
-                                </TouchableOpacity>
+                                <Text style={styles.inputLabel}>Where to? {isGeocodingDropoff ? '(locating...)' : ''}</Text>
+                                <TextInput
+                                    style={[styles.inputValue, dropoffLocation ? styles.selectedDestination : styles.placeholderText, styles.editableInput]}
+                                    value={dropoffText}
+                                    onChangeText={handleDropoffTextChange}
+                                    placeholder="Enter destination or tap to search"
+                                    placeholderTextColor="#666"
+                                    onFocus={() => {
+                                        if (!dropoffText) setShowSearchModal(true);
+                                    }}
+                                />
                             </View>
                         </View>
                     </View>
@@ -332,6 +402,11 @@ const styles = StyleSheet.create({
     selectedDestination: {
         color: '#f0d46d',
         fontWeight: '600',
+    },
+    editableInput: {
+        padding: 0,
+        margin: 0,
+        minHeight: 24,
     },
     locationAccuracy: {
         fontSize: 12,

@@ -7,6 +7,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { AppState, AppStateStatus } from "react-native";
 import { useAuth } from "./AuthContext";
 import { useRideId } from "./RideIdContext";
 
@@ -484,6 +485,33 @@ export const WebSocketProvider = ({
       }
     };
   }, [token, isOnline]);
+
+  // Reconnect when app returns to foreground
+  useEffect(() => {
+    const appStateRef = { current: AppState.currentState };
+
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (
+        appStateRef.current.match(/inactive|background/) &&
+        nextAppState === "active"
+      ) {
+        console.log("📱 [WSP] App returned to foreground");
+        // Check if socket is disconnected and reconnect
+        if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
+          console.log("🔄 [WSP] Socket disconnected while in background, reconnecting...");
+          shouldReconnect.current = true;
+          manualDisconnect.current = false;
+          reconnectAttempts.current = 0;
+          isReconnecting.current = false;
+          connectWebSocket();
+        }
+      }
+      appStateRef.current = nextAppState;
+    };
+
+    const subscription = AppState.addEventListener("change", handleAppStateChange);
+    return () => subscription.remove();
+  }, [connectWebSocket]);
 
   // Manual reconnect function
   const reconnect = useCallback(() => {

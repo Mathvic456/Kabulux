@@ -44,6 +44,41 @@ export default function RideTrackingScreen({ goBack }: { goBack: () => void }) {
     distance: number;
     duration: number;
   } | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [isLate, setIsLate] = useState(false);
+  const countdownRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (routeInfo && (rideState === "driver_on_way" || rideState === "in_progress")) {
+      const seconds = Math.ceil(routeInfo.duration * 60);
+      setCountdown(seconds);
+      setIsLate(false);
+    }
+  }, [routeInfo?.duration, rideState]);
+
+  useEffect(() => {
+    if (countdown === null) return;
+
+    if (countdown <= 0) {
+      setIsLate(true);
+      return;
+    }
+
+    countdownRef.current = setTimeout(() => {
+      setCountdown((prev) => (prev !== null ? prev - 1 : null));
+    }, 1000);
+
+    return () => {
+      if (countdownRef.current) clearTimeout(countdownRef.current);
+    };
+  }, [countdown]);
+
+  useEffect(() => {
+    if (rideState === "completed" || rideState === "idle") {
+      setCountdown(null);
+      setIsLate(false);
+    }
+  }, [rideState]);
 
   // Extract pickup location from ride details
   useEffect(() => {
@@ -316,6 +351,35 @@ export default function RideTrackingScreen({ goBack }: { goBack: () => void }) {
                 {routeInfo.distance.toFixed(1)} km •{" "}
                 {Math.ceil(routeInfo.duration)} min{" "}
                 {rideState === "in_progress" ? "to destination" : "away"}
+              </Text>
+            </View>
+          )}
+
+        {/* ETA Countdown Timer */}
+        {(rideState === "driver_on_way" || rideState === "in_progress") &&
+          countdown !== null && (
+            <View
+              style={[
+                styles.countdownBadge,
+                isLate && styles.countdownBadgeLate,
+              ]}
+            >
+              <Ionicons
+                name={isLate ? "alert-circle" : "time-outline"}
+                size={18}
+                color={isLate ? "#ff6b6b" : "#FEB914"}
+              />
+              <Text
+                style={[
+                  styles.countdownText,
+                  isLate && styles.countdownTextLate,
+                ]}
+              >
+                {isLate
+                  ? rideState === "driver_on_way"
+                    ? "Driver is late"
+                    : "Running late"
+                  : `ETA: ${Math.floor(countdown / 60)}:${String(countdown % 60).padStart(2, "0")}`}
               </Text>
             </View>
           )}
@@ -761,5 +825,31 @@ const styles = StyleSheet.create({
     fontSize: 15,
     flex: 1,
     lineHeight: 20,
+  },
+  countdownBadge: {
+    position: "absolute",
+    top: 170,
+    alignSelf: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderWidth: 1,
+    borderColor: "#FEB914",
+  },
+  countdownBadgeLate: {
+    borderColor: "#ff6b6b",
+    backgroundColor: "rgba(255, 107, 107, 0.15)",
+  },
+  countdownText: {
+    color: "#FEB914",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  countdownTextLate: {
+    color: "#ff6b6b",
   },
 });

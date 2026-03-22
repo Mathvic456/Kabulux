@@ -4,14 +4,14 @@ import { api } from "./api";
 interface RateRideParams {
   rideId: string;
   rating: number;
-  comments: string;
+  comment: string;
   role: "driver" | "rider";
 }
 
 export const useRateRideEndPoint = () => {
   return useMutation({
     mutationFn: ({ rideId, ...body }: RateRideParams) => {
-      console.log(body);
+      console.log("[Rating] Submitting:", body);
       return api.post(`rides/${rideId}/rate/`, { ...body });
     },
     onSuccess: (res) => {

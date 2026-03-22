@@ -58,7 +58,7 @@ export const RideCompletionModal = () => {
       {
         rideId: rideId,
         rating: rating,
-        comments: comment,
+        comment: comment,
         role: "rider",
       },
       {
@@ -66,9 +66,25 @@ export const RideCompletionModal = () => {
           setViewMode("success");
         },
         onError: (error: any) => {
-          const msg =
-            error.response?.data?.message ||
-            "Failed to submit rating. Please try again.";
+          const data = error.response?.data;
+          let msg = "Failed to submit rating. Please try again.";
+
+          if (data) {
+            if (typeof data === "string") {
+              msg = data;
+            } else if (data.message) {
+              msg = data.message;
+            } else if (data.detail) {
+              msg = data.detail;
+            } else if (data.rating) {
+              msg = Array.isArray(data.rating) ? data.rating[0] : data.rating;
+            } else if (data.comment) {
+              msg = Array.isArray(data.comment) ? data.comment[0] : data.comment;
+            } else if (data.non_field_errors) {
+              msg = Array.isArray(data.non_field_errors) ? data.non_field_errors[0] : data.non_field_errors;
+            }
+          }
+
           setErrorModal({ show: true, message: msg });
         },
       },

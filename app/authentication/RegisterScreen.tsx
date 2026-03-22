@@ -142,6 +142,7 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
     const last_name = rest.length > 0 ? rest.join(" ") : "";
 
     await AsyncStorage.setItem("pendingEmail", email);
+    await AsyncStorage.setItem("pendingPassword", password);
 
     register(
       {

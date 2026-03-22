@@ -1,6 +1,6 @@
 import { SocketContext } from "@/context/WebSocketProvider";
 import { Feather, Ionicons } from "@expo/vector-icons";
-import { useContext, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import useMapModal from "../hooks/useMapModal";
 import useRideEstimates from "../hooks/useRideEstimates";
@@ -38,6 +38,18 @@ export default function ChooseRide({ setModal, setScreen }: ChooseRideProps) {
 
     // Fetch ride estimates with the prepared data
     const { rideOptions: fetchedRideOptions, rideId, rideDetails, loading, error } = useRideEstimates({ rideData });
+
+    // Auto-select the first standard ride option when options load
+    useEffect(() => {
+        if (!selectedRide && fetchedRideOptions.length > 0) {
+            const standardOption = fetchedRideOptions.find(
+                (option) => option.carType === "standard Vehicle"
+            );
+            if (standardOption) {
+                setSelectedRide(standardOption.name);
+            }
+        }
+    }, [fetchedRideOptions]);
 
     const handleConfirmRide = async () => {
         const selectedOption = fetchedRideOptions.find((option) => option.name === selectedRide);

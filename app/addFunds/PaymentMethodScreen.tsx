@@ -88,20 +88,48 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
   };
 
   /* ---------------------------------- */
-  /* Backend Simulation */
+  /* Card Validation Helpers */
   /* ---------------------------------- */
-  const simulateBackendVerification = async (cardDetails: any) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // Simulate a 90% success rate
-        const isSuccess = Math.random() > 0.1;
-        if (isSuccess) {
-          resolve({ status: 'success', token: 'tok_12345' });
-        } else {
-          reject(new Error('Bank declined transaction'));
-        }
-      }, 2000); // 2 second delay
-    });
+  const luhnCheck = (cardNum: string): boolean => {
+    const digits = cardNum.replace(/\D/g, '');
+    if (digits.length < 13 || digits.length > 19) return false;
+
+    let sum = 0;
+    let isEven = false;
+    for (let i = digits.length - 1; i >= 0; i--) {
+      let digit = parseInt(digits[i], 10);
+      if (isEven) {
+        digit *= 2;
+        if (digit > 9) digit -= 9;
+      }
+      sum += digit;
+      isEven = !isEven;
+    }
+    return sum % 10 === 0;
+  };
+
+  const isExpiryValid = (expiryStr: string): boolean => {
+    const match = expiryStr.match(/^(0[1-9]|1[0-2])\/?(\d{2})$/);
+    if (!match) return false;
+
+    const month = parseInt(match[1], 10);
+    const year = parseInt(match[2], 10) + 2000;
+    const now = new Date();
+    const expiryDate = new Date(year, month); // First day of the month after expiry
+    return expiryDate > now;
+  };
+
+  const formatCardNumber = (text: string): string => {
+    const digits = text.replace(/\D/g, '').slice(0, 16);
+    return digits.replace(/(\d{4})(?=\d)/g, '$1 ');
+  };
+
+  const formatExpiry = (text: string): string => {
+    const digits = text.replace(/\D/g, '').slice(0, 4);
+    if (digits.length > 2) {
+      return digits.slice(0, 2) + '/' + digits.slice(2);
+    }
+    return digits;
   };
 
   /* ---------------------------------- */
@@ -120,22 +148,45 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
       return;
     }
 
-    // 2. Format Validation (Simple MM/YY check)
-    const expiryRegex = /^(0[1-9]|1[0-2])\/?([0-9]{2})$/;
-    if (!expiryRegex.test(expiry)) {
+    const cleaned = cardNumber.replace(/\D/g, "");
+
+    // 2. Luhn check
+    if (!luhnCheck(cleaned)) {
       setModalState({
         visible: true,
-        title: "Invalid Expiry",
-        message: "Use MM/YY format (e.g., 12/25)"
+        title: "Invalid Card",
+        message: "Please enter a valid card number."
       });
       return;
     }
 
-    if (cardNumber.length < 12) {
+    // 3. Expiry format and not-expired check
+    if (!isExpiryValid(expiry)) {
       setModalState({
         visible: true,
-        title: "Invalid Card",
-        message: "Card number is too short."
+        title: "Invalid Expiry",
+        message: "Card is expired or expiry format is invalid. Use MM/YY."
+      });
+      return;
+    }
+
+    // 4. CVV validation (3-4 digits)
+    const cvvCleaned = cvv.replace(/\D/g, '');
+    if (cvvCleaned.length < 3 || cvvCleaned.length > 4) {
+      setModalState({
+        visible: true,
+        title: "Invalid CVV",
+        message: "CVV must be 3 or 4 digits."
+      });
+      return;
+    }
+
+    // 5. Cardholder name validation
+    if (cardName.trim().length < 2) {
+      setModalState({
+        visible: true,
+        title: "Invalid Name",
+        message: "Please enter the name as shown on your card."
       });
       return;
     }
@@ -143,26 +194,15 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
     setIsLoading(true);
 
     try {
-      // 3. Prepare data
-      const cleaned = cardNumber.replace(/\D/g, "");
       const newCard: Card = {
         id: Date.now().toString(),
         last4: cleaned.slice(-4),
         brand: cleaned.startsWith("5") ? "mastercard" : "visa",
-        holder: cardName,
+        holder: cardName.trim(),
         expiry,
       };
 
-      // 4. Simulate sending to backend
-      // In a real app, you would send `cardNumber`, `cvv`, etc. here securely
-      await simulateBackendVerification({
-        number: cleaned,
-        cvv,
-        expiry,
-        name: cardName
-      });
-
-      // 5. On Success: Save locally
+      // Save card locally (card tokenization happens at payment time via Paystack)
       const updated = [...cards, newCard];
       await saveCards(updated);
 
@@ -178,14 +218,13 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
       setModalState({
         visible: true,
         title: "Success",
-        message: "Payment method verified and added."
+        message: "Payment method added successfully."
       });
 
     } catch (error: any) {
-      // 6. On Failure
       setModalState({
         visible: true,
-        title: "Verification Failed",
+        title: "Error",
         message: error.message || "Could not add card."
       });
     } finally {
@@ -263,15 +302,17 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
                     placeholderTextColor="#9CA3AF"
                     keyboardType="numeric"
                     value={cardNumber}
-                    onChangeText={(text) => setCardNumber(text.replace(/\D/g, '').slice(0, 16))} // Limit to 16 digits
+                    maxLength={19}
+                    onChangeText={(text) => setCardNumber(formatCardNumber(text))}
                   />
                   <TextInput
                     style={styles.input}
                     placeholder="MM/YY"
                     placeholderTextColor="#9CA3AF"
+                    keyboardType="numeric"
                     value={expiry}
-                    maxLength={5} // Limit length
-                    onChangeText={setExpiry}
+                    maxLength={5}
+                    onChangeText={(text) => setExpiry(formatExpiry(text))}
                   />
                   <TextInput
                     style={styles.input}
@@ -281,7 +322,7 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
                     secureTextEntry
                     value={cvv}
                     maxLength={4}
-                    onChangeText={setCvv}
+                    onChangeText={(text) => setCvv(text.replace(/\D/g, ''))}
                   />
                   <TextInput
                     style={styles.input}

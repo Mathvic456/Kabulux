@@ -272,7 +272,7 @@ export default function MainNavigator() {
     case "accountSuccess":
       return (
         <AccountSuccessScreen
-          next={() => handleSetScreen("login")}
+          next={() => handleSetScreen("dashboard")}
           goRegister={() => handleSetScreen("register")}
           goForgot={() => handleSetScreen("reset")}
         />
