@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: 'BebasNeue',
+    fontFamily: '',
     color: '#fff',
     marginBottom: 5,
   },
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   proceedButtonText: {
     color: '#000',
     fontSize: 18,
-    fontFamily: 'BebasNeue',
+    fontFamily: '',
   },
   // Modal Styles
   modalOverlay: {
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 22,
-    fontFamily: 'BebasNeue',
+    fontFamily: '',
     color: '#fff',
     marginBottom: 15,
     textAlign: 'center',
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: '#000',
     fontSize: 16,
-    fontFamily: 'BebasNeue',
+    fontFamily: '',
   },
 
   backButton: {
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     marginLeft: 6,
-    fontFamily: "BebasNeue",
+    fontFamily: "",
   },
 
 });

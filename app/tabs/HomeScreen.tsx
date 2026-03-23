@@ -849,7 +849,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
         <TouchableOpacity onPress={() => setShowAreaFadaOverlay(true)}>
           {profile?.profile_image ? (
             <Image
-              source={{ uri: profile.profile_image }}
+              source={{ uri: profile.profile_image.file ?? profile.profile_image }}
               resizeMode="contain"
               style={{
                 width: 40,
@@ -905,7 +905,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
                 <Image
                   source={
                     driver?.profile_image
-                      ? { uri: driver.profile_image }
+                      ? { uri: driver.profile_image.file ?? driver.profile_image }
                       : require("../../assets/images/Ava.png")
                   }
                   style={styles.driverAvatar}

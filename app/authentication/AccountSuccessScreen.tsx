@@ -1,19 +1,7 @@
-// import React from 'react';
-// import { Button, Text, View } from 'react-native';
-
-// export default function VerifyEmailScreen({ next }: { next: () => void }) {
-//   return (
-//     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-//       <Text>Verify Email Screen</Text>
-//       <Button title="Verify" onPress={next} />
-//     </View>
-//   );
-// }
-
 import CustomButton from "@/components/ui/CustomButton";
 import { useAuth } from "@/context/AuthContext";
-import { useLoginEndPoint } from "@/services/authentication.service";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useLoginEndPoint } from "@/services/authentication.service";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
@@ -23,11 +11,14 @@ import Success from '../../assets/images/success.png';
 
 export default function AccountSuccessScreen({ next }: { next: () => void }) {
   const [isLoading, setIsLoading] = useState(false);
+
+  // ✅ All hooks at the top level of the component
   const { setTokens } = useAuth();
   const { expoPushToken } = usePushNotifications();
   const { mutate: login } = useLoginEndPoint(setTokens, true);
 
-  const handleProceed = async() => {
+  // ✅ Single, clean handleProceed — no hooks inside
+  const handleProceed = async () => {
     setIsLoading(true);
 
     try {
@@ -67,9 +58,10 @@ export default function AccountSuccessScreen({ next }: { next: () => void }) {
     }
   };
 
-
+  // ✅ JSX returned directly from the component
   return (
     <View style={styles.container}>
+
       {/* Top Banner */}
       <View style={styles.banner} />
 
@@ -78,92 +70,190 @@ export default function AccountSuccessScreen({ next }: { next: () => void }) {
 
         <View style={styles.LogoContainer}>
           <Image
-            source={Logo} // Update the path as needed
+            source={Logo}
             style={styles.Logoicon}
           />
         </View>
 
         <View style={styles.envelopeContainer}>
           <Image
-            source={Success} // Update the path as needed
+            source={Success}
             style={styles.envelopeIcon}
           />
         </View>
 
         <View style={styles.bottomSection}>
+          <Text style={styles.title}>Your Account is Successfully Created</Text>
 
-            <Text style={styles.title}>Your Account is Successfully Created</Text>
-
-        <CustomButton 
-          title="Proceed"
-          onPress={handleProceed}
-          loading={isLoading}
-        />
+          <CustomButton
+            title="Proceed"
+            onPress={handleProceed}
+            loading={isLoading}
+          />
         </View>
 
-        {/* Password Input */}
-        
       </View>
-      </View>
-    // </View>
+
+    </View>
   );
 }
 
+// ✅ Styles outside the component
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000" },
-  banner: { height: 200, backgroundColor: "#fcbf24", borderBottomLeftRadius: 40, borderBottomRightRadius: 40, },
-  card: { flex: 1, marginTop: -40, backgroundColor: "#000", borderTopLeftRadius: 40, borderTopRightRadius: 40, padding: 30, width:'95%', alignSelf:'center',},
-  logo: { fontSize: 36, fontWeight: "bold", color: "#fcbf24", textAlign: "center", marginBottom: 20 },
-  // title: { fontSize: 24, fontWeight: "bold", color: "#fff", textAlign: "center", marginBottom: 10 },
-  // subtitle: { fontSize: 14, color: "#ccc", textAlign: "center", marginBottom: 20 },
-
-  inputContainer: { flexDirection: "row", alignItems: "center", backgroundColor: "#111", borderRadius: 10, marginBottom: 15, paddingHorizontal: 10, borderWidth:2, borderColor:'white', marginTop:0 },
-  inputIcon: { marginRight: 10 },
-  input: { flex: 1, color: "#fff", height: 50 },
-
-  row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
-  checkboxRow: { flexDirection: "row", alignItems: "center" },
-  checkbox: { width: 20, height: 20, borderRadius: 5, borderWidth: 1, borderColor: "#fcbf24", justifyContent: "center", alignItems: "center", marginRight: 8 },
-  checkboxChecked: { backgroundColor: "#fcbf24" },
-  checkboxLabel: { color: "#fff", fontSize: 12 },
-  forgot: { color: "#fcbf24", fontSize: 12 },
-
-  
-  progressBackground: { height: 6, backgroundColor: "#444", borderRadius: 3, marginBottom: 20, borderWidth:1, borderColor:'white' },
-  progressFill: { height: 6, backgroundColor: "#fcbf24", width: "75%", borderRadius: 3, borderWidth:1, borderColor:'white' },
-
-
-  proceedBtn: { backgroundColor: "#fcbf24", borderRadius: 10, paddingVertical: 14, marginTop: 10, width: 90 },
-  proceedText: { color: "#000", fontWeight: "bold", fontSize: 16 },
-
-  dividerRow: { flexDirection: "row", alignItems: "center", marginVertical: 20 },
-  divider: { flex: 1, height: 1, backgroundColor: "#444" },
-  dividerText: { color: "#aaa", marginHorizontal: 10 },
-
-  googleBtn: { flexDirection: "row", justifyContent: "center", alignItems: "center", borderColor: "#fcbf24", borderWidth: 1, borderRadius: 10, paddingVertical: 12, marginBottom: 30 },
-  googleText: { color: "#fff", marginLeft: 8 },
-
-  footerText: { textAlign: "center", color: "#888", fontSize: 12 },
-  signup: { color: "#fcbf24", fontWeight: "bold" },
-
+  container: {
+    flex: 1,
+    backgroundColor: "#000",
+  },
+  banner: {
+    height: 200,
+    backgroundColor: "#fcbf24",
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+  },
+  card: {
+    flex: 1,
+    marginTop: -40,
+    backgroundColor: "#000",
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    padding: 30,
+    width: '95%',
+    alignSelf: 'center',
+  },
+  logo: {
+    fontSize: 36,
+    fontWeight: "bold",
+    color: "#fcbf24",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#111",
+    borderRadius: 10,
+    marginBottom: 15,
+    paddingHorizontal: 10,
+    borderWidth: 2,
+    borderColor: 'white',
+    marginTop: 0,
+  },
+  inputIcon: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    color: "#fff",
+    height: 50,
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  checkboxRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: "#fcbf24",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8,
+  },
+  checkboxChecked: {
+    backgroundColor: "#fcbf24",
+  },
+  checkboxLabel: {
+    color: "#fff",
+    fontSize: 12,
+  },
+  forgot: {
+    color: "#fcbf24",
+    fontSize: 12,
+  },
+  progressBackground: {
+    height: 6,
+    backgroundColor: "#444",
+    borderRadius: 3,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'white',
+  },
+  progressFill: {
+    height: 6,
+    backgroundColor: "#fcbf24",
+    width: "75%",
+    borderRadius: 3,
+    borderWidth: 1,
+    borderColor: 'white',
+  },
+  proceedBtn: {
+    backgroundColor: "#fcbf24",
+    borderRadius: 10,
+    paddingVertical: 14,
+    marginTop: 10,
+    width: 90,
+  },
+  proceedText: {
+    color: "#000",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#444",
+  },
+  dividerText: {
+    color: "#aaa",
+    marginHorizontal: 10,
+  },
+  googleBtn: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    borderColor: "#fcbf24",
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 12,
+    marginBottom: 30,
+  },
+  googleText: {
+    color: "#fff",
+    marginLeft: 8,
+  },
+  footerText: {
+    textAlign: "center",
+    color: "#888",
+    fontSize: 12,
+  },
+  signup: {
+    color: "#fcbf24",
+    fontWeight: "bold",
+  },
   envelopeIcon: {
     width: '80%',
     height: '90%',
-    // borderWidth:1,
-    // borderColor:'white',
     resizeMode: 'contain',
     alignSelf: 'center',
   },
   envelopeContainer: {
-    // backgroundColor: '#FEB91454',
-    // padding: 10,
     borderRadius: 50,
     marginTop: 30,
-    // borderWidth:1,
-    // borderColor:'white',
-    width:100,
-    height:100,
-    alignSelf:'center'
+    width: 100,
+    height: 100,
+    alignSelf: 'center',
   },
   bottomSection: {
     flex: 0.6,
@@ -173,7 +263,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: 'BebasNeue',
     color: '#fff',
     marginBottom: 5,
   },
@@ -187,7 +276,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '80%',
     marginBottom: 30,
-    gap:10,
+    gap: 10,
   },
   otpInput: {
     width: 40,
@@ -211,7 +300,6 @@ const styles = StyleSheet.create({
   proceedButtonText: {
     color: '#000',
     fontSize: 18,
-    fontFamily: 'BebasNeue',
   },
   resendContainer: {
     flexDirection: 'row',
@@ -225,16 +313,11 @@ const styles = StyleSheet.create({
     color: '#ffb300',
     fontWeight: 'bold',
   },
-  LogoContainer:{
-  
-  },
-  Logoicon:{
+  LogoContainer: {},
+  Logoicon: {
     width: 130,
     height: 100,
-    // borderWidth:1,
-    // borderColor:'white',
     resizeMode: 'contain',
     alignSelf: 'center',
   },
-  
 });

@@ -41,7 +41,7 @@ export const RideCard: React.FC<RideCardProps> = ({
       return dateString;
     }
   };
-
+  console.log("RIDDDDDDDEEEEE======", ride)
   const formatCurrency = (amount: number) => {
     const value = amount;
     return `₦${value.toLocaleString("en-NG", {

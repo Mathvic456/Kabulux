@@ -12,10 +12,10 @@ import {
 import Lock from '../../assets/images/lock.png';
 import Logo from '../../assets/images/logo.png';
 
-export default function PasswordSetScreen({ next, goRegister, goForgot }: { 
-  next: () => void, 
-  goRegister: () => void, 
-  goForgot: () => void 
+export default function PasswordSetScreen({ next, goRegister, goForgot }: {
+  next: () => void,
+  goRegister: () => void,
+  goForgot: () => void
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,7 +23,7 @@ export default function PasswordSetScreen({ next, goRegister, goForgot }: {
   const [remember, setRemember] = useState(false);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState(false); // Add loading state
-  
+
   const handleOtpChange = (text: string, index: number) => {
     const newOtp = [...otp];
     newOtp[index] = text;
@@ -37,7 +37,7 @@ export default function PasswordSetScreen({ next, goRegister, goForgot }: {
 
   const handleProceed = () => {
     setIsLoading(true); // Show loader when button is pressed
-    
+
     // Simulate an API call or validation that takes some time
     setTimeout(() => {
       setIsLoading(false); // Hide loader
@@ -94,8 +94,8 @@ export default function PasswordSetScreen({ next, goRegister, goForgot }: {
             />
           </View>
 
-          <TouchableOpacity 
-            style={styles.proceedButton} 
+          <TouchableOpacity
+            style={styles.proceedButton}
             onPress={handleProceed}
             disabled={isLoading} // Disable button when loading
           >
@@ -104,7 +104,7 @@ export default function PasswordSetScreen({ next, goRegister, goForgot }: {
             ) : (
               <Text style={styles.proceedButtonText}>Proceed</Text>
             )}
-          </TouchableOpacity>        
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -114,12 +114,12 @@ export default function PasswordSetScreen({ next, goRegister, goForgot }: {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000" },
   banner: { height: 200, backgroundColor: "#fcbf24", borderBottomLeftRadius: 40, borderBottomRightRadius: 40, },
-  card: { flex: 1, marginTop: -40, backgroundColor: "#000", borderTopLeftRadius: 40, borderTopRightRadius: 40, padding: 30, width:'95%', alignSelf:'center',},
+  card: { flex: 1, marginTop: -40, backgroundColor: "#000", borderTopLeftRadius: 40, borderTopRightRadius: 40, padding: 30, width: '95%', alignSelf: 'center', },
   logo: { fontSize: 36, fontWeight: "bold", color: "#fcbf24", textAlign: "center", marginBottom: 20 },
   // title: { fontSize: 24, fontWeight: "bold", color: "#fff", textAlign: "center", marginBottom: 10 },
   // subtitle: { fontSize: 14, color: "#ccc", textAlign: "center", marginBottom: 20 },
 
-  inputContainer: { flexDirection: "row", alignItems: "center", backgroundColor: "#111", borderRadius: 10, marginBottom: 15, paddingHorizontal: 10, borderWidth:2, borderColor:'white', marginTop:0 },
+  inputContainer: { flexDirection: "row", alignItems: "center", backgroundColor: "#111", borderRadius: 10, marginBottom: 15, paddingHorizontal: 10, borderWidth: 2, borderColor: 'white', marginTop: 0 },
   inputIcon: { marginRight: 10 },
   input: { flex: 1, color: "#fff", height: 50 },
 
@@ -130,9 +130,9 @@ const styles = StyleSheet.create({
   checkboxLabel: { color: "#fff", fontSize: 12 },
   forgot: { color: "#fcbf24", fontSize: 12 },
 
-  
-  progressBackground: { height: 6, backgroundColor: "#444", borderRadius: 3, marginBottom: 20, borderWidth:1, borderColor:'white' },
-  progressFill: { height: 6, backgroundColor: "#fcbf24", width: "75%", borderRadius: 3, borderWidth:1, borderColor:'white' },
+
+  progressBackground: { height: 6, backgroundColor: "#444", borderRadius: 3, marginBottom: 20, borderWidth: 1, borderColor: 'white' },
+  progressFill: { height: 6, backgroundColor: "#fcbf24", width: "75%", borderRadius: 3, borderWidth: 1, borderColor: 'white' },
 
 
   proceedBtn: { backgroundColor: "#fcbf24", borderRadius: 10, paddingVertical: 14, marginTop: 10, width: 90 },
@@ -163,9 +163,9 @@ const styles = StyleSheet.create({
     marginTop: 30,
     // borderWidth:1,
     // borderColor:'white',
-    width:50,
-    height:50,
-    alignSelf:'center'
+    width: 50,
+    height: 50,
+    alignSelf: 'center'
   },
   bottomSection: {
     flex: 0.6,
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: 'BebasNeue',
+    fontFamily: '',
     color: '#fff',
     marginBottom: 5,
   },
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '80%',
     marginBottom: 30,
-    gap:10,
+    gap: 10,
   },
   otpInput: {
     width: 40,
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
   proceedButtonText: {
     color: '#000',
     fontSize: 18,
-    fontFamily: 'BebasNeue',
+    fontFamily: '',
   },
   resendContainer: {
     flexDirection: 'row',
@@ -227,10 +227,10 @@ const styles = StyleSheet.create({
     color: '#ffb300',
     fontWeight: 'bold',
   },
-  LogoContainer:{
-  
+  LogoContainer: {
+
   },
-  Logoicon:{
+  Logoicon: {
     width: 130,
     height: 100,
     // borderWidth:1,
@@ -238,5 +238,5 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     alignSelf: 'center',
   },
-  
+
 });

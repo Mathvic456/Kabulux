@@ -17,7 +17,7 @@ export type ProfileResponse = {
   referral_code: string;
   phone_number: string;
   address?: string;
-  profile_image?: string | null;
+  profile_image?: { file: string } | string | null;
   ride_preference?: Record<string, any>;
   security_preference?: Record<string, any>;
 };

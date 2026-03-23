@@ -147,7 +147,7 @@ export default function ResetCredentialsScreen({
         email,
         otp: otp.join(""),
       });
-      
+
       setShowSuccessModal(true);
     } catch (error: any) {
       const errorMessage =
@@ -156,7 +156,7 @@ export default function ResetCredentialsScreen({
         error?.response?.data?.email?.[0] ||
         error?.message ||
         "Password reset failed. Please try again.";
-      
+
       setErrors((prev) => ({
         ...prev,
         general: errorMessage,
@@ -175,7 +175,7 @@ export default function ResetCredentialsScreen({
     const otpValid = otp.join("").length === 6;
     const passwordValid = validatePassword() === "";
     const confirmPasswordValid = password === confirmPassword && confirmPassword !== "";
-    
+
     return otpValid && passwordValid && confirmPasswordValid;
   };
 
@@ -194,168 +194,168 @@ export default function ResetCredentialsScreen({
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-        <View style={styles.card}>
-          <TouchableOpacity style={styles.backButton} onPress={back}>
-            <Ionicons name="arrow-back" size={22} color="#fff" />
-          </TouchableOpacity>
-
-          <View style={styles.logoContainer}>
-            <Image source={Logo} style={styles.logo} />
-          </View>
-
-          <View style={styles.iconContainer}>
-            <FontAwesome name="lock" size={24} color="#fcbf24" />
-          </View>
-
-          <View style={styles.bottomSection}>
-            <Text style={styles.title}>Reset Password</Text>
-            <Text style={styles.subtitle}>
-              Enter OTP and set your new password
-            </Text>
-
-            {/* OTP Input */}
-            <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>Verification Code</Text>
-              <View style={styles.otpInputsContainer}>
-                {otp.map((value, index) => (
-                  <TextInput
-                    key={index}
-                    ref={(el) => {
-                      otpRefs.current[index] = el;
-                    }}
-                    style={[
-                      styles.otpInput,
-                      errors.otp && styles.inputError,
-                    ]}
-                    value={value}
-                    keyboardType="number-pad"
-                    maxLength={1}
-                    onChangeText={(text) => handleOtpChange(text, index)}
-                    onKeyPress={(e) => handleOtpKeyPress(e, index)}
-                  />
-                ))}
-              </View>
-              {errors.otp ? (
-                <Text style={styles.errorText}>{errors.otp}</Text>
-              ) : null}
-            </View>
-
-            {/* New Password Input */}
-            <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>New Password</Text>
-              <View
-                style={[
-                  styles.inputContainer,
-                  errors.password && styles.inputContainerError,
-                ]}
-              >
-                <FontAwesome
-                  name="lock"
-                  size={20}
-                  color="#aaa"
-                  style={styles.inputIcon}
-                />
-                <TextInput
-                  ref={passwordRef}
-                  style={styles.input}
-                  placeholder="Enter new password"
-                  placeholderTextColor="#666"
-                  secureTextEntry={!showPassword}
-                  value={password}
-                  onChangeText={(text) => {
-                    setPassword(text);
-                    if (errors.password) {
-                      setErrors((prev) => ({ ...prev, password: "" }));
-                    }
-                  }}
-                  onSubmitEditing={() => confirmPasswordRef.current?.focus()}
-                />
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                  <Ionicons
-                    name={showPassword ? "eye-off-outline" : "eye-outline"}
-                    size={22}
-                    color="#aaa"
-                  />
-                </TouchableOpacity>
-              </View>
-              {errors.password ? (
-                <Text style={styles.errorText}>{errors.password}</Text>
-              ) : null}
-              <View style={styles.passwordRequirements}>
-                <Text style={styles.requirementText}>Password must contain:</Text>
-                <Text style={styles.requirementItem}>• At least 12 characters</Text>
-                <Text style={styles.requirementItem}>• One uppercase letter (A-Z)</Text>
-                <Text style={styles.requirementItem}>• One lowercase letter (a-z)</Text>
-                <Text style={styles.requirementItem}>• One number (0-9)</Text>
-                <Text style={styles.requirementItem}>• One special character (!@#$%^&*)</Text>
-              </View>
-            </View>
-
-            {/* Confirm Password Input */}
-            <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>Confirm Password</Text>
-              <View
-                style={[
-                  styles.inputContainer,
-                  errors.confirmPassword && styles.inputContainerError,
-                ]}
-              >
-                <FontAwesome
-                  name="lock"
-                  size={20}
-                  color="#aaa"
-                  style={styles.inputIcon}
-                />
-                <TextInput
-                  ref={confirmPasswordRef}
-                  style={styles.input}
-                  placeholder="Re-enter password"
-                  placeholderTextColor="#666"
-                  secureTextEntry={!showConfirmPassword}
-                  value={confirmPassword}
-                  onChangeText={(text) => {
-                    setConfirmPassword(text);
-                    if (errors.confirmPassword) {
-                      setErrors((prev) => ({ ...prev, confirmPassword: "" }));
-                    }
-                  }}
-                  onSubmitEditing={handleProceed}
-                />
-                <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                  <Ionicons
-                    name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
-                    size={22}
-                    color="#aaa"
-                  />
-                </TouchableOpacity>
-              </View>
-              {errors.confirmPassword ? (
-                <Text style={styles.errorText}>{errors.confirmPassword}</Text>
-              ) : null}
-            </View>
-
-            {/* General Error */}
-            {errors.general ? (
-              <Text style={styles.errorTextGeneral}>{errors.general}</Text>
-            ) : null}
-
-            <TouchableOpacity
-              style={[
-                styles.proceedButton,
-                (!isFormValid() || isLoading) && styles.disabledButton,
-              ]}
-              onPress={handleProceed}
-              disabled={!isFormValid() || isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="#000" />
-              ) : (
-                <Text style={styles.proceedButtonText}>Reset Password</Text>
-              )}
+          <View style={styles.card}>
+            <TouchableOpacity style={styles.backButton} onPress={back}>
+              <Ionicons name="arrow-back" size={22} color="#fff" />
             </TouchableOpacity>
+
+            <View style={styles.logoContainer}>
+              <Image source={Logo} style={styles.logo} />
+            </View>
+
+            <View style={styles.iconContainer}>
+              <FontAwesome name="lock" size={24} color="#fcbf24" />
+            </View>
+
+            <View style={styles.bottomSection}>
+              <Text style={styles.title}>Reset Password</Text>
+              <Text style={styles.subtitle}>
+                Enter OTP and set your new password
+              </Text>
+
+              {/* OTP Input */}
+              <View style={styles.fieldContainer}>
+                <Text style={styles.fieldLabel}>Verification Code</Text>
+                <View style={styles.otpInputsContainer}>
+                  {otp.map((value, index) => (
+                    <TextInput
+                      key={index}
+                      ref={(el) => {
+                        otpRefs.current[index] = el;
+                      }}
+                      style={[
+                        styles.otpInput,
+                        errors.otp && styles.inputError,
+                      ]}
+                      value={value}
+                      keyboardType="number-pad"
+                      maxLength={1}
+                      onChangeText={(text) => handleOtpChange(text, index)}
+                      onKeyPress={(e) => handleOtpKeyPress(e, index)}
+                    />
+                  ))}
+                </View>
+                {errors.otp ? (
+                  <Text style={styles.errorText}>{errors.otp}</Text>
+                ) : null}
+              </View>
+
+              {/* New Password Input */}
+              <View style={styles.fieldContainer}>
+                <Text style={styles.fieldLabel}>New Password</Text>
+                <View
+                  style={[
+                    styles.inputContainer,
+                    errors.password && styles.inputContainerError,
+                  ]}
+                >
+                  <FontAwesome
+                    name="lock"
+                    size={20}
+                    color="#aaa"
+                    style={styles.inputIcon}
+                  />
+                  <TextInput
+                    ref={passwordRef}
+                    style={styles.input}
+                    placeholder="Enter new password"
+                    placeholderTextColor="#666"
+                    secureTextEntry={!showPassword}
+                    value={password}
+                    onChangeText={(text) => {
+                      setPassword(text);
+                      if (errors.password) {
+                        setErrors((prev) => ({ ...prev, password: "" }));
+                      }
+                    }}
+                    onSubmitEditing={() => confirmPasswordRef.current?.focus()}
+                  />
+                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                    <Ionicons
+                      name={showPassword ? "eye-off-outline" : "eye-outline"}
+                      size={22}
+                      color="#aaa"
+                    />
+                  </TouchableOpacity>
+                </View>
+                {errors.password ? (
+                  <Text style={styles.errorText}>{errors.password}</Text>
+                ) : null}
+                <View style={styles.passwordRequirements}>
+                  <Text style={styles.requirementText}>Password must contain:</Text>
+                  <Text style={styles.requirementItem}>• At least 12 characters</Text>
+                  <Text style={styles.requirementItem}>• One uppercase letter (A-Z)</Text>
+                  <Text style={styles.requirementItem}>• One lowercase letter (a-z)</Text>
+                  <Text style={styles.requirementItem}>• One number (0-9)</Text>
+                  <Text style={styles.requirementItem}>• One special character (!@#$%^&*)</Text>
+                </View>
+              </View>
+
+              {/* Confirm Password Input */}
+              <View style={styles.fieldContainer}>
+                <Text style={styles.fieldLabel}>Confirm Password</Text>
+                <View
+                  style={[
+                    styles.inputContainer,
+                    errors.confirmPassword && styles.inputContainerError,
+                  ]}
+                >
+                  <FontAwesome
+                    name="lock"
+                    size={20}
+                    color="#aaa"
+                    style={styles.inputIcon}
+                  />
+                  <TextInput
+                    ref={confirmPasswordRef}
+                    style={styles.input}
+                    placeholder="Re-enter password"
+                    placeholderTextColor="#666"
+                    secureTextEntry={!showConfirmPassword}
+                    value={confirmPassword}
+                    onChangeText={(text) => {
+                      setConfirmPassword(text);
+                      if (errors.confirmPassword) {
+                        setErrors((prev) => ({ ...prev, confirmPassword: "" }));
+                      }
+                    }}
+                    onSubmitEditing={handleProceed}
+                  />
+                  <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                    <Ionicons
+                      name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
+                      size={22}
+                      color="#aaa"
+                    />
+                  </TouchableOpacity>
+                </View>
+                {errors.confirmPassword ? (
+                  <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+                ) : null}
+              </View>
+
+              {/* General Error */}
+              {errors.general ? (
+                <Text style={styles.errorTextGeneral}>{errors.general}</Text>
+              ) : null}
+
+              <TouchableOpacity
+                style={[
+                  styles.proceedButton,
+                  (!isFormValid() || isLoading) && styles.disabledButton,
+                ]}
+                onPress={handleProceed}
+                disabled={!isFormValid() || isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#000" />
+                ) : (
+                  <Text style={styles.proceedButtonText}>Reset Password</Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-              </ScrollView>
+        </ScrollView>
       </KeyboardAvoidingView>
 
       {/* Success Modal */}
@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     marginLeft: 6,
-    fontFamily: "BebasNeue",
+    fontFamily: "",
   },
   logoContainer: {
     alignItems: "center",
@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: "BebasNeue",
+    fontFamily: "",
     color: "#fff",
     marginBottom: 5,
   },
@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 14,
     marginBottom: 10,
-    fontFamily: "BebasNeue",
+    fontFamily: "",
   },
   otpInputsContainer: {
     flexDirection: "row",
@@ -565,7 +565,7 @@ const styles = StyleSheet.create({
   proceedButtonText: {
     color: "#000",
     fontSize: 18,
-    fontFamily: "BebasNeue",
+    fontFamily: "",
   },
   modalOverlay: {
     flex: 1,
@@ -589,7 +589,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 22,
-    fontFamily: "BebasNeue",
+    fontFamily: "",
     color: "#fff",
     marginBottom: 15,
     textAlign: "center",
@@ -619,6 +619,6 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: "#000",
     fontSize: 18,
-    fontFamily: "BebasNeue",
+    fontFamily: "",
   },
 });

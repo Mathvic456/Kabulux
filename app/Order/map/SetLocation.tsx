@@ -2,7 +2,19 @@ import { getCurrentLocation } from "@/hooks/useCurrLocation";
 import { reverseGeocode } from "@/utils/googleGeocoding";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Animated, Dimensions, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+    ActivityIndicator,
+    Animated,
+    Dimensions,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
 import MapModal from "./SwitchModal";
 import RideMapView from "./components/RideMapView";
 import useMapModal from "./hooks/useMapModal";
@@ -37,16 +49,11 @@ export default function SetLocation({ goBack, setScreen }: SetLocationProps) {
 
         console.log('pickuoDta', pickupData)
 
-        // Update selected location for map
         setSelectedLocation(pickupData);
         setLocation({ longitude: place?.center[0], latitude: place?.center[1] });
-
-        // Update pickup location in context
         setPickupLocation(pickupData);
 
         setAddressLoading(false);
-
-        // Map will automatically update when pickupLocation changes in RideMapView
     };
 
     useEffect(() => {
@@ -58,7 +65,6 @@ export default function SetLocation({ goBack, setScreen }: SetLocationProps) {
                 console.log("Current Location:", currentLocation);
                 setLocation(currentLocation);
 
-                // Get address for current location
                 setAddressLoading(true);
                 const address = await reverseGeocode(
                     currentLocation?.latitude,
@@ -68,7 +74,6 @@ export default function SetLocation({ goBack, setScreen }: SetLocationProps) {
 
                 console.log("Current location address:", address);
 
-                // Set as pickup location in context
                 setPickupLocation({
                     latitude: currentLocation?.latitude,
                     longitude: currentLocation?.longitude,
@@ -99,7 +104,11 @@ export default function SetLocation({ goBack, setScreen }: SetLocationProps) {
     }, [locationLoading, slideAnim]);
 
     return (
-        <View style={{ flex: 1 }}>
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        >
             <StatusBar barStyle="light-content" backgroundColor={'#000'} />
 
             <View style={{ flex: 1, height: height * 0.55 }}>
@@ -109,7 +118,6 @@ export default function SetLocation({ goBack, setScreen }: SetLocationProps) {
                     showRoute={true}
                 />
             </View>
-
 
             {/* Loading overlay */}
             {locationLoading && (
@@ -128,7 +136,12 @@ export default function SetLocation({ goBack, setScreen }: SetLocationProps) {
             )}
 
             <Animated.View style={[styles.bottomPanel, { transform: [{ translateY: slideAnim }] }]}>
-                <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    style={{ flex: 1 }}
+                    keyboardShouldPersistTaps="handled"
+                    contentContainerStyle={{ flexGrow: 1 }}
+                >
                     <MapModal handleSelectPlace={handleSelectPlace} setScreen={setScreen} />
                 </ScrollView>
             </Animated.View>
@@ -136,7 +149,7 @@ export default function SetLocation({ goBack, setScreen }: SetLocationProps) {
             <TouchableOpacity style={styles.headerIconContainer} onPress={() => goBack()}>
                 <Ionicons name="arrow-back" size={24} color="#111" />
             </TouchableOpacity>
-        </View>
+        </KeyboardAvoidingView>
     );
 }
 
@@ -165,21 +178,6 @@ const styles = StyleSheet.create({
         position: "absolute",
         top: 45,
         left: 20,
-    },
-    bottomSheet: {
-        position: "absolute",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: "#181818",
-        padding: 20,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        shadowColor: "#181818",
-        shadowOffset: { width: 0, height: -5 },
-        shadowOpacity: 0.3,
-        shadowRadius: 10,
-        elevation: 20,
     },
     bottomPanel: {
         position: 'absolute',
@@ -216,19 +214,8 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(0, 0, 0, 0.4)",
         borderRadius: 50,
     },
-    mapPlaceholder: {
-        flex: 1,
-        backgroundColor: "#333",
-        position: "relative",
-    },
     map: {
         ...StyleSheet.absoluteFillObject,
-    },
-    overlayContainer: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: "rgba(0, 0, 0, 0.7)",
-        justifyContent: "center",
-        alignItems: "center",
     },
     loadingOverlay: {
         ...StyleSheet.absoluteFillObject,
@@ -236,11 +223,6 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         zIndex: 100,
-    },
-    loadingContainer: {
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 20,
     },
     loadingText: {
         color: "#f6a623",
@@ -266,38 +248,10 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: "600",
     },
-    locationFoundBadge: {
-        position: "absolute",
-        top: 100,
-        alignSelf: "center",
-        backgroundColor: "rgba(0, 0, 0, 0.8)",
-        paddingHorizontal: 20,
-        paddingVertical: 12,
-        borderRadius: 25,
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 8,
-    },
-    locationFoundBadgeText: {
-        color: "#4CAF50",
-        fontSize: 16,
-        fontWeight: "bold",
-    },
-    addressPreview: {
-        color: "#a10505",
-        fontSize: 14,
-        textAlign: "center",
-        marginTop: 10,
-    },
-    mapText: {
-        fontSize: 18,
-        fontWeight: "bold",
-        color: "#f6a623",
-    },
     markerContainer: {
         height: 30,
         width: 30,
-        borderRadius: '50%',
+        borderRadius: 15,
         backgroundColor: "#fff",
         display: "flex",
         alignItems: "center",
@@ -309,25 +263,6 @@ const styles = StyleSheet.create({
         shadowRadius: 6,
         borderWidth: 1,
         borderColor: '#f6a623'
-    },
-    title: {
-        color: "white",
-        fontSize: 16,
-        marginBottom: 15,
-        fontWeight: "bold",
-        alignSelf: "center",
-    },
-    searchContainer: {
-        marginBottom: 15,
-        zIndex: 1,
-    },
-    locationDetails: {
-        backgroundColor: "rgba(76, 175, 80, 0.1)",
-        padding: 15,
-        borderRadius: 10,
-        marginBottom: 15,
-        borderLeftWidth: 3,
-        borderLeftColor: "#4CAF50",
     },
     confirmButton: {
         borderRadius: 10,

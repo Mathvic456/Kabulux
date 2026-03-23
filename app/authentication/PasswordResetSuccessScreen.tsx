@@ -16,7 +16,7 @@ export default function PasswordResetSuccessScreen({ next, goRegister, goForgot 
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  
+
   const handleOtpChange = (text: string, index: number) => {
     const newOtp = [...otp];
     newOtp[index] = text;
@@ -61,17 +61,17 @@ export default function PasswordResetSuccessScreen({ next, goRegister, goForgot 
 
         <View style={styles.bottomSection}>
 
-            <Text style={styles.title}>Your Password is Successfully Changed</Text>
+          <Text style={styles.title}>Your Password is Successfully Changed</Text>
 
-<TouchableOpacity style={styles.proceedButton} onPress={handleProceed}>
-          <Text style={styles.proceedButtonText}>Proceed</Text>
-        </TouchableOpacity>        
+          <TouchableOpacity style={styles.proceedButton} onPress={handleProceed}>
+            <Text style={styles.proceedButtonText}>Proceed</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Password Input */}
-        
+
       </View>
-      </View>
+    </View>
     // </View>
   );
 }
@@ -79,12 +79,12 @@ export default function PasswordResetSuccessScreen({ next, goRegister, goForgot 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000" },
   banner: { height: 200, backgroundColor: "#fcbf24", borderBottomLeftRadius: 40, borderBottomRightRadius: 40, },
-  card: { flex: 1, marginTop: -40, backgroundColor: "#000", borderTopLeftRadius: 40, borderTopRightRadius: 40, padding: 30, width:'95%', alignSelf:'center',},
+  card: { flex: 1, marginTop: -40, backgroundColor: "#000", borderTopLeftRadius: 40, borderTopRightRadius: 40, padding: 30, width: '95%', alignSelf: 'center', },
   logo: { fontSize: 36, fontWeight: "bold", color: "#fcbf24", textAlign: "center", marginBottom: 20 },
   // title: { fontSize: 24, fontWeight: "bold", color: "#fff", textAlign: "center", marginBottom: 10 },
   // subtitle: { fontSize: 14, color: "#ccc", textAlign: "center", marginBottom: 20 },
 
-  inputContainer: { flexDirection: "row", alignItems: "center", backgroundColor: "#111", borderRadius: 10, marginBottom: 15, paddingHorizontal: 10, borderWidth:2, borderColor:'white', marginTop:0 },
+  inputContainer: { flexDirection: "row", alignItems: "center", backgroundColor: "#111", borderRadius: 10, marginBottom: 15, paddingHorizontal: 10, borderWidth: 2, borderColor: 'white', marginTop: 0 },
   inputIcon: { marginRight: 10 },
   input: { flex: 1, color: "#fff", height: 50 },
 
@@ -95,9 +95,9 @@ const styles = StyleSheet.create({
   checkboxLabel: { color: "#fff", fontSize: 12 },
   forgot: { color: "#fcbf24", fontSize: 12 },
 
-  
-  progressBackground: { height: 6, backgroundColor: "#444", borderRadius: 3, marginBottom: 20, borderWidth:1, borderColor:'white' },
-  progressFill: { height: 6, backgroundColor: "#fcbf24", width: "75%", borderRadius: 3, borderWidth:1, borderColor:'white' },
+
+  progressBackground: { height: 6, backgroundColor: "#444", borderRadius: 3, marginBottom: 20, borderWidth: 1, borderColor: 'white' },
+  progressFill: { height: 6, backgroundColor: "#fcbf24", width: "75%", borderRadius: 3, borderWidth: 1, borderColor: 'white' },
 
 
   proceedBtn: { backgroundColor: "#fcbf24", borderRadius: 10, paddingVertical: 14, marginTop: 10, width: 90 },
@@ -122,9 +122,9 @@ const styles = StyleSheet.create({
   envelopeContainer: {
     borderRadius: 50,
     marginTop: 30,
-    width:100,
-    height:100,
-    alignSelf:'center'
+    width: 100,
+    height: 100,
+    alignSelf: 'center'
   },
   bottomSection: {
     flex: 0.6,
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: 'BebasNeue',
+    fontFamily: '',
     color: '#fff',
     marginBottom: 5,
   },
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '80%',
     marginBottom: 30,
-    gap:10,
+    gap: 10,
   },
   otpInput: {
     width: 40,
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   proceedButtonText: {
     color: '#000',
     fontSize: 18,
-    fontFamily: 'BebasNeue',
+    fontFamily: '',
   },
   resendContainer: {
     flexDirection: 'row',
@@ -186,14 +186,14 @@ const styles = StyleSheet.create({
     color: '#ffb300',
     fontWeight: 'bold',
   },
-  LogoContainer:{
-  
+  LogoContainer: {
+
   },
-  Logoicon:{
+  Logoicon: {
     width: 130,
     height: 100,
     resizeMode: 'contain',
     alignSelf: 'center',
   },
-  
+
 });

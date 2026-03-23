@@ -1,9 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert, // Added Alert
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -34,14 +34,12 @@ export default function VerifyEmailScreen({
 }) {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
   const [resendTimer, setResendTimer] = useState(0);
 
-  const inputsRef = useRef<TextInput[]>([]);
+  const inputsRef = useRef<(TextInput | null)[]>([]);
   const verifyOtpMutation = useVerifyOtpEndPoint();
-
   const resendOtpMutation = useResendOtpEndPoint();
 
   useEffect(() => {
@@ -50,7 +48,6 @@ export default function VerifyEmailScreen({
         const savedEmail = await AsyncStorage.getItem("pendingEmail");
         if (savedEmail) {
           setEmail(savedEmail);
-          console.log("📬 Loaded email from storage:", savedEmail);
         }
       } catch (error) {
         console.error("Error loading email:", error);
@@ -59,80 +56,123 @@ export default function VerifyEmailScreen({
     loadEmail();
   }, []);
 
-  // 👇 Timer logic: Decrement timer every second
+  // FIX 1: Timer isolated — only updates resendTimer, won't cascade into OTP renders
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (resendTimer > 0) {
-      interval = setInterval(() => {
-        setResendTimer((prev) => prev - 1);
-      }, 1000);
-    }
+    if (resendTimer <= 0) return;
+    const interval = setInterval(() => {
+      setResendTimer((prev) => prev - 1);
+    }, 1000);
     return () => clearInterval(interval);
   }, [resendTimer]);
 
-  // 👇 Handle Resend OTP
-  const handleResendOtp = async () => {
+  const handleResendOtp = useCallback(async () => {
     if (!email) return;
     setErrorMessage(null);
-
     try {
       await resendOtpMutation.mutateAsync({ email });
       Alert.alert("Success", "A new code has been sent to your email.");
-      setResendTimer(30); // Start 30 second cooldown
+      setResendTimer(30);
     } catch (err: any) {
-      if (err?.response?.data?.message) {
-        setErrorMessage(err.response.data.message);
-      } else {
-        setErrorMessage("Failed to resend OTP. Please try again.");
-      }
+      setErrorMessage(
+        err?.response?.data?.message ?? "Failed to resend OTP. Please try again."
+      );
     }
-  };
+  }, [email, resendOtpMutation]);
 
-  const handleOtpChange = (text: string, index: number) => {
-    const newOtp = [...otp];
-    newOtp[index] = text.slice(-1);
-    setOtp(newOtp);
+  // FIX 2: Paste support — detect a 6-digit string and distribute across boxes
+  const handleOtpChange = useCallback((text: string, index: number) => {
+    // Strip non-numeric characters
+    const cleaned = text.replace(/\D/g, "");
 
-    if (text && index < otp.length - 1) inputsRef.current[index + 1]?.focus();
-    if (!text && index > 0) inputsRef.current[index - 1]?.focus();
-  };
+    // Paste scenario: received 2+ digits at once
+    if (cleaned.length > 1) {
+      const digits = cleaned.slice(0, 6).split("");
+      setOtp((prev) => {
+        const next = [...prev];
+        digits.forEach((d, i) => {
+          if (i < 6) next[i] = d;
+        });
+        return next;
+      });
+      // Focus the last filled box (or the one after)
+      const lastIndex = Math.min(digits.length, 5);
+      inputsRef.current[lastIndex]?.focus();
+      return;
+    }
 
-  const handleProceed = async () => {
+    // Normal single-character entry
+    const digit = cleaned.slice(-1);
+    // FIX 3: Functional update to avoid stale closure and unnecessary re-renders
+    setOtp((prev) => {
+      if (prev[index] === digit) return prev; // no change, skip re-render
+      const next = [...prev];
+      next[index] = digit;
+      return next;
+    });
+
+    if (digit && index < 5) {
+      inputsRef.current[index + 1]?.focus();
+    }
+  }, []);
+
+  const handleKeyPress = useCallback(
+    ({ nativeEvent }: { nativeEvent: { key: string } }, index: number) => {
+      if (nativeEvent.key === "Backspace") {
+        if (!otp[index] && index > 0) {
+          setOtp((prev) => {
+            const next = [...prev];
+            next[index - 1] = "";
+            return next;
+          });
+          inputsRef.current[index - 1]?.focus();
+        } else if (otp[index]) {
+          setOtp((prev) => {
+            const next = [...prev];
+            next[index] = "";
+            return next;
+          });
+        }
+      }
+    },
+    [otp]
+  );
+
+  const handleProceed = useCallback(async () => {
     setIsLoading(true);
     setErrorMessage(null);
     const code = otp.join("");
-
     try {
       await verifyOtpMutation.mutateAsync({ email, otp: code });
       next();
     } catch (err: any) {
       console.error("OTP verification failed:", err);
-
-      if (err?.response?.data?.message) {
-        setErrorMessage(err.response.data.message);
-      } else {
-        setErrorMessage("Something went wrong. Please try again.");
-      }
+      setErrorMessage(
+        err?.response?.data?.message ?? "Something went wrong. Please try again."
+      );
     } finally {
       setOtp(["", "", "", "", "", ""]);
       inputsRef.current[0]?.focus();
       setIsLoading(false);
     }
-  };
+  }, [email, otp, verifyOtpMutation, next]);
 
   return (
+    // FIX 4: KAV — use "padding" on iOS only, undefined on Android to avoid
+    // the aggressive layout shift that causes bottom-half flickering.
+    // Android should rely on adjustResize in AndroidManifest.xml instead.
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 80}
-      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      style={styles.flex}
     >
       <StatusBar barStyle="light-content" backgroundColor="#000" />
 
+      {/* FIX 5: Removed flexGrow:1 from contentContainerStyle — it fought KAV's
+          height shrink and caused layout races. paddingBottom handles spacing. */}
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
-        bounces={false}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.banner} />
 
@@ -143,7 +183,7 @@ export default function VerifyEmailScreen({
             <Image source={Email} style={styles.envelopeIcon} />
           </View>
 
-          <Pressable style={styles.backBtn} onPress={() => goBack()}>
+          <Pressable style={styles.backBtn} onPress={goBack}>
             <Ionicons name="arrow-back" size={22} color="#fff" />
           </Pressable>
 
@@ -156,37 +196,31 @@ export default function VerifyEmailScreen({
             <View style={styles.progressFill} />
           </View>
 
-          {/* OTP Inputs */}
+          {/* FIX 6: OTP inputs with paste support via onChangeText.
+              Each input is individually keyed so React won't re-mount siblings
+              on a sibling's state change. */}
           <View style={styles.otpInputContainer}>
             {otp.map((value, index) => (
               <TextInput
                 key={index}
-                ref={(el) => (inputsRef.current[index] = el!)}
+                ref={(el) => { inputsRef.current[index] = el; }}
                 style={styles.otpInput}
                 value={value}
                 keyboardType="number-pad"
-                maxLength={1}
+                // FIX 7: No maxLength=1 here — we need to allow paste (multi-char)
+                // and handle truncation ourselves in handleOtpChange
+                maxLength={index === 0 ? 6 : 1}
                 onChangeText={(text) => handleOtpChange(text, index)}
-                onKeyPress={({ nativeEvent }) => {
-                  if (
-                    nativeEvent.key === "Backspace" &&
-                    !otp[index] &&
-                    index > 0
-                  ) {
-                    inputsRef.current[index - 1]?.focus();
-                  }
-                }}
+                onKeyPress={(e) => handleKeyPress(e, index)}
+                selectTextOnFocus
+                caretHidden
               />
             ))}
           </View>
 
-          {errorMessage && (
-            <Text
-              style={{ color: "red", marginBottom: 10, textAlign: "center" }}
-            >
-              {errorMessage}
-            </Text>
-          )}
+          {errorMessage ? (
+            <Text style={styles.errorText}>{errorMessage}</Text>
+          ) : null}
 
           <TouchableOpacity
             style={styles.proceedButton}
@@ -200,7 +234,6 @@ export default function VerifyEmailScreen({
             )}
           </TouchableOpacity>
 
-          {/* 👇 RESEND BUTTON SECTION */}
           <View style={styles.resendContainer}>
             <Text style={styles.resendLabel}>Didn't receive code? </Text>
             <TouchableOpacity
@@ -213,7 +246,7 @@ export default function VerifyEmailScreen({
                 <Text
                   style={[
                     styles.resendLink,
-                    resendTimer > 0 && { color: "#666" }, // Grey out if timer active
+                    resendTimer > 0 && styles.resendLinkDisabled,
                   ]}
                 >
                   {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend"}
@@ -228,12 +261,15 @@ export default function VerifyEmailScreen({
 }
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     backgroundColor: "#000",
   },
+  // FIX 5 continued: paddingBottom replaces flexGrow to avoid layout race with KAV
   scrollContainer: {
-    flexGrow: 1,
     paddingBottom: 40,
   },
   banner: {
@@ -279,7 +315,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: "BebasNeue",
     color: "#fff",
     marginBottom: 5,
     textAlign: "center",
@@ -330,9 +365,12 @@ const styles = StyleSheet.create({
   proceedButtonText: {
     color: "#000",
     fontSize: 18,
-    fontFamily: "BebasNeue",
   },
-
+  errorText: {
+    color: "red",
+    marginBottom: 10,
+    textAlign: "center",
+  },
   resendContainer: {
     marginTop: 20,
     flexDirection: "row",
@@ -346,5 +384,8 @@ const styles = StyleSheet.create({
     color: "#ffb300",
     fontSize: 14,
     fontWeight: "bold",
+  },
+  resendLinkDisabled: {
+    color: "#666",
   },
 });

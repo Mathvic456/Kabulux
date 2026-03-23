@@ -79,7 +79,7 @@ export default function RiderOffersScreen({ goBack, next, rideData }: RiderOffer
     subscribeToRideOffers,
     clearRideAccepted,
     clearRideAcceptError,
-    queuedMessageCount,
+    // queuedMessageCount,
     reconnect,
     removeOffer,
   } = useContext(SocketContext);
@@ -623,7 +623,7 @@ export default function RiderOffersScreen({ goBack, next, rideData }: RiderOffer
         </View>
       )}
 
-      {queuedMessageCount > 0 && (
+      {/* {queuedMessageCount > 0 && (
         <View style={[styles.connectionBanner, styles.queueBanner]}>
           <Ionicons name="time-outline" size={16} color="#facc15" />
           <Text style={styles.queueText}>
@@ -631,7 +631,7 @@ export default function RiderOffersScreen({ goBack, next, rideData }: RiderOffer
             {queuedMessageCount === 1 ? "message" : "messages"} queued
           </Text>
         </View>
-      )}
+      )} */}
 
       <View style={styles.content}>
         <FlatList
@@ -742,7 +742,7 @@ export default function RiderOffersScreen({ goBack, next, rideData }: RiderOffer
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.errorIconContainer}>
-              <Ionicons name="trash-bin" size={60} color="#f44336" />
+              <Ionicons name="trash-bin" size={60} color="#ffb300" />
             </View>
             <Text style={styles.modalTitle}>Request Cancelled</Text>
             <Text style={styles.modalMessage}>
@@ -1192,7 +1192,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   errorModalButton: {
-    backgroundColor: "#f44336",
+    backgroundColor: "#ffb300",
   },
   modalButtonText: {
     color: "#fff",
