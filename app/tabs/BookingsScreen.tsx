@@ -123,7 +123,7 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({
 
   const formatCurrency = (amount: number) => {
     if (amount === undefined || amount === null) return "₦0";
-    const value = amount / 100;
+    const value = amount;
     return "₦" + value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 

@@ -148,7 +148,7 @@ export default function PickDestination({ setModal }) {
                     </View>
                 </View>
 
-                <View>
+                {/* <View>
                     {suggestedLocations.map((loc) => (
                         <TouchableOpacity
                             style={styles.suggestionItem}
@@ -166,7 +166,7 @@ export default function PickDestination({ setModal }) {
                             </View>
                         </TouchableOpacity>
                     ))}
-                </View>
+                </View> */}
             </View>
 
             <SearchModal

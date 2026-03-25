@@ -1,6 +1,6 @@
 import GooglePlacesSearch from "@/components/GooglePlacesSearch";
-import { Feather, FontAwesome5 } from "@expo/vector-icons";
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Feather } from "@expo/vector-icons";
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface SearchModalProps {
     setModal: (modal: string) => void;
@@ -80,7 +80,7 @@ export default function SearchModal({
                     />
                 </View>
 
-                <View style={styles.suggestedSection}>
+                {/* <View style={styles.suggestedSection}>
                     <Text style={styles.suggestedTitle}>Popular Destinations</Text>
                     <ScrollView showsVerticalScrollIndicator={false}>
                         {suggestedLocations.map((loc) => (
@@ -98,7 +98,7 @@ export default function SearchModal({
                             </TouchableOpacity>
                         ))}
                     </ScrollView>
-                </View>
+                </View> */}
             </View>
         </Modal>
     );

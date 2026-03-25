@@ -4,6 +4,7 @@ import {
   Dimensions,
   Easing,
   Image,
+  StatusBar,
   StyleSheet,
   View
 } from 'react-native';
@@ -47,9 +48,10 @@ export default function OnboardingScreen1({ next }: { next: () => void }) {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#000" />
       <Animated.View style={[
-        styles.logoContainer, 
-        { 
+        styles.logoContainer,
+        {
           transform: [{ translateY: slideAnim }],
           opacity: fadeAnim
         }

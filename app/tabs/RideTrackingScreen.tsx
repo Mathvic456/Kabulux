@@ -28,7 +28,7 @@ interface PickupLocation {
   address: string;
 }
 
-export default function RideTrackingScreen({ goBack }: { goBack: () => void }) {
+export default function RideTrackingScreen({ goBack, setScreen }: { goBack: () => void; setScreen: (screen: string) => void }) {
   const { driverLocation, rideState } = useRide();
   const { rideId } = useRideId();
 

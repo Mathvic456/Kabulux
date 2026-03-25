@@ -57,6 +57,7 @@ import TabNavigator from "./tabs/TabNavigator";
 import WalletScreen from "./tabs/WalletScreen";
 
 //NEW MAPBOX SCREENS GODSWILL AG
+import Terms from "./authentication/Terms";
 import SetLocation from "./Order/map/SetLocation";
 import TrackDriver from "./Order/map/TrackDriver";
 
@@ -117,7 +118,9 @@ type Screen =
   | "terms"
   | "trackRide"
   | "setLocation"
-  | "trackDriver";
+  | "trackDriver"
+  | "termsOfService";
+
 
 const STACK_RESET_SCREENS: Screen[] = ["dashboard", "login"];
 
@@ -228,7 +231,7 @@ export default function MainNavigator() {
         <RegisterScreen
           next={(email) => {
             setRegisteredEmail(email);
-            handleSetScreen("verify");
+            handleSetScreen("termsOfService");
           }}
           goLogin={() => handleSetScreen("login")}
         />
@@ -250,7 +253,7 @@ export default function MainNavigator() {
         <VerifyEmailScreen
           goBack={goBack}
           next={() => handleSetScreen("accountSuccess")}
-          goRegister={() => handleSetScreen("register")}
+          goRegister={() => handleSetScreen("termsOfService")}
         />
       );
 
@@ -264,7 +267,7 @@ export default function MainNavigator() {
       );
 
     case "trackRide":
-      return <RideTrackingScreen goBack={goBack} />;
+      return <RideTrackingScreen goBack={() => handleSetScreen("dashboard")} setScreen={handleSetScreen} />;
 
     case "profile":
       return <ProfileScreen setScreen={handleSetScreen} />;
@@ -275,6 +278,12 @@ export default function MainNavigator() {
           next={() => handleSetScreen("dashboard")}
           goRegister={() => handleSetScreen("register")}
           goForgot={() => handleSetScreen("reset")}
+        />
+      );
+    case "termsOfService":
+      return (
+        <Terms
+          next={() => handleSetScreen("verify")}
         />
       );
 
@@ -291,7 +300,8 @@ export default function MainNavigator() {
       return (
         <RiderOffersScreen
           goBack={goBack}
-          next={() => handleSetScreen("dashboard")}
+          next={() => handleSetScreen("trackRide")}
+          home={() => handleSetScreen("dashboard")}
           rideData={rideData}
         />
       );

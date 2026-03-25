@@ -18,6 +18,7 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -66,9 +67,10 @@ interface RiderOfferProps {
   goBack: () => void;
   next: () => void;
   rideData?: RideData;
+  home?: () => void;
 }
 
-export default function RiderOffersScreen({ goBack, next, rideData }: RiderOfferProps) {
+export default function RiderOffersScreen({ goBack, next, rideData, home }: RiderOfferProps) {
   const {
     driverOffers,
     rideAccepted,
@@ -305,7 +307,7 @@ export default function RiderOffersScreen({ goBack, next, rideData }: RiderOffer
 
   const handleCancelSuccessClose = () => {
     setCancelModalVisible(false);
-    next();
+    home();
   };
 
   const adjustBy = useCallback((offerId: string, delta: number) => {
@@ -399,6 +401,7 @@ export default function RiderOffersScreen({ goBack, next, rideData }: RiderOffer
       console.log("📤 [RIDER] Accepting ride:", message);
       await sendMessage(message);
       // Note: busy state will be cleared by useEffect when rideAccepted changes
+
     } catch (err) {
       console.error("[RIDER] Accept failed:", err);
       Alert.alert(
@@ -589,6 +592,7 @@ export default function RiderOffersScreen({ goBack, next, rideData }: RiderOffer
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
+      <StatusBar barStyle="light-content" backgroundColor="#000" />
       <View style={styles.header}>
         <TouchableOpacity onPress={goBack} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="white" />
