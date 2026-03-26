@@ -212,7 +212,7 @@ export default function MainNavigator() {
     case "setLocation":
       return <SetLocation goBack={goBack} setScreen={handleSetScreen} />;
     case "trackDriver":
-      return <TrackDriver goBack={goBack} setScreen={handleSetScreen} />;
+      return <TrackDriver goBack={() => handleSetScreen("dashboard")} setScreen={handleSetScreen} />;
 
     case "onboard2":
       return <OnboardingScreen2 next={() => { }} />;

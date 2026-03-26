@@ -1,9 +1,10 @@
+import CustomButton from "@/components/ui/CustomButton";
 import { useRide } from "@/context/RideContext";
 import { getCurrentLocation } from "@/hooks/useCurrLocation";
 import { reverseGeocode } from "@/utils/googleGeocoding";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
-import { Animated, Dimensions, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Animated, Dimensions, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import RideMapView from "./components/RideMapView";
 import useMapModal from "./hooks/useMapModal";
 
@@ -101,9 +102,10 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
 
     return (
         <View style={{ flex: 1 }}>
+            <StatusBar barStyle="dark-content" backgroundColor={'#fff'} />
             <RideMapView
                 pickupLocation={pickupLocation}
-                dropoffLocation={{ latitude: driverLocation.lat, longitude: driverLocation.lng, address: '' }}
+                dropoffLocation={{ latitude: 0, longitude: 0, address: '' }}
                 showRoute={true} // Set to true if you want a line between points
                 driver={true}
             />
@@ -124,11 +126,57 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
                 </View>
             )} */}
 
-            {/* <Animated.View style={[styles.bottomPanel, { transform: [{ translateY: slideAnim }] }]}>
+            <Animated.View style={[styles.bottomPanel, { transform: [{ translateY: slideAnim }] }]}>
                 <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-                    <MapModal handleSelectPlace={handleSelectPlace} setScreen={setScreen} />
+                    <View style={{ flex: 1, gap: 15 }}>
+                        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                            <View />
+                            <Text style={styles.title}>Driver Details</Text>
+                            <View />
+                        </View>
+                        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+                            <View>
+                                <Text style={{ fontSize: 16, fontWeight: "bold", color: "#fff", lineHeight: 24 }}>Your ride is on the way</Text>
+                                <Text style={{ fontSize: 14, color: "#fff", marginTop: 5 }}>Blue Toyota</Text>
+                            </View>
+                            <View>
+                                <Text style={{ fontSize: 14, color: "#fff", marginTop: 5 }}>ETA: 5 mins</Text>
+                            </View>
+                        </View>
+                        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-around", marginBottom: 20 }}>
+                            <View>
+                                <View style={styles.circle}>
+
+                                </View>
+                                <Text style={{ color: "#fff", fontSize: 14, textAlign: "center", marginTop: 5 }}>John Doe</Text>
+                            </View>
+                            <View>
+                                <View style={styles.circle}>
+                                    <Ionicons name="call" size={24} color="#f6a623" />
+                                </View>
+                                <Text style={{ color: "#fff", fontSize: 14, textAlign: "center", marginTop: 5 }}>Call</Text>
+                            </View>
+                            <View>
+                                <View style={styles.circle}>
+                                    <Ionicons name="chatbubble" size={24} color="#f6a623" />
+                                </View>
+                                <Text style={{ color: "#fff", fontSize: 14, textAlign: "center", marginTop: 5 }}>Chat</Text>
+                            </View>
+                            <View>
+                                <View style={styles.circle}>
+                                    <Ionicons name="share-social" size={24} color="#f6a623" />
+                                </View>
+                                <Text style={{ color: "#fff", fontSize: 14, textAlign: "center", marginTop: 5 }}>Share</Text>
+                            </View>
+                        </View>
+                        <CustomButton
+                            title="SOS"
+                            onPress={() => console.log("Contacting driver...")}
+                            style={{ backgroundColor: "#e74c3c", marginBottom: 15 }}
+                        />
+                    </View>
                 </ScrollView>
-            </Animated.View> */}
+            </Animated.View>
 
             <TouchableOpacity style={styles.headerIconContainer} onPress={() => goBack()}>
                 <Ionicons name="arrow-back" size={24} color="#111" />
@@ -152,6 +200,7 @@ const styles = StyleSheet.create({
         alignSelf: "center",
         marginTop: 5,
     },
+    circle: { height: 43.83116912841797, width: 43.83116912841797, borderRadius: 21.915584564208984, backgroundColor: "#1F212A", borderWidth: 0.88, borderColor: "#f6a623", alignItems: "center", justifyContent: "center" },
     headerIconContainer: {
         backgroundColor: "#fff",
         borderRadius: 20,
@@ -309,10 +358,10 @@ const styles = StyleSheet.create({
     },
     title: {
         color: "white",
-        fontSize: 16,
-        marginBottom: 15,
+        fontSize: 24,
+        // marginBottom: 15,
         fontWeight: "bold",
-        alignSelf: "center",
+        // alignSelf: "center",
     },
     searchContainer: {
         marginBottom: 15,
