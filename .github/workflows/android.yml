@@ -28,6 +28,15 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Verify module resolver
+        run: |
+          if ! ls node_modules/babel-plugin-module-resolver > /dev/null 2>&1; then
+            echo "Installing babel-plugin-module-resolver..."
+            npm install babel-plugin-module-resolver --save-dev
+          else
+            echo "babel-plugin-module-resolver already installed"
+          fi
+
       - name: Generate native Android project
         run: npx expo prebuild --platform android --non-interactive
 
@@ -64,6 +73,9 @@ jobs:
         run: |
           keytool -list -v -keystore android/app/keystore.jks \
             -storepass ${{ secrets.ANDROID_STORE_PASSWORD }} | grep SHA1
+
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
 
       - name: Build Android Bundle
         run: cd android && ./gradlew bundleRelease > /tmp/build-output.txt 2>&1 || true
