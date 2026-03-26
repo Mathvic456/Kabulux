@@ -14,10 +14,12 @@ import {
 } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Animated,
+  Easing,
   FlatList,
   Image,
   Modal,
@@ -546,6 +548,61 @@ const ProfileUpdateSuccessModal = ({
 };
 
 export default function HomeScreen({ setScreen }: HomeScreenProps) {
+  // Auto-scroll refs
+  const bannerRef = useRef<FlatList>(null);
+  const specialRef = useRef<FlatList>(null);
+  const bannerIndex = useRef(0);
+  const specialIndex = useRef(0);
+
+  // Oscillating animation for suggestion icons
+  const bounceAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Oscillate icons up and down
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(bounceAnim, {
+          toValue: -8,
+          duration: 800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(bounceAnim, {
+          toValue: 0,
+          duration: 800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
+  // Auto-scroll banners
+  const bannerWidth = 280 + 12; // banner width + marginRight
+  useEffect(() => {
+    const interval = setInterval(() => {
+      bannerIndex.current = (bannerIndex.current + 1) % 3;
+      bannerRef.current?.scrollToOffset({
+        offset: bannerIndex.current * bannerWidth,
+        animated: true,
+      });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Auto-scroll special services
+  const specialWidth = 200 + 12; // card width + marginRight
+  useEffect(() => {
+    const interval = setInterval(() => {
+      specialIndex.current = (specialIndex.current + 1) % 3;
+      specialRef.current?.scrollToOffset({
+        offset: specialIndex.current * specialWidth,
+        animated: true,
+      });
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
   const [showComingSoonModal, setShowComingSoonModal] =
     useState<boolean>(false);
   const [showAdditionalInfoOverlay, setShowAdditionalInfoOverlay] =
@@ -984,9 +1041,9 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
             style={styles.suggestionCard}
             onPress={() => setScreen("setLocation")}
           >
-            <Image
+            <Animated.Image
               source={require("../../assets/images/car.png")}
-              style={styles.suggestionIcon}
+              style={[styles.suggestionIcon, { transform: [{ translateY: bounceAnim }] }]}
             />
             <Text style={styles.suggestionText}>Ride</Text>
           </TouchableOpacity>
@@ -995,9 +1052,9 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
             style={styles.suggestionCard}
             onPress={() => setShowComingSoonModal(true)}
           >
-            <Image
+            <Animated.Image
               source={require("../../assets/images/courier.png")}
-              style={styles.suggestionIcon}
+              style={[styles.suggestionIcon, { transform: [{ translateY: bounceAnim }] }]}
             />
             <Text style={styles.suggestionText}>Courier</Text>
           </TouchableOpacity>
@@ -1006,15 +1063,16 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
             style={styles.suggestionCard}
             onPress={() => setShowComingSoonModal(true)}
           >
-            <Image
+            <Animated.Image
               source={require("../../assets/images/reserve.png")}
-              style={styles.suggestionIcon}
+              style={[styles.suggestionIcon, { transform: [{ translateY: bounceAnim }] }]}
             />
             <Text style={styles.suggestionText}>Reserve</Text>
           </TouchableOpacity>
         </View>
 
         <FlatList
+          ref={bannerRef}
           data={banners}
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -1088,6 +1146,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
         <Text style={styles.sectionTitle}>Special Service</Text>
         <View style={styles.specialServiceRow}>
           <FlatList
+            ref={specialRef}
             data={[
               {
                 id: "1",

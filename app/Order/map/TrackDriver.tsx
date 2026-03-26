@@ -1,81 +1,161 @@
 import CustomButton from "@/components/ui/CustomButton";
 import { useRide } from "@/context/RideContext";
+import { useRideId } from "@/context/RideIdContext";
+import { SocketContext } from "@/context/WebSocketProvider";
 import { getCurrentLocation } from "@/hooks/useCurrLocation";
+import { useRideDetails } from "@/services/rideDetails.service";
 import { reverseGeocode } from "@/utils/googleGeocoding";
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
-import { Animated, Dimensions, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useContext, useEffect, useRef, useState } from "react";
+import {
+    Animated,
+    Dimensions,
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
+} from "react-native";
 import RideMapView from "./components/RideMapView";
 import useMapModal from "./hooks/useMapModal";
 
-const { height } = Dimensions.get('window');
+const { height } = Dimensions.get("window");
 
 interface SetLocationProps {
     goBack: () => void;
-    setScreen: (screen: string, data?: any) => void
+    setScreen: (screen: string, data?: any) => void;
 }
 
 export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
     const [location, setLocation] = useState({ latitude: 0, longitude: 0 });
     const [locationLoading, setLocationLoading] = useState(false);
     const [addressLoading, setAddressLoading] = useState(false);
+    const [showChat, setShowChat] = useState(false);
+    const [messageText, setMessageText] = useState("");
+    const chatScrollRef = useRef<ScrollView>(null);
 
     const { setSelectedLocation, setPickupLocation, pickupLocation, dropoffLocation, setDropoffLocation } = useMapModal();
-    const { driverLocation } = useRide();
+    const { driverLocation, rideState } = useRide();
+    const { rideId } = useRideId();
+    const { data: rideDetails } = useRideDetails(rideId);
+    const { chatMessages, sendChatMessage } = useContext(SocketContext);
+    const driver = rideDetails?.driver;
+    const currentMessages = rideId ? chatMessages[rideId] || [] : [];
+
     const [isPanelUp, setIsPanelUp] = useState(false);
+    const [isPanelVisible, setIsPanelVisible] = useState(true);
     const [slideAnim] = useState(new Animated.Value(height));
+    const panelOpacity = useRef(new Animated.Value(1)).current;
+    const panelTranslateY = useRef(new Animated.Value(0)).current;
 
-    const handleSelectPlace = async (place) => {
-        console.log('Selected place:', place);
+    const rideStatusInfo = (() => {
+        switch (rideState) {
+            case "driver_on_way":
+                return { label: "Driver on the way", color: "#FEB914" };
+            case "driver_arrived":
+                return { label: "Driver arrived", color: "#4CAF50" };
+            case "in_progress":
+                return { label: "Ride in progress", color: "#2196F3" };
+            default:
+                return { label: "Your ride is on the way", color: "#FEB914" };
+        }
+    })();
 
+    const handleSelectPlace = async (place: any) => {
         setAddressLoading(true);
-
         const pickupData = {
             longitude: place?.center[0],
             latitude: place?.center[1],
             address: place?.place_name,
-            name: place?.text || place.place_name.split(',')[0],
+            name: place?.text || place.place_name.split(",")[0],
         };
-
-        console.log('pickuoDta', pickupData)
-
-        // Update selected location for map
         setSelectedLocation(pickupData);
         setLocation({ longitude: place?.center[0], latitude: place?.center[1] });
-
-        // Update pickup location in context
         setPickupLocation(pickupData);
-
         setAddressLoading(false);
+    };
 
-        // Map will automatically update when pickupLocation changes in RideMapView
+    const handleSendMessage = async () => {
+        if (!messageText.trim() || !rideId) return;
+        const textToSend = messageText.trim();
+        setMessageText("");
+        try {
+            await sendChatMessage(rideId, textToSend);
+        } catch (err) {
+            console.error("Failed to send chat:", err);
+        }
+    };
+
+    const formatTime = (date: any) => {
+        const d = date instanceof Date ? date : new Date(date);
+        return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    };
+
+    const togglePanel = () => {
+        if (isPanelVisible) {
+            // Hide panel
+            Animated.parallel([
+                Animated.timing(panelOpacity, {
+                    toValue: 0,
+                    duration: 300,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(panelTranslateY, {
+                    toValue: height * 0.5,
+                    duration: 300,
+                    useNativeDriver: true,
+                }),
+            ]).start(() => setIsPanelVisible(false));
+        } else {
+            // Show panel
+            setIsPanelVisible(true);
+            Animated.parallel([
+                Animated.timing(panelOpacity, {
+                    toValue: 1,
+                    duration: 300,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(panelTranslateY, {
+                    toValue: 0,
+                    duration: 300,
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        }
+    };
+
+    const handleMapPress = () => {
+        if (showChat) {
+            setShowChat(false);
+            return;
+        }
+        togglePanel();
     };
 
     useEffect(() => {
         (async () => {
             setLocationLoading(true);
-            setDropoffLocation(null)
+            setDropoffLocation(null);
             try {
                 const currentLocation = await getCurrentLocation();
-                console.log("Current Location:", currentLocation);
                 setLocation(currentLocation);
-
-                // Get address for current location
                 setAddressLoading(true);
                 const address = await reverseGeocode(
                     currentLocation?.latitude,
                     currentLocation?.longitude
                 );
                 setAddressLoading(false);
-
-                console.log("Current location address:", address);
-
-                // Set as pickup location in context
                 setPickupLocation({
                     latitude: currentLocation?.latitude,
                     longitude: currentLocation?.longitude,
-                    address: address ? address : '',
-                    name: 'Current Location',
+                    address: address ? address : "",
+                    name: "Current Location",
                 });
             } catch (error) {
                 console.error("Error getting current location:", error);
@@ -95,89 +175,209 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
                     useNativeDriver: true,
                 }).start(() => setIsPanelUp(true));
             }, 500);
-
             return () => clearTimeout(timer);
         }
     }, [locationLoading, slideAnim]);
 
+    // Chat view
+    if (showChat) {
+        return (
+            <View style={{ flex: 1, backgroundColor: "#000" }}>
+                <StatusBar barStyle="light-content" backgroundColor="#000" />
+                <KeyboardAvoidingView
+                    style={{ flex: 1 }}
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    keyboardVerticalOffset={Platform.OS === "ios" ? 10 : 0}
+                >
+                    {/* Chat Header */}
+                    <View style={styles.chatHeader}>
+                        <TouchableOpacity onPress={() => setShowChat(false)} style={{ padding: 4, marginRight: 8 }}>
+                            <Ionicons name="arrow-back" size={24} color="#fff" />
+                        </TouchableOpacity>
+                        <View style={{ flex: 1 }}>
+                            <Text style={{ color: "#fff", fontSize: 17, fontWeight: "700" }}>
+                                {driver?.name || "Driver"}
+                            </Text>
+                            <Text style={{ color: "#FEB914", fontSize: 12, fontWeight: "500", marginTop: 2 }}>
+                                {driver?.vehicle || "Active Ride"}
+                            </Text>
+                        </View>
+                    </View>
+
+                    {/* Messages */}
+                    <ScrollView
+                        ref={chatScrollRef}
+                        style={{ flex: 1 }}
+                        contentContainerStyle={{ padding: 16, paddingBottom: 20 }}
+                        onContentSizeChange={() => chatScrollRef.current?.scrollToEnd({ animated: true })}
+                        keyboardDismissMode="on-drag"
+                    >
+                        {currentMessages.map((msg: any) => (
+                            <View
+                                key={msg.id}
+                                style={[
+                                    styles.bubbleContainer,
+                                    msg.sender === "user" ? styles.userContainer : styles.driverContainer,
+                                ]}
+                            >
+                                <View
+                                    style={[
+                                        styles.bubble,
+                                        msg.sender === "user" ? styles.userBubble : styles.driverBubble,
+                                    ]}
+                                >
+                                    <Text
+                                        style={[
+                                            styles.msgText,
+                                            msg.sender === "user" ? { color: "#000" } : { color: "#fff" },
+                                        ]}
+                                    >
+                                        {msg.text}
+                                    </Text>
+                                    <Text style={styles.timeText}>{formatTime(msg.timestamp)}</Text>
+                                </View>
+                            </View>
+                        ))}
+                    </ScrollView>
+
+                    {/* Input */}
+                    <View style={styles.chatInputWrapper}>
+                        <View style={styles.chatInputRow}>
+                            <TextInput
+                                style={styles.chatInput}
+                                placeholder="Message your driver..."
+                                placeholderTextColor="#666"
+                                value={messageText}
+                                onChangeText={setMessageText}
+                                multiline
+                                maxLength={500}
+                            />
+                            <TouchableOpacity
+                                style={[styles.sendCircle, !messageText.trim() && styles.sendDisabled]}
+                                onPress={handleSendMessage}
+                                disabled={!messageText.trim()}
+                            >
+                                <Ionicons name="send" size={20} color={messageText.trim() ? "#000" : "#444"} />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </KeyboardAvoidingView>
+            </View>
+        );
+    }
+
+    // Main map + panel view
     return (
         <View style={{ flex: 1 }}>
-            <StatusBar barStyle="dark-content" backgroundColor={'#fff'} />
-            <RideMapView
-                pickupLocation={pickupLocation}
-                dropoffLocation={{ latitude: 0, longitude: 0, address: '' }}
-                showRoute={true} // Set to true if you want a line between points
-                driver={true}
-            />
+            <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
-            {/* Loading overlay */}
-            {/* {locationLoading && (
-                <View style={styles.loadingOverlay}>
-                    <ActivityIndicator size="large" color="#f6a623" />
-                    <Text style={styles.loadingText}>Getting your location...</Text>
+            <TouchableWithoutFeedback onPress={handleMapPress}>
+                <View style={{ flex: 1 }}>
+                    <RideMapView
+                        pickupLocation={pickupLocation}
+                        dropoffLocation={{ latitude: 0, longitude: 0, address: "" }}
+                        showRoute={true}
+                        driver={true}
+                    />
                 </View>
-            )} */}
+            </TouchableWithoutFeedback>
 
-            {/* Address loading indicator */}
-            {/* {addressLoading && (
-                <View style={styles.addressLoadingBadge}>
-                    <ActivityIndicator size="small" color="#f6a623" />
-                    <Text style={styles.addressLoadingText}>Loading address...</Text>
-                </View>
-            )} */}
-
-            <Animated.View style={[styles.bottomPanel, { transform: [{ translateY: slideAnim }] }]}>
+            {/* Bottom Panel */}
+            <Animated.View
+                style={[
+                    styles.bottomPanel,
+                    {
+                        transform: [
+                            { translateY: Animated.add(slideAnim, panelTranslateY) },
+                        ],
+                        opacity: panelOpacity,
+                    },
+                ]}
+                pointerEvents={isPanelVisible ? "auto" : "none"}
+            >
                 <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
                     <View style={{ flex: 1, gap: 15 }}>
-                        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                            <View />
-                            <Text style={styles.title}>Driver Details</Text>
-                            <View />
+                        {/* Drag handle */}
+                        <View style={{ alignItems: "center", marginBottom: 5 }}>
+                            <View style={{ width: 40, height: 4, backgroundColor: "#444", borderRadius: 2 }} />
                         </View>
-                        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-                            <View>
-                                <Text style={{ fontSize: 16, fontWeight: "bold", color: "#fff", lineHeight: 24 }}>Your ride is on the way</Text>
-                                <Text style={{ fontSize: 14, color: "#fff", marginTop: 5 }}>Blue Toyota</Text>
-                            </View>
-                            <View>
-                                <Text style={{ fontSize: 14, color: "#fff", marginTop: 5 }}>ETA: 5 mins</Text>
-                            </View>
-                        </View>
-                        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-around", marginBottom: 20 }}>
-                            <View>
-                                <View style={styles.circle}>
 
-                                </View>
-                                <Text style={{ color: "#fff", fontSize: 14, textAlign: "center", marginTop: 5 }}>John Doe</Text>
+                        {/* Status badge */}
+                        <View style={styles.statusBadge}>
+                            <View style={[styles.statusDot, { backgroundColor: rideStatusInfo.color }]} />
+                            <Text style={[styles.statusLabel, { color: rideStatusInfo.color }]}>
+                                {rideStatusInfo.label}
+                            </Text>
+                        </View>
+
+                        {/* Driver info row */}
+                        <View style={styles.driverInfoRow}>
+                            <View style={styles.driverAvatarContainer}>
+                                <Image
+                                    source={
+                                        driver?.profile_image
+                                            ? { uri: driver.profile_image.file ?? driver.profile_image }
+                                            : require("../../../assets/images/Ava.png")
+                                    }
+                                    style={styles.driverAvatar}
+                                    resizeMode="cover"
+                                />
                             </View>
-                            <View>
-                                <View style={styles.circle}>
-                                    <Ionicons name="call" size={24} color="#f6a623" />
-                                </View>
-                                <Text style={{ color: "#fff", fontSize: 14, textAlign: "center", marginTop: 5 }}>Call</Text>
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.driverName}>{driver?.name || "Your Driver"}</Text>
+                                <Text style={styles.vehicleText}>
+                                    {driver?.vehicle || rideDetails?.vehicle_type || "Vehicle"}
+                                </Text>
                             </View>
-                            <View>
-                                <View style={styles.circle}>
-                                    <Ionicons name="chatbubble" size={24} color="#f6a623" />
-                                </View>
-                                <Text style={{ color: "#fff", fontSize: 14, textAlign: "center", marginTop: 5 }}>Chat</Text>
-                            </View>
-                            <View>
-                                <View style={styles.circle}>
-                                    <Ionicons name="share-social" size={24} color="#f6a623" />
-                                </View>
-                                <Text style={{ color: "#fff", fontSize: 14, textAlign: "center", marginTop: 5 }}>Share</Text>
+                            <View style={styles.etaContainer}>
+                                <Text style={styles.etaLabel}>ETA</Text>
+                                <Text style={styles.etaValue}>
+                                    {rideDetails?.eta || "5 mins"}
+                                </Text>
                             </View>
                         </View>
+
+                        {/* Action buttons */}
+                        <View style={styles.actionRow}>
+                            <TouchableOpacity style={styles.actionBtn} onPress={() => console.log("Calling driver...")}>
+                                <View style={styles.actionCircle}>
+                                    <Ionicons name="call" size={22} color="#f6a623" />
+                                </View>
+                                <Text style={styles.actionLabel}>Call</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity style={styles.actionBtn} onPress={() => setShowChat(true)}>
+                                <View style={styles.actionCircle}>
+                                    <Ionicons name="chatbubble" size={22} color="#f6a623" />
+                                </View>
+                                <Text style={styles.actionLabel}>Chat</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity style={styles.actionBtn} onPress={() => console.log("Sharing ride...")}>
+                                <View style={styles.actionCircle}>
+                                    <Ionicons name="share-social" size={22} color="#f6a623" />
+                                </View>
+                                <Text style={styles.actionLabel}>Share</Text>
+                            </TouchableOpacity>
+                        </View>
+
                         <CustomButton
                             title="SOS"
-                            onPress={() => console.log("Contacting driver...")}
+                            onPress={() => console.log("SOS pressed")}
                             style={{ backgroundColor: "#e74c3c", marginBottom: 15 }}
                         />
                     </View>
                 </ScrollView>
             </Animated.View>
 
+            {/* Show panel button when hidden */}
+            {!isPanelVisible && isPanelUp && (
+                <TouchableOpacity style={styles.showPanelBtn} onPress={togglePanel}>
+                    <Ionicons name="chevron-up" size={24} color="#FEB914" />
+                </TouchableOpacity>
+            )}
+
+            {/* Back button */}
             <TouchableOpacity style={styles.headerIconContainer} onPress={() => goBack()}>
                 <Ionicons name="arrow-back" size={24} color="#111" />
             </TouchableOpacity>
@@ -186,21 +386,24 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
 }
 
 const styles = StyleSheet.create({
-    marker: {
-        width: 30,
-        height: 30,
-        backgroundColor: "#fff",
-        borderRadius: 15,
-        borderColor: "white",
-        borderWidth: 3,
+    // Bottom panel
+    bottomPanel: {
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: height * 0.42,
+        backgroundColor: "#181818",
+        borderTopLeftRadius: 30,
+        borderTopRightRadius: 30,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: -5 },
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
+        elevation: 20,
+        paddingHorizontal: 20,
+        paddingTop: 12,
     },
-    markerImage: {
-        width: 20,
-        height: 20,
-        alignSelf: "center",
-        marginTop: 5,
-    },
-    circle: { height: 43.83116912841797, width: 43.83116912841797, borderRadius: 21.915584564208984, backgroundColor: "#1F212A", borderWidth: 0.88, borderColor: "#f6a623", alignItems: "center", justifyContent: "center" },
     headerIconContainer: {
         backgroundColor: "#fff",
         borderRadius: 20,
@@ -212,177 +415,204 @@ const styles = StyleSheet.create({
         top: 45,
         left: 20,
     },
-    bottomSheet: {
-        position: "absolute",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: "#181818",
-        padding: 20,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        shadowColor: "#181818",
-        shadowOffset: { width: 0, height: -5 },
-        shadowOpacity: 0.3,
-        shadowRadius: 10,
-        elevation: 20,
-    },
-    bottomPanel: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: height * 0.45,
-        backgroundColor: '#181818',
-        borderTopLeftRadius: 30,
-        borderTopRightRadius: 30,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -5 },
-        shadowOpacity: 0.3,
-        shadowRadius: 10,
-        elevation: 20,
-        paddingHorizontal: 20,
-        paddingTop: 20,
-    },
-    container: {
-        flex: 1,
-        backgroundColor: "#000",
-    },
-    topBar: {
-        position: "absolute",
-        top: 50,
-        left: 20,
-        right: 20,
+
+    // Status badge
+    statusBadge: {
         flexDirection: "row",
-        justifyContent: "space-between",
-        zIndex: 10,
-    },
-    iconContainer: {
-        padding: 10,
-        backgroundColor: "rgba(0, 0, 0, 0.4)",
-        borderRadius: 50,
-    },
-    mapPlaceholder: {
-        flex: 1,
-        backgroundColor: "#333",
-        position: "relative",
-    },
-    map: {
-        ...StyleSheet.absoluteFillObject,
-    },
-    overlayContainer: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: "rgba(0, 0, 0, 0.7)",
-        justifyContent: "center",
         alignItems: "center",
-    },
-    loadingOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: "rgba(0, 0, 0, 0.7)",
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 100,
-    },
-    loadingContainer: {
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 20,
-    },
-    loadingText: {
-        color: "#f6a623",
-        fontSize: 16,
-        marginTop: 10,
-        textAlign: "center",
-    },
-    addressLoadingBadge: {
-        position: "absolute",
-        top: 100,
         alignSelf: "center",
-        backgroundColor: "rgba(0, 0, 0, 0.8)",
-        paddingHorizontal: 20,
-        paddingVertical: 12,
-        borderRadius: 25,
-        flexDirection: "row",
-        alignItems: "center",
+        backgroundColor: "rgba(255,255,255,0.08)",
+        paddingHorizontal: 14,
+        paddingVertical: 6,
+        borderRadius: 20,
         gap: 8,
-        zIndex: 50,
     },
-    addressLoadingText: {
-        color: "#f6a623",
+    statusDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+    },
+    statusLabel: {
         fontSize: 14,
         fontWeight: "600",
     },
-    locationFoundBadge: {
-        position: "absolute",
-        top: 100,
-        alignSelf: "center",
-        backgroundColor: "rgba(0, 0, 0, 0.8)",
-        paddingHorizontal: 20,
-        paddingVertical: 12,
-        borderRadius: 25,
+
+    // Driver info
+    driverInfoRow: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 8,
+        gap: 12,
+        marginBottom: 5,
     },
-    locationFoundBadgeText: {
-        color: "#4CAF50",
+    driverAvatarContainer: {
+        width: 52,
+        height: 52,
+        borderRadius: 26,
+        borderWidth: 2,
+        borderColor: "#f6a623",
+        overflow: "hidden",
+    },
+    driverAvatar: {
+        width: "100%",
+        height: "100%",
+    },
+    driverName: {
+        fontSize: 17,
+        fontWeight: "bold",
+        color: "#fff",
+    },
+    vehicleText: {
+        fontSize: 13,
+        color: "#aaa",
+        marginTop: 2,
+    },
+    etaContainer: {
+        alignItems: "center",
+        backgroundColor: "rgba(254,185,20,0.12)",
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 12,
+    },
+    etaLabel: {
+        fontSize: 11,
+        color: "#aaa",
+        fontWeight: "600",
+    },
+    etaValue: {
         fontSize: 16,
+        color: "#FEB914",
         fontWeight: "bold",
     },
-    addressPreview: {
-        color: "#a10505",
-        fontSize: 14,
-        textAlign: "center",
-        marginTop: 10,
+
+    // Action buttons
+    actionRow: {
+        flexDirection: "row",
+        justifyContent: "space-around",
+        marginBottom: 10,
     },
-    mapText: {
-        fontSize: 18,
-        fontWeight: "bold",
-        color: "#f6a623",
+    actionBtn: {
+        alignItems: "center",
+        gap: 6,
     },
-    markerContainer: {
-        height: 30,
-        width: 30,
-        borderRadius: '50%',
-        backgroundColor: "#fff",
-        display: "flex",
+    actionCircle: {
+        height: 48,
+        width: 48,
+        borderRadius: 24,
+        backgroundColor: "#1F212A",
+        borderWidth: 1,
+        borderColor: "#f6a623",
         alignItems: "center",
         justifyContent: "center",
-        elevation: 6,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
-        borderWidth: 1,
-        borderColor: '#f6a623'
     },
-    title: {
-        color: "white",
-        fontSize: 24,
-        // marginBottom: 15,
-        fontWeight: "bold",
-        // alignSelf: "center",
+    actionLabel: {
+        color: "#fff",
+        fontSize: 13,
     },
-    searchContainer: {
-        marginBottom: 15,
-        zIndex: 1,
-    },
-    locationDetails: {
-        backgroundColor: "rgba(76, 175, 80, 0.1)",
-        padding: 15,
-        borderRadius: 10,
-        marginBottom: 15,
-        borderLeftWidth: 3,
-        borderLeftColor: "#4CAF50",
-    },
-    confirmButton: {
-        borderRadius: 10,
-        padding: 15,
+
+    // Show panel button
+    showPanelBtn: {
+        position: "absolute",
+        bottom: 20,
+        alignSelf: "center",
+        backgroundColor: "#181818",
+        borderRadius: 25,
+        width: 50,
+        height: 50,
+        justifyContent: "center",
         alignItems: "center",
+        borderWidth: 1,
+        borderColor: "#333",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 5,
     },
-    confirmText: {
-        color: "white",
-        fontSize: 16,
-        fontWeight: "bold",
+
+    // Chat styles
+    chatHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        paddingTop: 50,
+        borderBottomWidth: 1,
+        borderBottomColor: "#1a1a1a",
+        backgroundColor: "#000",
+    },
+    bubbleContainer: {
+        width: "100%",
+        marginVertical: 4,
+        flexDirection: "row",
+    },
+    userContainer: {
+        justifyContent: "flex-end",
+    },
+    driverContainer: {
+        justifyContent: "flex-start",
+    },
+    bubble: {
+        maxWidth: "80%",
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        borderRadius: 18,
+    },
+    userBubble: {
+        backgroundColor: "#FEB914",
+        borderBottomRightRadius: 4,
+    },
+    driverBubble: {
+        backgroundColor: "#1a1a1a",
+        borderBottomLeftRadius: 4,
+    },
+    msgText: {
+        fontSize: 15,
+        lineHeight: 20,
+    },
+    timeText: {
+        fontSize: 10,
+        color: "rgba(0,0,0,0.5)",
+        alignSelf: "flex-end",
+        marginTop: 4,
+    },
+    chatInputWrapper: {
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        paddingBottom: 30,
+        backgroundColor: "#000",
+        borderTopWidth: 1,
+        borderTopColor: "#1a1a1a",
+    },
+    chatInputRow: {
+        flexDirection: "row",
+        alignItems: "flex-end",
+        backgroundColor: "#111",
+        borderRadius: 24,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderWidth: 1,
+        borderColor: "#222",
+    },
+    chatInput: {
+        flex: 1,
+        color: "#fff",
+        fontSize: 15,
+        maxHeight: 100,
+        paddingTop: 8,
+        paddingBottom: 8,
+        paddingHorizontal: 8,
+    },
+    sendCircle: {
+        backgroundColor: "#FEB914",
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        justifyContent: "center",
+        alignItems: "center",
+        marginLeft: 8,
+        marginBottom: 2,
+    },
+    sendDisabled: {
+        backgroundColor: "#222",
     },
 });
