@@ -39,6 +39,14 @@ jobs:
 
       - name: Generate native Android project
         run: npx expo prebuild --platform android --non-interactive
+        env:
+          EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
+          EXPO_PUBLIC_WSS_URL: ${{ secrets.EXPO_PUBLIC_WSS_URL }}
+          EXPO_PUBLIC_GOOGLE_API_KEY: ${{ secrets.EXPO_PUBLIC_GOOGLE_API_KEY }}
+          EXPO_PUBLIC_GOOGLE_IOS_API_KEY: ${{ secrets.EXPO_PUBLIC_GOOGLE_IOS_API_KEY }}
+          EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID }}
+          EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID }}
+          EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID }}
 
       - name: Setup Android signing
         run: |
@@ -79,6 +87,14 @@ jobs:
 
       - name: Build Android Bundle
         run: cd android && ./gradlew bundleRelease > /tmp/build-output.txt 2>&1 || true
+        env:
+          EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
+          EXPO_PUBLIC_WSS_URL: ${{ secrets.EXPO_PUBLIC_WSS_URL }}
+          EXPO_PUBLIC_GOOGLE_API_KEY: ${{ secrets.EXPO_PUBLIC_GOOGLE_API_KEY }}
+          EXPO_PUBLIC_GOOGLE_IOS_API_KEY: ${{ secrets.EXPO_PUBLIC_GOOGLE_IOS_API_KEY }}
+          EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID }}
+          EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID }}
+          EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID }}
 
       - name: Show build output
         if: always()

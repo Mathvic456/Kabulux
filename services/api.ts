@@ -5,7 +5,7 @@ if (!Constants.expoConfig?.extra?.apiUrl) {
   console.warn("API URL missing in expoConfig.extra");
 }
 
-export const API_URL = Constants.expoConfig?.extra?.apiUrl;
+export const API_URL = Constants.expoConfig?.extra?.apiUrl || process.env.EXPO_PUBLIC_API_URL;
 
 console.log("[API Config] Base URL:", API_URL);
 
