@@ -1,7 +1,5 @@
 import CustomButton from "@/components/ui/CustomButton";
-import GoogleSignInButton from "@/components/ui/GoogleSignInButton";
 import { useAuth } from "@/context/AuthContext";
-import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useLoginEndPoint } from "@/services/authentication.service";
 import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
@@ -42,12 +40,7 @@ export default function LoginScreen({
   const { expoPushToken, registerForPushNotificationsAsync } = usePushNotifications();
   const { mutate: login, isPending: isLoginPending } = useLoginEndPoint(setTokens, remember);
 
-  const { promptGoogleSignIn, isLoading: isGoogleLoading } = useGoogleAuth({
-    onSuccess: next,
-    onError: (msg) => console.error('[Google Auth]', msg),
-  });
-
-  const isLoading = isLoginPending || isSubmitting || isGoogleLoading;
+  const isLoading = isLoginPending || isSubmitting
 
   const validateForm = () => {
     let valid = true;
@@ -195,11 +188,6 @@ export default function LoginScreen({
             <View style={styles.dividerLine} />
           </View>
 
-          <GoogleSignInButton
-            onPress={promptGoogleSignIn}
-            disabled={isLoading}
-            loading={isGoogleLoading}
-          />
 
           <View style={{ marginTop: 20 }}>
             <TouchableOpacity onPress={goRegister} disabled={isLoading}>

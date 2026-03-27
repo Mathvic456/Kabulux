@@ -1,6 +1,5 @@
 import CentralModal from "@/components/CentralModal";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import {
@@ -28,7 +27,7 @@ type Card = {
 const STORAGE_KEY = "@saved_cards";
 
 export default function PaymentMethodScreen({ goBack, next }: any) {
-  const [cards, setCards] = useState<Card[]>([]);
+  // const [cards, setCards] = useState<Card[]>([]);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -53,184 +52,18 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
   }, []);
 
   const loadCards = async () => {
-    const raw = await AsyncStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      setCards(parsed);
-      if (parsed.length) setSelectedCardId(parsed[0].id);
-    } else {
-      // Dummy cards logic (kept same as your code)
-      const dummy: Card[] = [
-        {
-          id: "1",
-          last4: "4242",
-          brand: "visa",
-          holder: "Victor Matthew",
-          expiry: "09/26",
-        },
-        {
-          id: "2",
-          last4: "8842",
-          brand: "mastercard",
-          holder: "Victor Matthew",
-          expiry: "11/25",
-        },
-      ];
-      setCards(dummy);
-      setSelectedCardId(dummy[0].id);
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(dummy));
-    }
+
+
   };
 
   const saveCards = async (updated: Card[]) => {
-    setCards(updated);
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+
   };
 
-  /* ---------------------------------- */
-  /* Card Validation Helpers */
-  /* ---------------------------------- */
-  const luhnCheck = (cardNum: string): boolean => {
-    const digits = cardNum.replace(/\D/g, '');
-    if (digits.length < 13 || digits.length > 19) return false;
-
-    let sum = 0;
-    let isEven = false;
-    for (let i = digits.length - 1; i >= 0; i--) {
-      let digit = parseInt(digits[i], 10);
-      if (isEven) {
-        digit *= 2;
-        if (digit > 9) digit -= 9;
-      }
-      sum += digit;
-      isEven = !isEven;
-    }
-    return sum % 10 === 0;
-  };
-
-  const isExpiryValid = (expiryStr: string): boolean => {
-    const match = expiryStr.match(/^(0[1-9]|1[0-2])\/?(\d{2})$/);
-    if (!match) return false;
-
-    const month = parseInt(match[1], 10);
-    const year = parseInt(match[2], 10) + 2000;
-    const now = new Date();
-    const expiryDate = new Date(year, month); // First day of the month after expiry
-    return expiryDate > now;
-  };
-
-  const formatCardNumber = (text: string): string => {
-    const digits = text.replace(/\D/g, '').slice(0, 16);
-    return digits.replace(/(\d{4})(?=\d)/g, '$1 ');
-  };
-
-  const formatExpiry = (text: string): string => {
-    const digits = text.replace(/\D/g, '').slice(0, 4);
-    if (digits.length > 2) {
-      return digits.slice(0, 2) + '/' + digits.slice(2);
-    }
-    return digits;
-  };
-
-  /* ---------------------------------- */
-  /* Add new card */
-  /* ---------------------------------- */
   const handleSaveCard = async () => {
     Keyboard.dismiss();
-
-    // 1. Basic Validation
-    if (!cardNumber || !expiry || !cvv || !cardName) {
-      setModalState({
-        visible: true,
-        title: "Missing Details",
-        message: "Please fill in all card information."
-      });
-      return;
-    }
-
-    const cleaned = cardNumber.replace(/\D/g, "");
-
-    // 2. Luhn check
-    if (!luhnCheck(cleaned)) {
-      setModalState({
-        visible: true,
-        title: "Invalid Card",
-        message: "Please enter a valid card number."
-      });
-      return;
-    }
-
-    // 3. Expiry format and not-expired check
-    if (!isExpiryValid(expiry)) {
-      setModalState({
-        visible: true,
-        title: "Invalid Expiry",
-        message: "Card is expired or expiry format is invalid. Use MM/YY."
-      });
-      return;
-    }
-
-    // 4. CVV validation (3-4 digits)
-    const cvvCleaned = cvv.replace(/\D/g, '');
-    if (cvvCleaned.length < 3 || cvvCleaned.length > 4) {
-      setModalState({
-        visible: true,
-        title: "Invalid CVV",
-        message: "CVV must be 3 or 4 digits."
-      });
-      return;
-    }
-
-    // 5. Cardholder name validation
-    if (cardName.trim().length < 2) {
-      setModalState({
-        visible: true,
-        title: "Invalid Name",
-        message: "Please enter the name as shown on your card."
-      });
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const newCard: Card = {
-        id: Date.now().toString(),
-        last4: cleaned.slice(-4),
-        brand: cleaned.startsWith("5") ? "mastercard" : "visa",
-        holder: cardName.trim(),
-        expiry,
-      };
-
-      // Save card locally (card tokenization happens at payment time via Paystack)
-      const updated = [...cards, newCard];
-      await saveCards(updated);
-
-      setSelectedCardId(newCard.id);
-      setShowAddModal(false);
-
-      // Reset form
-      setCardNumber("");
-      setExpiry("");
-      setCvv("");
-      setCardName("");
-
-      setModalState({
-        visible: true,
-        title: "Success",
-        message: "Payment method added successfully."
-      });
-
-    } catch (error: any) {
-      setModalState({
-        visible: true,
-        title: "Error",
-        message: error.message || "Could not add card."
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    return;
+  }
 
   return (
     <>
@@ -241,9 +74,10 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={goBack}>
-              <Ionicons name="arrow-back" size={24} color="black" />
+              <Ionicons name="arrow-back" size={20} color="black" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Payment Methods</Text>
+            <View />
           </View>
 
           <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -251,33 +85,7 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
             {/* Saved cards */}
             <Text style={styles.sectionTitle}>Saved cards</Text>
 
-            {cards.map((card) => (
-              <TouchableOpacity
-                key={card.id}
-                style={[
-                  styles.cardRow,
-                  selectedCardId === card.id && styles.cardRowActive,
-                ]}
-                onPress={() => setSelectedCardId(card.id)}
-              >
-                <Ionicons
-                  name={card.brand === "visa" ? "card" : "card"}
-                  size={28}
-                  color="#FEB914"
-                />
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={styles.cardText}>
-                    •••• {card.last4}
-                  </Text>
-                  <Text style={styles.cardSub}>
-                    {card.holder} · {card.expiry}
-                  </Text>
-                </View>
-                {selectedCardId === card.id && (
-                  <Ionicons name="checkmark-circle" size={22} color="#FEB914" />
-                )}
-              </TouchableOpacity>
-            ))}
+
 
             {/* Add new card */}
             <TouchableOpacity
@@ -303,7 +111,7 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
                     keyboardType="numeric"
                     value={cardNumber}
                     maxLength={19}
-                    onChangeText={(text) => setCardNumber(formatCardNumber(text))}
+                    onChangeText={(text) => setCardNumber(text)}
                   />
                   <TextInput
                     style={styles.input}
@@ -312,7 +120,7 @@ export default function PaymentMethodScreen({ goBack, next }: any) {
                     keyboardType="numeric"
                     value={expiry}
                     maxLength={5}
-                    onChangeText={(text) => setExpiry(formatExpiry(text))}
+                    onChangeText={(text) => setExpiry(text)}
                   />
                   <TextInput
                     style={styles.input}
@@ -377,6 +185,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 16,
     marginTop: 25,
+    justifyContent: "space-between",
   },
   backButton: {
     backgroundColor: "white",

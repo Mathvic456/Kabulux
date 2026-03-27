@@ -40,7 +40,7 @@ export default function PickLocation({ setModal, handleSelectPlace }) {
                     onPress={handleManualConfirm}
                 >
                     <Text style={styles.confirmText}>
-                        {"Confirm Pick-up"}
+                        {pickupLocation ? "Use Current Location" : "Confirm Pick-up"}
                     </Text>
                 </TouchableOpacity>
             </View>

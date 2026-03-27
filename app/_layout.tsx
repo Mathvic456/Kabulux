@@ -91,12 +91,6 @@ export default function RootLayout() {
     return () => subscription.remove();
   }, []);
 
-  useEffect(() => {
-    GoogleSignin.configure({
-      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-      offlineAccess: true, // required for idToken to be non-null
-    });
-  }, []);
 
   if (!loaded) {
     return null;
