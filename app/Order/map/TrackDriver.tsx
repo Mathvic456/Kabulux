@@ -316,7 +316,7 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
                                 <Image
                                     source={
                                         driver?.profile_image
-                                            ? { uri: driver.profile_image.file ?? driver.profile_image }
+                                            ? { uri: driver?.profile_image.file ?? driver?.profile_image }
                                             : require("../../../assets/images/Ava.png")
                                     }
                                     style={styles.driverAvatar}
