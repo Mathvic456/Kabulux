@@ -2,14 +2,15 @@ import CentralModal from "@/components/CentralModal";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Image } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { darkMapStyle } from "../../styles/darkMapStyle";
 
 import Constants from "expo-constants";
 import {
+  ActivityIndicator,
   Alert,
   Animated,
+  Image,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -17,7 +18,7 @@ import {
   Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View,
+  View
 } from "react-native";
 import "react-native-get-random-values";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";

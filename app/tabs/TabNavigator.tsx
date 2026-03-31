@@ -24,6 +24,7 @@ export default function TabNavigator({ setScreen, setSelectedRide }) {
           borderTopRightRadius: 20,
           position: "absolute",
           overflow: "hidden",
+          height: 60,
         },
         tabBarLabelStyle: {
           fontSize: 12,
