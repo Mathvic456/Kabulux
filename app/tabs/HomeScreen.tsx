@@ -622,7 +622,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
   const [showUploadOverlay, setShowUploadOverlay] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
-  const [selectedCancelReason, setSelectedCancelReason] = useState(null);
+  const [selectedCancelReason, setSelectedCancelReason] = useState<string | null>(null);
 
   const CANCELLATION_REASONS = [
     "Can't find driver",
@@ -906,7 +906,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
         <TouchableOpacity onPress={() => setShowAreaFadaOverlay(true)}>
           {profile?.profile_image ? (
             <Image
-              source={{ uri: profile.profile_image.file ?? profile.profile_image }}
+              source={{ uri: typeof profile.profile_image === "object" && profile.profile_image.file ? profile.profile_image.file : typeof profile.profile_image === "string" ? profile.profile_image : undefined }}
               resizeMode="contain"
               style={{
                 width: 40,
@@ -962,7 +962,14 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
                 <Image
                   source={
                     driver?.profile_image
-                      ? { uri: driver.profile_image.file ?? driver.profile_image }
+                      ? {
+                            uri:
+                                typeof driver.profile_image === "object" && driver.profile_image.file
+                                    ? driver.profile_image.file
+                                    : typeof driver.profile_image === "string"
+                                      ? driver.profile_image
+                                      : undefined,
+                        }
                       : require("../../assets/images/Ava.png")
                   }
                   style={styles.driverAvatar}
