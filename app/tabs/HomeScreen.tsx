@@ -963,13 +963,13 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
                   source={
                     driver?.profile_image
                       ? {
-                            uri:
-                                typeof driver.profile_image === "object" && driver.profile_image.file
-                                    ? driver.profile_image.file
-                                    : typeof driver.profile_image === "string"
-                                      ? driver.profile_image
-                                      : undefined,
-                        }
+                        uri:
+                          typeof driver?.profile_image === "object" && driver?.profile_image.file
+                            ? driver?.profile_image.file
+                            : typeof driver?.profile_image === "string"
+                              ? driver?.profile_image
+                              : undefined,
+                      }
                       : require("../../assets/images/Ava.png")
                   }
                   style={styles.driverAvatar}

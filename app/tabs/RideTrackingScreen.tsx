@@ -392,11 +392,18 @@ export default function RideTrackingScreen({ goBack, setScreen }: { goBack: () =
           <View style={styles.driverInfoSection}>
             <View style={styles.driverAvatarContainer}>
               <Image
-                source={
-                  driver.profile_image
-                    ? { uri: driver.profile_image }
-                    : require("../../assets/images/Ava.png")
-                }
+                source={(() => {
+                  if (!driver.profile_image) return require("../../assets/images/Ava.png");
+
+                  const uri =
+                    typeof driver.profile_image === "object" && driver.profile_image?.file
+                      ? driver.profile_image.file
+                      : typeof driver.profile_image === "string"
+                        ? driver.profile_image
+                        : null;
+
+                  return uri ? { uri } : require("../../assets/images/Ava.png");
+                })()}
                 style={styles.driverAvatar}
                 resizeMode="cover"
               />

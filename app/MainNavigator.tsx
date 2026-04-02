@@ -300,7 +300,7 @@ export default function MainNavigator() {
       return (
         <RiderOffersScreen
           goBack={goBack}
-          next={() => handleSetScreen("trackRide")}
+          next={() => handleSetScreen("trackDriver")}
           home={() => handleSetScreen("dashboard")}
           rideData={rideData}
         />

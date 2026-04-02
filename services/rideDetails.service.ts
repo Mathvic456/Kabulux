@@ -16,6 +16,6 @@ export const useRideDetails = (rideId: string | null) => {
     queryKey: rideKeys.details(rideId || ""),
     queryFn: () => fetchRideDetails(rideId!),
     enabled: !!rideId, // Only fetch if rideId exists
-    refetchInterval: 5000, // Optional: Poll every 5s to keep location/status fresh
+    refetchInterval: 5000,
   });
 };
