@@ -6,9 +6,11 @@ export const rideKeys = {
 };
 
 const fetchRideDetails = async (rideId: string) => {
-  // console.log(`🔍 Fetching details for: ${rideId}`);
-  const { data } = await api.get(`rides/${rideId}/details/`);
-  return data;
+  console.log(`🔍 Fetching details for: ${rideId}`);
+  const res = await api.get(`rides/${rideId}/details/`);
+
+  console.log(`✅ Fetched details for: ${rideId}`, res);
+  return res.data;
 };
 
 export const useRideDetails = (rideId: string | null) => {

@@ -214,7 +214,7 @@ const UploadPhotoOverlay = ({
     <Modal
       animationType="slide"
       transparent
-      visible={isVisible}
+      visible={false}
       onRequestClose={onClose}
     >
       <View style={styles.overlayContainer}>
@@ -666,6 +666,10 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
             setCancelModalVisible(false);
             //TODO: Add a Ride cancelled.
             resetRide();
+          },
+          onError: (error) => {
+            console.error("Cancellation failed:", error);
+            Alert.alert("Cancellation Failed", "Failed to cancel the ride.");
           },
         },
       );

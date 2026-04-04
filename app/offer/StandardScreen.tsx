@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import CentralModal from "@/components/CentralModal";
 import { useBookStandard } from "@/services/bookStandard";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -38,7 +39,7 @@ interface RideData {
     estimated_fare: number;
   };
   ride_request_id: string;
-  paymentMethod: string; // Added this field
+  paymentMethod: string;
 }
 
 interface StandardScreenProps {
@@ -62,17 +63,14 @@ export default function StandardScreen({
   const getBasePrice = () => {
     if (!rideData) return 0;
 
-    // Priority 1: Use rawPrice if available
     if (rideData.rawPrice) {
       return Number(rideData.rawPrice);
     }
 
-    // Priority 2: Use estimated_fare from rideDetails
     if (rideData.rideDetails?.estimated_fare) {
       return Number(rideData.rideDetails.estimated_fare);
     }
 
-    // Priority 3: Extract from price string as fallback
     const extractPrice = (priceString: string) =>
       parseFloat(priceString.replace(/[₦,]/g, "")) || 0;
     return extractPrice(rideData.price);
@@ -120,7 +118,6 @@ export default function StandardScreen({
       return;
     }
 
-    // Convert payment method to uppercase for backend
     const paymentMethodUpper = rideData.paymentMethod.toUpperCase();
 
     console.log("📤 Submitting offer:", {
@@ -143,19 +140,14 @@ export default function StandardScreen({
 
           let msg = "Failed to submit offer. Please try again.";
 
-          // 1. Check for the specific "Insufficient wallet" error from your logs
           if (
             error.response?.data?.rider_offer &&
             Array.isArray(error.response.data.rider_offer)
           ) {
             msg = error.response.data.rider_offer[0];
-          }
-          // 2. Fallback for other backend errors
-          else if (error.response?.data?.message) {
+          } else if (error.response?.data?.message) {
             msg = error.response.data.message;
-          }
-          // 3. Fallback for network/generic errors
-          else if (error.message) {
+          } else if (error.message) {
             msg = error.message;
           }
 
@@ -174,7 +166,6 @@ export default function StandardScreen({
   const isValidOffer = riderOffer >= basePrice;
 
   const formatDuration = (durationString: string) => {
-    // Check for "X min" pattern FIRST before trying to parse as number
     const minMatch = durationString.match(/(\d+)\s*min/);
     if (minMatch) {
       return `${minMatch[1]} min`;
@@ -222,7 +213,7 @@ export default function StandardScreen({
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={'#000'} />
+      <StatusBar barStyle="light-content" backgroundColor={"#000"} />
 
       {/* Header */}
       <View style={styles.header}>
@@ -345,9 +336,22 @@ export default function StandardScreen({
             </TouchableOpacity>
 
             <View style={styles.priceDisplay}>
-              <Text style={styles.priceAmount}>{formatPrice(riderOffer)}</Text>
+              {/* ✅ KEY FIX: numberOfLines + adjustsFontSizeToFit prevent wrapping */}
+              <Text
+                style={styles.priceAmount}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.5}
+              >
+                {formatPrice(riderOffer)}
+              </Text>
               {riderOffer > basePrice ? (
-                <Text style={styles.priceIncrease}>
+                <Text
+                  style={styles.priceIncrease}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.6}
+                >
                   +{formatPrice(riderOffer - basePrice)} Boost
                 </Text>
               ) : (
@@ -423,12 +427,13 @@ export default function StandardScreen({
             </>
           )}
         </TouchableOpacity>
+
         <CentralModal
           visible={errorModalVisible}
           onClose={() => setErrorModalVisible(false)}
           title="Booking Failed"
           subText={errorMessage}
-          icon="wallet-outline" // Or "alert-circle-outline"
+          icon="wallet-outline"
           iconColor="#ff6b6b"
           themeColor="#ff6b6b"
           confirmText="Understood"
@@ -598,6 +603,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 15,
+    paddingVertical: 10,
+    overflow: "hidden", // ✅ Prevents children from bleeding outside
   },
   priceButton: {
     width: 70,
@@ -611,6 +618,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 10,
     elevation: 6,
+    flexShrink: 0, // ✅ Buttons never shrink
   },
   priceButtonDisabled: {
     backgroundColor: "#333",
@@ -619,22 +627,30 @@ const styles = StyleSheet.create({
   priceDisplay: {
     alignItems: "center",
     flex: 1,
+    minWidth: 0,      // ✅ Allows flex child to shrink below its content size
+    overflow: "hidden", // ✅ Clips text that still overflows after font scaling
+    paddingHorizontal: 8,
   },
   priceAmount: {
     fontSize: 42,
     fontWeight: "bold",
     color: "white",
     marginBottom: 4,
+    width: "100%",    // ✅ Gives adjustsFontSizeToFit a bounded width to work within
+    textAlign: "center",
   },
   priceIncrease: {
     fontSize: 16,
     color: "#4CAF50",
     fontWeight: "700",
+    width: "100%",
+    textAlign: "center",
   },
   priceIncreasePlaceholder: {
     fontSize: 16,
     color: "#666",
     fontWeight: "600",
+    textAlign: "center",
   },
   incrementText: {
     fontSize: 13,
