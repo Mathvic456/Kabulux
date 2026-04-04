@@ -4,7 +4,7 @@ export default {
   expo: {
     name: "Kablux",
     slug: "kablux-rider",
-    version: "1.0.1",
+    version: "1.0.2",
     orientation: "portrait",
     icon: "./assets/icons/rider-logo.png",
     scheme: "com.crashingout.kablux",
@@ -18,7 +18,7 @@ export default {
       config: {
         googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_IOS_API_KEY,
       },
-      buildNumber: "4",
+      buildNumber: "5",
       bundleIdentifier: "com.kablux.kabluxrider",
       infoPlist: {
         NSLocationWhenInUseUsageDescription: "Kablux uses your location to match you with nearby drivers, calculate accurate pickup points, and provide real-time ride tracking during your trip.",
@@ -40,7 +40,7 @@ export default {
           apiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
         },
       },
-      versionCode: 38
+      versionCode: 42
     },
 
     web: {

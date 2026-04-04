@@ -30,7 +30,7 @@ import PlanRideScreen from "./Order/PlanRideScreen";
 import AboutUs from "./profile/AboutUs";
 import { RateAppScreen } from "./profile/ExtraScreens";
 import HelpAndSupportScreen from "./profile/HelpAndSupportScreen";
-import Language from "./profile/Language";
+import LanguageScreen from "./profile/Language";
 import LegalScreen from "./profile/LegalScreen";
 import LoginAndSecurityScreen from "./profile/LoginAndSecurityScreen";
 import PersonalInfoScreen from "./profile/PersonalInfoScreen";
@@ -300,7 +300,7 @@ export default function MainNavigator() {
       return (
         <RiderOffersScreen
           goBack={goBack}
-          next={() => handleSetScreen("trackRide")}
+          next={() => handleSetScreen("trackDriver")}
           home={() => handleSetScreen("dashboard")}
           rideData={rideData}
         />
@@ -449,7 +449,7 @@ export default function MainNavigator() {
 
     case "language":
       return (
-        <Language
+        <LanguageScreen
           goBack={goBack}
         />
       );

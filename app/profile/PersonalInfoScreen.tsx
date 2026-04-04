@@ -1,6 +1,6 @@
 import { useProfile } from "@/services/profile.service";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type PersonalInfoScreenProps = {
@@ -31,6 +31,7 @@ export default function PersonalInfoScreen({
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="#000" barStyle="light-content" />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={goBack} style={styles.backButton}>

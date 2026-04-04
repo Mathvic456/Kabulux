@@ -275,8 +275,16 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
                 <View style={{ flex: 1 }}>
                     <RideMapView
                         pickupLocation={pickupLocation}
-                        dropoffLocation={{ latitude: 0, longitude: 0, address: "" }}
-                        showRoute={true}
+                        dropoffLocation={
+                            driverLocation
+                                ? {
+                                    latitude: driverLocation.lat,
+                                    longitude: driverLocation.lng,
+                                    address: "Driver Location",
+                                }
+                                : null
+                        }
+                        showRoute={!!driverLocation}
                         driver={true}
                     />
                 </View>
@@ -314,11 +322,18 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
                         <View style={styles.driverInfoRow}>
                             <View style={styles.driverAvatarContainer}>
                                 <Image
-                                    source={
-                                        driver?.profile_image
-                                            ? { uri: driver.profile_image.file ?? driver.profile_image }
-                                            : require("../../../assets/images/Ava.png")
-                                    }
+                                    source={(() => {
+                                        if (!driver?.profile_image) return require("../../../assets/images/Ava.png");
+
+                                        const uri =
+                                            typeof driver.profile_image === "object" && driver.profile_image?.file
+                                                ? driver.profile_image.file
+                                                : typeof driver.profile_image === "string"
+                                                    ? driver.profile_image
+                                                    : null;
+
+                                        return uri ? { uri } : require("../../../assets/images/Ava.png");
+                                    })()}
                                     style={styles.driverAvatar}
                                     resizeMode="cover"
                                 />

@@ -6,9 +6,11 @@ export const rideKeys = {
 };
 
 const fetchRideDetails = async (rideId: string) => {
-  // console.log(`🔍 Fetching details for: ${rideId}`);
-  const { data } = await api.get(`rides/${rideId}/details/`);
-  return data;
+  console.log(`🔍 Fetching details for: ${rideId}`);
+  const res = await api.get(`rides/${rideId}/details/`);
+
+  console.log(`✅ Fetched details for: ${rideId}`, res);
+  return res.data;
 };
 
 export const useRideDetails = (rideId: string | null) => {
@@ -16,6 +18,6 @@ export const useRideDetails = (rideId: string | null) => {
     queryKey: rideKeys.details(rideId || ""),
     queryFn: () => fetchRideDetails(rideId!),
     enabled: !!rideId, // Only fetch if rideId exists
-    refetchInterval: 5000, // Optional: Poll every 5s to keep location/status fresh
+    refetchInterval: 5000,
   });
 };

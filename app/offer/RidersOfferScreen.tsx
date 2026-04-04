@@ -267,7 +267,7 @@ export default function RiderOffersScreen({ goBack, next, rideData, home }: Ride
 
   const closeModalAndContinue = () => {
     setAcceptedModalVisible(false);
-    clearRideAccepted();
+    // clearRideAccepted();
     hasShownModal.current = false;
     next();
   };

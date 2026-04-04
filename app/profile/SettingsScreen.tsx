@@ -28,7 +28,7 @@ export default function SettingsScreen({ setScreen, goBack }) {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [dLoading, setDLoading] = useState(false);
-  const route = useRouter()
+  const route = useRouter();
   const [deleteForm, setDeleteForm] = useState<{ reason: string; password: string }>({
     reason: "",
     password: "",
@@ -43,15 +43,12 @@ export default function SettingsScreen({ setScreen, goBack }) {
     resetRide,
   );
 
-
   const handleLogout = () => {
     console.log("🚪 [Settings] Starting logout process...");
-
     if (socket) {
       console.log("🔌 [Settings] Closing WebSocket connection...");
       socket.close(1000, "User logged out");
     }
-
     logout(undefined, {
       onSuccess: () => {
         console.log("✅ [Settings] Logout successful");
@@ -68,36 +65,33 @@ export default function SettingsScreen({ setScreen, goBack }) {
 
   const validateDeleteForm = () => {
     const errors: { reason?: string; password?: string } = {};
-
+    if (!deleteForm.reason || deleteForm.reason.trim().length === 0) {
+      errors.reason = "Reason is required to delete your account.";
+    }
     if (!deleteForm.password || deleteForm.password.trim().length === 0) {
       errors.password = "Password is required to delete your account.";
-    } if (!deleteForm.reason || deleteForm.reason.trim().length === 0) {
-      errors.password = "Reason is required to delete your account.";
     } else if (deleteForm.password.length < 6) {
       errors.password = "Password must be at least 6 characters.";
     }
-
     setDeleteErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleDeleteAcct = async () => {
     if (!validateDeleteForm()) return;
-
     setDLoading(true);
     try {
-      await api.post('auth/request_delete_account/', {
+      await api.post("auth/request_delete_account/", {
         password: deleteForm.password,
         reason: deleteForm.reason,
       });
-
       console.log("[Settings] Delete account request successful");
       setShowDeleteModal(false);
       setDeleteForm({ reason: "", password: "" });
       setDeleteErrors({ reason: "", password: "" });
       setScreen("login");
     } catch (error: any) {
-      console.log('actual err', error)
+      console.log("actual err", error);
       const message =
         error?.response?.data?.message ||
         error?.message ||
@@ -138,7 +132,6 @@ export default function SettingsScreen({ setScreen, goBack }) {
         {
           icon: "notifications-outline",
           label: "Notifications",
-          // action: () => setScreen("notifications"),
           hasToggle: true,
           toggleValue: notificationsEnabled,
           toggleAction: setNotificationsEnabled,
@@ -208,7 +201,7 @@ export default function SettingsScreen({ setScreen, goBack }) {
         },
         {
           icon: "trash-outline",
-          label: "Delete account",
+          label: "Delete Account",
           isAction: true,
           action: () => setShowDeleteModal(true),
         },
@@ -222,13 +215,12 @@ export default function SettingsScreen({ setScreen, goBack }) {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => goBack()}
-            style={styles.backButton}
-          >
+          <TouchableOpacity onPress={() => goBack()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Settings</Text>
+          {/* FIX: header title sits between two equal-width spacers so it
+              always centres without being squeezed by the back button */}
+          <Text style={styles.headerTitle} numberOfLines={1}>Settings</Text>
           <View style={styles.headerSpacer} />
         </View>
 
@@ -241,20 +233,36 @@ export default function SettingsScreen({ setScreen, goBack }) {
                   key={itemIndex}
                   style={[
                     styles.item,
-                    itemIndex !== section.items.length - 1 &&
-                    styles.itemWithBorder,
+                    itemIndex !== section.items.length - 1 && styles.itemWithBorder,
                   ]}
                   onPress={item.action}
                   disabled={!item.action && !item.hasToggle}
                 >
+                  {/* FIX: itemLeft is flex:1 with flexShrink:1 and minWidth:0
+                      so it shrinks when the right side needs space, and the
+                      label uses flexShrink + flexWrap to never get clipped */}
                   <View style={styles.itemLeft}>
-                    <Ionicons name={item.icon} size={22} color="#FEB914" />
-                    <Text style={styles.itemLabel}>{item.label}</Text>
+                    {/* Icon has a fixed width so it never causes label shift */}
+                    <View style={styles.itemIconWrap}>
+                      <Ionicons name={item.icon} size={22} color="#FEB914" />
+                    </View>
+                    <Text
+                      style={styles.itemLabel}
+                      numberOfLines={2}
+                    // FIX: numberOfLines={2} lets long labels wrap to a second
+                    // line instead of being truncated with "..."
+                    >
+                      {item.label}
+                    </Text>
                   </View>
 
+                  {/* FIX: itemRight has flexShrink:0 so it never gets squashed
+                      and never overlaps the label */}
                   <View style={styles.itemRight}>
                     {item.value && (
-                      <Text style={styles.itemValue}>{item.value}</Text>
+                      <Text style={styles.itemValue} numberOfLines={1}>
+                        {item.value}
+                      </Text>
                     )}
                     {item.hasToggle ? (
                       <Switch
@@ -287,34 +295,38 @@ export default function SettingsScreen({ setScreen, goBack }) {
           onPress={() => !isLoggingOut && setShowLogoutModal(false)}
         >
           <View style={styles.modalOverlay}>
-            <View style={styles.confirmationModal}>
-              <Text style={styles.modalTitle}>Log Out</Text>
-              <Text style={styles.modalText}>
-                Are you sure you want to log out?
-              </Text>
+            {/* FIX: wrap inner modal in TouchableWithoutFeedback so taps
+                inside don't bubble up and close it accidentally */}
+            <TouchableWithoutFeedback>
+              <View style={styles.confirmationModal}>
+                <Text style={styles.modalTitle}>Log Out</Text>
+                <Text style={styles.modalText}>
+                  Are you sure you want to log out?
+                </Text>
 
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.cancelButton]}
-                  onPress={() => setShowLogoutModal(false)}
-                  disabled={isLoggingOut}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.cancelButton]}
+                    onPress={() => setShowLogoutModal(false)}
+                    disabled={isLoggingOut}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.confirmButton]}
-                  onPress={handleLogout}
-                  disabled={isLoggingOut}
-                >
-                  {isLoggingOut ? (
-                    <ActivityIndicator size="small" color="#000" />
-                  ) : (
-                    <Text style={styles.confirmButtonText}>Log Out</Text>
-                  )}
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.confirmButton]}
+                    onPress={handleLogout}
+                    disabled={isLoggingOut}
+                  >
+                    {isLoggingOut ? (
+                      <ActivityIndicator size="small" color="#000" />
+                    ) : (
+                      <Text style={styles.confirmButtonText}>Log Out</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
+            </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
       </Modal>
@@ -333,7 +345,10 @@ export default function SettingsScreen({ setScreen, goBack }) {
                 {/* Header */}
                 <View style={styles.deleteModalHeader}>
                   <Ionicons name="warning-outline" size={28} color="#FF4444" />
-                  <Text style={[styles.modalTitle, { color: "#FF4444", marginBottom: 0, marginLeft: 8 }]}>
+                  <Text
+                    style={[styles.modalTitle, styles.deleteModalTitle]}
+                    numberOfLines={1}
+                  >
                     Delete Account
                   </Text>
                 </View>
@@ -342,10 +357,10 @@ export default function SettingsScreen({ setScreen, goBack }) {
                   This action is permanent and cannot be undone. All your data will be erased.
                 </Text>
 
-                {/* Reason Field (optional) */}
+                {/* Reason Field */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>
-                    Reason for leaving<Text style={styles.requiredTag}>*</Text>
+                    Reason for leaving<Text style={styles.requiredTag}> *</Text>
                   </Text>
                   <TextInput
                     style={styles.textArea}
@@ -359,12 +374,15 @@ export default function SettingsScreen({ setScreen, goBack }) {
                     numberOfLines={3}
                     editable={!dLoading}
                   />
+                  {deleteErrors.reason ? (
+                    <Text style={styles.errorText}>{deleteErrors.reason}</Text>
+                  ) : null}
                 </View>
 
-                {/* Password Field (required) */}
+                {/* Password Field */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>
-                    Confirm your password <Text style={styles.requiredTag}>*</Text>
+                    Confirm your password<Text style={styles.requiredTag}> *</Text>
                   </Text>
                   <TextInput
                     style={[
@@ -437,14 +455,19 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 5,
+    // FIX: fixed width matches headerSpacer so title stays perfectly centred
+    width: 34,
   },
   headerTitle: {
     color: "#fff",
     fontSize: 20,
     fontWeight: "bold",
+    flex: 1,
+    textAlign: "center",
   },
   headerSpacer: {
-    width: 30,
+    // FIX: matches backButton width to balance the header layout
+    width: 34,
   },
   section: {
     marginBottom: 20,
@@ -468,6 +491,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: 16,
+    // FIX: minHeight ensures items with two-line labels don't look too tight
+    minHeight: 56,
   },
   itemWithBorder: {
     borderBottomWidth: 1,
@@ -476,34 +501,66 @@ const styles = StyleSheet.create({
   itemLeft: {
     flexDirection: "row",
     alignItems: "center",
+    // FIX: flex:1 + flexShrink:1 + minWidth:0 is the correct trio for a
+    // flex child that must shrink when siblings need space. Without minWidth:0
+    // React Native won't shrink below the intrinsic content width.
     flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
+    marginRight: 10,
+  },
+  // FIX: Dedicated fixed-width wrapper for the icon so it never shifts or
+  // causes the label to start at an inconsistent position.
+  itemIconWrap: {
+    width: 28,
+    alignItems: "center",
+    flexShrink: 0,
   },
   itemLabel: {
     color: "#fff",
-    marginLeft: 15,
+    marginLeft: 12,
     fontSize: 16,
+    // FIX: flexShrink:1 allows the label to shrink rather than overflow,
+    // and flexWrap ensures it wraps to a second line before truncating.
+    flexShrink: 1,
+    flexWrap: "wrap",
+    lineHeight: 22,
   },
   itemRight: {
     flexDirection: "row",
     alignItems: "center",
+    // FIX: flexShrink:0 prevents the right side (toggle/chevron) from being
+    // squashed when the label is long — it always gets its natural size.
+    flexShrink: 0,
   },
   itemValue: {
     color: "#bbb",
     marginRight: 10,
     fontSize: 14,
+    // FIX: constrain value text so it doesn't push the chevron off screen
+    maxWidth: 80,
   },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.7)",
     justifyContent: "center",
     alignItems: "center",
+    // FIX: horizontal padding so the modal never touches screen edges on
+    // narrow devices — the modal itself uses width:"100%" inside this space
+    paddingHorizontal: 24,
   },
   confirmationModal: {
     backgroundColor: "#2C2C2C",
     borderRadius: 16,
     padding: 24,
-    width: "85%",
-    alignItems: "center",
+    // FIX: width:"100%" + maxWidth fills available space (minus overlay
+    // padding) and caps at a comfortable width on large screens.
+    // Previously "85%" could be too narrow on small phones, cropping text.
+    width: "100%",
+    maxWidth: 420,
+    // FIX: removed alignItems:"center" from the modal container — it was
+    // forcing all child text to compress to its intrinsic width instead of
+    // stretching across the full modal width.
   },
   deleteModalHeader: {
     flexDirection: "row",
@@ -516,12 +573,23 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10,
   },
+  deleteModalTitle: {
+    // Override for the delete modal header where title sits next to an icon
+    marginBottom: 0,
+    marginLeft: 8,
+    // FIX: flex:1 so the title takes remaining space and never wraps awkwardly
+    flex: 1,
+  },
   modalText: {
     color: "#9CA3AF",
     fontSize: 14,
-    textAlign: "center",
+    // FIX: textAlign left so text flows naturally across the full modal width
+    // instead of being centred and potentially looking like it's cropped
+    textAlign: "left",
     marginBottom: 20,
     lineHeight: 20,
+    // FIX: width:"100%" ensures the text block fills the modal
+    width: "100%",
   },
   modalButtons: {
     flexDirection: "row",
@@ -534,7 +602,10 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     alignItems: "center",
+    justifyContent: "center",
     marginHorizontal: 5,
+    // FIX: minHeight so buttons never collapse when text is slightly larger
+    minHeight: 44,
   },
   cancelButton: {
     backgroundColor: "#444",
@@ -548,17 +619,21 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     color: "#fff",
     fontWeight: "600",
+    // FIX: explicit fontSize so button text is never clipped by a too-small button
+    fontSize: 15,
   },
   confirmButtonText: {
     color: "#000",
     fontWeight: "600",
+    fontSize: 15,
   },
   deleteButtonText: {
     color: "#fff",
     fontWeight: "600",
+    fontSize: 15,
   },
-  // Form styles
   inputGroup: {
+    // FIX: width:"100%" so form fields stretch the full modal width
     width: "100%",
     marginBottom: 14,
   },
@@ -567,10 +642,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginBottom: 6,
     fontWeight: "500",
-  },
-  optionalTag: {
-    color: "#666",
-    fontWeight: "400",
   },
   requiredTag: {
     color: "#FF4444",
@@ -584,6 +655,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
+    // FIX: width:"100%" so the input never undershoots the modal edges
+    width: "100%",
   },
   textArea: {
     backgroundColor: "#1A1A1A",
@@ -596,6 +669,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlignVertical: "top",
     minHeight: 70,
+    width: "100%",
   },
   inputError: {
     borderColor: "#FF4444",
@@ -604,5 +678,7 @@ const styles = StyleSheet.create({
     color: "#FF4444",
     fontSize: 12,
     marginTop: 4,
+    // FIX: width:"100%" so error text wraps properly and isn't clipped
+    width: "100%",
   },
 });
