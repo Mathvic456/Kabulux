@@ -11,15 +11,7 @@ interface RateRideParams {
 export const useRateRideEndPoint = () => {
   return useMutation({
     mutationFn: ({ rideId, ...body }: RateRideParams) => {
-      console.log("[Rating] Submitting:", body);
       return api.post(`rides/${rideId}/rate/`, { ...body });
-    },
-    onSuccess: (res) => {
-      console.log("Ride rated successfully:", res.data);
-    },
-
-    onError: (error: any) => {
-      console.error("❌ Failed to rate ride:", error.response?.data || error);
     },
   });
 };
