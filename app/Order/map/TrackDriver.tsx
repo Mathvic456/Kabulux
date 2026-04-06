@@ -12,6 +12,7 @@ import {
     Dimensions,
     Image,
     KeyboardAvoidingView,
+    Linking,
     Platform,
     ScrollView,
     StatusBar,
@@ -47,6 +48,8 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
     const { chatMessages, sendChatMessage } = useContext(SocketContext);
     const driver = rideDetails?.driver;
     const currentMessages = rideId ? chatMessages[rideId] || [] : [];
+    const riderPhone = rideDetails?.driver?.phone_number;
+    console.log('ride detsssssssssssssssssss', rideDetails)
 
     const [isPanelUp, setIsPanelUp] = useState(false);
     const [isPanelVisible, setIsPanelVisible] = useState(true);
@@ -75,7 +78,7 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
             address: place?.place_name,
             name: place?.text || place.place_name.split(",")[0],
         };
-        setSelectedLocation(pickupData);
+        setSelectedLocation(pickupData as any);
         setLocation({ longitude: place?.center[0], latitude: place?.center[1] });
         setPickupLocation(pickupData);
         setAddressLoading(false);
@@ -136,6 +139,12 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
             return;
         }
         togglePanel();
+    };
+
+    const handleCall = () => {
+        if (riderPhone) {
+            Linking.openURL(`tel:${riderPhone}`);
+        }
     };
 
     useEffect(() => {
@@ -344,17 +353,18 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
                                     {driver?.vehicle || rideDetails?.vehicle_type || "Vehicle"}
                                 </Text>
                             </View>
-                            <View style={styles.etaContainer}>
+                            <View />
+                            {/* <View style={styles.etaContainer}>
                                 <Text style={styles.etaLabel}>ETA</Text>
                                 <Text style={styles.etaValue}>
                                     {rideDetails?.eta || "5 mins"}
                                 </Text>
-                            </View>
+                            </View> */}
                         </View>
 
                         {/* Action buttons */}
                         <View style={styles.actionRow}>
-                            <TouchableOpacity style={styles.actionBtn} onPress={() => console.log("Calling driver...")}>
+                            <TouchableOpacity style={styles.actionBtn} onPress={() => { console.log("Calling driver..."); handleCall() }}>
                                 <View style={styles.actionCircle}>
                                     <Ionicons name="call" size={22} color="#f6a623" />
                                 </View>

@@ -3,14 +3,16 @@ import { api } from "./api";
 
 // 1. Raw API Shape (Matches your JSON Log exactly)
 export interface RideHistoryAPIItem {
-  driver: string; 
-  rider: string;  
-  pickup_address: string; 
+  id: string;
+  driver: string;
+  driver_name: string;
+  rider: string;
+  pickup_address: string;
   dropoff_address: string;
-  fare: number;
-  start_time: string;
-  end_time: string;
-  status: string; 
+  fare: string; // API returns "2200.00" as a string, not number
+  start_time: string | null;
+  end_time: string | null;
+  status: string;
 }
 
 // 2. Response Wrapper

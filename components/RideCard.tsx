@@ -37,13 +37,14 @@ export const RideCard: React.FC<RideCardProps> = ({
         hour: "2-digit",
         minute: "2-digit",
       });
-    } catch (error) {
+    } catch (error: any) {
       return dateString;
     }
   };
-  console.log("RIDDDDDDDEEEEE======", ride)
+  // console.log("RIDDDDDDDEEEEE======", ride)
   const formatCurrency = (amount: number) => {
-    const value = amount;
+    const value = Number(amount);
+    if (isNaN(value)) return "₦0";
     return `₦${value.toLocaleString("en-NG", {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,

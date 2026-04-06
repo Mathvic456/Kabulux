@@ -9,7 +9,7 @@ const fetchRideDetails = async (rideId: string) => {
   console.log(`🔍 Fetching details for: ${rideId}`);
   const res = await api.get(`rides/${rideId}/details/`);
 
-  console.log(`✅ Fetched details for: ${rideId}`, res);
+  console.log(`✅ Fetched details for: ${rideId}`, res.data);
   return res.data;
 };
 
