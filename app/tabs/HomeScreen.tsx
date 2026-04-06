@@ -673,6 +673,12 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
           },
         },
       );
+    } else {
+      Alert.alert("Ride ID Missing", "Unable to cancel ride. Please logout and try again.");
+      // logoutApi({}).then(() => {
+      //   AsyncStorage.clear();
+      //   setScreen("login");
+      // });
     }
   };
 
@@ -710,7 +716,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
   useEffect(() => {
     if (profileError) {
       const status =
-        profileError?.response?.status || (profileError as any)?.status;
+        (profileError as any)?.response?.status || (profileError as any)?.status;
 
       console.log("Profile Error Detected:", status);
 
