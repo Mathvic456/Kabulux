@@ -308,7 +308,7 @@ export default function StandardScreen({
         {/* Price Adjustment Section */}
         <View style={styles.priceSection}>
           <View style={styles.priceSectionHeader}>
-            <Feather name="dollar-sign" size={24} color="#f6a623" />
+            {/* <Feather name="dollar-sign" size={24} color="#f6a623" /> */}
             <Text style={styles.priceSectionTitle}>Set Your Offer</Text>
           </View>
 
