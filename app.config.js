@@ -53,7 +53,7 @@ export default {
       [
         "expo-notifications",
         {
-          sound: "./assets/sounds/kablux-sound.wav"
+          sound: "./assets/sounds/kablux-sound2.wav"
         },
       ],
       "expo-router",

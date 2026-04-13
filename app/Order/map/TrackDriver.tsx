@@ -116,6 +116,14 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
     const riderPhone = rideDetails?.driver?.phone_number;
     console.log('ride detsssssssssssssssssss', rideDetails)
 
+    useEffect(() => {
+        if (rideDetails?.status === "cancelled") {
+            console.log("[TRACK_DRIVER] Ride cancelled by backend; clearing active ride and going back.");
+            resetRide();
+            goBack();
+        }
+    }, [rideDetails?.status, resetRide, goBack]);
+
     const [isPanelUp, setIsPanelUp] = useState(false);
     const [isPanelVisible, setIsPanelVisible] = useState(true);
     const [slideAnim] = useState(new Animated.Value(height));

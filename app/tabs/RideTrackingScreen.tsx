@@ -29,10 +29,18 @@ interface PickupLocation {
 }
 
 export default function RideTrackingScreen({ goBack, setScreen }: { goBack: () => void; setScreen: (screen: string) => void }) {
-  const { driverLocation, rideState } = useRide();
+  const { driverLocation, rideState, resetRide } = useRide();
   const { rideId } = useRideId();
 
   const { data: rideDetails, isLoading: loadingRideDetails } = useRideDetails(rideId);
+
+  useEffect(() => {
+    if (rideDetails?.status === "cancelled") {
+      console.log("[RIDE_TRACKING] Ride cancelled by backend; clearing active ride and exiting tracking.");
+      resetRide();
+      goBack();
+    }
+  }, [rideDetails?.status, resetRide, goBack]);
 
   const mapRef = useRef<MapView>(null);
   const [pickupLocation, setPickupLocation] = useState<PickupLocation | null>(

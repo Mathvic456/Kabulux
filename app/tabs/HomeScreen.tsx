@@ -715,6 +715,13 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
   })();
 
   useEffect(() => {
+    if (rideDetails?.status === "cancelled") {
+      console.log("[HOME] Ride details indicate cancelled status; clearing active ride.");
+      resetRide();
+    }
+  }, [rideDetails?.status, resetRide]);
+
+  useEffect(() => {
     if (profileError) {
       const status =
         (profileError as any)?.response?.status || (profileError as any)?.status;

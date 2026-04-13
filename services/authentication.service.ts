@@ -11,6 +11,7 @@ type LoginPayload = {
   role: string;
   fcm_token: string;
   type: string;
+  referrer_code?: string;
 };
 
 export const useRegisterEndPoint = () => {
