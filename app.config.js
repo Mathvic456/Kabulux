@@ -40,7 +40,7 @@ export default {
           apiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
         },
       },
-      versionCode: 43
+      versionCode: 44
     },
 
     web: {

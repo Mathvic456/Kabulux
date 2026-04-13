@@ -5,6 +5,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AxiosError } from "axios";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   Modal,
   ScrollView,
@@ -81,6 +82,7 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0a0a0a", }}>
+        <ActivityIndicator size="large" color="#f7b731" />
         <Text style={{ color: "#fff" }}>Loading profile...</Text>
       </View>
     );

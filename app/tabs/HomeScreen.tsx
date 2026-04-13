@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import { useRideId } from "@/context/RideIdContext";
 import { useCancelRideEndPoint } from "@/services/cancelRide.service";
 import { useProfile } from "@/services/profile.service";
@@ -51,13 +52,13 @@ type ComingSoonModalProps = {
   onClose: () => void;
 };
 
-type AdditionalInfoOverlayProps = {
-  isVisible: boolean;
-  onClose: () => void;
-  profileImageId?: string | null;
-  onSubmit: (ridePreference: string, securityPreference: string) => void;
-  loading?: boolean;
-};
+// type AdditionalInfoOverlayProps = {
+//   isVisible: boolean;
+//   onClose: () => void;
+//   profileImageId?: string | null;
+//   onSubmit: (ridePreference: string, securityPreference: string) => void;
+//   loading?: boolean;
+// };
 
 type LoginSuccessModalProps = {
   isVisible: boolean;
@@ -275,167 +276,167 @@ const UploadPhotoOverlay = ({
 };
 
 // Additional Info Overlay Component
-const AdditionalInfoOverlay = ({
-  isVisible,
-  onClose,
-  profileImageId,
-  onSubmit,
-  loading,
-}: AdditionalInfoOverlayProps) => {
-  const [ridePreference, setRidePreference] = useState<string>("Comfort");
-  const [securityPreference, setSecurityPreference] =
-    useState<string>("Standard");
-  const [showRideDropdown, setShowRideDropdown] = useState<boolean>(false);
-  const [showSecurityDropdown, setShowSecurityDropdown] =
-    useState<boolean>(false);
+// const AdditionalInfoOverlay = ({
+//   isVisible,
+//   onClose,
+//   profileImageId,
+//   onSubmit,
+//   loading,
+// }: AdditionalInfoOverlayProps) => {
+//   const [ridePreference, setRidePreference] = useState<string>("Comfort");
+//   const [securityPreference, setSecurityPreference] =
+//     useState<string>("Standard");
+//   const [showRideDropdown, setShowRideDropdown] = useState<boolean>(false);
+//   const [showSecurityDropdown, setShowSecurityDropdown] =
+//     useState<boolean>(false);
 
-  const rideOptions = ["Economy", "Comfort", "Premium"];
-  const securityOptions = ["Standard", "Verified Driver", "Premium Protection"];
+//   const rideOptions = ["Economy", "Comfort", "Premium"];
+//   const securityOptions = ["Standard", "Verified Driver", "Premium Protection"];
 
-  const handleSubmit = () => {
-    console.log("\n🔍 [AdditionalInfoOverlay] Submit button pressed");
-    console.log("📝 Form Data:");
-    console.log("  - Ride Preference:", ridePreference);
-    console.log("  - Security Preference:", securityPreference);
+//   const handleSubmit = () => {
+//     console.log("\n🔍 [AdditionalInfoOverlay] Submit button pressed");
+//     console.log("📝 Form Data:");
+//     console.log("  - Ride Preference:", ridePreference);
+//     console.log("  - Security Preference:", securityPreference);
 
-    console.log(
-      "[AdditionalInfoOverlay] Validation passed, calling onSubmit...",
-    );
-    onSubmit(ridePreference, securityPreference);
-  };
+//     console.log(
+//       "[AdditionalInfoOverlay] Validation passed, calling onSubmit...",
+//     );
+//     onSubmit(ridePreference, securityPreference);
+//   };
 
-  if (!isVisible) return null;
+//   if (!isVisible) return null;
 
-  return (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={isVisible}
-      onRequestClose={onClose}
-    >
-      <View style={styles.overlayContainer}>
-        <ScrollView
-          style={styles.overlayScrollView}
-          contentContainerStyle={styles.overlayScrollContent}
-        >
-          <View style={styles.overlayContent}>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Entypo name="cross" size={28} color="#fff" />
-            </TouchableOpacity>
+//   return (
+//     <Modal
+//       animationType="slide"
+//       transparent={true}
+//       visible={isVisible}
+//       onRequestClose={onClose}
+//     >
+//       <View style={styles.overlayContainer}>
+//         <ScrollView
+//           style={styles.overlayScrollView}
+//           contentContainerStyle={styles.overlayScrollContent}
+//         >
+//           <View style={styles.overlayContent}>
+//             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+//               <Entypo name="cross" size={28} color="#fff" />
+//             </TouchableOpacity>
 
-            <Text style={styles.overlayTitle}>Preferences</Text>
-            <Text style={styles.overlaySubtitle}>
-              Choose your ride and security preferences
-            </Text>
+//             <Text style={styles.overlayTitle}>Preferences</Text>
+//             <Text style={styles.overlaySubtitle}>
+//               Choose your ride and security preferences
+//             </Text>
 
-            <TouchableOpacity
-              style={styles.inputField}
-              onPress={() => setShowRideDropdown(!showRideDropdown)}
-            >
-              <View style={{ flex: 1 }}>
-                <Text style={styles.dropdownLabel}>Ride Preference</Text>
-                <Text style={styles.dropdownText}>{ridePreference}</Text>
-              </View>
-              <Entypo
-                name={showRideDropdown ? "chevron-up" : "chevron-down"}
-                size={18}
-                color="#FEB914"
-              />
-            </TouchableOpacity>
+//             <TouchableOpacity
+//               style={styles.inputField}
+//               onPress={() => setShowRideDropdown(!showRideDropdown)}
+//             >
+//               <View style={{ flex: 1 }}>
+//                 <Text style={styles.dropdownLabel}>Ride Preference</Text>
+//                 <Text style={styles.dropdownText}>{ridePreference}</Text>
+//               </View>
+//               <Entypo
+//                 name={showRideDropdown ? "chevron-up" : "chevron-down"}
+//                 size={18}
+//                 color="#FEB914"
+//               />
+//             </TouchableOpacity>
 
-            {showRideDropdown && (
-              <View style={styles.dropdownMenu}>
-                {rideOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option}
-                    style={[
-                      styles.dropdownMenuItem,
-                      ridePreference === option &&
-                      styles.dropdownMenuItemSelected,
-                    ]}
-                    onPress={() => {
-                      setRidePreference(option);
-                      setShowRideDropdown(false);
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.dropdownMenuText,
-                        ridePreference === option &&
-                        styles.dropdownMenuTextSelected,
-                      ]}
-                    >
-                      {option}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
+//             {showRideDropdown && (
+//               <View style={styles.dropdownMenu}>
+//                 {rideOptions.map((option) => (
+//                   <TouchableOpacity
+//                     key={option}
+//                     style={[
+//                       styles.dropdownMenuItem,
+//                       ridePreference === option &&
+//                       styles.dropdownMenuItemSelected,
+//                     ]}
+//                     onPress={() => {
+//                       setRidePreference(option);
+//                       setShowRideDropdown(false);
+//                     }}
+//                   >
+//                     <Text
+//                       style={[
+//                         styles.dropdownMenuText,
+//                         ridePreference === option &&
+//                         styles.dropdownMenuTextSelected,
+//                       ]}
+//                     >
+//                       {option}
+//                     </Text>
+//                   </TouchableOpacity>
+//                 ))}
+//               </View>
+//             )}
 
-            <TouchableOpacity
-              style={styles.inputField}
-              onPress={() => setShowSecurityDropdown(!showSecurityDropdown)}
-            >
-              <View style={{ flex: 1 }}>
-                <Text style={styles.dropdownLabel}>Security Preference</Text>
-                <Text style={styles.dropdownText}>{securityPreference}</Text>
-              </View>
-              <Entypo
-                name={showSecurityDropdown ? "chevron-up" : "chevron-down"}
-                size={18}
-                color="#FEB914"
-              />
-            </TouchableOpacity>
+//             <TouchableOpacity
+//               style={styles.inputField}
+//               onPress={() => setShowSecurityDropdown(!showSecurityDropdown)}
+//             >
+//               <View style={{ flex: 1 }}>
+//                 <Text style={styles.dropdownLabel}>Security Preference</Text>
+//                 <Text style={styles.dropdownText}>{securityPreference}</Text>
+//               </View>
+//               <Entypo
+//                 name={showSecurityDropdown ? "chevron-up" : "chevron-down"}
+//                 size={18}
+//                 color="#FEB914"
+//               />
+//             </TouchableOpacity>
 
-            {showSecurityDropdown && (
-              <View style={styles.dropdownMenu}>
-                {securityOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option}
-                    style={[
-                      styles.dropdownMenuItem,
-                      securityPreference === option &&
-                      styles.dropdownMenuItemSelected,
-                    ]}
-                    onPress={() => {
-                      setSecurityPreference(option);
-                      setShowSecurityDropdown(false);
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.dropdownMenuText,
-                        securityPreference === option &&
-                        styles.dropdownMenuTextSelected,
-                      ]}
-                    >
-                      {option}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
+//             {showSecurityDropdown && (
+//               <View style={styles.dropdownMenu}>
+//                 {securityOptions.map((option) => (
+//                   <TouchableOpacity
+//                     key={option}
+//                     style={[
+//                       styles.dropdownMenuItem,
+//                       securityPreference === option &&
+//                       styles.dropdownMenuItemSelected,
+//                     ]}
+//                     onPress={() => {
+//                       setSecurityPreference(option);
+//                       setShowSecurityDropdown(false);
+//                     }}
+//                   >
+//                     <Text
+//                       style={[
+//                         styles.dropdownMenuText,
+//                         securityPreference === option &&
+//                         styles.dropdownMenuTextSelected,
+//                       ]}
+//                     >
+//                       {option}
+//                     </Text>
+//                   </TouchableOpacity>
+//                 ))}
+//               </View>
+//             )}
 
-            <TouchableOpacity
-              style={styles.nextButton}
-              onPress={handleSubmit}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#000" />
-              ) : (
-                <Text style={styles.nextButtonText}>Submit</Text>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.skipButton} onPress={onClose}>
-              <Text style={styles.skipButtonText}>Skip</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </View>
-    </Modal>
-  );
-};
+//             <TouchableOpacity
+//               style={styles.nextButton}
+//               onPress={handleSubmit}
+//               disabled={loading}
+//             >
+//               {loading ? (
+//                 <ActivityIndicator color="#000" />
+//               ) : (
+//                 <Text style={styles.nextButtonText}>Submit</Text>
+//               )}
+//             </TouchableOpacity>
+//             <TouchableOpacity style={styles.skipButton} onPress={onClose}>
+//               <Text style={styles.skipButtonText}>Skip</Text>
+//             </TouchableOpacity>
+//           </View>
+//         </ScrollView>
+//       </View>
+//     </Modal>
+//   );
+// };
 
 // Login Success Modal Component
 const LoginSuccessModal = ({ isVisible, onClose }: LoginSuccessModalProps) => {
@@ -605,8 +606,8 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
 
   const [showComingSoonModal, setShowComingSoonModal] =
     useState<boolean>(false);
-  const [showAdditionalInfoOverlay, setShowAdditionalInfoOverlay] =
-    useState<boolean>(false);
+  // const [showAdditionalInfoOverlay, setShowAdditionalInfoOverlay] =
+  //   useState<boolean>(false);
   const [showLoginSuccessModal, setShowLoginSuccessModal] =
     useState<boolean>(false);
   const [showProfileUpdateSuccessModal, setShowProfileUpdateSuccessModal] =
@@ -784,7 +785,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
             setUploadedProfileImageId(fileId);
             setImageUri(null);
             setShowUploadOverlay(false);
-            setShowAdditionalInfoOverlay(true);
+            // setShowAdditionalInfoOverlay(true);
           }
         },
         onError: (error: any) => {
@@ -849,37 +850,37 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
     setShowLoginSuccessModal(false);
   };
 
-  const handleAdditionalInfoSubmit = (
-    ridePreference: string,
-    securityPreference: string,
-  ) => {
-    console.log("\n🎯 [AdditionalInfo] User submitted preferences");
-    console.log("🚗 Ride Preference:", ridePreference);
-    console.log("🔒 Security Preference:", securityPreference);
-    console.log("🖼️ Profile Image ID:", uploadedProfileImageId);
+  // const handleAdditionalInfoSubmit = (
+  //   ridePreference: string,
+  //   securityPreference: string,
+  // ) => {
+  //   console.log("\n🎯 [AdditionalInfo] User submitted preferences");
+  //   console.log("🚗 Ride Preference:", ridePreference);
+  //   console.log("🔒 Security Preference:", securityPreference);
+  //   console.log("🖼️ Profile Image ID:", uploadedProfileImageId);
 
-    const payload = {
-      profile_picture: uploadedProfileImageId,
-      ride_preference: ridePreference,
-      security_preference: securityPreference,
-    };
+  //   const payload = {
+  //     profile_picture: uploadedProfileImageId,
+  //     ride_preference: ridePreference,
+  //     security_preference: securityPreference,
+  //   };
 
-    console.log("\n📦 [AdditionalInfo] Full payload being sent:");
-    console.log(JSON.stringify(payload, null, 2));
+  //   console.log("\n📦 [AdditionalInfo] Full payload being sent:");
+  //   console.log(JSON.stringify(payload, null, 2));
 
-    updateProfileMutation.mutate(payload, {
-      onSuccess: () => {
-        console.log("[AdditionalInfo] Profile updated successfully");
-        setShowAdditionalInfoOverlay(false);
-        setUploadedProfileImageId(null);
-        setShowProfileUpdateSuccessModal(true);
-      },
-      onError: (error: any) => {
-        console.error("[AdditionalInfo] Profile update failed:", error);
-        Alert.alert("Error", "Failed to update profile preferences");
-      },
-    });
-  };
+  //   updateProfileMutation.mutate(payload, {
+  //     onSuccess: () => {
+  //       console.log("[AdditionalInfo] Profile updated successfully");
+  //       // setShowAdditionalInfoOverlay(false);
+  //       setUploadedProfileImageId(null);
+  //       setShowProfileUpdateSuccessModal(true);
+  //     },
+  //     onError: (error: any) => {
+  //       console.error("[AdditionalInfo] Profile update failed:", error);
+  //       Alert.alert("Error", "Failed to update profile preferences");
+  //     },
+  //   });
+  // };
 
   const handleProfileUpdateSuccessClose = () => {
     setShowProfileUpdateSuccessModal(false);
@@ -1033,7 +1034,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
               {/* Added closing tag */}
             </View>
 
-            {rideState === "driver_on_way" && (
+            {rideState === "driver_on_way" || rideState === "driver_arrived" ? (
               <TouchableOpacity
                 style={[
                   styles.cancelRideButton,
@@ -1048,7 +1049,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
                   <Text style={styles.cancelRideButtonText}>Cancel Ride</Text>
                 )}
               </TouchableOpacity>
-            )}
+            ) : null}
           </View>
         )}
 
@@ -1210,13 +1211,13 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
           loading={uploadMutation.isPending}
         />
 
-        <AdditionalInfoOverlay
+        {/* <AdditionalInfoOverlay
           isVisible={showAdditionalInfoOverlay}
           onClose={() => setShowAdditionalInfoOverlay(false)}
           profileImageId={uploadedProfileImageId}
           onSubmit={handleAdditionalInfoSubmit}
           loading={updateProfileMutation.isPending}
-        />
+        /> */}
 
         <LoginSuccessModal
           isVisible={showLoginSuccessModal}

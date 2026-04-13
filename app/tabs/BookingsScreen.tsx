@@ -102,6 +102,7 @@ const BookingsScreen: React.FC<BookingsScreenProps> = ({
   const allRides = rideHistoryData?.results
     ? transformRides(rideHistoryData.results)
     : [];
+  // console.log('all rides======', allRides)
 
   const tabFiltered = allRides.filter((r) => r.type === activeTab);
   const dateFiltered = filterRidesByDate(tabFiltered, filter);

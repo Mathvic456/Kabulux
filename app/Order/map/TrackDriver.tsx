@@ -102,7 +102,6 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
 
     const togglePanel = () => {
         if (isPanelVisible) {
-            // Hide panel
             Animated.parallel([
                 Animated.timing(panelOpacity, {
                     toValue: 0,
@@ -116,7 +115,6 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
                 }),
             ]).start(() => setIsPanelVisible(false));
         } else {
-            // Show panel
             setIsPanelVisible(true);
             Animated.parallel([
                 Animated.timing(panelOpacity, {
@@ -353,18 +351,20 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
                                     {driver?.vehicle || rideDetails?.vehicle_type || "Vehicle"}
                                 </Text>
                             </View>
-                            <View />
-                            {/* <View style={styles.etaContainer}>
-                                <Text style={styles.etaLabel}>ETA</Text>
-                                <Text style={styles.etaValue}>
-                                    {rideDetails?.eta || "5 mins"}
-                                </Text>
-                            </View> */}
+                            {driver?.rating && (
+                                <View style={styles.ratingContainer}>
+                                    <Ionicons name="star" size={14} color="#f6a623" />
+                                    <Text style={styles.ratingValue}>
+                                        {parseFloat(driver.rating).toFixed(1)}
+                                    </Text>
+                                    <Text style={styles.ratingLabel}>rating</Text>
+                                </View>
+                            )}
                         </View>
 
                         {/* Action buttons */}
                         <View style={styles.actionRow}>
-                            <TouchableOpacity style={styles.actionBtn} onPress={() => { console.log("Calling driver..."); handleCall() }}>
+                            <TouchableOpacity style={styles.actionBtn} onPress={() => { console.log("Calling driver..."); handleCall(); }}>
                                 <View style={styles.actionCircle}>
                                     <Ionicons name="call" size={22} color="#f6a623" />
                                 </View>
@@ -507,6 +507,26 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: "#FEB914",
         fontWeight: "bold",
+    },
+
+    // Rating
+    ratingContainer: {
+        alignItems: "center",
+        backgroundColor: "rgba(246,166,35,0.1)",
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 10,
+        gap: 3,
+        flexDirection: "row",
+    },
+    ratingValue: {
+        fontSize: 15,
+        color: "#f6a623",
+        fontWeight: "500",
+    },
+    ratingLabel: {
+        fontSize: 11,
+        color: "#888",
     },
 
     // Action buttons
