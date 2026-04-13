@@ -1034,7 +1034,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
               {/* Added closing tag */}
             </View>
 
-            {rideState === "driver_on_way" || rideState === "driver_arrived" ? (
+            {(rideState === "driver_on_way" || rideState === "driver_arrived") && (
               <TouchableOpacity
                 style={[
                   styles.cancelRideButton,
@@ -1049,7 +1049,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
                   <Text style={styles.cancelRideButtonText}>Cancel Ride</Text>
                 )}
               </TouchableOpacity>
-            ) : null}
+            )}
           </View>
         )}
 

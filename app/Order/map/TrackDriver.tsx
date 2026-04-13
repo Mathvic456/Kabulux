@@ -3,17 +3,23 @@ import { useRide } from "@/context/RideContext";
 import { useRideId } from "@/context/RideIdContext";
 import { SocketContext } from "@/context/WebSocketProvider";
 import { getCurrentLocation } from "@/hooks/useCurrLocation";
+import { useCancelRideEndPoint } from "@/services/cancelRide.service";
 import { useRideDetails } from "@/services/rideDetails.service";
+import { calculateDistance } from "@/utils/geocoding";
 import { reverseGeocode } from "@/utils/googleGeocoding";
 import { Ionicons } from "@expo/vector-icons";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
+    ActivityIndicator,
+    Alert,
     Animated,
     Dimensions,
     Image,
     KeyboardAvoidingView,
     Linking,
+    Modal,
     Platform,
+    Pressable,
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -42,9 +48,68 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
     const chatScrollRef = useRef<ScrollView>(null);
 
     const { setSelectedLocation, setPickupLocation, pickupLocation, dropoffLocation, setDropoffLocation } = useMapModal();
-    const { driverLocation, rideState } = useRide();
+    const { driverLocation, rideState, resetRide } = useRide();
     const { rideId } = useRideId();
     const { data: rideDetails } = useRideDetails(rideId);
+    const { mutate: cancelRide, isPending: isCanceling } = useCancelRideEndPoint();
+    const [cancelModalVisible, setCancelModalVisible] = useState(false);
+    const [selectedCancelReason, setSelectedCancelReason] = useState<string | null>(null);
+    const cancelReasons = [
+        "Driver took too long",
+        "Changed my mind",
+        "Wrong pickup location",
+        "Emergency",
+        "Other",
+    ];
+
+    const distanceInfo = useMemo(() => {
+        if (rideState === "driver_on_way") {
+            if (
+                !driverLocation ||
+                !location.latitude ||
+                !location.longitude
+            ) return null;
+            const km = calculateDistance(
+                location.latitude,
+                location.longitude,
+                driverLocation.lat,
+                driverLocation.lng,
+            );
+            return { label: "Driver distance", value: `${km} km` };
+        }
+        if (rideState === "driver_arrived") {
+            const pLat = parseFloat(rideDetails?.pickup_lat);
+            const pLng = parseFloat(rideDetails?.pickup_lng);
+            const dLat = parseFloat(rideDetails?.dropoff_lat);
+            const dLng = parseFloat(rideDetails?.dropoff_lng);
+            if (!pLat || !pLng || !dLat || !dLng) return null;
+            const km = calculateDistance(pLat, pLng, dLat, dLng);
+            return { label: "Trip distance", value: `${km} km` };
+        }
+        return null;
+    }, [rideState, driverLocation, location, rideDetails]);
+
+    const handleConfirmCancel = () => {
+        if (!selectedCancelReason || !rideId) return;
+        cancelRide(
+            { rideId, reason: selectedCancelReason },
+            {
+                onSuccess: async () => {
+                    setCancelModalVisible(false);
+                    setSelectedCancelReason(null);
+                    await resetRide();
+                    goBack();
+                },
+                onError: (error: any) => {
+                    console.error("Cancellation failed:", error);
+                    Alert.alert(
+                        "Cancellation Failed",
+                        error?.response?.data?.detail || "Failed to cancel the ride.",
+                    );
+                },
+            },
+        );
+    };
     const { chatMessages, sendChatMessage } = useContext(SocketContext);
     const driver = rideDetails?.driver;
     const currentMessages = rideId ? chatMessages[rideId] || [] : [];
@@ -362,6 +427,13 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
                             )}
                         </View>
 
+                        {distanceInfo && (
+                            <View style={styles.distanceContainer}>
+                                <Text style={styles.distanceLabel}>{distanceInfo.label}</Text>
+                                <Text style={styles.distanceValue}>{distanceInfo.value}</Text>
+                            </View>
+                        )}
+
                         {/* Action buttons */}
                         <View style={styles.actionRow}>
                             <TouchableOpacity style={styles.actionBtn} onPress={() => { console.log("Calling driver..."); handleCall(); }}>
@@ -391,9 +463,76 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
                             onPress={() => console.log("SOS pressed")}
                             style={{ backgroundColor: "#e74c3c", marginBottom: 15 }}
                         />
+
+                        {(rideState === "driver_on_way" || rideState === "driver_arrived") && (
+                            <CustomButton
+                                title={isCanceling ? "Cancelling..." : "Cancel Ride"}
+                                onPress={() => setCancelModalVisible(true)}
+                                disabled={isCanceling}
+                                style={{ backgroundColor: "#e74c3c", marginBottom: 15 }}
+                            />
+                        )}
                     </View>
                 </ScrollView>
             </Animated.View>
+
+            <Modal
+                visible={cancelModalVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setCancelModalVisible(false)}
+            >
+                <Pressable
+                    style={styles.modalBackdrop}
+                    onPress={() => !isCanceling && setCancelModalVisible(false)}
+                >
+                    <Pressable style={styles.modalCard} onPress={() => { }}>
+                        <Text style={styles.modalTitle}>Cancel Ride</Text>
+                        <Text style={styles.modalSubtitle}>Select a reason</Text>
+                        {cancelReasons.map((reason) => {
+                            const selected = selectedCancelReason === reason;
+                            return (
+                                <TouchableOpacity
+                                    key={reason}
+                                    style={[styles.reasonRow, selected && styles.reasonRowSelected]}
+                                    onPress={() => setSelectedCancelReason(reason)}
+                                    disabled={isCanceling}
+                                >
+                                    <Text style={[styles.reasonText, selected && styles.reasonTextSelected]}>
+                                        {reason}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                        <View style={styles.modalActions}>
+                            <TouchableOpacity
+                                style={[styles.modalBtn, { backgroundColor: "#333" }]}
+                                onPress={() => setCancelModalVisible(false)}
+                                disabled={isCanceling}
+                            >
+                                <Text style={styles.modalBtnText}>Close</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[
+                                    styles.modalBtn,
+                                    {
+                                        backgroundColor: "#e74c3c",
+                                        opacity: !selectedCancelReason || isCanceling ? 0.6 : 1,
+                                    },
+                                ]}
+                                onPress={handleConfirmCancel}
+                                disabled={!selectedCancelReason || isCanceling}
+                            >
+                                {isCanceling ? (
+                                    <ActivityIndicator size="small" color="#fff" />
+                                ) : (
+                                    <Text style={styles.modalBtnText}>Confirm</Text>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                    </Pressable>
+                </Pressable>
+            </Modal>
 
             {/* Show panel button when hidden */}
             {!isPanelVisible && isPanelUp && (
@@ -490,6 +629,83 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: "#aaa",
         marginTop: 2,
+    },
+    distanceContainer: {
+        alignItems: "center",
+        backgroundColor: "rgba(254,185,20,0.12)",
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        borderRadius: 12,
+    },
+    distanceLabel: {
+        fontSize: 12,
+        color: "#aaa",
+        fontWeight: "600",
+    },
+    distanceValue: {
+        fontSize: 18,
+        color: "#FEB914",
+        fontWeight: "bold",
+        marginTop: 2,
+    },
+    modalBackdrop: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.6)",
+        justifyContent: "center",
+        paddingHorizontal: 24,
+    },
+    modalCard: {
+        backgroundColor: "#181818",
+        borderRadius: 16,
+        padding: 20,
+    },
+    modalTitle: {
+        color: "#fff",
+        fontSize: 18,
+        fontWeight: "bold",
+    },
+    modalSubtitle: {
+        color: "#aaa",
+        fontSize: 13,
+        marginTop: 4,
+        marginBottom: 14,
+    },
+    reasonRow: {
+        paddingVertical: 12,
+        paddingHorizontal: 14,
+        borderRadius: 10,
+        backgroundColor: "#222",
+        marginBottom: 8,
+        borderWidth: 1,
+        borderColor: "#222",
+    },
+    reasonRowSelected: {
+        backgroundColor: "rgba(231,76,60,0.15)",
+        borderColor: "#e74c3c",
+    },
+    reasonText: {
+        color: "#ddd",
+        fontSize: 14,
+    },
+    reasonTextSelected: {
+        color: "#fff",
+        fontWeight: "600",
+    },
+    modalActions: {
+        flexDirection: "row",
+        gap: 10,
+        marginTop: 12,
+    },
+    modalBtn: {
+        flex: 1,
+        paddingVertical: 12,
+        borderRadius: 10,
+        alignItems: "center",
+    },
+    modalBtnText: {
+        color: "#fff",
+        fontWeight: "600",
+        fontSize: 14,
     },
     etaContainer: {
         alignItems: "center",
