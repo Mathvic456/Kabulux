@@ -126,19 +126,19 @@ export const RideProvider = ({ children }: { children: React.ReactNode }) => {
               }
               break;
 
-            case "driver_arrived":
+            case "DRIVER_ARRIVED":
               if (rideState !== "driver_arrived") {
                 updateRideState("driver_arrived");
               }
               break;
 
-            case "ride_started":
+            case "TRIP_STARTED":
               if (rideState !== "in_progress") {
                 updateRideState("in_progress");
               }
               break;
 
-            case "ride_completed":
+            case "TRIP_COMPLETED":
               console.log(
                 "🏁 [RIDE] Ride completed - waiting for user acknowledgement",
               );

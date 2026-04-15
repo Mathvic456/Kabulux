@@ -31,7 +31,7 @@ export default function PersonalInfoScreen({
 
   const copyReferral = (code?: string) => {
     if (!code) return;
-    Clipboard.setStringAsync(code);
+    // Clipboard.setStringAsync(code);
     Alert.alert("Copied", "Referral code copied to clipboard");
   };
 
