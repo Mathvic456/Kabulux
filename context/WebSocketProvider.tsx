@@ -171,6 +171,7 @@ export const WebSocketProvider = ({
         typeof event.data === "string" ? JSON.parse(event.data) : event.data;
       console.log(`📩 [WSP] PARSED:`, JSON.stringify(msg));
 
+      const syncedPayload = msg.data.ride;
       // 1. Handle accept_ride_error
       if (msg.type === "accept_ride_error") {
         console.log("❌ [WSP] Accept Ride Error:", msg.message);
@@ -222,6 +223,27 @@ export const WebSocketProvider = ({
           setDriverOffers((prev) => ({ ...prev, [offer.id]: offer }));
         }
       }
+      // DRIVER OFFER SYNCED
+      // if (msg.type === "sync_offers") {
+      //   const message = syncedPayload.message || "";
+      //   const priceMatch = message.match(/₦\s*([\d,]+)/);
+      //   const rawAmount = priceMatch
+      //     ? parseInt(priceMatch[1].replace(/,/g, ""), 10)
+      //     : 0;
+
+      //   const offer: DriverOffer = {
+      //     id: syncedPayload.offer_id || syncedPayload.id,
+      //     ride_request_id: syncedPayload.ride_request_id,
+      //     driver_id: syncedPayload.driver_id || syncedPayload.offer_id,
+      //     driver_name: message.split(" offered")[0] || "Driver",
+      //     counter_offer: rawAmount,
+      //     negotiated_price: rawAmount,
+      //     timestamp: Date.now(),
+      //     status: "pending",
+      //   };
+      //   setDriverOffers((prev) => ({ ...prev, [offer.id]: offer }));
+      // }
+
 
       // 3. Direct Offer Message
       if (msg.type === "driver_offer" && msg.data) {
