@@ -62,32 +62,77 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
         "Other",
     ];
 
+    const [routeInfo, setRouteInfo] = useState<{ duration: number; distance: number } | null>(null);
+
+    const driverLocData = useMemo(
+        () =>
+            driverLocation
+                ? {
+                    latitude: driverLocation.lat,
+                    longitude: driverLocation.lng,
+                    address: "Driver",
+                }
+                : null,
+        [driverLocation?.lat, driverLocation?.lng],
+    );
+
+    const dropoffLocData = useMemo(() => {
+        const lat = parseFloat(rideDetails?.dropoff_lat);
+        const lng = parseFloat(rideDetails?.dropoff_lng);
+        if (!lat || !lng) return null;
+        return {
+            latitude: lat,
+            longitude: lng,
+            address: rideDetails?.dropoff_address || "Dropoff",
+            name: rideDetails?.dropoff_name || rideDetails?.dropoff_address,
+        };
+    }, [rideDetails?.dropoff_lat, rideDetails?.dropoff_lng, rideDetails?.dropoff_address, rideDetails?.dropoff_name]);
+
+    const isEnRoute = rideState === "driver_on_way" || rideState === "driver_arrived";
+    const isInProgress = rideState === "in_progress";
+
+    const mapPickup = isEnRoute ? pickupLocation : null;
+    const mapDropoff = isInProgress ? dropoffLocData : null;
+    const routeFrom = isInProgress ? driverLocData : mapPickup;
+    const routeTo = isInProgress ? mapDropoff : driverLocData;
+    const showRoute = !!(routeFrom && routeTo);
+
+    const etaText = useMemo(() => {
+        if (!routeInfo) return null;
+        const minutes = Math.max(1, Math.round(routeInfo.duration / 60));
+        return `~${minutes} min`;
+    }, [routeInfo]);
+
     const distanceInfo = useMemo(() => {
-        if (rideState === "driver_on_way") {
-            if (
-                !driverLocation ||
-                !location.latitude ||
-                !location.longitude
-            ) return null;
+        const label = isInProgress ? "Trip distance" : "Driver distance";
+
+        if (routeInfo?.distance) {
+            const km = (routeInfo.distance / 1000).toFixed(2);
+            return { label, value: `${km} km` };
+        }
+
+        if (isEnRoute) {
+            if (!driverLocation || !location.latitude || !location.longitude) return null;
             const km = calculateDistance(
                 location.latitude,
                 location.longitude,
                 driverLocation.lat,
                 driverLocation.lng,
             );
-            return { label: "Driver distance", value: `${km} km` };
+            return { label, value: `${km} km` };
         }
-        if (rideState === "driver_arrived") {
-            const pLat = parseFloat(rideDetails?.pickup_lat);
-            const pLng = parseFloat(rideDetails?.pickup_lng);
-            const dLat = parseFloat(rideDetails?.dropoff_lat);
-            const dLng = parseFloat(rideDetails?.dropoff_lng);
-            if (!pLat || !pLng || !dLat || !dLng) return null;
-            const km = calculateDistance(pLat, pLng, dLat, dLng);
-            return { label: "Trip distance", value: `${km} km` };
+        if (isInProgress) {
+            if (!driverLocation || !dropoffLocData) return null;
+            const km = calculateDistance(
+                driverLocation.lat,
+                driverLocation.lng,
+                dropoffLocData.latitude,
+                dropoffLocData.longitude,
+            );
+            return { label, value: `${km} km` };
         }
         return null;
-    }, [rideState, driverLocation, location, rideDetails]);
+    }, [isEnRoute, isInProgress, driverLocation, location, dropoffLocData, routeInfo]);
 
     const handleConfirmCancel = () => {
         if (!selectedCancelReason || !rideId) return;
@@ -354,18 +399,13 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
             <TouchableWithoutFeedback onPress={handleMapPress}>
                 <View style={{ flex: 1 }}>
                     <RideMapView
-                        pickupLocation={pickupLocation}
-                        dropoffLocation={
-                            driverLocation
-                                ? {
-                                    latitude: driverLocation.lat,
-                                    longitude: driverLocation.lng,
-                                    address: "Driver Location",
-                                }
-                                : null
-                        }
-                        showRoute={!!driverLocation}
-                        driver={true}
+                        pickupLocation={mapPickup}
+                        dropoffLocation={mapDropoff}
+                        driverLocation={driverLocData}
+                        routeFrom={routeFrom}
+                        routeTo={routeTo}
+                        showRoute={showRoute}
+                        onRouteInfo={setRouteInfo}
                     />
                 </View>
             </TouchableWithoutFeedback>
@@ -435,10 +475,29 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
                             )}
                         </View>
 
-                        {distanceInfo && (
-                            <View style={styles.distanceContainer}>
-                                <Text style={styles.distanceLabel}>{distanceInfo.label}</Text>
-                                <Text style={styles.distanceValue}>{distanceInfo.value}</Text>
+                        {(etaText || distanceInfo) && (
+                            <View style={styles.infoRow}>
+                                {etaText ? (
+                                    <View style={styles.infoCard}>
+                                        <Ionicons name="time-outline" size={18} color="#FEB914" />
+                                        <Text style={styles.infoLabel}>
+                                            {isInProgress ? "Arrival ETA" : "Driver ETA"}
+                                        </Text>
+                                        <Text style={styles.infoValue}>{etaText}</Text>
+                                    </View>
+                                ) : showRoute ? (
+                                    <View style={styles.infoCard}>
+                                        <ActivityIndicator size="small" color="#FEB914" />
+                                        <Text style={styles.infoLabel}>Calculating ETA…</Text>
+                                    </View>
+                                ) : null}
+                                {distanceInfo && (
+                                    <View style={styles.infoCard}>
+                                        <Ionicons name="navigate-outline" size={18} color="#FEB914" />
+                                        <Text style={styles.infoLabel}>{distanceInfo.label}</Text>
+                                        <Text style={styles.infoValue}>{distanceInfo.value}</Text>
+                                    </View>
+                                )}
                             </View>
                         )}
 
@@ -655,6 +714,29 @@ const styles = StyleSheet.create({
         color: "#FEB914",
         fontWeight: "bold",
         marginTop: 2,
+    },
+    infoRow: {
+        flexDirection: "row",
+        gap: 10,
+    },
+    infoCard: {
+        flex: 1,
+        alignItems: "center",
+        backgroundColor: "rgba(254,185,20,0.12)",
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        borderRadius: 12,
+        gap: 2,
+    },
+    infoLabel: {
+        fontSize: 11,
+        color: "#aaa",
+        fontWeight: "600",
+    },
+    infoValue: {
+        fontSize: 16,
+        color: "#FEB914",
+        fontWeight: "bold",
     },
     modalBackdrop: {
         flex: 1,

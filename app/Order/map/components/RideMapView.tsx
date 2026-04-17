@@ -1,7 +1,7 @@
-import { getDirectionsGeometry } from "@/utils/googleDirections";
+import { getDirections } from "@/utils/googleDirections";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE, Region } from "react-native-maps";
 
 interface LocationData {
@@ -11,15 +11,27 @@ interface LocationData {
     name?: string;
 }
 
+interface RouteInfo {
+    duration: number;
+    distance: number;
+}
+
 interface RideMapViewProps {
-    pickupLocation: LocationData | null;
+    pickupLocation?: LocationData | null;
     dropoffLocation?: LocationData | null;
+    driverLocation?: LocationData | null;
     showRoute?: boolean;
+    routeFrom?: LocationData | null;
+    routeTo?: LocationData | null;
+    onRouteInfo?: (info: RouteInfo | null) => void;
+    /** @deprecated kept for backward compat — use driverLocation instead */
     driver?: boolean;
 }
 
+const ROUTE_COLOR = "#FEB914";
+
 const DEFAULT_REGION: Region = {
-    latitude: 6.5244, // Default to Lagos
+    latitude: 6.5244,
     longitude: 3.3792,
     latitudeDelta: 0.05,
     longitudeDelta: 0.05,
@@ -28,164 +40,163 @@ const DEFAULT_REGION: Region = {
 export default function RideMapView({
     pickupLocation,
     dropoffLocation,
+    driverLocation,
     showRoute = false,
-    driver = false
+    routeFrom,
+    routeTo,
+    onRouteInfo,
+    driver = false,
 }: RideMapViewProps) {
     const mapRef = useRef<MapView>(null);
-
-    // FIX 2: routeCoordinates no longer needs to be state that drives a region
-    // calculation — we just use it to draw the polyline and derive bounds from it.
     const [routeCoordinates, setRouteCoordinates] = useState<{ latitude: number; longitude: number }[]>([]);
     const [loadingRoute, setLoadingRoute] = useState(false);
 
-    // Fetch route from Google Directions API
-    useEffect(() => {
-        if (showRoute && pickupLocation && dropoffLocation) {
-            setLoadingRoute(true);
-            console.log('Fetching route from Google Directions API...');
+    const effectiveRouteFrom = routeFrom ?? pickupLocation ?? null;
+    const effectiveRouteTo = routeTo ?? dropoffLocation ?? null;
 
-            getDirectionsGeometry(
-                pickupLocation.longitude,
-                pickupLocation.latitude,
-                dropoffLocation.longitude,
-                dropoffLocation.latitude
-            ).then(geometry => {
-                if (geometry && geometry.coordinates) {
-                    console.log('Route fetched, points:', geometry.coordinates.length);
-                    const coords = geometry.coordinates.map(([lng, lat]: [number, number]) => ({
+    useEffect(() => {
+        if (!showRoute || !effectiveRouteFrom || !effectiveRouteTo) {
+            setRouteCoordinates([]);
+            onRouteInfo?.(null);
+            return;
+        }
+
+        let cancelled = false;
+        setLoadingRoute(true);
+
+        getDirections(
+            effectiveRouteFrom.longitude,
+            effectiveRouteFrom.latitude,
+            effectiveRouteTo.longitude,
+            effectiveRouteTo.latitude,
+        )
+            .then((result) => {
+                if (cancelled) return;
+                if (result && result.coordinates.length > 0) {
+                    const coords = result.coordinates.map(([lat, lng]) => ({
                         latitude: lat,
                         longitude: lng,
                     }));
                     setRouteCoordinates(coords);
+                    onRouteInfo?.({ duration: result.duration, distance: result.distance });
                 } else {
-                    console.warn('No route geometry returned');
                     setRouteCoordinates([]);
+                    onRouteInfo?.(null);
                 }
-                setLoadingRoute(false);
-            }).catch((error: any) => {
-                console.error('Error fetching route:', error);
+            })
+            .catch((error: any) => {
+                if (cancelled) return;
+                console.error("Error fetching route:", error);
                 setRouteCoordinates([]);
-                setLoadingRoute(false);
+                onRouteInfo?.(null);
 
-                if (error.message?.includes('API key') || error.message?.includes('billing')) {
+                if (error.message?.includes("API key") || error.message?.includes("billing")) {
                     Alert.alert(
-                        'Route Error',
-                        'Unable to calculate route. Please check your Google Maps API configuration.',
-                        [{ text: 'OK' }]
+                        "Route Error",
+                        "Unable to calculate route. Please check your Google Maps API configuration.",
+                        [{ text: "OK" }],
                     );
-                } else if (error.message?.includes('No route found')) {
+                } else if (error.message?.includes("No route found")) {
                     Alert.alert(
-                        'No Route Found',
-                        'Could not find a route between the selected locations. Please try different locations.',
-                        [{ text: 'OK' }]
-                    );
-                } else {
-                    Alert.alert(
-                        'Route Error',
-                        'Unable to calculate route. Please try again.',
-                        [{ text: 'OK' }]
+                        "No Route Found",
+                        "Could not find a route between the selected locations. Please try different locations.",
+                        [{ text: "OK" }],
                     );
                 }
+            })
+            .finally(() => {
+                if (!cancelled) setLoadingRoute(false);
             });
-        } else {
-            setRouteCoordinates([]);
-        }
-    }, [pickupLocation, dropoffLocation, showRoute]);
 
-    // FIX 2: Drop the redundant `region` state entirely. animateToRegion is the
-    // only thing that actually moves the map after mount, so we just call it
-    // directly. initialRegion on the MapView uses DEFAULT_REGION as a constant.
+        return () => {
+            cancelled = true;
+        };
+    }, [
+        showRoute,
+        effectiveRouteFrom?.latitude,
+        effectiveRouteFrom?.longitude,
+        effectiveRouteTo?.latitude,
+        effectiveRouteTo?.longitude,
+    ]);
+
     useEffect(() => {
-        if (!pickupLocation) return;
+        const markers = [pickupLocation, dropoffLocation, driverLocation].filter(
+            (m): m is LocationData => !!m,
+        );
+        if (markers.length === 0) return;
 
-        let allLatitudes: number[];
-        let allLongitudes: number[];
+        let latitudes: number[];
+        let longitudes: number[];
 
-        if (pickupLocation && dropoffLocation) {
-            if (routeCoordinates.length > 0) {
-                allLatitudes = routeCoordinates.map(c => c.latitude);
-                allLongitudes = routeCoordinates.map(c => c.longitude);
-                console.log('Using route coordinates for bounds, points:', routeCoordinates.length);
-            } else {
-                allLatitudes = [pickupLocation.latitude, dropoffLocation.latitude];
-                allLongitudes = [pickupLocation.longitude, dropoffLocation.longitude];
-                console.log('Using pickup/dropoff for bounds');
-            }
-
-            const minLat = Math.min(...allLatitudes);
-            const maxLat = Math.max(...allLatitudes);
-            const minLng = Math.min(...allLongitudes);
-            const maxLng = Math.max(...allLongitudes);
-
-            const latDiff = maxLat - minLat;
-            const lngDiff = maxLng - minLng;
-            const latPadding = latDiff * 0.2 || 0.01;
-            const lngPadding = lngDiff * 0.2 || 0.01;
-
-            const newRegion: Region = {
-                latitude: (minLat + maxLat) / 2,
-                longitude: (minLng + maxLng) / 2,
-                latitudeDelta: Math.max(latDiff + latPadding * 2, 0.01),
-                longitudeDelta: Math.max(lngDiff + lngPadding * 2, 0.01),
-            };
-
-            console.log('Calculated region:', newRegion);
-            setTimeout(() => {
-                try {
-                    mapRef.current?.animateToRegion(newRegion, 1000);
-                    console.log('Map animated to region');
-                } catch (error) {
-                    console.error('Error animating map:', error);
-                }
-            }, 600);
-
+        if (routeCoordinates.length > 0) {
+            latitudes = routeCoordinates.map((c) => c.latitude);
+            longitudes = routeCoordinates.map((c) => c.longitude);
         } else {
-            // Only pickup exists
-            console.log('Centering on pickup only');
-            const newRegion: Region = {
-                latitude: pickupLocation.latitude,
-                longitude: pickupLocation.longitude,
-                latitudeDelta: 0.05,
-                longitudeDelta: 0.05,
-            };
-            setTimeout(() => {
-                mapRef.current?.animateToRegion(newRegion, 1000);
-            }, 600);
+            latitudes = markers.map((m) => m.latitude);
+            longitudes = markers.map((m) => m.longitude);
         }
-    }, [pickupLocation, dropoffLocation, routeCoordinates]);
+
+        const minLat = Math.min(...latitudes);
+        const maxLat = Math.max(...latitudes);
+        const minLng = Math.min(...longitudes);
+        const maxLng = Math.max(...longitudes);
+
+        const latDiff = maxLat - minLat;
+        const lngDiff = maxLng - minLng;
+        const latPadding = latDiff * 0.3 || 0.01;
+        const lngPadding = lngDiff * 0.3 || 0.01;
+
+        const newRegion: Region = {
+            latitude: (minLat + maxLat) / 2,
+            longitude: (minLng + maxLng) / 2,
+            latitudeDelta: Math.max(latDiff + latPadding * 2, 0.01),
+            longitudeDelta: Math.max(lngDiff + lngPadding * 2, 0.01),
+        };
+
+        const timer = setTimeout(() => {
+            try {
+                mapRef.current?.animateToRegion(newRegion, 1000);
+            } catch (error) {
+                console.error("Error animating map:", error);
+            }
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [
+        pickupLocation?.latitude,
+        pickupLocation?.longitude,
+        dropoffLocation?.latitude,
+        dropoffLocation?.longitude,
+        driverLocation?.latitude,
+        driverLocation?.longitude,
+        routeCoordinates,
+    ]);
+
+    const showDropoffAsCar = driver && !driverLocation;
 
     return (
-        // FIX 2: Wrapper View so the loading overlay can sit outside MapView
-        // while still being visually overlaid via position: 'absolute'.
         <View style={styles.container}>
             <MapView
                 ref={mapRef}
                 style={styles.map}
                 provider={PROVIDER_GOOGLE}
-                // FIX 2: Use a stable constant here — initialRegion is only read
-                // once on mount. All subsequent positioning is handled by
-                // animateToRegion above, so the old `region` state was dead code.
                 initialRegion={DEFAULT_REGION}
                 showsUserLocation={false}
                 showsMyLocationButton={false}
                 showsCompass={false}
             >
-                {/* Route Polyline */}
                 {showRoute && routeCoordinates.length > 0 && (
                     <>
-                        {/* Route outline/shadow */}
                         <Polyline
                             coordinates={routeCoordinates}
-                            strokeColor="#000"
-                            strokeWidth={6}
+                            strokeColor="rgba(0,0,0,0.35)"
+                            strokeWidth={7}
                             lineCap="round"
                             lineJoin="round"
                             zIndex={1}
                         />
-                        {/* Main route line */}
                         <Polyline
                             coordinates={routeCoordinates}
-                            strokeColor="#f6a623"
+                            strokeColor={ROUTE_COLOR}
                             strokeWidth={4}
                             lineCap="round"
                             lineJoin="round"
@@ -194,7 +205,6 @@ export default function RideMapView({
                     </>
                 )}
 
-                {/* Pickup Location Marker */}
                 {pickupLocation && (
                     <Marker
                         coordinate={{
@@ -210,7 +220,6 @@ export default function RideMapView({
                     </Marker>
                 )}
 
-                {/* Dropoff Location Marker */}
                 {dropoffLocation && (
                     <Marker
                         coordinate={{
@@ -220,26 +229,47 @@ export default function RideMapView({
                         title="Dropoff Location"
                         description={dropoffLocation.address}
                     >
-                        {driver ? (
-                            <View style={styles.dropoffMarker}>
-                                <Ionicons name="car" size={24} color="#f6a623" />
+                        {showDropoffAsCar ? (
+                            <View style={styles.driverMarker}>
+                                <Ionicons name="car" size={22} color="#fff" />
                             </View>
                         ) : (
-                            <View style={styles.dropoffMarker}>
-                                <Ionicons name="location-sharp" size={24} color="#f6a623" />
+                            <View style={styles.flagMarkerWrapper}>
+                                <View style={styles.flagMarker}>
+                                    <Ionicons name="flag" size={18} color="#fff" />
+                                </View>
+                                {dropoffLocation.address ? (
+                                    <View style={styles.flagLabel}>
+                                        <Text style={styles.flagLabelText} numberOfLines={1}>
+                                            {dropoffLocation.name || dropoffLocation.address}
+                                        </Text>
+                                    </View>
+                                ) : null}
                             </View>
                         )}
                     </Marker>
                 )}
+
+                {driverLocation && (
+                    <Marker
+                        coordinate={{
+                            latitude: driverLocation.latitude,
+                            longitude: driverLocation.longitude,
+                        }}
+                        title="Driver"
+                        description={driverLocation.address}
+                        anchor={{ x: 0.5, y: 0.5 }}
+                    >
+                        <View style={styles.driverMarker}>
+                            <Ionicons name="car" size={22} color="#fff" />
+                        </View>
+                    </Marker>
+                )}
             </MapView>
 
-            {/* FIX 1: Loading overlay moved OUTSIDE MapView. Plain <View> children
-                inside MapView crash Fabric/JSI on Android with:
-                IllegalStateException: addViewAt: failed to insert view into parent.
-                position: 'absolute' still floats it visually over the map. */}
             {loadingRoute && (
                 <View style={styles.loadingOverlay}>
-                    <ActivityIndicator size="small" color="#f6a623" />
+                    <ActivityIndicator size="small" color={ROUTE_COLOR} />
                 </View>
             )}
         </View>
@@ -257,37 +287,68 @@ const styles = StyleSheet.create({
         width: 30,
         height: 30,
         borderRadius: 20,
-        backgroundColor: '#fff',
-        justifyContent: 'center',
-        alignItems: 'center',
+        backgroundColor: "#fff",
+        justifyContent: "center",
+        alignItems: "center",
         borderWidth: 3,
-        borderColor: '#4CAF50',
-        shadowColor: '#000',
+        borderColor: "#4CAF50",
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.3,
         shadowRadius: 4,
         elevation: 5,
     },
-    dropoffMarker: {
-        width: 30,
-        height: 30,
-        borderRadius: 20,
-        backgroundColor: '#fff',
-        justifyContent: 'center',
-        alignItems: 'center',
+    flagMarkerWrapper: {
+        alignItems: "center",
+    },
+    flagMarker: {
+        width: 34,
+        height: 34,
+        borderRadius: 17,
+        backgroundColor: ROUTE_COLOR,
+        justifyContent: "center",
+        alignItems: "center",
         borderWidth: 3,
-        borderColor: '#f6a623',
-        shadowColor: '#000',
+        borderColor: "#fff",
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.3,
         shadowRadius: 4,
         elevation: 5,
+    },
+    flagLabel: {
+        marginTop: 4,
+        backgroundColor: "rgba(0,0,0,0.75)",
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 6,
+        maxWidth: 180,
+    },
+    flagLabelText: {
+        color: "#fff",
+        fontSize: 11,
+        fontWeight: "600",
+    },
+    driverMarker: {
+        width: 38,
+        height: 38,
+        borderRadius: 19,
+        backgroundColor: "#111",
+        justifyContent: "center",
+        alignItems: "center",
+        borderWidth: 3,
+        borderColor: ROUTE_COLOR,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.4,
+        shadowRadius: 5,
+        elevation: 6,
     },
     loadingOverlay: {
-        position: 'absolute',
+        position: "absolute",
         top: 10,
         right: 10,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        backgroundColor: "rgba(0, 0, 0, 0.7)",
         padding: 8,
         borderRadius: 20,
     },
