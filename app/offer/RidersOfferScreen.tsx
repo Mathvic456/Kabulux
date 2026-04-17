@@ -4,6 +4,7 @@ import { SocketContext } from "@/context/WebSocketProvider";
 import { useCancelRideRequest } from "@/services/cancelRideRequest.service";
 import { Ionicons } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
+import Constants from "expo-constants";
 import React, {
   useCallback,
   useContext,
@@ -24,6 +25,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import { darkMapStyle } from "../../styles/darkMapStyle";
+
+if (!Constants.expoConfig?.extra?.googleMapsApiKey) {
+  throw new Error("API is missing in expoConfig.extra");
+}
+
+const GOOGLE_API_KEY = Constants.expoConfig.extra.googleMapsApiKey;
 
 type OfferItem = {
   id: string;
@@ -593,6 +602,35 @@ export default function RiderOffersScreen({ goBack, next, rideData, home }: Ride
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <StatusBar barStyle="light-content" backgroundColor="#000" />
+
+      {/* Background Map */}
+      {rideData?.rideDetails?.pickup?.pickupLat != null &&
+        rideData?.rideDetails?.pickup?.pickupLong != null && (
+          <MapView
+            style={StyleSheet.absoluteFill}
+            provider={PROVIDER_GOOGLE}
+            initialRegion={{
+              latitude: rideData.rideDetails.pickup.pickupLat,
+              longitude: rideData.rideDetails.pickup.pickupLong,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            }}
+            showsUserLocation={false}
+            showsMyLocationButton={false}
+            showsCompass={false}
+            customMapStyle={darkMapStyle}
+            pointerEvents="none"
+          >
+            <Marker
+              coordinate={{
+                latitude: rideData.rideDetails.pickup.pickupLat,
+                longitude: rideData.rideDetails.pickup.pickupLong,
+              }}
+              title="Your Pickup Location"
+            />
+          </MapView>
+        )}
+
       <View style={styles.header}>
         <TouchableOpacity onPress={goBack} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="white" />
