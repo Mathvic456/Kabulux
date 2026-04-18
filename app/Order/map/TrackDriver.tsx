@@ -68,8 +68,8 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
         () =>
             driverLocation
                 ? {
-                    latitude: driverLocation.lat,
-                    longitude: driverLocation.lng,
+                    latitude: driverLocation?.lat,
+                    longitude: driverLocation?.lng,
                     address: "Driver",
                 }
                 : null,

@@ -1158,17 +1158,17 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
         />
 
         <View style={styles.recentRideHeader}>
-          <Text style={styles.sectionTitle}>Recent Ride</Text>
+          {/* <Text style={styles.sectionTitle}>Recent Ride</Text> */}
         </View>
 
         <View style={styles.emptyRideCard}>
           <View style={styles.emptyRideIconContainer}>
             <FontAwesome5 name="car" size={40} color="#FEB914" />
           </View>
-          <Text style={styles.emptyRideTitle}>No Recent Rides</Text>
+          {/* <Text style={styles.emptyRideTitle}>No Recent Rides</Text>
           <Text style={styles.emptyRideMessage}>
             Take a ride to see your ride history here
-          </Text>
+          </Text> */}
           <TouchableOpacity
             style={styles.emptyRideButton}
             onPress={() => setScreen("setLocation")}
