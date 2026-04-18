@@ -24,6 +24,7 @@ import {
   FlatList,
   Image,
   Modal,
+  RefreshControl,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -642,10 +643,24 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
     data: profile,
     isLoading: profileLoading,
     error: profileError,
+    refetch: refetchProfile,
   } = useProfile();
   const { rideState, driverLocation, resetRide } = useRide();
   const { rideId } = useRideId();
-  const { data: rideDetails } = useRideDetails(rideId);
+  const {
+    data: rideDetails,
+    refetch: refetchRideDetails,
+  } = useRideDetails(rideId);
+
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const onPullToRefresh = async () => {
+    setIsManualRefreshing(true);
+    try {
+      await Promise.all([refetchProfile(), refetchRideDetails()]);
+    } finally {
+      setIsManualRefreshing(false);
+    }
+  };
   const driver = rideDetails?.driver;
 
   const handleCancelPress = () => {
@@ -959,7 +974,17 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
           <Text style={styles.laterText}>Later</Text>
         </TouchableOpacity>
       </TouchableOpacity>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isManualRefreshing}
+            onRefresh={onPullToRefresh}
+            tintColor="#f7b731"
+            colors={["#f7b731"]}
+          />
+        }
+      >
 
         {activeRideStatus && (
           <View
