@@ -106,7 +106,7 @@ export default function BookingScreen({
 
   type TimeFilter = "all" | "today" | "week" | "month";
 
-const [filter, setFilter] = useState<TimeFilter>("all");
+  const [filter, setFilter] = useState<TimeFilter>("all");
 
   const { socket, isConnected } = useContext(SocketContext);
   const { clearTokens, getValidToken } = useAuth();
@@ -151,38 +151,38 @@ const [filter, setFilter] = useState<TimeFilter>("all");
   };
 
   const applyTimeFilter = (rides: Ride[]) => {
-  if (filter === "all") return rides;
+    if (filter === "all") return rides;
 
-  const now = new Date();
+    const now = new Date();
 
-  return rides.filter((ride) => {
-    const rideDate = new Date(ride.date);
-    if (isNaN(rideDate.getTime())) return false;
+    return rides.filter((ride) => {
+      const rideDate = new Date(ride.date);
+      if (isNaN(rideDate.getTime())) return false;
 
-    switch (filter) {
-      case "today":
-        return (
-          rideDate.getDate() === now.getDate() &&
-          rideDate.getMonth() === now.getMonth() &&
-          rideDate.getFullYear() === now.getFullYear()
-        );
+      switch (filter) {
+        case "today":
+          return (
+            rideDate.getDate() === now.getDate() &&
+            rideDate.getMonth() === now.getMonth() &&
+            rideDate.getFullYear() === now.getFullYear()
+          );
 
-      case "week": {
-        const diff = now.getTime() - rideDate.getTime();
-        return diff <= 7 * 24 * 60 * 60 * 1000;
+        case "week": {
+          const diff = now.getTime() - rideDate.getTime();
+          return diff <= 7 * 24 * 60 * 60 * 1000;
+        }
+
+        case "month":
+          return (
+            rideDate.getMonth() === now.getMonth() &&
+            rideDate.getFullYear() === now.getFullYear()
+          );
+
+        default:
+          return true;
       }
-
-      case "month":
-        return (
-          rideDate.getMonth() === now.getMonth() &&
-          rideDate.getFullYear() === now.getFullYear()
-        );
-
-      default:
-        return true;
-    }
-  });
-};
+    });
+  };
 
   useEffect(() => {
     console.log("BookingScreen props:", pickupLat, pickupLong, dropoffLat, dropoffLong, pickupAddress, dropoffAddress);
@@ -301,6 +301,7 @@ const [filter, setFilter] = useState<TimeFilter>("all");
 
     if (!selectedPaymentMethod) {
       Alert.alert("Error", "Please select a payment method");
+
       return;
     }
 

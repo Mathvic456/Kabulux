@@ -26,12 +26,12 @@ export const usePushNotifications = () => {
     try {
       if (Platform.OS === "android") {
         try {
-          await Notifications.setNotificationChannelAsync("default", {
+          await Notifications.setNotificationChannelAsync("default_v2", {
             name: "default",
             importance: Notifications.AndroidImportance.MAX,
-            vibrationPattern: [0, 250, 250, 250],
+            vibrationPattern: [0, 500, 250, 500],
             lightColor: "#FF231F7C",
-            sound: 'kablux-sound.mp3',
+            sound: 'kablux-sound2.wav',
             enableVibrate: true,
           });
         } catch (channelError) {

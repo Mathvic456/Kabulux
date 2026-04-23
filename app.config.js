@@ -40,7 +40,7 @@ export default {
           apiKey: process.env.EXPO_PUBLIC_GOOGLE_API_KEY,
         },
       },
-      versionCode: 42
+      versionCode: 46
     },
 
     web: {
@@ -53,7 +53,7 @@ export default {
       [
         "expo-notifications",
         {
-          sound: "./assets/sounds/kablux-sound.wav"
+          sound: "./assets/sounds/new_kablux_sound.wav"
         },
       ],
       "expo-router",
@@ -78,10 +78,10 @@ export default {
       apiUrl: process.env.EXPO_PUBLIC_API_URL,
       wssUrl: process.env.EXPO_PUBLIC_WSS_URL,
       eas: {
-        projectId: "cf905950-121d-4ddc-9d09-e4539b9fd7fb",
+        projectId: "5048eba6-0946-40cd-97fb-f146a2a47163",
       },
     },
 
-    owner: "agbaby02",
+    owner: "agbaby",
   },
 };

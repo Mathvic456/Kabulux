@@ -3,17 +3,23 @@ import { useRide } from "@/context/RideContext";
 import { useRideId } from "@/context/RideIdContext";
 import { SocketContext } from "@/context/WebSocketProvider";
 import { getCurrentLocation } from "@/hooks/useCurrLocation";
+import { useCancelRideEndPoint } from "@/services/cancelRide.service";
 import { useRideDetails } from "@/services/rideDetails.service";
+import { calculateDistance } from "@/utils/geocoding";
 import { reverseGeocode } from "@/utils/googleGeocoding";
 import { Ionicons } from "@expo/vector-icons";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
+    ActivityIndicator,
+    Alert,
     Animated,
     Dimensions,
     Image,
     KeyboardAvoidingView,
     Linking,
+    Modal,
     Platform,
+    Pressable,
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -42,14 +48,126 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
     const chatScrollRef = useRef<ScrollView>(null);
 
     const { setSelectedLocation, setPickupLocation, pickupLocation, dropoffLocation, setDropoffLocation } = useMapModal();
-    const { driverLocation, rideState } = useRide();
+    const { driverLocation, rideState, resetRide } = useRide();
     const { rideId } = useRideId();
     const { data: rideDetails } = useRideDetails(rideId);
+    const { mutate: cancelRide, isPending: isCanceling } = useCancelRideEndPoint();
+    const [cancelModalVisible, setCancelModalVisible] = useState(false);
+    const [selectedCancelReason, setSelectedCancelReason] = useState<string | null>(null);
+    const cancelReasons = [
+        "Driver took too long",
+        "Changed my mind",
+        "Wrong pickup location",
+        "Emergency",
+        "Other",
+    ];
+
+    const [routeInfo, setRouteInfo] = useState<{ duration: number; distance: number } | null>(null);
+
+    const driverLocData = useMemo(
+        () =>
+            driverLocation
+                ? {
+                    latitude: driverLocation?.lat,
+                    longitude: driverLocation?.lng,
+                    address: "Driver",
+                }
+                : null,
+        [driverLocation?.lat, driverLocation?.lng],
+    );
+
+    const dropoffLocData = useMemo(() => {
+        const lat = parseFloat(rideDetails?.dropoff_lat);
+        const lng = parseFloat(rideDetails?.dropoff_lng);
+        if (!lat || !lng) return null;
+        return {
+            latitude: lat,
+            longitude: lng,
+            address: rideDetails?.dropoff_address || "Dropoff",
+            name: rideDetails?.dropoff_name || rideDetails?.dropoff_address,
+        };
+    }, [rideDetails?.dropoff_lat, rideDetails?.dropoff_lng, rideDetails?.dropoff_address, rideDetails?.dropoff_name]);
+
+    const isEnRoute = rideState === "driver_on_way" || rideState === "driver_arrived";
+    const isInProgress = rideState === "in_progress";
+
+    const mapPickup = isEnRoute ? pickupLocation : null;
+    const mapDropoff = isInProgress ? dropoffLocData : null;
+    const routeFrom = isInProgress ? driverLocData : mapPickup;
+    const routeTo = isInProgress ? mapDropoff : driverLocData;
+    const showRoute = !!(routeFrom && routeTo);
+
+    const etaText = useMemo(() => {
+        if (!routeInfo) return null;
+        const minutes = Math.max(1, Math.round(routeInfo.duration / 60));
+        return `~${minutes} min`;
+    }, [routeInfo]);
+
+    const distanceInfo = useMemo(() => {
+        const label = isInProgress ? "Trip distance" : "Driver distance";
+
+        if (routeInfo?.distance) {
+            const km = (routeInfo.distance / 1000).toFixed(2);
+            return { label, value: `${km} km` };
+        }
+
+        if (isEnRoute) {
+            if (!driverLocation || !location.latitude || !location.longitude) return null;
+            const km = calculateDistance(
+                location.latitude,
+                location.longitude,
+                driverLocation.lat,
+                driverLocation.lng,
+            );
+            return { label, value: `${km} km` };
+        }
+        if (isInProgress) {
+            if (!driverLocation || !dropoffLocData) return null;
+            const km = calculateDistance(
+                driverLocation.lat,
+                driverLocation.lng,
+                dropoffLocData.latitude,
+                dropoffLocData.longitude,
+            );
+            return { label, value: `${km} km` };
+        }
+        return null;
+    }, [isEnRoute, isInProgress, driverLocation, location, dropoffLocData, routeInfo]);
+
+    const handleConfirmCancel = () => {
+        if (!selectedCancelReason || !rideId) return;
+        cancelRide(
+            { rideId, reason: selectedCancelReason },
+            {
+                onSuccess: async () => {
+                    setCancelModalVisible(false);
+                    setSelectedCancelReason(null);
+                    await resetRide();
+                    goBack();
+                },
+                onError: (error: any) => {
+                    console.error("Cancellation failed:", error);
+                    Alert.alert(
+                        "Cancellation Failed",
+                        error?.response?.data?.detail || "Failed to cancel the ride.",
+                    );
+                },
+            },
+        );
+    };
     const { chatMessages, sendChatMessage } = useContext(SocketContext);
     const driver = rideDetails?.driver;
     const currentMessages = rideId ? chatMessages[rideId] || [] : [];
     const riderPhone = rideDetails?.driver?.phone_number;
     console.log('ride detsssssssssssssssssss', rideDetails)
+
+    useEffect(() => {
+        if (rideDetails?.status === "cancelled") {
+            console.log("[TRACK_DRIVER] Ride cancelled by backend; clearing active ride and going back.");
+            resetRide();
+            goBack();
+        }
+    }, [rideDetails?.status, resetRide, goBack]);
 
     const [isPanelUp, setIsPanelUp] = useState(false);
     const [isPanelVisible, setIsPanelVisible] = useState(true);
@@ -102,7 +220,6 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
 
     const togglePanel = () => {
         if (isPanelVisible) {
-            // Hide panel
             Animated.parallel([
                 Animated.timing(panelOpacity, {
                     toValue: 0,
@@ -116,7 +233,6 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
                 }),
             ]).start(() => setIsPanelVisible(false));
         } else {
-            // Show panel
             setIsPanelVisible(true);
             Animated.parallel([
                 Animated.timing(panelOpacity, {
@@ -208,7 +324,7 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
                                 {driver?.name || "Driver"}
                             </Text>
                             <Text style={{ color: "#FEB914", fontSize: 12, fontWeight: "500", marginTop: 2 }}>
-                                {driver?.vehicle || "Active Ride"}
+                                {driver?.vehicle.model || "Active Ride"}
                             </Text>
                         </View>
                     </View>
@@ -283,18 +399,13 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
             <TouchableWithoutFeedback onPress={handleMapPress}>
                 <View style={{ flex: 1 }}>
                     <RideMapView
-                        pickupLocation={pickupLocation}
-                        dropoffLocation={
-                            driverLocation
-                                ? {
-                                    latitude: driverLocation.lat,
-                                    longitude: driverLocation.lng,
-                                    address: "Driver Location",
-                                }
-                                : null
-                        }
-                        showRoute={!!driverLocation}
-                        driver={true}
+                        pickupLocation={mapPickup}
+                        dropoffLocation={mapDropoff}
+                        driverLocation={driverLocData}
+                        routeFrom={routeFrom}
+                        routeTo={routeTo}
+                        showRoute={showRoute}
+                        onRouteInfo={setRouteInfo}
                     />
                 </View>
             </TouchableWithoutFeedback>
@@ -323,7 +434,7 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
                         <View style={styles.statusBadge}>
                             <View style={[styles.statusDot, { backgroundColor: rideStatusInfo.color }]} />
                             <Text style={[styles.statusLabel, { color: rideStatusInfo.color }]}>
-                                {rideStatusInfo.label}
+                                {rideStatusInfo?.label}
                             </Text>
                         </View>
 
@@ -350,21 +461,49 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
                             <View style={{ flex: 1 }}>
                                 <Text style={styles.driverName}>{driver?.name || "Your Driver"}</Text>
                                 <Text style={styles.vehicleText}>
-                                    {driver?.vehicle || rideDetails?.vehicle_type || "Vehicle"}
+                                    {driver?.vehicle.model || rideDetails?.vehicle_type || "Vehicle"}
                                 </Text>
                             </View>
-                            <View />
-                            {/* <View style={styles.etaContainer}>
-                                <Text style={styles.etaLabel}>ETA</Text>
-                                <Text style={styles.etaValue}>
-                                    {rideDetails?.eta || "5 mins"}
-                                </Text>
-                            </View> */}
+                            {driver?.rating && (
+                                <View style={styles.ratingContainer}>
+                                    <Ionicons name="star" size={14} color="#f6a623" />
+                                    <Text style={styles.ratingValue}>
+                                        {parseFloat(driver.rating).toFixed(1)}
+                                    </Text>
+                                    <Text style={styles.ratingLabel}>rating</Text>
+                                </View>
+                            )}
                         </View>
+
+                        {(etaText || distanceInfo) && (
+                            <View style={styles.infoRow}>
+                                {etaText ? (
+                                    <View style={styles.infoCard}>
+                                        <Ionicons name="time-outline" size={18} color="#FEB914" />
+                                        <Text style={styles.infoLabel}>
+                                            {isInProgress ? "Arrival ETA" : "Driver ETA"}
+                                        </Text>
+                                        <Text style={styles.infoValue}>{etaText}</Text>
+                                    </View>
+                                ) : showRoute ? (
+                                    <View style={styles.infoCard}>
+                                        <ActivityIndicator size="small" color="#FEB914" />
+                                        <Text style={styles.infoLabel}>Calculating ETA…</Text>
+                                    </View>
+                                ) : null}
+                                {distanceInfo && (
+                                    <View style={styles.infoCard}>
+                                        <Ionicons name="navigate-outline" size={18} color="#FEB914" />
+                                        <Text style={styles.infoLabel}>{distanceInfo.label}</Text>
+                                        <Text style={styles.infoValue}>{distanceInfo.value}</Text>
+                                    </View>
+                                )}
+                            </View>
+                        )}
 
                         {/* Action buttons */}
                         <View style={styles.actionRow}>
-                            <TouchableOpacity style={styles.actionBtn} onPress={() => { console.log("Calling driver..."); handleCall() }}>
+                            <TouchableOpacity style={styles.actionBtn} onPress={() => { console.log("Calling driver..."); handleCall(); }}>
                                 <View style={styles.actionCircle}>
                                     <Ionicons name="call" size={22} color="#f6a623" />
                                 </View>
@@ -391,9 +530,76 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
                             onPress={() => console.log("SOS pressed")}
                             style={{ backgroundColor: "#e74c3c", marginBottom: 15 }}
                         />
+
+                        {(rideState === "driver_on_way" || rideState === "driver_arrived") && (
+                            <CustomButton
+                                title={isCanceling ? "Cancelling..." : "Cancel Ride"}
+                                onPress={() => setCancelModalVisible(true)}
+                                disabled={isCanceling}
+                                style={{ backgroundColor: "#e74c3c", marginBottom: 15 }}
+                            />
+                        )}
                     </View>
                 </ScrollView>
             </Animated.View>
+
+            <Modal
+                visible={cancelModalVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setCancelModalVisible(false)}
+            >
+                <Pressable
+                    style={styles.modalBackdrop}
+                    onPress={() => !isCanceling && setCancelModalVisible(false)}
+                >
+                    <Pressable style={styles.modalCard} onPress={() => { }}>
+                        <Text style={styles.modalTitle}>Cancel Ride</Text>
+                        <Text style={styles.modalSubtitle}>Select a reason</Text>
+                        {cancelReasons.map((reason) => {
+                            const selected = selectedCancelReason === reason;
+                            return (
+                                <TouchableOpacity
+                                    key={reason}
+                                    style={[styles.reasonRow, selected && styles.reasonRowSelected]}
+                                    onPress={() => setSelectedCancelReason(reason)}
+                                    disabled={isCanceling}
+                                >
+                                    <Text style={[styles.reasonText, selected && styles.reasonTextSelected]}>
+                                        {reason}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                        <View style={styles.modalActions}>
+                            <TouchableOpacity
+                                style={[styles.modalBtn, { backgroundColor: "#333" }]}
+                                onPress={() => setCancelModalVisible(false)}
+                                disabled={isCanceling}
+                            >
+                                <Text style={styles.modalBtnText}>Close</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[
+                                    styles.modalBtn,
+                                    {
+                                        backgroundColor: "#e74c3c",
+                                        opacity: !selectedCancelReason || isCanceling ? 0.6 : 1,
+                                    },
+                                ]}
+                                onPress={handleConfirmCancel}
+                                disabled={!selectedCancelReason || isCanceling}
+                            >
+                                {isCanceling ? (
+                                    <ActivityIndicator size="small" color="#fff" />
+                                ) : (
+                                    <Text style={styles.modalBtnText}>Confirm</Text>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                    </Pressable>
+                </Pressable>
+            </Modal>
 
             {/* Show panel button when hidden */}
             {!isPanelVisible && isPanelUp && (
@@ -491,6 +697,106 @@ const styles = StyleSheet.create({
         color: "#aaa",
         marginTop: 2,
     },
+    distanceContainer: {
+        alignItems: "center",
+        backgroundColor: "rgba(254,185,20,0.12)",
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        borderRadius: 12,
+    },
+    distanceLabel: {
+        fontSize: 12,
+        color: "#aaa",
+        fontWeight: "600",
+    },
+    distanceValue: {
+        fontSize: 18,
+        color: "#FEB914",
+        fontWeight: "bold",
+        marginTop: 2,
+    },
+    infoRow: {
+        flexDirection: "row",
+        gap: 10,
+    },
+    infoCard: {
+        flex: 1,
+        alignItems: "center",
+        backgroundColor: "rgba(254,185,20,0.12)",
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        borderRadius: 12,
+        gap: 2,
+    },
+    infoLabel: {
+        fontSize: 11,
+        color: "#aaa",
+        fontWeight: "600",
+    },
+    infoValue: {
+        fontSize: 16,
+        color: "#FEB914",
+        fontWeight: "bold",
+    },
+    modalBackdrop: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.6)",
+        justifyContent: "center",
+        paddingHorizontal: 24,
+    },
+    modalCard: {
+        backgroundColor: "#181818",
+        borderRadius: 16,
+        padding: 20,
+    },
+    modalTitle: {
+        color: "#fff",
+        fontSize: 18,
+        fontWeight: "bold",
+    },
+    modalSubtitle: {
+        color: "#aaa",
+        fontSize: 13,
+        marginTop: 4,
+        marginBottom: 14,
+    },
+    reasonRow: {
+        paddingVertical: 12,
+        paddingHorizontal: 14,
+        borderRadius: 10,
+        backgroundColor: "#222",
+        marginBottom: 8,
+        borderWidth: 1,
+        borderColor: "#222",
+    },
+    reasonRowSelected: {
+        backgroundColor: "rgba(231,76,60,0.15)",
+        borderColor: "#e74c3c",
+    },
+    reasonText: {
+        color: "#ddd",
+        fontSize: 14,
+    },
+    reasonTextSelected: {
+        color: "#fff",
+        fontWeight: "600",
+    },
+    modalActions: {
+        flexDirection: "row",
+        gap: 10,
+        marginTop: 12,
+    },
+    modalBtn: {
+        flex: 1,
+        paddingVertical: 12,
+        borderRadius: 10,
+        alignItems: "center",
+    },
+    modalBtnText: {
+        color: "#fff",
+        fontWeight: "600",
+        fontSize: 14,
+    },
     etaContainer: {
         alignItems: "center",
         backgroundColor: "rgba(254,185,20,0.12)",
@@ -507,6 +813,26 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: "#FEB914",
         fontWeight: "bold",
+    },
+
+    // Rating
+    ratingContainer: {
+        alignItems: "center",
+        backgroundColor: "rgba(246,166,35,0.1)",
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 10,
+        gap: 3,
+        flexDirection: "row",
+    },
+    ratingValue: {
+        fontSize: 15,
+        color: "#f6a623",
+        fontWeight: "500",
+    },
+    ratingLabel: {
+        fontSize: 11,
+        color: "#888",
     },
 
     // Action buttons

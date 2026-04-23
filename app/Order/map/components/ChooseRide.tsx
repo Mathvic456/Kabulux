@@ -348,6 +348,7 @@ const styles = StyleSheet.create({
         color: "white",
         fontSize: 16,
         fontWeight: "bold",
+        padding: 5,
     },
     rideImage: { width: 80, height: 50, resizeMode: "contain", marginRight: 15 },
     rideDetails: { flex: 1 },

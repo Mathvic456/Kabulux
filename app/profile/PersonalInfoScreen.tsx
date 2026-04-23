@@ -1,6 +1,15 @@
 import { useProfile } from "@/services/profile.service";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { ActivityIndicator, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import * as Clipboard from "expo-clipboard";
+import {
+  ActivityIndicator,
+  Alert,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type PersonalInfoScreenProps = {
@@ -20,6 +29,12 @@ export default function PersonalInfoScreen({
     return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6, 11)}`;
   };
 
+  const copyReferral = (code?: string) => {
+    if (!code) return;
+    Clipboard.setStringAsync(code);
+    Alert.alert("Copied", "Referral code copied to clipboard");
+  };
+
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.container, styles.loadingContainer]}>
@@ -32,6 +47,7 @@ export default function PersonalInfoScreen({
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#000" barStyle="light-content" />
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={goBack} style={styles.backButton}>
@@ -47,7 +63,9 @@ export default function PersonalInfoScreen({
           <MaterialIcons name="email" size={24} color="#FEB914" />
           <Text style={styles.cardLabel}>Email</Text>
         </View>
-        <Text style={styles.cardValue}>{profile?.email || "Not set"}</Text>
+        <Text style={styles.cardValue}>
+          {profile?.email || "Not set"}
+        </Text>
       </View>
 
       {/* Phone Card */}
@@ -56,7 +74,31 @@ export default function PersonalInfoScreen({
           <Ionicons name="call" size={24} color="#FEB914" />
           <Text style={styles.cardLabel}>Phone Number</Text>
         </View>
-        <Text style={styles.cardValue}>{formatPhoneNumber(profile?.phone_number || "")}</Text>
+        <Text style={styles.cardValue}>
+          {formatPhoneNumber(profile?.phone_number || "")}
+        </Text>
+      </View>
+
+      {/* Referral Code Card */}
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Ionicons name="gift" size={24} color="#FEB914" />
+          <Text style={styles.cardLabel}>Referral Code</Text>
+        </View>
+
+        <View style={styles.referralRow}>
+          <Text style={styles.cardValue}>
+            {profile?.referral_code || "Not set"}
+          </Text>
+
+          {profile?.referral_code && (
+            <TouchableOpacity
+              onPress={() => copyReferral(profile?.referral_code)}
+            >
+              <Ionicons name="copy-outline" size={20} color="#FEB914" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -124,6 +166,12 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "500",
+    marginLeft: 36,
+  },
+  referralRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginLeft: 36,
   },
 });

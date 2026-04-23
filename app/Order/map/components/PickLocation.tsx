@@ -1,19 +1,53 @@
 import GooglePlacesSearch from "@/components/GooglePlacesSearch";
+import { useRideBooking } from "@/context/RideBookingContext";
+import * as Location from 'expo-location';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import useMapModal from "../hooks/useMapModal";
 
 export default function PickLocation({ setModal, handleSelectPlace }) {
 
     const { pickupLocation, modal, } = useMapModal();
+    const { setPickupLocation } = useRideBooking();
 
-    const handleManualConfirm = () => {
+    const handleManualConfirm = async () => {
         console.log("Manual Confirm Clicked");
         console.log('selected', pickupLocation)
+
+        if (pickupLocation) {
+            // Use selected location
+            console.log("Confirmed Location:", pickupLocation);
+            setPickupLocation({
+                latitude: pickupLocation.latitude,
+                longitude: pickupLocation.longitude,
+                address: pickupLocation.address,
+                name: pickupLocation.name,
+            });
+        } else {
+            // Use current location
+            try {
+                const { status } = await Location.requestForegroundPermissionsAsync();
+                if (status === 'granted') {
+                    const currentLocation = await Location.getCurrentPositionAsync({});
+                    const { latitude, longitude } = currentLocation.coords;
+
+                    // Optionally reverse geocode to get address
+                    const geocodeResult = await Location.reverseGeocodeAsync({ latitude, longitude });
+                    const address = geocodeResult[0]?.name || 'Current Location';
+
+                    console.log("Current Location:", { latitude, longitude, address });
+                    setPickupLocation({
+                        latitude,
+                        longitude,
+                        address,
+                    });
+                }
+            } catch (error) {
+                console.error('Error getting current location:', error);
+            }
+        }
+
         setModal('setDestination');
         console.log(modal)
-        if (pickupLocation) {
-            console.log("Confirmed Location:", pickupLocation);
-        }
     };
 
     return (

@@ -3,7 +3,7 @@ import CustomButton from "@/components/ui/CustomButton";
 import { useRegisterEndPoint } from "@/services/authentication.service";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useState, useCallback, useRef } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -47,6 +47,7 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
     showModal: false,
     modalErr: "",
   });
+  const [referralCode, setReferralCode] = useState("");
 
   const [errors, setErrors] = useState({
     fullName: "",
@@ -63,6 +64,7 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
   const addressRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
   const confirmPasswordRef = useRef<TextInput>(null);
+  const referralCodeRef = useRef<TextInput>(null);
 
   const { mutate: register, isPending } = useRegisterEndPoint();
 
@@ -157,16 +159,16 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
     await AsyncStorage.setItem("pendingEmail", email);
     await AsyncStorage.setItem("pendingPassword", password);
 
-    register(
-      {
-        email,
-        password,
-        role: "rider",
-        first_name,
-        last_name,
-        phone_number: normalizedPhone,
-        address,
-      },
+    register({
+      email,
+      password,
+      role: "rider",
+      first_name,
+      last_name,
+      phone_number: normalizedPhone,
+      address,
+      ...(referralCode.trim() && { referrer_code: referralCode.trim() }), // 👈
+    },
       {
         onSuccess: () => next(email),
         onError: (err) => {
@@ -296,12 +298,28 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
                 value={address}
                 onChangeText={setAddress}
                 returnKeyType="next"
-                onSubmitEditing={() => passwordRef.current?.focus()}
+                onSubmitEditing={() => referralCodeRef.current?.focus()}
               />
             </View>
             {errors.address ? (
               <Text style={[styles.errorText, { fontSize: scaleFont(12) }]}>{errors.address}</Text>
             ) : null}
+
+            {/* Referral Code - Optional */}
+            <View style={styles.inputContainer}>
+              <FontAwesome name="ticket" size={20} color="#aaa" style={styles.inputIcon} />
+              <TextInput
+                ref={referralCodeRef}
+                style={styles.input}
+                placeholder="Referral Code (optional)"
+                placeholderTextColor="#aaa"
+                value={referralCode}
+                onChangeText={setReferralCode}
+                autoCapitalize="characters"
+                returnKeyType="next"
+                onSubmitEditing={() => passwordRef.current?.focus()}
+              />
+            </View>
 
             {/* Password */}
             <View style={styles.inputContainer}>

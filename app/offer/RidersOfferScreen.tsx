@@ -4,6 +4,7 @@ import { SocketContext } from "@/context/WebSocketProvider";
 import { useCancelRideRequest } from "@/services/cancelRideRequest.service";
 import { Ionicons } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
+import Constants from "expo-constants";
 import React, {
   useCallback,
   useContext,
@@ -24,6 +25,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import { darkMapStyle } from "../../styles/darkMapStyle";
+
+if (!Constants.expoConfig?.extra?.googleMapsApiKey) {
+  throw new Error("API is missing in expoConfig.extra");
+}
+
+const GOOGLE_API_KEY = Constants.expoConfig.extra.googleMapsApiKey;
 
 type OfferItem = {
   id: string;
@@ -448,8 +457,8 @@ export default function RiderOffersScreen({ goBack, next, rideData, home }: Ride
 
   const renderOffer = ({ item }: { item: OfferItem }) => {
     console.log('itemmmmm', item)
-    const busy = !!busyMap[item.id];
-    const diff = item.negotiated_price - item.counter_offer;
+    const busy = !!busyMap[item?.id];
+    const diff = item?.negotiated_price - item?.counter_offer;
 
     return (
       <View style={styles.card}>
@@ -546,9 +555,9 @@ export default function RiderOffersScreen({ goBack, next, rideData, home }: Ride
             style={[styles.primaryButton, busy && styles.disabledButton]}
             onPress={() =>
               sendNegotiation(
-                item.id,
-                item.ride_request_id,
-                item.negotiated_price,
+                item?.id,
+                item?.ride_request_id,
+                item?.negotiated_price,
               )
             }
             disabled={busy}
@@ -566,7 +575,7 @@ export default function RiderOffersScreen({ goBack, next, rideData, home }: Ride
           <View style={styles.secondaryActions}>
             <TouchableOpacity
               style={[styles.secondaryButton, styles.acceptButton]}
-              onPress={() => handleAcceptOffer(item.id)}
+              onPress={() => handleAcceptOffer(item?.id)}
               disabled={busy}
             >
               <Ionicons name="checkmark-circle" size={18} color="white" />
@@ -575,7 +584,7 @@ export default function RiderOffersScreen({ goBack, next, rideData, home }: Ride
 
             <TouchableOpacity
               style={[styles.secondaryButton, styles.declineButton]}
-              onPress={() => handleDeclineOffer(item.id)}
+              onPress={() => handleDeclineOffer(item?.id)}
               disabled={busy}
             >
               <Ionicons name="close-circle" size={18} color="#666" />
@@ -593,6 +602,35 @@ export default function RiderOffersScreen({ goBack, next, rideData, home }: Ride
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <StatusBar barStyle="light-content" backgroundColor="#000" />
+
+      {/* Background Map */}
+      {rideData?.rideDetails?.pickup?.pickupLat != null &&
+        rideData?.rideDetails?.pickup?.pickupLong != null && (
+          <MapView
+            style={StyleSheet.absoluteFill}
+            provider={PROVIDER_GOOGLE}
+            initialRegion={{
+              latitude: rideData?.rideDetails.pickup.pickupLat,
+              longitude: rideData?.rideDetails.pickup.pickupLong,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            }}
+            showsUserLocation={false}
+            showsMyLocationButton={false}
+            showsCompass={false}
+            customMapStyle={darkMapStyle}
+            pointerEvents="none"
+          >
+            <Marker
+              coordinate={{
+                latitude: rideData?.rideDetails.pickup.pickupLat,
+                longitude: rideData?.rideDetails.pickup.pickupLong,
+              }}
+              title="Your Pickup Location"
+            />
+          </MapView>
+        )}
+
       <View style={styles.header}>
         <TouchableOpacity onPress={goBack} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="white" />
@@ -640,7 +678,7 @@ export default function RiderOffersScreen({ goBack, next, rideData, home }: Ride
       <View style={styles.content}>
         <FlatList
           data={offersArray}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item?.id}
           renderItem={renderOffer}
           contentContainerStyle={[styles.listContent, { paddingBottom: 100 }]}
           showsVerticalScrollIndicator={false}

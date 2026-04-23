@@ -1,4 +1,33 @@
 /**
+ * Calculate distance between two coordinates using the Haversine formula
+ * @returns Distance in kilometers, rounded to 1 decimal place
+ */
+export const calculateDistance = (
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+): number => {
+    if (
+        !Number.isFinite(lat1) ||
+        !Number.isFinite(lon1) ||
+        !Number.isFinite(lat2) ||
+        !Number.isFinite(lon2)
+    ) {
+        return 0;
+    }
+    const R = 6371; // Earth radius in km
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return Math.round(R * c * 10) / 10;
+};
+
+/**
  * Reverse geocode coordinates to get address using Mapbox
  * @param latitude - Latitude coordinate
  * @param longitude - Longitude coordinate
