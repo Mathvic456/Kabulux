@@ -1039,7 +1039,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
                   />
 
                   <Text style={styles.statusSubtitle}>
-                    {driver?.vehicle ? driver.vehicle : activeRideStatus.subtitle}
+                    {driver?.vehicle ? driver.vehicle.model : activeRideStatus.subtitle} . {driver?.vehicle && driver.vehicle.color}
                   </Text>
                 </View>
               </View>

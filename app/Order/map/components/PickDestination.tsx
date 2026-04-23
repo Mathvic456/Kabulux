@@ -50,30 +50,30 @@ export default function PickDestination({ setModal }) {
         }, 800);
     }, [setPickupLocation]);
 
-    const handleDropoffTextChange = useCallback((text: string) => {
-        setDropoffText(text);
-        if (dropoffTimerRef.current) clearTimeout(dropoffTimerRef.current);
-        if (text.trim().length < 5) return;
+    // const handleDropoffTextChange = useCallback((text: string) => {
+    //     setDropoffText(text);
+    //     if (dropoffTimerRef.current) clearTimeout(dropoffTimerRef.current);
+    //     if (text.trim().length < 5) return;
 
-        dropoffTimerRef.current = setTimeout(async () => {
-            setIsGeocodingDropoff(true);
-            try {
-                const result = await forwardGeocode(text.trim());
-                if (result) {
-                    handleSelectDestination({
-                        latitude: result.latitude,
-                        longitude: result.longitude,
-                        address: text.trim(),
-                        name: text.trim(),
-                    });
-                }
-            } catch (e) {
-                console.error('[PickDestination] Dropoff geocode error:', e);
-            } finally {
-                setIsGeocodingDropoff(false);
-            }
-        }, 800);
-    }, [handleSelectDestination]);
+    //     dropoffTimerRef.current = setTimeout(async () => {
+    //         setIsGeocodingDropoff(true);
+    //         try {
+    //             const result = await forwardGeocode(text.trim());
+    //             if (result) {
+    //                 handleSelectDestination({
+    //                     latitude: result.latitude,
+    //                     longitude: result.longitude,
+    //                     address: text.trim(),
+    //                     name: text.trim(),
+    //                 });
+    //             }
+    //         } catch (e) {
+    //             console.error('[PickDestination] Dropoff geocode error:', e);
+    //         } finally {
+    //             setIsGeocodingDropoff(false);
+    //         }
+    //     }, 800);
+    // }, [handleSelectDestination]);
 
     const shortenAddress = (address: string, maxLength: number = 35) => {
         if (address && address.length <= maxLength) return address;
@@ -132,18 +132,19 @@ export default function PickDestination({ setModal }) {
                             </View>
 
                             <View style={styles.inputBox}>
-                                <Text style={styles.inputLabel}>Where to? {isGeocodingDropoff ? '(locating...)' : ''}</Text>
-                                <TextInput
-                                    style={[styles.inputValue, dropoffLocation ? styles.selectedDestination : styles.placeholderText, styles.editableInput]}
-                                    value={dropoffText}
-                                    onChangeText={handleDropoffTextChange}
-                                    placeholder="Enter destination or tap to search"
-                                    placeholderTextColor="#666"
-                                    onFocus={() => {
-                                        if (!dropoffText) setShowSearchModal(true);
-                                    }}
-                                />
+                                <Text style={styles.inputLabel}>
+                                    Where to? {isGeocodingDropoff ? '(locating...)' : ''}
+                                </Text>
+                                <TouchableOpacity onPress={() => setShowSearchModal(true)}>
+                                    <Text style={[
+                                        styles.inputValue,
+                                        dropoffLocation ? styles.selectedDestination : styles.placeholderText
+                                    ]}>
+                                        {dropoffText || 'Enter destination'}
+                                    </Text>
+                                </TouchableOpacity>
                             </View>
+
                         </View>
                     </View>
                 </View>
