@@ -20,4 +20,5 @@ export const useRideDetails = (rideId: string | null) => {
     enabled: !!rideId, // Only fetch if rideId exists
     refetchInterval: 5000,
   });
+
 };

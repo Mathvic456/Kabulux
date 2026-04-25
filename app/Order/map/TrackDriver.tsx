@@ -324,7 +324,7 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
                                 {driver?.name || "Driver"}
                             </Text>
                             <Text style={{ color: "#FEB914", fontSize: 12, fontWeight: "500", marginTop: 2 }}>
-                                {driver?.vehicle.model || "Active Ride"}
+                                {driver?.vehicle?.model || "Active Ride"}
                             </Text>
                         </View>
                     </View>
@@ -461,7 +461,7 @@ export default function TrackDriver({ goBack, setScreen }: SetLocationProps) {
                             <View style={{ flex: 1 }}>
                                 <Text style={styles.driverName}>{driver?.name || "Your Driver"}</Text>
                                 <Text style={styles.vehicleText}>
-                                    {driver?.vehicle.model || rideDetails?.vehicle_type || "Vehicle"}
+                                    {driver?.vehicle?.model || rideDetails?.vehicle_type || "Vehicle"}
                                 </Text>
                             </View>
                             {driver?.rating && (

@@ -193,12 +193,12 @@ export default function SettingsScreen({ setScreen, goBack }) {
           label: "About Us",
           action: () => setScreen("aboutus"),
         },
-        {
-          icon: "log-out-outline",
-          label: "Log Out",
-          isAction: true,
-          action: () => setShowLogoutModal(true),
-        },
+        // {
+        //   icon: "log-out-outline",
+        //   label: "Log Out",
+        //   isAction: true,
+        //   action: () => setShowLogoutModal(true),
+        // },
         {
           icon: "trash-outline",
           label: "Delete Account",

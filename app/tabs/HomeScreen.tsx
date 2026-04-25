@@ -662,6 +662,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
     }
   };
   const driver = rideDetails?.driver;
+  console.log('driver details from home', driver)
 
   const handleCancelPress = () => {
     setCancelModalVisible(true);
@@ -1039,7 +1040,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
                   />
 
                   <Text style={styles.statusSubtitle}>
-                    {driver?.vehicle ? driver.vehicle.model : activeRideStatus.subtitle} . {driver?.vehicle && driver.vehicle.color}
+                    {driver?.vehicle ? driver.vehicle?.model : activeRideStatus.subtitle} . {driver?.vehicle && driver.vehicle?.color}
                   </Text>
                 </View>
               </View>

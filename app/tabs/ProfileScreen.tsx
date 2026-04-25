@@ -1,9 +1,11 @@
+import { useAuth } from "@/context/AuthContext";
+import { useRide } from "@/context/RideContext";
+import { SocketContext } from "@/context/WebSocketProvider";
 import { useLogoutEndPoint } from "@/services/authentication.service";
 import { useProfile } from "@/services/profile.service";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AxiosError } from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -12,6 +14,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View
 } from "react-native";
 useProfile
@@ -24,8 +27,38 @@ type ProfileScreenProps = {
 export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [authExpired, setAuthExpired] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
 
   const { data: profile, isLoading, isError, error } = useProfile();
+
+  const { clearTokens } = useAuth();
+  const { resetRide } = useRide();
+  const { socket } = useContext(SocketContext);
+  const { mutate: logout, isPending: isLoggingOut } = useLogoutEndPoint(
+    clearTokens,
+    resetRide,
+  );
+
+  const handleLogout = () => {
+    console.log("🚪 [Settings] Starting logout process...");
+    if (socket) {
+      console.log("🔌 [Settings] Closing WebSocket connection...");
+      socket.close(1000, "User logged out");
+    }
+    logout(undefined, {
+      onSuccess: () => {
+        console.log("✅ [Settings] Logout successful");
+        setShowLogoutModal(false);
+        setScreen("login");
+      },
+      onError: (error) => {
+        console.error("[Settings] Logout error:", error);
+        setShowLogoutModal(false);
+        setScreen("login");
+      },
+    });
+  };
 
   useEffect(() => {
     console.log("🔍 [ProfileScreen] Profile state changed:");
@@ -44,28 +77,28 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
     }
   }, [isError, error]);
 
-  const logoutMutation = useLogoutEndPoint();
+  // const logoutMutation = useLogoutEndPoint();
 
-  const handleLogout = async () => {
-    try {
-      await logoutMutation.mutateAsync();
-    } catch (error) {
-      console.error("Logout failed:", error);
-    } finally {
-      await AsyncStorage.multiRemove(["token", "refreshToken", "rememberedEmail"]);
-      setAuthExpired(false);
-      setLogoutModalVisible(false);
-      setScreen("login");
-    }
-  };
+  // const handleLogout = async () => {
+  //   try {
+  //     await logoutMutation.mutateAsync();
+  //   } catch (error) {
+  //     console.error("Logout failed:", error);
+  //   } finally {
+  //     await AsyncStorage.multiRemove(["token", "refreshToken", "rememberedEmail"]);
+  //     setAuthExpired(false);
+  //     setLogoutModalVisible(false);
+  //     setScreen("login");
+  //   }
+  // };
 
 
   const openLogoutModal = () => {
-    setLogoutModalVisible(true);
+    setShowLogoutModal(true);
   };
 
   const closeLogoutModal = () => {
-    setLogoutModalVisible(false);
+    setShowLogoutModal(false);
   };
 
   const menuItems = [
@@ -248,7 +281,7 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
                 flexDirection: "row",
                 alignItems: "center",
                 padding: 15,
-                borderBottomWidth: index !== menuItems.length - 1 ? 1 : 0,
+                borderBottomWidth: 1,
                 borderBottomColor: "#333",
               }}
               onPress={item.isAction ? item.action : () => setScreen(item.screen)}
@@ -260,6 +293,22 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
               <Ionicons name="chevron-forward" size={20} color="#f7b731" />
             </TouchableOpacity>
           ))}
+          <TouchableOpacity style={{
+            flexDirection: "row",
+            alignItems: "center",
+            padding: 15,
+            borderBottomWidth: 0,
+            borderBottomColor: "#333",
+          }}
+            onPress={openLogoutModal}
+          >
+            <Ionicons name="log-out-outline" size={20} color="#f7b731" />
+            <Text style={{ color: "#fff", marginLeft: 15, flex: 1 }} onPress={openLogoutModal}>
+              Logout
+            </Text>
+            <Ionicons name="chevron-forward" size={20} color="#f7b731" />
+
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
@@ -286,6 +335,53 @@ export default function ProfileScreen({ setScreen }: ProfileScreenProps) {
           <Ionicons name="person-outline" size={24} color="#f7b731" />
         </TouchableOpacity>
       </View> */}
+
+      {/* Logout Confirmation Modal */}
+      <Modal
+        visible={showLogoutModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowLogoutModal(false)}
+      >
+        <TouchableWithoutFeedback
+          onPress={() => !isLoggingOut && setShowLogoutModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            {/* FIX: wrap inner modal in TouchableWithoutFeedback so taps
+                      inside don't bubble up and close it accidentally */}
+            <TouchableWithoutFeedback>
+              <View style={styles.confirmationModal}>
+                <Text style={styles.modalTitle}>Log Out</Text>
+                <Text style={styles.modalText}>
+                  Are you sure you want to log out?
+                </Text>
+
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.cancelButton]}
+                    onPress={() => setShowLogoutModal(false)}
+                    disabled={isLoggingOut}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.confirmButton]}
+                    onPress={handleLogout}
+                    disabled={isLoggingOut}
+                  >
+                    {isLoggingOut ? (
+                      <ActivityIndicator size="small" color="#000" />
+                    ) : (
+                      <Text style={styles.confirmButtonText}>Log Out</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
 
     </View>
   );
@@ -362,5 +458,50 @@ const styles = StyleSheet.create({
     color: '#000',
     fontWeight: '600',
     fontSize: 16,
+  },
+  // modalButton: {
+  //   flex: 1,
+  //   padding: 12,
+  //   borderRadius: 8,
+  //   alignItems: "center",
+  //   justifyContent: "center",
+  //   marginHorizontal: 5,
+  //   // FIX: minHeight so buttons never collapse when text is slightly larger
+  //   minHeight: 44,
+  // },
+  confirmButton: {
+    backgroundColor: "#FEB914",
+  },
+  deleteButton: {
+    backgroundColor: "#FF4444",
+  },
+  confirmButtonText: {
+    color: "#000",
+    fontWeight: "600",
+    fontSize: 15,
+  },
+  modalText: {
+    color: "#9CA3AF",
+    fontSize: 14,
+    // FIX: textAlign left so text flows naturally across the full modal width
+    // instead of being centred and potentially looking like it's cropped
+    textAlign: "center",
+    marginBottom: 20,
+    lineHeight: 20,
+    // FIX: width:"100%" ensures the text block fills the modal
+    width: "100%",
+  },
+  confirmationModal: {
+    backgroundColor: "#2C2C2C",
+    borderRadius: 16,
+    padding: 24,
+    // FIX: width:"100%" + maxWidth fills available space (minus overlay
+    // padding) and caps at a comfortable width on large screens.
+    // Previously "85%" could be too narrow on small phones, cropping text.
+    width: "100%",
+    maxWidth: 420,
+    // FIX: removed alignItems:"center" from the modal container — it was
+    // forcing all child text to compress to its intrinsic width instead of
+    // stretching across the full modal width.
   },
 });
