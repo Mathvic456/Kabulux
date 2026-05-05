@@ -175,19 +175,19 @@ const AreaFadaOverlay = ({
               <View style={styles.areaFadaStatBox}>
                 <MaterialIcons name="local-taxi" size={20} color="#FFB800" />
                 <Text style={styles.areaFadaStatTitle}>Trips</Text>
-                <Text style={styles.areaFadaStatValue}>5</Text>
+                {/* <Text style={styles.areaFadaStatValue}>5</Text> */}
               </View>
 
               <View style={styles.areaFadaStatBox}>
                 <MaterialIcons name="route" size={20} color="#FFB800" />
                 <Text style={styles.areaFadaStatTitle}>Kilometers covered</Text>
-                <Text style={styles.areaFadaStatValue}>5</Text>
+                {/* <Text style={styles.areaFadaStatValue}>5</Text> */}
               </View>
 
               <View style={styles.areaFadaStatBox}>
                 <FontAwesome5 name="medal" size={20} color="#FFB800" />
                 <Text style={styles.areaFadaStatTitle}>Points</Text>
-                <Text style={styles.areaFadaStatValue}>5</Text>
+                {/* <Text style={styles.areaFadaStatValue}>5</Text> */}
               </View>
             </View>
 
@@ -1178,7 +1178,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.analyticsCard}>
+        {/* <View style={styles.analyticsCard}>
           <Text style={styles.analyticsTitle}>Check your ride Analytics</Text>
           <TouchableOpacity
             style={styles.analyticsButton}
@@ -1186,7 +1186,7 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
           >
             <Text style={styles.analyticsButtonText}>View your Ride Summary</Text>
           </TouchableOpacity>
-        </View>
+        </View> */}
 
         {/* <TouchableOpacity style={styles.resetButton} onPress={resetRide}>
         <Text style={styles.resetButtonText}>
@@ -1201,19 +1201,19 @@ export default function HomeScreen({ setScreen }: HomeScreenProps) {
             data={[
               {
                 id: "1",
-                image: require("../../assets/images/car2.png"),
+                image: require("../../assets/images/ai_security_yellow.png"),
                 title: "Our Special AI Security",
                 subtitle: "Checkout our Special AI",
               },
               {
                 id: "2",
-                image: require("../../assets/images/car2.png"),
+                image: require("../../assets/images/yellow_car.png"),
                 title: "Share your Ride",
                 subtitle: "See how to share ride",
               },
               {
                 id: "3",
-                image: require("../../assets/images/car2.png"),
+                image: require("../../assets/images/car_share.png"),
                 title: "Share your Ride",
                 subtitle: "See how to share ride",
               },

@@ -1,10 +1,14 @@
 import CentralModal from "@/components/CentralModal";
 import CustomButton from "@/components/ui/CustomButton";
 import { useRegisterEndPoint } from "@/services/authentication.service";
+import { PlaceSuggestion, searchPlaces, searchPlacesClassic } from "@/utils/googlePlaces";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { debounce } from "lodash";
 import React, { useCallback, useRef, useState } from "react";
 import {
+  ActivityIndicator,
+  FlatList,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -58,6 +62,12 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
     confirmPassword: "",
   });
 
+  const [addressSuggestions, setAddressSuggestions] = useState<PlaceSuggestion[]>([]);
+  const [addressLoading, setAddressLoading] = useState(false);
+  const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
+  const addressUseClassicRef = useRef(false);
+  const [addressSessionToken] = useState(() => Date.now().toString());
+
   // Refs for focus chaining
   const emailRef = useRef<TextInput>(null);
   const phoneRef = useRef<TextInput>(null);
@@ -67,6 +77,49 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
   const referralCodeRef = useRef<TextInput>(null);
 
   const { mutate: register, isPending } = useRegisterEndPoint();
+
+  const debouncedSearchAddress = useCallback(
+    debounce(async (text: string) => {
+      if (!text || text.length < 2) {
+        setAddressSuggestions([]);
+        setShowAddressSuggestions(false);
+        return;
+      }
+      setAddressLoading(true);
+      try {
+        let results: PlaceSuggestion[] = [];
+        if (!addressUseClassicRef.current) {
+          try {
+            results = await searchPlaces(text, addressSessionToken);
+            if (results.length === 0) {
+              results = await searchPlacesClassic(text);
+              if (results.length > 0) addressUseClassicRef.current = true;
+            }
+          } catch {
+            results = await searchPlacesClassic(text);
+            if (results.length > 0) addressUseClassicRef.current = true;
+          }
+        } else {
+          results = await searchPlacesClassic(text);
+        }
+        setAddressSuggestions(results.slice(0, 5));
+        setShowAddressSuggestions(results.length > 0);
+      } catch {
+        setAddressSuggestions([]);
+        setShowAddressSuggestions(false);
+      } finally {
+        setAddressLoading(false);
+      }
+    }, 300),
+    [addressSessionToken]
+  );
+
+  const handleSelectAddress = useCallback((suggestion: PlaceSuggestion) => {
+    setAddress(suggestion.description);
+    setAddressSuggestions([]);
+    setShowAddressSuggestions(false);
+    setTimeout(() => referralCodeRef.current?.focus(), 50);
+  }, []);
 
   const validateForm = useCallback(() => {
     let valid = true;
@@ -288,18 +341,69 @@ export default function RegisterScreen({ next, goLogin }: RegisterScreenProps) {
             ) : null}
 
             {/* Address */}
-            <View style={styles.inputContainer}>
-              <FontAwesome name="map-marker" size={20} color="#aaa" style={styles.inputIcon} />
-              <TextInput
-                ref={addressRef}
-                style={styles.input}
-                placeholder="Address"
-                placeholderTextColor="#aaa"
-                value={address}
-                onChangeText={setAddress}
-                returnKeyType="next"
-                onSubmitEditing={() => referralCodeRef.current?.focus()}
-              />
+            <View style={styles.addressWrapper}>
+              <View style={styles.inputContainer}>
+                <FontAwesome name="map-marker" size={20} color="#aaa" style={styles.inputIcon} />
+                <TextInput
+                  ref={addressRef}
+                  style={styles.input}
+                  placeholder="Address"
+                  placeholderTextColor="#aaa"
+                  value={address}
+                  onChangeText={(text) => {
+                    setAddress(text);
+                    if (text.length >= 2) {
+                      debouncedSearchAddress(text);
+                    } else {
+                      setAddressSuggestions([]);
+                      setShowAddressSuggestions(false);
+                    }
+                  }}
+                  returnKeyType="next"
+                  onSubmitEditing={() => {
+                    setShowAddressSuggestions(false);
+                    referralCodeRef.current?.focus();
+                  }}
+                  onBlur={() => setTimeout(() => setShowAddressSuggestions(false), 150)}
+                  onFocus={() => {
+                    if (addressSuggestions.length > 0) setShowAddressSuggestions(true);
+                  }}
+                />
+                {addressLoading && (
+                  <ActivityIndicator size="small" color="#fcbf24" style={{ marginRight: 4 }} />
+                )}
+              </View>
+
+              {showAddressSuggestions && addressSuggestions.length > 0 && (
+                <View style={styles.suggestionsContainer}>
+                  <FlatList
+                    data={addressSuggestions}
+                    keyExtractor={(item) => item.place_id}
+                    keyboardShouldPersistTaps="handled"
+                    scrollEnabled={false}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={styles.suggestionItem}
+                        onPress={() => handleSelectAddress(item)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="location-sharp" size={14} color="#fcbf24" style={{ marginRight: 8 }} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.suggestionMainText} numberOfLines={1}>
+                            {item.main_text || item.description.split(",")[0]}
+                          </Text>
+                          {item.secondary_text ? (
+                            <Text style={styles.suggestionSubText} numberOfLines={1}>
+                              {item.secondary_text}
+                            </Text>
+                          ) : null}
+                        </View>
+                      </TouchableOpacity>
+                    )}
+                    ItemSeparatorComponent={() => <View style={styles.suggestionSeparator} />}
+                  />
+                </View>
+              )}
             </View>
             {errors.address ? (
               <Text style={[styles.errorText, { fontSize: scaleFont(12) }]}>{errors.address}</Text>
@@ -542,4 +646,41 @@ const styles = StyleSheet.create({
   dividerText: { color: "#aaa", marginHorizontal: 10 },
   footerText: { textAlign: "center", color: "#888", fontSize: 12 },
   signup: { color: "#fcbf24", fontWeight: "bold" },
+  addressWrapper: {
+    zIndex: 10,
+    elevation: 10,
+  },
+  suggestionsContainer: {
+    position: "absolute",
+    top: 54,
+    left: 0,
+    right: 0,
+    backgroundColor: "#1a1a1a",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#333",
+    zIndex: 10,
+    elevation: 10,
+    overflow: "hidden",
+  },
+  suggestionItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+  },
+  suggestionMainText: {
+    color: "#fff",
+    fontSize: 14,
+  },
+  suggestionSubText: {
+    color: "#aaa",
+    fontSize: 12,
+    marginTop: 2,
+  },
+  suggestionSeparator: {
+    height: 1,
+    backgroundColor: "#222",
+    marginHorizontal: 14,
+  },
 });
